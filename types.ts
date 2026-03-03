@@ -165,17 +165,23 @@ export const resizeImage = (
   maxWidth: number = 800,
   quality: number = 0.6,
 ): Promise<string> =>
-  new Promise((resolve) => {
+  new Promise((resolve, reject) => {
     const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read file'));
     reader.onload = (ev) => {
       const img = new Image();
+      img.onerror = () => reject(new Error('Failed to load image'));
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const scale = Math.min(1, maxWidth / img.width);
         canvas.width = img.width * scale;
         canvas.height = img.height * scale;
         const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         resolve(canvas.toDataURL('image/jpeg', quality));
       };
       img.src = ev.target?.result as string;
@@ -199,6 +205,9 @@ export const CONSTANTS = {
   IMAGE_QUALITY: 0.6,
   ADMIN_USERNAME: 'JACK',
   ADMIN_PASSWORD: '0808',
+  // Additional admin login aliases for backward compatibility
+  ADMIN_ALIASES: ['8888', 'admin'] as readonly string[],
+  ADMIN_PASSWORD_ALIASES: ['0000'] as readonly string[],
   STAGNANT_DAYS_THRESHOLD: 7,
 };
 
