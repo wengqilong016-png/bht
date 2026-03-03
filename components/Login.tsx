@@ -33,7 +33,9 @@ const Login: React.FC<LoginProps> = ({ drivers, onLogin, lang, onSetLang }) => {
     const userLower = username.toLowerCase();
     
     // Admin Master Login
-    if ((userLower === '8888' || userLower === 'admin' || userLower === CONSTANTS.ADMIN_USERNAME.toLowerCase()) && (password === '0000' || password === CONSTANTS.ADMIN_PASSWORD)) {
+    const validUsernames = [CONSTANTS.ADMIN_USERNAME.toLowerCase(), ...CONSTANTS.ADMIN_ALIASES];
+    const validPasswords = [CONSTANTS.ADMIN_PASSWORD, ...CONSTANTS.ADMIN_PASSWORD_ALIASES];
+    if (validUsernames.includes(userLower) && validPasswords.includes(password)) {
       onLogin({ id: 'ADMIN-MASTER', username: userLower, role: 'admin', name: 'Administrator' });
       setIsLoading(false);
       return;
