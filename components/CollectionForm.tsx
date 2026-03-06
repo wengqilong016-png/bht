@@ -500,6 +500,13 @@ const CollectionForm: React.FC<CollectionFormProps> = ({ locations, currentDrive
     const loc = locations.find(l => l.id === payoutRequestLocId);
     if (!loc) return;
 
+    const availableBalance = loc.dividendBalance || 0;
+    const requestedAmount = parseInt(payoutAmount);
+    if (requestedAmount > availableBalance) {
+      alert(lang === 'zh' ? `❌ 提现金额超过可用余额 (TZS ${availableBalance.toLocaleString()})` : `❌ Amount exceeds available balance (TZS ${availableBalance.toLocaleString()})`);
+      return;
+    }
+
     const gps = gpsCoords || { lat: 0, lng: 0 };
     const tx: Transaction = {
       id: `PAY-${Date.now()}`,
@@ -517,8 +524,8 @@ const CollectionForm: React.FC<CollectionFormProps> = ({ locations, currentDrive
       gps, dataUsageKB: 40, isSynced: false,
       type: 'payout_request',
       approvalStatus: 'pending',
-      payoutAmount: parseInt(payoutAmount),
-      notes: lang === 'zh' ? `店主分红提现: TZS ${parseInt(payoutAmount).toLocaleString()}` : `Owner dividend payout: TZS ${parseInt(payoutAmount).toLocaleString()}`
+      payoutAmount: requestedAmount,
+      notes: lang === 'zh' ? `店主分红提现: TZS ${requestedAmount.toLocaleString()}` : `Owner dividend payout: TZS ${requestedAmount.toLocaleString()}`
     };
     onSubmit(tx);
     setPayoutRequestLocId(null);
@@ -604,6 +611,7 @@ const CollectionForm: React.FC<CollectionFormProps> = ({ locations, currentDrive
   // --- Payout Request View ---
   if (payoutRequestLocId) {
     const payoutLoc = locations.find(l => l.id === payoutRequestLocId);
+    const availableDividend = payoutLoc?.dividendBalance || 0;
     return (
       <div className="max-w-md mx-auto py-8 px-4 animate-in fade-in">
         <div className="bg-white rounded-[40px] p-8 border border-slate-200 shadow-2xl space-y-6">
@@ -628,6 +636,12 @@ const CollectionForm: React.FC<CollectionFormProps> = ({ locations, currentDrive
                 </p>
               </div>
             </div>
+            <div className="bg-white p-4 rounded-xl mt-3 text-center border border-emerald-100">
+              <p className="text-[8px] font-black text-emerald-400 uppercase">
+                {lang === 'zh' ? '可提现余额' : 'Available Balance'}
+              </p>
+              <p className="text-2xl font-black text-emerald-700">TZS {availableDividend.toLocaleString()}</p>
+            </div>
           </div>
 
           <div className="bg-slate-50 p-5 rounded-[28px] border border-slate-200">
@@ -642,11 +656,16 @@ const CollectionForm: React.FC<CollectionFormProps> = ({ locations, currentDrive
                 placeholder="0" 
               />
             </div>
+            {payoutAmount && parseInt(payoutAmount) > availableDividend && (
+              <p className="text-[9px] font-black text-rose-500 mt-2">
+                {lang === 'zh' ? `⚠ 超过可用余额 (TZS ${availableDividend.toLocaleString()})` : `⚠ Exceeds available balance (TZS ${availableDividend.toLocaleString()})`}
+              </p>
+            )}
           </div>
 
           <button 
             onClick={handleSubmitPayoutRequest} 
-            disabled={!payoutAmount || parseInt(payoutAmount) <= 0}
+            disabled={!payoutAmount || parseInt(payoutAmount) <= 0 || parseInt(payoutAmount) > availableDividend}
             className="w-full py-5 bg-emerald-600 text-white rounded-[28px] font-black uppercase text-sm shadow-xl disabled:bg-slate-300 active:scale-95 transition-all flex items-center justify-center gap-3"
           >
             <Wallet size={20} />
@@ -756,10 +775,8 @@ const CollectionForm: React.FC<CollectionFormProps> = ({ locations, currentDrive
                           <p className="text-[10px] font-black text-emerald-600">{(loc.commissionRate * 100).toFixed(0)}%</p>
                         </div>
                         <div>
-                          <p className="text-[7px] font-black text-slate-400 uppercase">Last Active</p>
-                          <p className="text-[10px] font-black text-slate-700">
-                            {daysSinceActive === null ? 'N/A' : daysSinceActive === 0 ? 'Today' : `${daysSinceActive}d ago`}
-                          </p>
+                          <p className="text-[7px] font-black text-slate-400 uppercase">{lang === 'zh' ? '分红余额' : 'Dividend'}</p>
+                          <p className="text-[10px] font-black text-amber-600">TZS {(loc.dividendBalance || 0).toLocaleString()}</p>
                         </div>
                       </div>
                       {loc.area && (
