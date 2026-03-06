@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { supabase, checkDbHealth } from './supabaseClient';
 import { Analytics } from '@vercel/analytics/react';
-import AIHub from './components/AIHub';
 
 // Safe localStorage wrapper – iOS Safari private mode throws QuotaExceededError on writes
 const safeSetItem = (key: string, value: string) => {
