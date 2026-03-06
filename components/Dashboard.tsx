@@ -779,10 +779,20 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, drivers, locations,
                             <div className="bg-emerald-50 p-4 rounded-xl mb-3 text-center">
                               <p className="text-[8px] font-black text-emerald-400 uppercase">{t.payoutAmount}</p>
                               <p className="text-2xl font-black text-emerald-700">TZS {(tx.payoutAmount || 0).toLocaleString()}</p>
+                              <p className="text-[8px] font-bold text-slate-400 mt-1">
+                                {lang === 'zh' ? '可用余额' : 'Available'}: TZS {(loc?.dividendBalance || 0).toLocaleString()}
+                              </p>
                             </div>
                             <div className="flex gap-2">
                               <button 
-                                onClick={() => onUpdateTransaction(tx.id, { approvalStatus: 'approved' })} 
+                                onClick={() => {
+                                  onUpdateTransaction(tx.id, { approvalStatus: 'approved' });
+                                  // Deduct payoutAmount from location's dividendBalance
+                                  if (loc && tx.payoutAmount) {
+                                    const newBalance = Math.max(0, (loc.dividendBalance || 0) - tx.payoutAmount);
+                                    onUpdateLocations(locations.map(l => l.id === loc.id ? { ...l, dividendBalance: newBalance, isSynced: false } : l));
+                                  }
+                                }} 
                                 className="flex-1 py-2.5 bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase"
                               >
                                 ✓ {t.approveBtn}

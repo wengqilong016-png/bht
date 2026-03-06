@@ -336,12 +336,16 @@ const App: React.FC = () => {
       setTransactions(prev => prev.map(t => t.id === tx.id ? finalTx : t));
     }
 
+    // Accumulate owner retention into dividendBalance
+    const retentionAmount = tx.ownerRetention || 0;
+
     setLocations(prev => prev.map(l => 
       l.id === tx.locationId 
         ? { 
             ...l, 
             lastScore: tx.currentScore, 
             remainingStartupDebt: Math.max(0, l.remainingStartupDebt - (tx.startupDebtDeduction || 0)),
+            dividendBalance: (l.dividendBalance || 0) + retentionAmount,
             isSynced: false 
           } 
         : l
@@ -357,13 +361,15 @@ const App: React.FC = () => {
           const currentLoc = locationsRef.current.find(l => l.id === tx.locationId);
           if (currentLoc) {
             const newDebt = Math.max(0, currentLoc.remainingStartupDebt - (tx.startupDebtDeduction || 0));
+            const newDividend = (currentLoc.dividendBalance || 0) + retentionAmount;
             await supabase.from('locations').update({ 
               lastScore: tx.currentScore, 
               remainingStartupDebt: newDebt,
+              dividendBalance: newDividend,
               isSynced: true 
             }).eq('id', tx.locationId);
             
-            setLocations(prev => prev.map(l => l.id === tx.locationId ? { ...l, lastScore: tx.currentScore, remainingStartupDebt: newDebt, isSynced: true } : l));
+            setLocations(prev => prev.map(l => l.id === tx.locationId ? { ...l, lastScore: tx.currentScore, remainingStartupDebt: newDebt, dividendBalance: newDividend, isSynced: true } : l));
           }
        }
     }
