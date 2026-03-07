@@ -54,7 +54,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
         .then(setMachinePhoto)
         .catch((err) => {
           console.error('Photo resize failed:', err);
-          alert(lang === 'zh' ? '图片处理失败，请重试' : 'Photo processing failed, please retry');
+          alert(lang === 'zh' ? '图片处理失败，请重试' : 'Usindikaji wa picha umeshindwa, tafadhali jaribu tena');
         })
         .finally(() => setIsPhotoProcessing(false));
     }

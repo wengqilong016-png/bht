@@ -529,7 +529,7 @@ const CollectionForm: React.FC<CollectionFormProps> = ({ locations, currentDrive
         .then(setResetPhotoData)
         .catch((err) => {
           console.error('Reset photo resize failed:', err);
-          alert(lang === 'zh' ? '图片处理失败，请重试' : 'Photo processing failed, please retry');
+          alert(lang === 'zh' ? '图片处理失败，请重试' : 'Usindikaji wa picha umeshindwa, tafadhali jaribu tena');
         });
     }
   };
