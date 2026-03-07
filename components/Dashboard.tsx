@@ -24,6 +24,7 @@ interface DashboardProps {
   lang: 'zh' | 'sw';
   onNavigate?: (view: any) => void;
   initialTab?: 'overview' | 'locations' | 'settlement' | 'team' | 'arrears' | 'ai-logs' | 'tracking';
+  hideTabs?: boolean;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ transactions, drivers, locations, dailySettlements, aiLogs, currentUser, onUpdateDrivers, onUpdateLocations, onUpdateTransaction, onNewTransaction, onSaveSettlement, onSync, isSyncing, offlineCount, lang, onNavigate, initialTab }) => {
