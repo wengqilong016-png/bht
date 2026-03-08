@@ -5,12 +5,16 @@
 
 -- ─── 辅助函数：SECURITY DEFINER 在 postgres 权限下执行，避免 profiles RLS 循环
 CREATE OR REPLACE FUNCTION public.get_my_role()
-RETURNS TEXT LANGUAGE sql STABLE SECURITY DEFINER AS $$
+RETURNS TEXT LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
   SELECT role FROM public.profiles WHERE auth_user_id = auth.uid()
 $$;
 
 CREATE OR REPLACE FUNCTION public.get_my_driver_id()
-RETURNS TEXT LANGUAGE sql STABLE SECURITY DEFINER AS $$
+RETURNS TEXT LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
   SELECT driver_id FROM public.profiles WHERE auth_user_id = auth.uid()
 $$;
 
