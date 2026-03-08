@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, checkDbHealth } from '../supabaseClient';
 import { localDB } from '../services/localDB';
 import { CONSTANTS, Location, Driver, Transaction, DailySettlement, AILog } from '../types';
@@ -15,15 +15,14 @@ const sanitizeDrivers = (driverList: any[]): Driver[] => {
 export function useSupabaseData() {
   const queryClient = useQueryClient();
 
+  // 1. Health check - High priority
   const { data: isOnline = false } = useQuery({
     queryKey: ['dbHealth'],
-    queryFn: async () => {
-      const online = await checkDbHealth();
-      return online;
-    },
-    refetchInterval: 20000, // Check every 20s
+    queryFn: async () => await checkDbHealth(),
+    refetchInterval: 20000,
   });
 
+  // 2. Core Data: Locations & Drivers - Critical for first paint
   const { data: locations = [], isLoading: isLoadingLocs } = useQuery({
     queryKey: ['locations'],
     queryFn: async () => {
@@ -36,7 +35,7 @@ export function useSupabaseData() {
       }
       return (await localDB.get<Location[]>(CONSTANTS.STORAGE_LOCATIONS_KEY)) || [];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
   const { data: drivers = [], isLoading: isLoadingDrivers } = useQuery({
@@ -52,14 +51,16 @@ export function useSupabaseData() {
       }
       return (await localDB.get<Driver[]>(CONSTANTS.STORAGE_DRIVERS_KEY)) || [];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
+  // 3. Heavy Data: Transactions, Settlements, Logs - Deferred loading
+  // These only load if critical data is ready, or on demand.
   const { data: transactions = [], isLoading: isLoadingTxs } = useQuery({
     queryKey: ['transactions'],
     queryFn: async () => {
       if (isOnline && supabase) {
-        const { data, error } = await supabase.from('transactions').select('id, timestamp, uploadTimestamp, locationId, locationName, driverId, driverName, previousScore, currentScore, revenue, commission, ownerRetention, debtDeduction, startupDebtDeduction, expenses, coinExchange, extraIncome, netPayable, gps, gpsDeviation, dataUsageKB, aiScore, isAnomaly, notes, isClearance, reportedStatus, paymentStatus, type, approvalStatus, expenseType, expenseCategory, expenseStatus, expenseDescription, payoutAmount').order('timestamp', { ascending: false }).limit(200);
+        const { data, error } = await supabase.from('transactions').select('id, timestamp, uploadTimestamp, locationId, locationName, driverId, driverName, previousScore, currentScore, revenue, commission, ownerRetention, debtDeduction, startupDebtDeduction, expenses, coinExchange, extraIncome, netPayable, gps, gpsDeviation, dataUsageKB, aiScore, isAnomaly, notes, isClearance, reportedStatus, paymentStatus, type, approvalStatus, expenseType, expenseCategory, expenseStatus, expenseDescription, payoutAmount').order('timestamp', { ascending: false }).limit(100); // Reduced limit for initial load
         if (!error && data) {
           const mapped = data.map(t => ({...t, isSynced: true})) as Transaction[];
           await localDB.set(CONSTANTS.STORAGE_TRANSACTIONS_KEY, mapped);
@@ -68,6 +69,7 @@ export function useSupabaseData() {
       }
       return (await localDB.get<Transaction[]>(CONSTANTS.STORAGE_TRANSACTIONS_KEY)) || [];
     },
+    enabled: !!locations.length, // Defer until core data is here
     staleTime: 1000 * 60 * 2,
   });
 
@@ -75,7 +77,7 @@ export function useSupabaseData() {
     queryKey: ['dailySettlements'],
     queryFn: async () => {
       if (isOnline && supabase) {
-        const { data, error } = await supabase.from('daily_settlements').select('id, date, adminId, adminName, driverId, driverName, totalRevenue, totalNetPayable, totalExpenses, driverFloat, expectedTotal, actualCash, actualCoins, shortage, note, timestamp, status').order('timestamp', { ascending: false }).limit(30);
+        const { data, error } = await supabase.from('daily_settlements').select('id, date, adminId, adminName, driverId, driverName, totalRevenue, totalNetPayable, totalExpenses, driverFloat, expectedTotal, actualCash, actualCoins, shortage, note, timestamp, status').order('timestamp', { ascending: false }).limit(20);
         if (!error && data) {
           const mapped = data.map(s => ({...s, isSynced: true})) as DailySettlement[];
           await localDB.set(CONSTANTS.STORAGE_SETTLEMENTS_KEY, mapped);
@@ -84,14 +86,15 @@ export function useSupabaseData() {
       }
       return (await localDB.get<DailySettlement[]>(CONSTANTS.STORAGE_SETTLEMENTS_KEY)) || [];
     },
-    staleTime: 1000 * 60 * 2,
+    enabled: !!drivers.length,
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: aiLogs = [] } = useQuery({
     queryKey: ['aiLogs'],
     queryFn: async () => {
       if (isOnline && supabase) {
-         const { data, error } = await supabase.from('ai_logs').select('id, timestamp, driverId, driverName, query, response, modelUsed, relatedLocationId, relatedTransactionId').order('timestamp', { ascending: false }).limit(50);
+         const { data, error } = await supabase.from('ai_logs').select('id, timestamp, driverId, driverName, query, response, modelUsed, relatedLocationId, relatedTransactionId').order('timestamp', { ascending: false }).limit(30);
          if (!error && data) {
            const mapped = data.map(l => ({...l, isSynced: true})) as AILog[];
            await localDB.set(CONSTANTS.STORAGE_AI_LOGS_KEY, mapped);
@@ -100,10 +103,12 @@ export function useSupabaseData() {
       }
       return (await localDB.get<AILog[]>(CONSTANTS.STORAGE_AI_LOGS_KEY)) || [];
     },
-    staleTime: 1000 * 60 * 5,
+    enabled: !!transactions.length, // Defer even further
+    staleTime: 1000 * 60 * 10,
   });
 
-  const isLoading = isLoadingLocs || isLoadingDrivers || isLoadingTxs || isLoadingSettlements;
+  // Main loading state now only reflects CORE data needed for first paint
+  const isLoading = isLoadingLocs || isLoadingDrivers;
 
   return {
     isOnline,
@@ -112,6 +117,7 @@ export function useSupabaseData() {
     transactions,
     dailySettlements,
     aiLogs,
-    isLoading
+    isLoading,
+    isBackgroundLoading: isLoadingTxs || isLoadingSettlements
   };
 }

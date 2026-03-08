@@ -1,15 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { User, TRANSLATIONS } from './types';
-import Dashboard from './components/Dashboard';
-import CollectionForm from './components/CollectionForm';
-import TransactionHistory from './components/TransactionHistory';
-import Login from './components/Login';
-import FinancialReports from './components/FinancialReports';
-import AIHub from './components/AIHub';
-import DebtManager from './components/DebtManager';
-import BillingReconciliation from './components/BillingReconciliation';
-import DriverManagement from './components/DriverManagement';
-import AccountSettings from './components/AccountSettings';
 import { 
   LayoutDashboard, PlusCircle, CreditCard, PieChart, Brain, 
   LogOut, Globe, Loader2, CloudOff,
@@ -22,6 +12,25 @@ import { fetchCurrentUserProfile, restoreCurrentUserFromSession, signOutCurrentU
 
 import { useSupabaseData } from './hooks/useSupabaseData';
 import { useSupabaseMutations } from './hooks/useSupabaseMutations';
+
+// Lazy load heavy components
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const CollectionForm = lazy(() => import('./components/CollectionForm'));
+const TransactionHistory = lazy(() => import('./components/TransactionHistory'));
+const FinancialReports = lazy(() => import('./components/FinancialReports'));
+const AIHub = lazy(() => import('./components/AIHub'));
+const DebtManager = lazy(() => import('./components/DebtManager'));
+const BillingReconciliation = lazy(() => import('./components/BillingReconciliation'));
+const DriverManagement = lazy(() => import('./components/DriverManagement'));
+const AccountSettings = lazy(() => import('./components/AccountSettings'));
+const Login = lazy(() => import('./components/Login'));
+
+const LoadingFallback = () => (
+  <div className="flex-1 flex flex-col items-center justify-center p-12">
+    <Loader2 size={32} className="text-indigo-600 animate-spin mb-4" />
+    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Loading Module...</p>
+  </div>
+);
 
 // Global ErrorBoundary
 class ErrorBoundary extends React.Component<
@@ -470,114 +479,111 @@ const App: React.FC = () => {
           )}
           
           <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-            {isAdmin && showDashboard && (
-              <Dashboard
-                transactions={filteredData.transactions}
-                drivers={filteredData.drivers}
-                locations={filteredData.locations}
-                dailySettlements={filteredData.dailySettlements}
-                aiLogs={aiLogs}
-                currentUser={currentUser}
-                onUpdateDrivers={(d) => updateDrivers.mutateAsync(d)}
-                onUpdateLocations={(l) => updateLocations.mutate(l)}
-                onDeleteLocations={(ids) => deleteLocations.mutate(ids)}
-                onUpdateTransaction={(id, updates) => updateTransaction.mutate({txId: id, updates})}
-                onNewTransaction={() => {}} // Not used in admin dashboard currently
-                onSaveSettlement={(s) => saveSettlement.mutate(s)}
-                onSync={async () => syncOfflineData.mutate()}
-                isSyncing={syncOfflineData.isPending}
-                offlineCount={unsyncedCount}
-                lang={lang}
-                onNavigate={(v) => setView(v as any)}
-                initialTab={getDashboardTab(view)}
-                hideTabs={true}
-              />
-            )}
+            <Suspense fallback={<LoadingFallback />}>
+              {isAdmin && showDashboard && (
+                <Dashboard
+                  transactions={filteredData.transactions}
+                  drivers={filteredData.drivers}
+                  locations={filteredData.locations}
+                  dailySettlements={filteredData.dailySettlements}
+                  aiLogs={aiLogs}
+                  currentUser={currentUser}
+                  onUpdateDrivers={(d) => updateDrivers.mutateAsync(d)}
+                  onUpdateLocations={(l) => updateLocations.mutate(l)}
+                  onDeleteLocations={(ids) => deleteLocations.mutate(ids)}
+                  onUpdateTransaction={(id, updates) => updateTransaction.mutate({txId: id, updates})}
+                  onNewTransaction={() => {}} // Not used in admin dashboard currently
+                  onSaveSettlement={(s) => saveSettlement.mutate(s)}
+                  onSync={async () => syncOfflineData.mutate()}
+                  isSyncing={syncOfflineData.isPending}
+                  offlineCount={unsyncedCount}
+                  lang={lang}
+                  onNavigate={(v) => setView(v as any)}
+                  initialTab={getDashboardTab(view)}
+                  hideTabs={true}
+                />
+              )}
 
-            {!isAdmin && view === 'settlement' && (
-              <Dashboard
-                transactions={filteredData.transactions}
-                drivers={filteredData.drivers}
-                locations={filteredData.locations}
-                dailySettlements={filteredData.dailySettlements}
-                aiLogs={aiLogs}
-                currentUser={currentUser}
-                onUpdateDrivers={(d) => updateDrivers.mutateAsync(d)}
-                onUpdateLocations={(l) => updateLocations.mutate(l)}
-                onDeleteLocations={(ids) => deleteLocations.mutate(ids)}
-                onUpdateTransaction={(id, updates) => updateTransaction.mutate({txId: id, updates})}
-                onNewTransaction={() => {}} // handled in CollectionForm
-                onSaveSettlement={(s) => saveSettlement.mutate(s)}
-                onSync={async () => syncOfflineData.mutate()}
-                isSyncing={syncOfflineData.isPending}
-                offlineCount={unsyncedCount}
-                lang={lang}
-                onNavigate={(v) => setView(v as any)}
-                initialTab="settlement"
-                hideTabs={true}
-              />
-            )}
+              {!isAdmin && view === 'settlement' && (
+                <Dashboard
+                  transactions={filteredData.transactions}
+                  drivers={filteredData.drivers}
+                  locations={filteredData.locations}
+                  dailySettlements={filteredData.dailySettlements}
+                  aiLogs={aiLogs}
+                  currentUser={currentUser}
+                  onUpdateDrivers={(d) => updateDrivers.mutateAsync(d)}
+                  onUpdateLocations={(l) => updateLocations.mutate(l)}
+                  onDeleteLocations={(ids) => deleteLocations.mutate(ids)}
+                  onUpdateTransaction={(id, updates) => updateTransaction.mutate({txId: id, updates})}
+                  onNewTransaction={() => {}} // handled in CollectionForm
+                  onSaveSettlement={(s) => saveSettlement.mutate(s)}
+                  onSync={async () => syncOfflineData.mutate()}
+                  isSyncing={syncOfflineData.isPending}
+                  offlineCount={unsyncedCount}
+                  lang={lang}
+                  onNavigate={(v) => setView(v as any)}
+                  initialTab="settlement"
+                  hideTabs={true}
+                />
+              )}
 
-            {view === 'team' && isAdmin && (
-              <DriverManagement
-                drivers={filteredData.drivers}
-                transactions={filteredData.transactions}
-                dailySettlements={filteredData.dailySettlements}
-                onUpdateDrivers={(d) => updateDrivers.mutateAsync(d)}
-              />
-            )}
+              {view === 'team' && isAdmin && (
+                <DriverManagement
+                  drivers={filteredData.drivers}
+                  transactions={filteredData.transactions}
+                  dailySettlements={filteredData.dailySettlements}
+                  onUpdateDrivers={(d) => updateDrivers.mutateAsync(d)}
+                />
+              )}
 
-            {view === 'billing' && isAdmin && (
-              <BillingReconciliation
-                drivers={filteredData.drivers}
-                transactions={filteredData.transactions}
-                dailySettlements={filteredData.dailySettlements}
-              />
-            )}
+              {view === 'billing' && isAdmin && (
+                <BillingReconciliation
+                  drivers={filteredData.drivers}
+                  transactions={filteredData.transactions}
+                  dailySettlements={filteredData.dailySettlements}
+                />
+              )}
 
-            {view === 'collect' && (
-              <CollectionForm
-                locations={filteredData.locations}
-                currentDriver={drivers.find(d => d.id === activeDriverId) || drivers[0]}
-                onSubmit={(tx) => {
-                  // Ensure transaction goes via mutation for queue + idb + UI state
-                  // Note: CollectionForm uses `enqueueTransaction` internally for the offline queue.
-                  // We also just invalidate/sync to show it. 
-                  // But for true optimistic, we'll manually dispatch updateTransaction here if needed.
-                  // We'll rely on the existing internal logic of CollectionForm and just re-fetch.
-                  syncOfflineData.mutate();
-                }}
-                lang={lang}
-                onLogAI={(l) => logAI.mutate(l)}
-                isOnline={isOnline}
-                allTransactions={filteredData.transactions}
-                onRegisterMachine={async (loc) => {
-                  const newLoc = { ...loc, isSynced: false, assignedDriverId: activeDriverId };
-                  updateLocations.mutate([...locations, newLoc]);
-                }}
-              />
-            )}
+              {view === 'collect' && (
+                <CollectionForm
+                  locations={filteredData.locations}
+                  currentDriver={drivers.find(d => d.id === activeDriverId) || drivers[0]}
+                  onSubmit={(tx) => {
+                    syncOfflineData.mutate();
+                  }}
+                  lang={lang}
+                  onLogAI={(l) => logAI.mutate(l)}
+                  isOnline={isOnline}
+                  allTransactions={filteredData.transactions}
+                  onRegisterMachine={async (loc) => {
+                    const newLoc = { ...loc, isSynced: false, assignedDriverId: activeDriverId };
+                    updateLocations.mutate([...locations, newLoc]);
+                  }}
+                />
+              )}
 
-            {view === 'history' && (
-              <TransactionHistory transactions={filteredData.transactions} locations={locations} onAnalyze={() => {}} />
-            )}
-            {view === 'reports' && (
-              <FinancialReports transactions={filteredData.transactions} drivers={filteredData.drivers} locations={filteredData.locations} dailySettlements={filteredData.dailySettlements} lang={lang} />
-            )}
-            {view === 'debt' && (
-              <DebtManager drivers={filteredData.drivers} locations={filteredData.locations} currentUser={currentUser} onUpdateLocations={(l) => updateLocations.mutate(l)} lang={lang} />
-            )}
-            {view === 'ai' && !showDashboard && isAdmin && (
-              <AIHub
-                drivers={filteredData.drivers}
-                locations={filteredData.locations}
-                transactions={filteredData.transactions}
-                onLogAI={(l) => logAI.mutate(l)}
-                currentUser={currentUser}
-                initialContextId={aiContextId}
-                onClearContext={() => setAiContextId('')}
-              />
-            )}
+              {view === 'history' && (
+                <TransactionHistory transactions={filteredData.transactions} locations={locations} onAnalyze={() => {}} />
+              )}
+              {view === 'reports' && (
+                <FinancialReports transactions={filteredData.transactions} drivers={filteredData.drivers} locations={filteredData.locations} dailySettlements={filteredData.dailySettlements} lang={lang} />
+              )}
+              {view === 'debt' && (
+                <DebtManager drivers={filteredData.drivers} locations={filteredData.locations} currentUser={currentUser} onUpdateLocations={(l) => updateLocations.mutate(l)} lang={lang} />
+              )}
+              {view === 'ai' && !showDashboard && isAdmin && (
+                <AIHub
+                  drivers={filteredData.drivers}
+                  locations={filteredData.locations}
+                  transactions={filteredData.transactions}
+                  onLogAI={(l) => logAI.mutate(l)}
+                  currentUser={currentUser}
+                  initialContextId={aiContextId}
+                  onClearContext={() => setAiContextId('')}
+                />
+              )}
+            </Suspense>
           </div>
         </main>
       </div>
