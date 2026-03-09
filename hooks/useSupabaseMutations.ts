@@ -45,7 +45,11 @@ export function useSupabaseMutations(isOnline: boolean) {
     mutationFn: async (updatedLocations: Location[]) => {
       queryClient.setQueryData(['locations'], updatedLocations);
       if (isOnline && supabase) {
-        await Promise.all(updatedLocations.map(l => supabase.from('locations').upsert({...l, isSynced: true})));
+        await Promise.all(updatedLocations.map(l => {
+          // Remove fields that don't exist in the remote database yet
+          const { resetLocked, dividendBalance, ...locationToSave } = l as any;
+          return supabase.from('locations').upsert({...locationToSave, isSynced: true});
+        }));
       }
     },
     onSettled: () => {
