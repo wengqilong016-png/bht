@@ -28,7 +28,7 @@ export function useSupabaseData() {
     queryKey: ['locations'],
     queryFn: async () => {
       if (isOnline && supabase) {
-        const { data, error } = await supabase.from('locations').select('id, name, machineId, lastScore, area, assignedDriverId, ownerName, shopOwnerPhone, initialStartupDebt, remainingStartupDebt, isNewOffice, coords, status, lastRevenueDate, commissionRate, resetLocked, dividendBalance');
+        const { data, error } = await supabase.from('locations').select('id, name, machineId, lastScore, area, assignedDriverId, ownerName, shopOwnerPhone, initialStartupDebt, remainingStartupDebt, isNewOffice, coords, status, lastRevenueDate, commissionRate');
         if (!error && data) {
           await localDB.set(CONSTANTS.STORAGE_LOCATIONS_KEY, data);
           return data as Location[];
