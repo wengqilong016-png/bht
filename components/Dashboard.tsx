@@ -226,38 +226,92 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ transactions, drivers,
   };
 
   return (
-    <div className="space-y-6">
-      <div className={`flex items-center gap-4 border-b border-slate-200 pb-2 mb-6 overflow-x-auto scrollbar-hide ${hideTabs ? 'hidden' : ''}`}>
-        {isAdmin && <button onClick={() => setActiveTab('overview')} className={`pb-2 text-[11px] font-black uppercase relative transition-all whitespace-nowrap ${activeTab === 'overview' ? 'text-indigo-600' : 'text-slate-400'}`}>OVERVIEW {activeTab === 'overview' && <div className="absolute bottom-[-9px] left-0 right-0 h-1 bg-indigo-600 rounded-t-full"></div>}</button>}
-        {isAdmin && <button onClick={() => setActiveTab('locations')} className={`pb-2 text-[11px] font-black uppercase relative transition-all whitespace-nowrap ${activeTab === 'locations' ? 'text-indigo-600' : 'text-slate-400'}`}>SITES {activeTab === 'locations' && <div className="absolute bottom-[-9px] left-0 right-0 h-1 bg-indigo-600 rounded-t-full"></div>}</button>}
-        <button onClick={() => setActiveTab('settlement')} className={`pb-2 text-[11px] font-black uppercase relative transition-all whitespace-nowrap ${activeTab === 'settlement' ? 'text-indigo-600' : 'text-slate-400'}`}>{isAdmin ? 'APPROVE' : "TODAY'S SETTLEMENT"} {activeTab === 'settlement' && <div className="absolute bottom-[-9px] left-0 right-0 h-1 bg-indigo-600 rounded-t-full"></div>}</button>
-        {isAdmin && <button onClick={() => setActiveTab('team')} className={`pb-2 text-[11px] font-black uppercase relative transition-all whitespace-nowrap ${activeTab === 'team' ? 'text-indigo-600' : 'text-slate-400'}`}>FLEET {activeTab === 'team' && <div className="absolute bottom-[-9px] left-0 right-0 h-1 bg-indigo-600 rounded-t-full"></div>}</button>}
-        {isAdmin && <button onClick={() => setActiveTab('tracking')} className={`pb-2 text-[11px] font-black uppercase relative transition-all whitespace-nowrap ${activeTab === 'tracking' ? 'text-indigo-600' : 'text-slate-400'}`}>TRACKING {activeTab === 'tracking' && <div className="absolute bottom-[-9px] left-0 right-0 h-1 bg-indigo-600 rounded-t-full"></div>}</button>}
-        {isAdmin && <button onClick={() => setActiveTab('ai-logs')} className={`pb-2 text-[11px] font-black uppercase relative transition-all whitespace-nowrap ${activeTab === 'ai-logs' ? 'text-indigo-600' : 'text-slate-400'}`}>AI LOGS {activeTab === 'ai-logs' && <div className="absolute bottom-[-9px] left-0 right-0 h-1 bg-indigo-600 rounded-t-full"></div>}</button>}
+    <div className="space-y-8">
+      <div className={`flex items-center gap-3 bg-[#f0f2f5] p-2 rounded-[24px] shadow-silicone-pressed overflow-x-auto scrollbar-hide mb-8 ${hideTabs ? 'hidden' : ''}`}>
+        {isAdmin && (
+          <button 
+            onClick={() => setActiveTab('overview')} 
+            className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${
+              activeTab === 'overview' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            OVERVIEW
+          </button>
+        )}
+        {isAdmin && (
+          <button 
+            onClick={() => setActiveTab('locations')} 
+            className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${
+              activeTab === 'locations' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            SITES
+          </button>
+        )}
+        <button 
+          onClick={() => setActiveTab('settlement')} 
+          className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${
+            activeTab === 'settlement' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          {isAdmin ? 'APPROVE' : "SETTLEMENT"}
+        </button>
+        {isAdmin && (
+          <button 
+            onClick={() => setActiveTab('team')} 
+            className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${
+              activeTab === 'team' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            FLEET
+          </button>
+        )}
+        {isAdmin && (
+          <button 
+            onClick={() => setActiveTab('tracking')} 
+            className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${
+              activeTab === 'tracking' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            TRACKING
+          </button>
+        )}
+        {isAdmin && (
+          <button 
+            onClick={() => setActiveTab('ai-logs')} 
+            className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${
+              activeTab === 'ai-logs' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            AI LOGS
+          </button>
+        )}
       </div>
 
       {activeTab === 'overview' && isAdmin && (
-        <div className="space-y-6 animate-in fade-in">
+        <div className="space-y-8 animate-in fade-in">
            {revDrilldown === 'none' ? (
              <>
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <button
                     onClick={() => setRevDrilldown('drivers')}
-                    className="bg-slate-900 text-white p-6 rounded-[32px] text-left hover:bg-indigo-900 transition-colors group"
+                    className="bg-silicone-gradient p-8 rounded-[40px] text-left shadow-silicone hover:shadow-silicone-sm active:shadow-silicone-pressed transition-all border border-white/80 group"
                   >
-                     <p className="text-[10px] font-black uppercase opacity-50 group-hover:opacity-80">Today's Revenue ↗ (click for details)</p>
-                     <p className="text-2xl font-black">TZS {bossStats.todayRev.toLocaleString()}</p>
+                     <p className="text-[10px] font-black uppercase text-slate-400 group-hover:text-indigo-600 transition-colors">Today's Revenue ↗</p>
+                     <p className="text-3xl font-black text-slate-800">TZS {bossStats.todayRev.toLocaleString()}</p>
                   </button>
-                  <div className="bg-white p-6 rounded-[32px] border border-slate-200">
+                  <div className="bg-[#f5f7fa] p-8 rounded-[40px] shadow-silicone border border-white/80">
                      <p className="text-[10px] font-black uppercase text-slate-400">Anomalies</p>
-                     <p className="text-2xl font-black text-rose-600">{bossStats.stagnantMachines.length}</p>
+                     <p className="text-3xl font-black text-rose-500">{bossStats.stagnantMachines.length}</p>
                   </div>
-                  <div className="bg-white p-6 rounded-[32px] border border-slate-200">
+                  <div className="bg-[#f5f7fa] p-8 rounded-[40px] shadow-silicone border border-white/80">
                      <p className="text-[10px] font-black uppercase text-slate-400">High-risk Debt</p>
-                     <p className="text-2xl font-black text-amber-600">{bossStats.riskyDrivers.length}</p>
+                     <p className="text-3xl font-black text-amber-500">{bossStats.riskyDrivers.length}</p>
                   </div>
                </div>
-               <SmartInsights transactions={transactions} locations={locations} />
+               <div className="bg-[#f5f7fa] p-6 rounded-[40px] shadow-silicone border border-white/80">
+                  <SmartInsights transactions={transactions} locations={locations} />
+               </div>
              </>
            ) : revDrilldown === 'drivers' ? (
              // Revenue drill-down: driver level
@@ -1005,57 +1059,57 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ transactions, drivers,
              </div>
            ) : (
               // Driver view: Today's Settlement
-             <div className="bg-white p-8 rounded-[40px] border border-slate-200 shadow-2xl space-y-8 animate-in zoom-in-95">
+             <div className="bg-[#f5f7fa] p-8 md:p-12 rounded-[50px] shadow-silicone border border-white/80 space-y-10 animate-in zoom-in-95">
                 <div className="text-center">
-                   <div className="w-16 h-16 bg-indigo-600 rounded-[24px] flex items-center justify-center text-white mx-auto mb-4 shadow-xl shadow-indigo-100">
-                      <Banknote size={32} />
+                   <div className="w-20 h-20 bg-silicone-gradient rounded-[30px] flex items-center justify-center text-indigo-600 mx-auto mb-6 shadow-silicone border border-white/60">
+                      <Banknote size={40} />
                    </div>
-                    <h2 className="text-xl font-black text-slate-900 uppercase">{t.dailySettlement}</h2>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{todayStr} — {todayDriverTxs.length} Collections</p>
+                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">{t.dailySettlement}</h2>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-2">{todayStr} • {todayDriverTxs.length} Collections</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="bg-slate-50 p-5 rounded-[28px] border border-slate-100">
-                      <p className="text-[9px] font-black text-slate-400 uppercase mb-1 tracking-widest">{t.revenue}</p>
-                       <p className="text-lg font-black text-slate-900">TZS {todayDriverTxs.reduce((sum, tx) => sum + tx.revenue, 0).toLocaleString()}</p>
+                <div className="grid grid-cols-2 gap-6">
+                   <div className="bg-[#f0f2f5] p-6 rounded-[35px] shadow-silicone-pressed">
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">{t.revenue}</p>
+                       <p className="text-xl font-black text-slate-800">TZS {todayDriverTxs.reduce((sum, tx) => sum + tx.revenue, 0).toLocaleString()}</p>
                    </div>
-                   <div className="bg-indigo-50 p-5 rounded-[28px] border border-indigo-100">
-                      <p className="text-[9px] font-black text-indigo-400 uppercase mb-1 tracking-widest">{t.cashInHand}</p>
-                       <p className="text-lg font-black text-indigo-600">TZS {todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0).toLocaleString()}</p>
+                   <div className="bg-silicone-gradient p-6 rounded-[35px] shadow-silicone border border-white/60">
+                      <p className="text-[10px] font-black text-indigo-400 uppercase mb-1 tracking-widest">{t.cashInHand}</p>
+                       <p className="text-xl font-black text-indigo-600">TZS {todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0).toLocaleString()}</p>
                    </div>
                 </div>
 
-                <div className="space-y-4 pt-4 border-t border-slate-50">
-                   <div className="bg-slate-50 p-6 rounded-[35px] border border-slate-200">
-                       <label className="text-[10px] font-black text-slate-400 uppercase block mb-4 tracking-widest text-center">{t.inputCash} (TZS Notes)</label>
+                <div className="space-y-6">
+                   <div className="bg-[#f0f2f5] p-8 rounded-[40px] shadow-silicone-pressed border border-white/20">
+                       <label className="text-[10px] font-black text-slate-500 uppercase block mb-4 tracking-widest text-center">{t.inputCash} (TZS Notes)</label>
                       <input 
                         type="number" 
                         value={actualCash} 
                         onChange={e => setActualCash(e.target.value)} 
-                        className="w-full text-4xl font-black bg-transparent text-center outline-none text-slate-900 placeholder:text-slate-200" 
+                        className="w-full text-5xl font-black bg-transparent text-center outline-none text-slate-800 placeholder:text-slate-300" 
                         placeholder="0" 
                       />
                    </div>
-                   <div className="bg-slate-50 p-6 rounded-[35px] border border-slate-200">
-                       <label className="text-[10px] font-black text-slate-400 uppercase block mb-4 tracking-widest text-center">{t.inputCoins} (TZS Coins)</label>
+                   <div className="bg-[#f0f2f5] p-8 rounded-[40px] shadow-silicone-pressed border border-white/20">
+                       <label className="text-[10px] font-black text-slate-500 uppercase block mb-4 tracking-widest text-center">{t.inputCoins} (TZS Coins)</label>
                       <input 
                         type="number" 
                         value={actualCoins} 
                         onChange={e => setActualCoins(e.target.value)} 
-                        className="w-full text-4xl font-black bg-transparent text-center outline-none text-slate-900 placeholder:text-slate-200" 
+                        className="w-full text-5xl font-black bg-transparent text-center outline-none text-slate-800 placeholder:text-slate-300" 
                         placeholder="0" 
                       />
                    </div>
                 </div>
 
                 {actualCash && (
-                  <div className={`p-6 rounded-[35px] flex justify-between items-center animate-in slide-in-from-top-4 ${parseInt(actualCash) + (parseInt(actualCoins) || 0) === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                  <div className={`p-8 rounded-[40px] flex justify-between items-center animate-in slide-in-from-top-4 shadow-silicone border border-white/40 ${parseInt(actualCash) + (parseInt(actualCoins) || 0) === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'bg-emerald-50' : 'bg-rose-50'}`}>
                      <div>
-                         <p className="text-[10px] font-black uppercase opacity-60">Variance</p>
-                         <p className="text-xl font-black">TZS {(parseInt(actualCash) + (parseInt(actualCoins) || 0) - todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0)).toLocaleString()}</p>
+                         <p className={`text-[10px] font-black uppercase ${parseInt(actualCash) + (parseInt(actualCoins) || 0) === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'text-emerald-400' : 'text-rose-400'}`}>Variance</p>
+                         <p className={`text-2xl font-black ${parseInt(actualCash) + (parseInt(actualCoins) || 0) === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'text-emerald-600' : 'text-rose-600'}`}>TZS {(parseInt(actualCash) + (parseInt(actualCoins) || 0) - todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0)).toLocaleString()}</p>
                      </div>
-                     <div className="p-3 bg-white/20 rounded-2xl">
-                         {parseInt(actualCash) + (parseInt(actualCoins) || 0) === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? <ThumbsUp size={24}/> : <AlertTriangle size={24}/>}
+                     <div className={`p-4 rounded-2xl shadow-silicone-sm ${parseInt(actualCash) + (parseInt(actualCoins) || 0) === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'bg-white text-emerald-500' : 'bg-white text-rose-500'}`}>
+                         {parseInt(actualCash) + (parseInt(actualCoins) || 0) === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? <ThumbsUp size={32}/> : <AlertTriangle size={32}/>}
                      </div>
                   </div>
                 )}
@@ -1087,9 +1141,9 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ transactions, drivers,
                      setActualCash('');
                      setActualCoins('');
                   }}
-                  className="w-full py-6 bg-slate-900 text-white rounded-[32px] font-black uppercase text-sm shadow-2xl active:scale-95 transition-all disabled:opacity-30"
+                  className="w-full py-7 bg-silicone-gradient text-indigo-600 rounded-[40px] font-black uppercase text-sm shadow-silicone hover:shadow-silicone-sm active:shadow-silicone-pressed border border-white/80 transition-all disabled:opacity-30"
                 >
-                   ✓ Submit Today's Settlement
+                   ✓ Submit Settlement
                 </button>
              </div>
            )}

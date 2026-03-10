@@ -126,7 +126,7 @@ const App: React.FC = () => {
     
     loadUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase?.auth.onAuthStateChange(async (_event, session) => {
       if (!session?.user) {
         setCurrentUser(null);
         return;
@@ -140,7 +140,7 @@ const App: React.FC = () => {
       setCurrentUser(result.user);
       setLang(result.user.role === 'admin' ? 'zh' : 'sw');
       if (result.user.role === 'driver') setView('collect');
-    });
+    }) || { data: { subscription: { unsubscribe: () => {} } } };
 
     return () => subscription.unsubscribe();
   }, []);
