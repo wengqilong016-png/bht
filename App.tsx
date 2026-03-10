@@ -81,13 +81,27 @@ const App: React.FC = () => {
   // -- Use React Query Custom Hooks --
   const { 
     isOnline, 
-    locations, 
-    drivers, 
-    transactions, 
-    dailySettlements, 
+    locations: cloudLocations, 
+    drivers: cloudDrivers, 
+    transactions: cloudTransactions, 
+    dailySettlements: cloudDailySettlements, 
     aiLogs, 
     isLoading: isDataLoading 
   } = useSupabaseData();
+
+  const [localBackup, setLocalBackup] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/backup-data')
+      .then(res => res.json())
+      .then(data => setLocalBackup(data))
+      .catch(() => console.log('Local backup API not available'));
+  }, []);
+
+  const locations = useMemo(() => cloudLocations.length > 0 ? cloudLocations : (localBackup?.locations || []), [cloudLocations, localBackup]);
+  const drivers = useMemo(() => cloudDrivers.length > 0 ? cloudDrivers : (localBackup?.drivers || []), [cloudDrivers, localBackup]);
+  const transactions = useMemo(() => cloudTransactions.length > 0 ? cloudTransactions : (localBackup?.transactions || []), [cloudTransactions, localBackup]);
+  const dailySettlements = useMemo(() => cloudDailySettlements.length > 0 ? cloudDailySettlements : (localBackup?.dailySettlements || []), [cloudDailySettlements, localBackup]);
 
   const {
     syncOfflineData,
