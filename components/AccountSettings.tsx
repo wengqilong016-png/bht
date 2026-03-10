@@ -107,33 +107,33 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, on
     return null;
   };
 
-  const inputClass = "w-full bg-slate-900/50 border border-white/10 rounded-xl py-3 px-4 text-sm font-bold text-white focus:border-amber-500/50 outline-none transition-all placeholder:text-slate-500";
-  const labelClass = "text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-1.5";
-  const sectionClass = "bg-white/5 rounded-2xl p-5 space-y-3";
-  const submitClass = "w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-900 font-black py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50";
+  const inputClass = "w-full bg-[#f0f2f5] border-none rounded-xl py-3 px-4 text-sm font-bold text-slate-700 shadow-silicone-pressed outline-none transition-all placeholder:text-slate-400";
+  const labelClass = "text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-1.5";
+  const sectionClass = "bg-[#f5f7fa] shadow-silicone rounded-2xl p-5 space-y-3";
+  const submitClass = "w-full bg-silicone-gradient text-slate-700 font-black py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-silicone hover:shadow-silicone-sm active:shadow-silicone-pressed transition-all disabled:opacity-50 border border-white/40";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-slate-800 rounded-[28px] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="absolute inset-0 bg-slate-200/60 backdrop-blur-md" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-[#f5f7fa] rounded-[28px] shadow-silicone overflow-hidden flex flex-col max-h-[90vh] border border-white/50">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/10 flex-shrink-0">
+        <div className="flex items-center justify-between p-5 border-b border-slate-200 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm">
+            <div className="w-10 h-10 rounded-xl bg-silicone-gradient shadow-silicone text-indigo-600 flex items-center justify-center font-black text-sm border border-white/60">
               {currentUser.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-black text-white">{currentUser.name}</p>
-              <p className="text-[9px] font-bold text-slate-400 uppercase">{t.accountSettings}</p>
+              <p className="text-sm font-black text-slate-800">{currentUser.name}</p>
+              <p className="text-[9px] font-bold text-slate-400 uppercase">{currentUser.username} • {t.accountSettings}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 bg-white/10 rounded-xl text-slate-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="p-2 bg-white/50 shadow-silicone-sm rounded-xl text-slate-400 hover:text-indigo-600 transition-all border border-white/80">
             <X size={16} />
           </button>
         </div>
 
         {/* Scrollable body */}
-        <div className="overflow-y-auto flex-1 p-5 space-y-4">
+        <div className="overflow-y-auto flex-1 p-5 space-y-6">
 
           {/* ── Change Password ── */}
           <div className={sectionClass}>
