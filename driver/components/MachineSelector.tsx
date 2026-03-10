@@ -5,6 +5,7 @@ import { getPendingTransactions } from '../../offlineQueue';
 import OfflineRouteMap from '../../components/OfflineRouteMap';
 
 const NEARBY_DISTANCE_METERS = 1500;
+// Large penalty distance assigned when GPS is unavailable, so GPS-less machines sort later.
 const PRIORITY_DISTANCE_FALLBACK = 99999;
 const PRIORITY_DISTANCE_CAP_KM = 9;
 const PRIORITY_PENDING_WEIGHT = 100;

@@ -26,7 +26,8 @@ interface ReadingCaptureProps {
   diff: number;
 }
 
-// Wizard step bar component
+// Wizard step bar — step numbers start at 2 because step 1 (machine selection)
+// has its own full-page layout without a progress bar.
 const WIZARD_STEPS: Array<{ key: string; labelZh: string; labelSw: string }> = [
   { key: 'capture',  labelZh: '拍照',     labelSw: 'Picha' },
   { key: 'amounts',  labelZh: '金额',     labelSw: 'Fedha' },

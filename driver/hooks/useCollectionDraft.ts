@@ -62,7 +62,8 @@ export function useCollectionDraft() {
 
   const saveDraft = useCallback((d: CollectionDraft) => {
     try {
-      // Don't persist photoData or large blobs to localStorage (size limit)
+      // Exclude photoData and aiReviewData from localStorage persistence
+      // to avoid hitting the ~5MB quota (photos can be several MB each).
       const toSave = { ...d, photoData: null, aiReviewData: null };
       localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(toSave));
     } catch { /* ignore quota errors */ }

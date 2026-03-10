@@ -157,8 +157,6 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       if (exifGps) { processSubmission(exifGps, 'exif'); return; }
     }
 
-    if (gpsCoords) { processSubmission(gpsCoords, 'live'); return; }
-
     const estimated = estimateLocationFromContext(gpsCoords, selectedLocation?.coords || null);
     if (estimated) {
       const confirmEst = confirm(lang === 'zh' ? '⚠️ 无法获取GPS，将使用网点坐标估算位置。继续提交？' : '⚠️ No GPS available. Will use site coordinates as estimated location. Continue?');
