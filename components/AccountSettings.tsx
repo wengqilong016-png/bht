@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { X, Lock, Mail, Phone, CheckCircle, AlertCircle, Loader2, KeyRound, Clock } from 'lucide-react';
-import { User as UserType, TRANSLATIONS } from '../types';
+import { User as UserType, TRANSLATIONS, isLikelyEmail } from '../types';
 import { supabase } from '../supabaseClient';
 import { changeUserPassword, updateUserEmail } from '../services/authService';
 
@@ -15,6 +15,9 @@ interface AccountSettingsProps {
 
 const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, onClose, onPhoneUpdated }) => {
   const t = TRANSLATIONS[lang];
+  const currentEmail = isLikelyEmail(currentUser.username)
+    ? currentUser.username.trim()
+    : '';
 
   // Password section
   const [newPwd, setNewPwd] = useState('');
@@ -191,8 +194,11 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, on
             {/* Current email read-only display */}
             <div className="mb-1">
               <label className={labelClass}><Mail size={10} className="text-slate-400" />{t.currentEmailLabel}</label>
-              <p className="w-full bg-[#e8eaed] rounded-xl py-2.5 px-4 text-sm font-bold text-slate-500 shadow-silicone-pressed border border-slate-200/60 truncate">
-                {currentUser.username}
+              <p
+                className="w-full bg-[#e8eaed] rounded-xl py-2.5 px-4 text-sm font-bold text-slate-500 shadow-silicone-pressed border border-slate-200/60 truncate"
+                title={currentEmail || undefined}
+              >
+                {currentEmail || '—'}
               </p>
             </div>
 
