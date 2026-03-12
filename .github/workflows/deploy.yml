@@ -1,24 +1,24 @@
-name: Vercel Deployment Check – Lint
+# Builds the app and deploys to Firebase Hosting on every push to main.
+
+name: Deploy to Firebase Hosting
 
 on:
-  repository_dispatch:
-    types:
-      - 'vercel.deployment.ready'
+  push:
+    branches: ["main"]
 
 permissions:
   contents: read
   statuses: write
 
 jobs:
-  lint:
+  deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.client_payload.git.sha }}
 
-      - name: Setup Node
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -26,6 +26,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
 
       - name: Build
         run: npm run build
@@ -36,8 +39,10 @@ jobs:
           VITE_STATUS_API_BASE: ${{ secrets.VITE_STATUS_API_BASE }}
           VITE_INTERNAL_API_KEY: ${{ secrets.VITE_INTERNAL_API_KEY }}
 
-      - name: 'notify vercel'
-        if: always()
-        uses: 'vercel/repository-dispatch/actions/status@v1'
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          name: 'Vercel - b-ht: lint'
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+          channelId: live
