@@ -17,14 +17,24 @@ export const LOCAL_DRIVER_ID_KEY = 'bht_local_driver_id';
 export const isAuthDisabled = (): boolean =>
   import.meta.env.VITE_DISABLE_AUTH === 'true';
 
-/** Read the locally stored driver id, or null if not set. */
-export const getLocalDriverId = (): string | null =>
-  localStorage.getItem(LOCAL_DRIVER_ID_KEY);
+/** Read the locally stored driver id, or null if not set/invalid. */
+export const getLocalDriverId = (): string | null => {
+  const stored = localStorage.getItem(LOCAL_DRIVER_ID_KEY);
+  if (stored == null) return null;
 
-/** Persist a driver id locally. */
-export const setLocalDriverId = (driverId: string): void =>
-  localStorage.setItem(LOCAL_DRIVER_ID_KEY, driverId);
+  const normalized = stored.trim().toUpperCase();
+  return normalized === '' ? null : normalized;
+};
 
+/** Persist a driver id locally (normalized: trimmed + uppercased). */
+export const setLocalDriverId = (driverId: string): void => {
+  const normalized = driverId.trim().toUpperCase();
+  if (normalized === '') {
+    localStorage.removeItem(LOCAL_DRIVER_ID_KEY);
+    return;
+  }
+  localStorage.setItem(LOCAL_DRIVER_ID_KEY, normalized);
+};
 /** Clear the locally stored driver id (e.g. for driver switching). */
 export const clearLocalDriverId = (): void =>
   localStorage.removeItem(LOCAL_DRIVER_ID_KEY);
