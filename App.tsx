@@ -83,6 +83,14 @@ const App: React.FC = () => {
     logAI
   } = useSupabaseMutations(isOnline);
 
+  const unsyncedCount = useMemo(
+    () =>
+      transactions.filter(t => !t.isSynced).length +
+      dailySettlements.filter(s => !s.isSynced).length +
+      aiLogs.filter(l => !l.isSynced).length,
+    [transactions, dailySettlements, aiLogs]
+  );
+
   // ─── Offline sync + GPS heartbeat ────────────────────────────────
   useOfflineSyncLoop({ isOnline, unsyncedCount, currentUser, activeDriverId, syncOfflineData });
 
@@ -101,14 +109,6 @@ const App: React.FC = () => {
       ? drivers
       : drivers.filter(d => d.id === activeDriverId),
   }), [activeDriverId, currentUser, locations, transactions, dailySettlements, drivers]);
-
-  const unsyncedCount = useMemo(
-    () =>
-      transactions.filter(t => !t.isSynced).length +
-      dailySettlements.filter(s => !s.isSynced).length +
-      aiLogs.filter(l => !l.isSynced).length,
-    [transactions, dailySettlements, aiLogs]
-  );
 
   // ─── Loading / Login screens ─────────────────────────────────────
   if (isInitializing || (isDataLoading && !currentUser)) {
