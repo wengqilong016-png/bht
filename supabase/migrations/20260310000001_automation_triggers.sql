@@ -1,74 +1,78 @@
-Based on the provided documentation and schema, I've written the automation triggers script, `20260310000001_automation_triggers.sql`, which includes the three triggers you requested:
-
-```sql
 -- 20260310000001_automation_triggers.sql
+-- Automation triggers: anomaly detection, machine overflow, and reset-lock alerts
+
+-- ─── 1. Transaction anomaly notification ──────────────────────────────────────
+-- Fires after a transaction is inserted or updated with isAnomaly = true.
+-- Inserts a 'anomaly' notification so admins are alerted.
 
 CREATE OR REPLACE FUNCTION on_transaction_anomaly()
 RETURNS TRIGGER AS $$
-DECLARE
-    notification_id integer;
 BEGIN
-    IF NEW.is_anomaly THEN
-        INSERT INTO notifications (level, message)
-        VALUES ('critical', 'Transaction anomaly detected: ' || NEW.description)
-        RETURNING notifications.id INTO notification_id;
-        UPDATE transactions
-        SET cooldown_key = 'anomaly_' || NEW.id
-        WHERE id = NEW.id;
-    END IF;
+    INSERT INTO public.notifications (type, title, message, "relatedTransactionId", "driverId")
+    VALUES (
+        'anomaly',
+        'Transaction anomaly detected',
+        COALESCE(NEW.notes, 'Anomaly flagged on transaction ' || NEW.id),
+        NEW.id,
+        NEW."driverId"
+    );
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trigger_on_transaction_anomaly ON public.transactions;
 CREATE TRIGGER trigger_on_transaction_anomaly
-AFTER INSERT ON transactions
-WHEN NEW.is_anomaly
+AFTER INSERT OR UPDATE ON public.transactions
 FOR EACH ROW
-EXECUTE PROCEDURE on_transaction_anomaly();
+WHEN (NEW."isAnomaly" IS TRUE)
+EXECUTE FUNCTION on_transaction_anomaly();
+
+-- ─── 2. Machine score overflow notification ───────────────────────────────────
+-- Fires after lastScore is updated on a location and the new value is ≥ 9900.
+-- Inserts an 'overflow' notification warning that the machine is near rollover.
 
 CREATE OR REPLACE FUNCTION on_machine_overflow()
 RETURNS TRIGGER AS $$
-DECLARE
-    notification_id integer;
 BEGIN
-    IF NEW.last_score >= 9900 THEN
-        INSERT INTO notifications (level, message)
-        VALUES ('warning', 'Machine overflow detected: ' || NEW.location_id)
-        RETURNING notifications.id INTO notification_id;
-        UPDATE locations
-        SET cooldown_key = 'overflow_' || NEW.location_id || '_' || to_char(current_date, 'YYYY-MM-DD')
-        WHERE id = NEW.location_id;
-    END IF;
+    INSERT INTO public.notifications (type, title, message)
+    VALUES (
+        'overflow',
+        'Machine near score overflow',
+        'Location "' || NEW.name || '" (id: ' || NEW.id::text || ') lastScore=' || NEW."lastScore"::text || ' is near overflow (≥9900).'
+    );
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trigger_on_machine_overflow ON public.locations;
 CREATE TRIGGER trigger_on_machine_overflow
-AFTER UPDATE ON locations
-WHEN NEW.last_score >= 9900
+AFTER UPDATE OF "lastScore" ON public.locations
 FOR EACH ROW
-EXECUTE PROCEDURE on_machine_overflow();
+WHEN (NEW."lastScore" >= 9900)
+EXECUTE FUNCTION on_machine_overflow();
+
+-- ─── 3. Reset-lock alert ──────────────────────────────────────────────────────
+-- Fires after resetLocked transitions to true on a location.
+-- Inserts a 'reset_locked' notification requesting administrator approval.
 
 CREATE OR REPLACE FUNCTION on_reset_locked()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO notifications (level, message)
-    VALUES ('critical', 'Locked location needs administrator approval: ' || NEW.id);
+    IF NEW."resetLocked" IS TRUE AND (OLD."resetLocked" IS DISTINCT FROM TRUE) THEN
+        INSERT INTO public.notifications (type, title, message)
+        VALUES (
+            'reset_locked',
+            'Location locked – approval required',
+            'Location "' || NEW.name || '" (id: ' || NEW.id::text || ') has been locked and requires administrator approval to reset.'
+        );
+    END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trigger_on_reset_locked ON public.locations;
 CREATE TRIGGER trigger_on_reset_locked
-AFTER UPDATE OF reset_locked ON locations
+AFTER UPDATE OF "resetLocked" ON public.locations
 FOR EACH ROW
-EXECUTE PROCEDURE on_reset_locked();
-```
-
-These triggers are designed to handle the conditions you specified:
-
-1. The `on_transaction_anomaly` trigger generates a critical-level notification when a new transaction is inserted with `is_anomaly` set to `true`. It also sets the `cooldown_key` for the transaction.
-2. The `on_machine_overflow` trigger generates a warning-level notification when the `last_score` in the `locations` table exceeds 9900. It also sets the `cooldown_key` for the location.
-3. The `on_reset_locked` trigger generates a critical-level notification when the `reset_locked` flag in the `locations` table is set to `true`.
-
-Each trigger function is designed to handle null values and potential conflicts. The `NEW` table is used to access the inserted or updated row, and the `RETURNING` clause is used to retrieve the generated notification ID.
+EXECUTE FUNCTION on_reset_locked();
 
