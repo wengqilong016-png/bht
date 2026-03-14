@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Scan, CheckCircle2, BrainCircuit, X, ArrowRight, RotateCcw, AlertTriangle, Satellite, Edit2, ChevronRight } from 'lucide-react';
 import { Location, Driver, TRANSLATIONS, AILog } from '../../types';
-import { recognizeScoreFromImage } from "../aiService";
 import { GoogleGenAI } from '@google/genai';
 import type { AIReviewData } from '../hooks/useCollectionDraft';
 
