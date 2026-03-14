@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Location, Driver, Transaction, CONSTANTS, TRANSLATIONS, AILog } from '../../types';
+import { supabase } from '../../supabaseClient';
 import { useCollectionDraft } from '../hooks/useCollectionDraft';
 import MachineSelector from '../components/MachineSelector';
 import ReadingCapture from '../components/ReadingCapture';
@@ -38,7 +39,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     [draft.selectedLocId, locations]
   );
 
-  // Calculations (single source of truth)
+  // Calculations (local fallback — single source of truth until RPC responds)
   const calculations = useMemo(() => {
     if (!selectedLocation) return { diff: 0, revenue: 0, commission: 0, finalRetention: 0, netPayable: 0, remainingCoins: 0, isCoinStockNegative: false };
 
@@ -61,6 +62,64 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
 
     return { diff, revenue, commission: autoCommission, finalRetention, netPayable, remainingCoins, isCoinStockNegative: remainingCoins < 0 };
   }, [selectedLocation, draft.currentScore, draft.coinExchange, draft.expenses, draft.ownerRetention, draft.isOwnerRetaining, currentDriver?.dailyFloatingCoins]);
+
+  // Authoritative server-side calculation via RPC (overrides local when available)
+  const [authoritativeCalc, setAuthoritativeCalc] = useState<{
+    revenue: number;
+    commission: number;
+    owner_retention: number;
+    net_payable: number;
+  } | null>(null);
+  const rpcRequestRef = useRef(0);
+
+  useEffect(() => {
+    if (!selectedLocation || !draft.currentScore) {
+      setAuthoritativeCalc(null);
+      return;
+    }
+
+    const requestId = ++rpcRequestRef.current;
+    const currentScore = parseInt(draft.currentScore) || 0;
+    const previousScore = selectedLocation.lastScore;
+    const commissionRate = selectedLocation.commissionRate || CONSTANTS.DEFAULT_PROFIT_SHARE;
+    const expenseVal = parseInt(draft.expenses) || 0;
+    const exchangeVal = parseInt(draft.coinExchange) || 0;
+
+    supabase.rpc('calculate_finance_v1', {
+      p_current_score: currentScore,
+      p_previous_score: previousScore,
+      p_commission_rate: commissionRate,
+      p_expenses: expenseVal,
+      p_coin_exchange: exchangeVal,
+    }).then(({ data, error }) => {
+      // Discard stale responses (request superseded by a newer one)
+      if (requestId !== rpcRequestRef.current) return;
+      if (!error && data) {
+        setAuthoritativeCalc(data);
+      } else {
+        if (error) console.warn('[FinanceRPC] calculate_finance_v1 failed, using local fallback:', error.message);
+        setAuthoritativeCalc(null);
+      }
+    });
+  }, [selectedLocation, draft.currentScore, draft.expenses, draft.coinExchange]);
+
+  // Merge authoritative RPC values into the calculations object when available
+  const effectiveCalculations = useMemo(() => {
+    if (!authoritativeCalc) return calculations;
+    const exchangeVal = parseInt(draft.coinExchange) || 0;
+    const initialFloat = currentDriver?.dailyFloatingCoins || 0;
+    const netPayable = authoritativeCalc.net_payable;
+    const remainingCoins = initialFloat + netPayable - exchangeVal;
+    return {
+      ...calculations,
+      revenue: authoritativeCalc.revenue,
+      commission: authoritativeCalc.commission,
+      finalRetention: authoritativeCalc.owner_retention,
+      netPayable,
+      remainingCoins,
+      isCoinStockNegative: remainingCoins < 0,
+    };
+  }, [authoritativeCalc, calculations, draft.coinExchange, currentDriver?.dailyFloatingCoins]);
 
   // Auto-fill retention when conditions met
   useEffect(() => {
@@ -193,8 +252,8 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         onUpdateGpsPermission={(perm) => updateDraft({ gpsPermission: perm })}
         onNext={() => setStep('amounts')}
         onBack={handleBackToSelection}
-        revenue={calculations.revenue}
-        diff={calculations.diff}
+        revenue={effectiveCalculations.revenue}
+        diff={effectiveCalculations.diff}
       />
     );
   }
@@ -212,7 +271,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         coinExchange={draft.coinExchange}
         ownerRetention={draft.ownerRetention}
         isOwnerRetaining={draft.isOwnerRetaining}
-        calculations={calculations}
+        calculations={effectiveCalculations}
         onUpdateExpenses={(v) => updateDraft({ expenses: v })}
         onUpdateExpenseType={(v) => updateDraft({ expenseType: v })}
         onUpdateExpenseCategory={(v) => updateDraft({ expenseCategory: v })}
@@ -242,7 +301,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       draftTxId={draft.draftTxId}
       gpsCoords={draft.gpsCoords}
       gpsPermission={draft.gpsPermission}
-      calculations={calculations}
+      calculations={effectiveCalculations}
       onSubmit={onSubmit}
       onBack={() => setStep('amounts')}
       onReset={handleFullReset}
