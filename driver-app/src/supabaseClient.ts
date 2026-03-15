@@ -1,14 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
+const SUPABASE_URL = 'https://yctsiudhicztvppddbvk.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_FULL_ANON_KEY'; // replace with actual key
 
-const supabaseUrl = 'your_supabase_url';
-const supabaseAnonKey = 'your_supabase_anon_key';
+const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    storageKey: 'bht-driver-auth',
-    persistSession: true,
-    autoRefreshToken: true
-  }
-});
+// Create Supabase client with env fallback
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storageKey: 'bht-driver-auth' } });
 
-export default supabase;
+const checkOnline = async () => {
+    // your existing online check implementation
+};
+
+module.exports = { supabase, checkOnline };
