@@ -13,6 +13,8 @@ This project uses **npm**. Always use `npm` commands — do not use `pnpm` or `y
 | Production build | `npm run build` |
 | Type-check only | `npm run typecheck` |
 
+Always use `npm ci` (not `npm install`) when setting up the project locally or in CI so that dependencies match `package-lock.json` exactly. Use `npm install` **only** when you intentionally want to update dependencies and regenerate `package-lock.json`.
+
 > `pnpm-lock.yaml` is listed in `.gitignore` and must not be committed.
 
 ## Required Environment Variables
