@@ -63,7 +63,7 @@ VITE_INTERNAL_API_KEY=your_internal_api_key_here
 Then start the dev server:
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
