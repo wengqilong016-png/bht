@@ -113,7 +113,7 @@ cp .env.example .env.local
 - The root `.gitignore` now ignores all `.env*` files (except `.env.example`) and common backup/export formats.
 - Never commit files matching: `*backup*`, `*BACKUP*`, `*.dump`, `*.sql.gz`, `*.sqlite`, `*.db`, `*.jsonl`, `*.ndjson`.
 - Use `safeRandomUUID()` from `types.ts` — do not import Node/browser crypto APIs directly.
-- The CI workflow runs `npm run typecheck && npm run build` on every push, which will fail if secrets are missing from the environment.
+- The CI workflow runs `npm run typecheck && npm run build` on every push. These steps may still succeed even if some secrets are missing (due to fallbacks), but deployments and certain features can be broken or degraded. Always configure all required secrets in CI/CD before deploying.
 
 ---
 
