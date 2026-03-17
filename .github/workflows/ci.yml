@@ -41,8 +41,8 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
-          VITE_STATUS_API_BASE: ${{ secrets.VITE_STATUS_API_BASE }}
-          VITE_INTERNAL_API_KEY: ${{ secrets.VITE_INTERNAL_API_KEY }}
+          VITE_STATUS_API_BASE: ${{ secrets.VITE_STATUS_API_BASE || 'http://localhost:5000' }}
+          VITE_INTERNAL_API_KEY: ${{ secrets.VITE_INTERNAL_API_KEY || 'local-dev-internal-key' }}
 
   # ── Driver sub-app (React 18 + Vite 5) ───────────────────────────────────
   build-driver-app:
