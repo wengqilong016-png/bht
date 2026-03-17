@@ -1,0 +1,71 @@
+# CI — Typecheck + Build
+#
+# Runs on every push and pull request to main.
+# Uses npm (package-lock.json is the canonical lock file for this repo).
+
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  # ── Root application (React 19 + Vite 6) ─────────────────────────────────
+  build-root:
+    name: Root app — typecheck & build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_STATUS_API_BASE: ${{ secrets.VITE_STATUS_API_BASE }}
+          VITE_INTERNAL_API_KEY: ${{ secrets.VITE_INTERNAL_API_KEY }}
+
+  # ── Driver sub-app (React 18 + Vite 5) ───────────────────────────────────
+  build-driver-app:
+    name: driver-app — build (includes tsc)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: driver-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: driver-app
+        run: npm ci
+
+      - name: Build (tsc + vite build)
+        working-directory: driver-app
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}

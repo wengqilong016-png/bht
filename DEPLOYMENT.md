@@ -48,11 +48,25 @@ VITE_INTERNAL_API_KEY=your_internal_api_key_here
 Then start the dev server:
 
 ```bash
-npm install
-npm run dev
+npm ci          # install exact versions from package-lock.json
+npm run dev     # local development server (http://localhost:3000)
 ```
 
+> **Use `npm ci` (not `npm install`) for reproducible installs.**
 > `.env.local` is listed in `.gitignore` and will not be committed to the repository.
+
+## Package Manager
+
+This repository uses **npm**. The canonical lock file is `package-lock.json`.
+
+| Command | Purpose |
+|---|---|
+| `npm ci` | Install dependencies (CI and fresh checkouts) |
+| `npm run dev` | Start local development server |
+| `npm run build` | Production build |
+| `npm run typecheck` | Run TypeScript type check without emitting files |
+
+`pnpm-lock.yaml` and `yarn.lock` are listed in `.gitignore` and should not be committed.
 
 ---
 

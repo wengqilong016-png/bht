@@ -22,15 +22,31 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Environment variable files — allow only the example file
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 manage_users.js
-.vercel
+.vercel/
 
 # Lock files — project uses npm (package-lock.json)
 pnpm-lock.yaml
+yarn.lock
 
-# Backup and credential files
-*.backup.json
+# Backup / exported data files (prevent re-committing sensitive exports)
+*backup*
+*BACKUP*
+*.dump
+*.sql.gz
+*.sqlite
+*.db
+*.jsonl
+*.ndjson
+
+# Credential files
 *_credentials*
+
+# Build / cache artefacts
+coverage/
+supabase/.temp/
+.firebase/
