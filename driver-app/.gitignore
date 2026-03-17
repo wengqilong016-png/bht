@@ -6,3 +6,4 @@ dist/
 # Environment files — keep only .env.example in VCS
 .env
 .env.*
+!.env.example
