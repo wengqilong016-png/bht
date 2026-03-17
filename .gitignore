@@ -22,15 +22,29 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env
-.env.local
-.env.*.local
 manage_users.js
 .vercel
+
+# Environment files — keep only .env.example in VCS
+.env*
+!.env.example
 
 # Lock files — project uses npm (package-lock.json)
 pnpm-lock.yaml
 
-# Backup and credential files
+# Backup and export files — avoid committing sensitive data dumps
+# Both *backup* and *BACKUP* are listed to cover case-sensitive Linux filesystems.
+*backup*
+*BACKUP*
 *.backup.json
 *_credentials*
+*.dump
+*.sql.gz
+*.sqlite
+*.db
+*.jsonl
+*.ndjson
+
+# Build caches and local tooling
+supabase/.temp/
+coverage/
