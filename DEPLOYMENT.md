@@ -19,21 +19,21 @@ want to update dependencies and regenerate `package-lock.json`.
 
 > `pnpm-lock.yaml` and `yarn.lock` are listed in `.gitignore` and must not be committed.
 
-## Required Environment Variables
+## Environment Variables
 
 All frontend variables **must** be prefixed with `VITE_` so that Vite exposes them to the browser bundle via `import.meta.env`.
 
 | Variable | Description | Required |
 |---|---|---|
-| `VITE_SUPABASE_URL` | Your Supabase project URL (e.g. `https://xxxx.supabase.co`) | Yes |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous/public key | Yes |
+| `VITE_SUPABASE_URL` | Your Supabase project URL (e.g. `https://xxxx.supabase.co`) | Recommended (falls back to built-in project credentials) |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous/public key | Recommended (falls back to built-in project credentials) |
 | `VITE_GEMINI_API_KEY` | Google Gemini API key | Yes |
-| `VITE_STATUS_API_BASE` | Base URL for the status API (e.g. `https://your-status-api.example.com`) | Optional |
+| `VITE_STATUS_API_BASE` | Base URL for an external status API | Optional |
 | `VITE_INTERNAL_API_KEY` | API key sent as `X-API-KEY` header to the status API | Optional |
-| `SUPABASE_URL` | Your Supabase project URL for the backend status API (`status_api.py`) | Yes (backend) |
-| `SUPABASE_KEY` | Supabase service role key for the backend status API (`status_api.py`) | Yes (backend) |
 
-> **Security note:** `SUPABASE_KEY` (service role key) grants admin-level access to your database and **must never be placed in frontend code or any `VITE_` variable**. Keep it only in server-side/backend environments.
+> **Note on Supabase credentials:** If `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` are not set, the app falls back to built-in project credentials and logs a console warning: `[Bahati] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY not set — using built-in project credentials`. Always set these env vars in production deployments to point at your own project.
+
+> **Security note:** The Supabase service role key (`SUPABASE_KEY`) grants admin-level database access and **must never be placed in frontend code or any `VITE_` variable**. Keep it only in server-side/backend environments.
 
 ## Vercel Setup
 
@@ -42,7 +42,7 @@ All frontend variables **must** be prefixed with `VITE_` so that Vite exposes th
 3. Add each variable from the table above with the appropriate value for each environment (Production, Preview, Development).
 4. Redeploy the project after saving the variables.
 
-> **If you see a white screen after deployment**, the most common cause is missing `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`. Check the browser console for a `[Bahati] Supabase is not configured` warning.
+> **Troubleshooting:** If the app connects to the wrong Supabase project, check the browser console for the warning `[Bahati] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY not set — using built-in project credentials`. This means the env vars are not reaching the build and the app is using its defaults.
 
 ## Local Development
 
