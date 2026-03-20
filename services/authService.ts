@@ -66,13 +66,19 @@ export const restoreCurrentUserFromSession = async (): Promise<
     return { success: false, error: 'Supabase not configured' };
   }
 
-  const { data: sessionData } = await supabase.auth.getSession();
-  const sessionUser = sessionData.session?.user;
-  if (!sessionUser) {
+  // Use getUser() instead of getSession() to validate the token against the
+  // Supabase Auth server on every startup. getSession() only reads from local
+  // storage and may return an expired session, causing a flood of 401 errors
+  // as the app tries to fetch data with a stale access token.
+  // getUser() will attempt a token refresh if needed; if the refresh token is
+  // also invalid ("Refresh Token Not Found"), it returns an error so we can
+  // show the login screen before making any data requests.
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
     return { success: false, error: 'No active session' };
   }
 
-  return fetchCurrentUserProfile(sessionUser.id, sessionUser.email || '');
+  return fetchCurrentUserProfile(userData.user.id, userData.user.email || '');
 };
 
 export const signInWithEmailPassword = async (email: string, password: string) => {

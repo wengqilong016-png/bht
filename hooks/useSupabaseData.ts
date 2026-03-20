@@ -30,6 +30,10 @@ const TX_LIMIT_DRIVER = 500;
 export function useSupabaseData(userRole?: 'admin' | 'driver' | null | undefined) {
   const queryClient = useQueryClient();
   const isDriver = userRole === 'driver';
+  // Only make authenticated Supabase requests when the user is logged in.
+  // When userRole is null/undefined (pre-auth or after logout) the queries
+  // fall through to localDB so the 401 flood caused by expired tokens is avoided.
+  const isAuthenticated = !!userRole;
 
   // 1. Health check - High priority
   const { data: isOnline = false } = useQuery({
@@ -42,7 +46,7 @@ export function useSupabaseData(userRole?: 'admin' | 'driver' | null | undefined
   const { data: locations = [], isLoading: isLoadingLocs } = useQuery({
     queryKey: ['locations'],
     queryFn: async () => {
-      if (isOnline && supabase) {
+      if (isOnline && supabase && isAuthenticated) {
         const { data, error } = await supabase.from('locations').select('id, name, machineId, lastScore, area, assignedDriverId, ownerName, shopOwnerPhone, initialStartupDebt, remainingStartupDebt, isNewOffice, coords, status, lastRevenueDate, commissionRate');
         if (!error && data) {
           await localDB.set(CONSTANTS.STORAGE_LOCATIONS_KEY, data);
@@ -57,7 +61,7 @@ export function useSupabaseData(userRole?: 'admin' | 'driver' | null | undefined
   const { data: drivers = [], isLoading: isLoadingDrivers } = useQuery({
     queryKey: ['drivers'],
     queryFn: async () => {
-      if (isOnline && supabase) {
+      if (isOnline && supabase && isAuthenticated) {
         const { data, error } = await supabase.from('drivers').select('id, name, username, phone, initialDebt, remainingDebt, dailyFloatingCoins, vehicleInfo, currentGps, lastActive, status, baseSalary, commissionRate');
         if (!error && data) {
           const sanitized = sanitizeDrivers(data);
@@ -79,7 +83,7 @@ export function useSupabaseData(userRole?: 'admin' | 'driver' | null | undefined
   const { data: transactions = [], isLoading: isLoadingTxs } = useQuery({
     queryKey: ['transactions'],
     queryFn: async () => {
-      if (isOnline && supabase) {
+      if (isOnline && supabase && isAuthenticated) {
         const txLimit = isDriver ? TX_LIMIT_DRIVER : TX_LIMIT_ADMIN;
         const { data, error } = await supabase.from('transactions').select('id, timestamp, uploadTimestamp, locationId, locationName, driverId, driverName, previousScore, currentScore, revenue, commission, ownerRetention, debtDeduction, startupDebtDeduction, expenses, coinExchange, extraIncome, netPayable, gps, gpsDeviation, dataUsageKB, aiScore, isAnomaly, notes, isClearance, reportedStatus, paymentStatus, type, approvalStatus, expenseType, expenseCategory, expenseStatus, expenseDescription, payoutAmount').order('timestamp', { ascending: false }).limit(txLimit); // 提升至2000条支持大规模回溯
         if (!error && data) {
@@ -100,7 +104,7 @@ export function useSupabaseData(userRole?: 'admin' | 'driver' | null | undefined
   const { data: dailySettlements = [], isLoading: isLoadingSettlements } = useQuery({
     queryKey: ['dailySettlements'],
     queryFn: async () => {
-      if (isOnline && supabase) {
+      if (isOnline && supabase && isAuthenticated) {
         const { data, error } = await supabase.from('daily_settlements').select('id, date, adminId, adminName, driverId, driverName, totalRevenue, totalNetPayable, totalExpenses, driverFloat, expectedTotal, actualCash, actualCoins, shortage, note, timestamp, status').order('timestamp', { ascending: false }).limit(500);
         if (!error && data) {
           const mapped = data.map(s => ({...s, isSynced: true})) as DailySettlement[];
@@ -120,7 +124,7 @@ export function useSupabaseData(userRole?: 'admin' | 'driver' | null | undefined
   const { data: aiLogs = [] } = useQuery({
     queryKey: ['aiLogs', userRole ?? 'none'],
     queryFn: async () => {
-      if (isOnline && supabase) {
+      if (isOnline && supabase && isAuthenticated) {
          const { data, error } = await supabase.from('ai_logs').select('id, timestamp, driverId, driverName, query, response, modelUsed, relatedLocationId, relatedTransactionId').order('timestamp', { ascending: false }).limit(500);
          if (!error && data) {
            const mapped = data.map(l => ({...l, isSynced: true})) as AILog[];
@@ -148,7 +152,7 @@ export function useSupabaseData(userRole?: 'admin' | 'driver' | null | undefined
   useEffect(() => { userRoleRef.current = userRole; }, [userRole]);
 
   useEffect(() => {
-    if (!isOnline) return;
+    if (!isOnline || !isAuthenticated) return;
     queryClient.invalidateQueries({ queryKey: ['locations'] });
     queryClient.invalidateQueries({ queryKey: ['drivers'] });
     queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -156,7 +160,7 @@ export function useSupabaseData(userRole?: 'admin' | 'driver' | null | undefined
     if (!isDriverRef.current) {
       queryClient.invalidateQueries({ queryKey: ['aiLogs', userRoleRef.current ?? 'none'] });
     }
-  }, [isOnline, queryClient]); // Only re-run when connectivity changes
+  }, [isOnline, isAuthenticated, queryClient]); // Only re-run when connectivity or auth changes
 
   // Listen for browser online event to immediately trigger a health check
   // This speeds up reconnection after network outages (issue 2).
@@ -174,7 +178,7 @@ export function useSupabaseData(userRole?: 'admin' | 'driver' | null | undefined
   // for the next React Query refetch window.
   // The subscription is established once and torn down on unmount.
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase || !isAuthenticated) return;
 
     const channel = supabase
       .channel('drivers-realtime')
@@ -197,7 +201,7 @@ export function useSupabaseData(userRole?: 'admin' | 'driver' | null | undefined
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [isAuthenticated, queryClient]);
 
   // ─── Supabase Realtime: new driver transactions ──────────────────────────
   // Subscribe to INSERT and UPDATE events on the transactions table so the
@@ -206,7 +210,7 @@ export function useSupabaseData(userRole?: 'admin' | 'driver' | null | undefined
   // The invalidation is intentionally coarse (refetch the whole query) rather
   // than a cache patch so the result set stays correctly sorted/filtered.
   useEffect(() => {
-    if (!supabase || isDriver) return;
+    if (!supabase || isDriver || !isAuthenticated) return;
 
     const channel = supabase
       .channel('transactions-realtime')
@@ -229,7 +233,7 @@ export function useSupabaseData(userRole?: 'admin' | 'driver' | null | undefined
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isDriver, queryClient, supabase]);
+  }, [isAuthenticated, isDriver, queryClient, supabase]);
 
   // Main loading state now only reflects CORE data needed for first paint
   const isLoading = isLoadingLocs || isLoadingDrivers;
