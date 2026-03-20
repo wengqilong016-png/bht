@@ -139,19 +139,28 @@ export function useAuthBootstrap() {
       // a stale "true" response arriving after onSuccess would re-lock the user
       // on the force-change screen.  Skip this event — the component's own
       // success path sets the correct user state.
-      if (_event === 'USER_UPDATED') return;
+      //
+      // INITIAL_SESSION fires when the listener is first registered, mirroring
+      // the session that loadUser() already processed above. Skip it to avoid
+      // a duplicate profile fetch on startup.
+      if (_event === 'USER_UPDATED' || _event === 'INITIAL_SESSION') return;
 
-      if (!session?.user) {
+      try {
+        if (!session?.user) {
+          dispatch({ type: 'LOGOUT' });
+          return;
+        }
+        const result = await fetchCurrentUserProfile(session.user.id, session.user.email || '');
+        if (!result.success) {
+          await signOutCurrentUser();
+          dispatch({ type: 'LOGOUT' });
+          return;
+        }
+        dispatch({ type: 'SET_USER', user: result.user });
+      } catch (err) {
+        console.error('[Auth] onAuthStateChange error:', err);
         dispatch({ type: 'LOGOUT' });
-        return;
       }
-      const result = await fetchCurrentUserProfile(session.user.id, session.user.email || '');
-      if (!result.success) {
-        await signOutCurrentUser();
-        dispatch({ type: 'LOGOUT' });
-        return;
-      }
-      dispatch({ type: 'SET_USER', user: result.user });
     });
 
     return () => subscription.unsubscribe();
