@@ -6,6 +6,7 @@ import { enqueueTransaction, extractGpsFromExif, estimateLocationFromContext, ge
 import type { AIReviewData } from '../hooks/useCollectionDraft';
 import { createCollectionTransaction } from '../../utils/transactionBuilder';
 import { submitCollectionV2 } from '../../services/collectionSubmissionService';
+import type { CollectionSubmissionInput } from '../../services/collectionSubmissionService';
 
 type SubmissionStatus = 'idle' | 'gps' | 'uploading';
 
@@ -160,7 +161,31 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
     tx.aiScore = recognizedScore;
     tx.reportedStatus = reportedStatus;
 
-    try { await enqueueTransaction(tx); } catch (e) { console.warn('[SubmitReview] IDB enqueue failed:', e); }
+    // Build the raw inputs payload so replay can route through submit_collection_v2
+    // instead of blindly upserting locally-computed finance values.
+    const rawInput: CollectionSubmissionInput = {
+      txId:             draftTxId,
+      locationId:       selectedLocation!.id,
+      driverId:         currentDriver.id,
+      currentScore:     userScore,
+      expenses:         expenseValue,
+      tip:              parseInt(tip) || 0,
+      isOwnerRetaining,
+      ownerRetention:   isOwnerRetaining && ownerRetention !== ''
+                          ? parseInt(ownerRetention) || null
+                          : null,
+      coinExchange:     parseInt(coinExchange) || 0,
+      gps:              resolvedGps.lat === 0 && resolvedGps.lng === 0 ? null : resolvedGps,
+      photoUrl:         photoData || null,
+      aiScore:          recognizedScore ?? null,
+      anomalyFlag:      isAnomaly,
+      notes,
+      expenseType:      expenseValue > 0 ? expenseType : null,
+      expenseCategory:  expenseValue > 0 ? expenseCategory : null,
+      reportedStatus,
+    };
+
+    try { await enqueueTransaction(tx, rawInput); } catch (e) { console.warn('[SubmitReview] IDB enqueue failed:', e); }
     onSubmit(tx);
     setStatus('idle');
 
