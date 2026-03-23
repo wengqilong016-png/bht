@@ -10,7 +10,9 @@
  *   • Fetches open cases on mount and exposes a refresh button
  *   • Allows selecting an open case from a dropdown
  *   • Allows clearing the selection
- *   • Defaults to manual-entry mode when no cases are found (fresh deploy)
+ *   • Falls back to manual text input ONLY when no open cases exist (fresh deploy)
+ *   • Once real cases are available, manual free-text entry is disabled to
+ *     enforce valid case linkage
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -34,7 +36,7 @@ const CasePicker: React.FC<CasePickerProps> = ({ value, onChange, supabaseClient
   const client = injectedClient ?? supabase;
   const [cases, setCases] = useState<SupportCase[]>([]);
   const [loading, setLoading] = useState(false);
-  const [manualEntry, setManualEntry] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const loadCases = useCallback(async () => {
     if (!client) return;
@@ -43,10 +45,10 @@ const CasePicker: React.FC<CasePickerProps> = ({ value, onChange, supabaseClient
       const result = await fetchSupportCases(client, { status: 'open', limit: 50 });
       setCases(result);
     } catch {
-      // Silently fail — the manual entry fallback is always available
       setCases([]);
     } finally {
       setLoading(false);
+      setLoaded(true);
     }
   }, [client]);
 
@@ -54,20 +56,27 @@ const CasePicker: React.FC<CasePickerProps> = ({ value, onChange, supabaseClient
     loadCases();
   }, [loadCases]);
 
+  // On initial load, clear any stale manual value that doesn't match a real case.
+  // This only fires once (when loaded transitions to true) so refreshes never
+  // disrupt an intentional user selection.
+  useEffect(() => {
+    if (loaded && cases.length > 0 && value && !cases.some((c) => c.id === value)) {
+      onChange('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only on initial load
+  }, [loaded]);
+
   const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onChange(e.target.value);
   };
 
   const handleClear = () => {
     onChange('');
-    setManualEntry(false);
   };
 
-  // If there's a value that's not in the dropdown, show it as manual.
-  // Also default to manual input when loading completes and no cases exist
-  // (e.g. fresh deploy) so operators are never left with an unusable empty dropdown.
-  const valueInList = cases.some((c) => c.id === value);
-  const showManualInput = manualEntry || (value && !valueInList && cases.length > 0) || (!loading && cases.length === 0);
+  // Manual text input is shown ONLY when no open cases exist (fresh deploy).
+  // Once real cases are available, operators must pick from the dropdown.
+  const showManualInput = loaded && !loading && cases.length === 0;
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -99,26 +108,6 @@ const CasePicker: React.FC<CasePickerProps> = ({ value, onChange, supabaseClient
           placeholder="e.g. CASE-2026-001"
           className="flex-1 min-w-[180px] max-w-xs rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-mono text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
         />
-      )}
-
-      {!showManualInput && cases.length > 0 && (
-        <button
-          onClick={() => setManualEntry(true)}
-          className="text-[9px] text-slate-400 hover:text-indigo-500 underline transition-colors"
-          title="Enter a case ID manually"
-        >
-          manual
-        </button>
-      )}
-
-      {showManualInput && cases.length > 0 && (
-        <button
-          onClick={() => { setManualEntry(false); if (!valueInList) onChange(''); }}
-          className="text-[9px] text-slate-400 hover:text-indigo-500 underline transition-colors"
-          title="Switch back to dropdown"
-        >
-          picker
-        </button>
       )}
 
       {value && (
