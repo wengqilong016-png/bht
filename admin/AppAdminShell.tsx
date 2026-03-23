@@ -4,7 +4,7 @@ import {
   LogOut, Globe, Loader2,
   CheckSquare, Crown,
   MapPin, Store, Users, FileSpreadsheet, History, Settings, ClipboardList,
-  Activity, Radio, Bell,
+  Activity, Radio, Bell, BookOpen, Briefcase,
 } from 'lucide-react';
 import { TRANSLATIONS } from '../types';
 import { useSyncStatus } from '../hooks/useSyncStatus';
@@ -27,6 +27,8 @@ const LocationChangeReview = lazy(() => import('./pages/LocationChangeReview'));
 const QueueDiagnostics = lazy(() => import('./components/QueueDiagnostics'));
 const FleetDiagnostics = lazy(() => import('./components/FleetDiagnostics'));
 const HealthAlerts = lazy(() => import('./components/HealthAlerts'));
+const AuditTrail = lazy(() => import('./components/AuditTrail'));
+const SupportCases = lazy(() => import('./components/SupportCases'));
 
 const LoadingFallback = () => (
   <div className="flex-1 flex flex-col items-center justify-center p-12">
@@ -35,7 +37,7 @@ const LoadingFallback = () => (
   </div>
 );
 
-type AdminView = 'dashboard' | 'settlement' | 'map' | 'sites' | 'team' | 'billing' | 'ai' | 'collect' | 'debt' | 'history' | 'reports' | 'change-review' | 'diagnostics' | 'fleet-diagnostics' | 'health-alerts';
+type AdminView = 'dashboard' | 'settlement' | 'map' | 'sites' | 'team' | 'billing' | 'ai' | 'collect' | 'debt' | 'history' | 'reports' | 'change-review' | 'diagnostics' | 'fleet-diagnostics' | 'health-alerts' | 'audit-trail' | 'support-cases';
 
 const AppAdminShell: React.FC = () => {
   const { currentUser, lang, setLang, handleLogout, activeDriverId } = useAuth();
@@ -53,6 +55,7 @@ const AppAdminShell: React.FC = () => {
   const [view, setView] = useState<AdminView>('dashboard');
   const [showAccountSettings, setShowAccountSettings] = useState(false);
   const [aiContextId, setAiContextId] = useState<string>('');
+  const [auditCaseFilter, setAuditCaseFilter] = useState<string>('');
 
   const syncStatus = useSyncStatus({ syncMutation: syncOfflineData, isOnline, unsyncedCount, userId: currentUser.id });
 
@@ -68,9 +71,11 @@ const AppAdminShell: React.FC = () => {
     sites: 'Site Management', team: 'Team', billing: 'Billing',
     ai: 'AI Audit', collect: 'Collect', debt: 'Finance',
     history: 'History', reports: 'Reports', 'change-review': 'Change Requests',
-    diagnostics: 'Local Queue Diagnostics',
+    'diagnostics': 'Local Queue Diagnostics',
     'fleet-diagnostics': 'Fleet-Wide Diagnostics',
     'health-alerts': 'Health Alerts',
+    'audit-trail': 'Support Audit Trail',
+    'support-cases': 'Support Cases',
   };
 
   const adminNavItems = [
@@ -85,6 +90,8 @@ const AppAdminShell: React.FC = () => {
     { id: 'diagnostics', icon: <Activity size={18}/>, label: '本地队列诊断', labelEn: 'Local Queue' },
     { id: 'fleet-diagnostics', icon: <Radio size={18}/>, label: '车队健康', labelEn: 'Fleet Diag.' },
     { id: 'health-alerts', icon: <Bell size={18}/>, label: '健康告警', labelEn: 'Alerts' },
+    { id: 'support-cases', icon: <Briefcase size={18}/>, label: '支持工单', labelEn: 'Cases' },
+    { id: 'audit-trail', icon: <BookOpen size={18}/>, label: '操作审计', labelEn: 'Audit Trail' },
   ];
 
   const getDashboardTab = (v: string): 'overview' | 'locations' | 'settlement' | 'team' | 'arrears' | 'ai-logs' | 'tracking' => {
@@ -322,6 +329,21 @@ const AppAdminShell: React.FC = () => {
               )}
               {view === 'health-alerts' && (
                 <HealthAlerts />
+              )}
+              {view === 'support-cases' && (
+                <SupportCases
+                  onNavigateToAudit={(caseId) => {
+                    setAuditCaseFilter(caseId);
+                    setView('audit-trail');
+                  }}
+                />
+              )}
+              {view === 'audit-trail' && (
+                <AuditTrail
+                  initialCaseFilter={auditCaseFilter}
+                  onCaseFilterConsumed={() => setAuditCaseFilter('')}
+                  onNavigateToCases={() => setView('support-cases')}
+                />
               )}
             </Suspense>
           </div>

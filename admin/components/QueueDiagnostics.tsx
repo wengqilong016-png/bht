@@ -18,6 +18,7 @@ import {
   AlertTriangle, CheckCircle2, Clock, RefreshCw,
   Inbox, XCircle, Loader2, RotateCcw, Download,
 } from 'lucide-react';
+import CasePicker from './CasePicker';
 import {
   getQueueHealthSummary,
   getDeadLetterItems,
@@ -37,6 +38,10 @@ import {
   triggerJSONDownload,
   buildExportFilename,
 } from '../../services/diagnosticsExportService';
+import {
+  recordAuditEvent,
+  addCaseIdToExportPayload,
+} from '../../services/supportCaseService';
 
 type DeadLetterEntry = Transaction & Partial<QueueMeta>;
 
@@ -140,6 +145,7 @@ const QueueDiagnostics: React.FC = () => {
   /** Per-entry replay state: id → 'replaying' | ManualReplayResult */
   const [replayState, setReplayState] = useState<Record<string, 'replaying' | ManualReplayResult>>({});
   const [exporting, setExporting] = useState(false);
+  const [caseId, setCaseId] = useState('');
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -170,11 +176,27 @@ const QueueDiagnostics: React.FC = () => {
       return;
     }
     setReplayState(s => ({ ...s, [entry.id]: 'replaying' }));
+    // Record audit event: replay attempted
+    recordAuditEvent(supabase, {
+      caseId: caseId.trim() || undefined,
+      eventType: 'manual_replay_attempted',
+      payload: { txId: entry.id, driverId: entry.driverId, deviceId: entry.operationId },
+    });
     const result = await replayDeadLetterItem(entry.id, {
       supabaseClient: supabase,
       submitCollection: submitCollectionV2,
     });
     setReplayState(s => ({ ...s, [entry.id]: result }));
+    // Record audit event: replay outcome
+    recordAuditEvent(supabase, {
+      caseId: caseId.trim() || undefined,
+      eventType: result.success ? 'manual_replay_succeeded' : 'manual_replay_failed',
+      payload: {
+        txId: entry.id,
+        driverId: entry.driverId,
+        ...(!result.success && 'error' in result && { errorSummary: String(result.error).slice(0, 200) }),
+      },
+    });
     // Refresh local diagnostics so the list reflects any state change.
     refresh();
     // Re-report queue health to fleet snapshot so the admin fleet-wide view
@@ -187,7 +209,7 @@ const QueueDiagnostics: React.FC = () => {
         entry.driverName ?? 'Unknown',
       ).catch(() => {});
     }
-  }, [refresh]);
+  }, [refresh, caseId]);
 
   const dismissReplayOutcome = useCallback((id: string) => {
     setReplayState(s => {
@@ -201,13 +223,22 @@ const QueueDiagnostics: React.FC = () => {
     if (!summary) return;
     setExporting(true);
     try {
-      const payload = buildLocalExportPayload(deadItems as DeadLetterEntry[], summary);
+      const rawPayload = buildLocalExportPayload(deadItems as DeadLetterEntry[], summary);
+      const payload = addCaseIdToExportPayload(rawPayload, caseId.trim() || undefined);
       const filename = buildExportFilename('local', payload.exportedAt);
       triggerJSONDownload(payload, filename);
+      // Record audit event: diagnostic export
+      if (supabase) {
+        recordAuditEvent(supabase, {
+          caseId: caseId.trim() || undefined,
+          eventType: 'diagnostic_export',
+          payload: { exportScope: 'local', exportFilename: filename },
+        });
+      }
     } finally {
       setExporting(false);
     }
-  }, [summary, deadItems]);
+  }, [summary, deadItems, caseId]);
 
   // ── Loading skeleton ─────────────────────────────────────────────────────
   if (loading && !summary) {
@@ -277,6 +308,12 @@ const QueueDiagnostics: React.FC = () => {
             An empty state means no items exist on this device, not globally.
           </p>
         </div>
+      </div>
+
+      {/* ── Support case linking ───────────────────────────────────────── */}
+      <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+        <CasePicker value={caseId} onChange={setCaseId} />
+        <p className="text-[10px] text-slate-400 mt-1.5">Links replay &amp; export actions to the selected case</p>
       </div>
 
       {/* ── Health summary cards ─────────────────────────────────────────── */}

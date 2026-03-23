@@ -39,6 +39,8 @@ import {
   type HealthAlert,
   type AlertSeverity,
 } from '../../services/healthAlertService';
+import { recordAuditEvent } from '../../services/supportCaseService';
+import CasePicker from './CasePicker';
 
 const POLL_INTERVAL_MS = 60_000;
 const MS_PER_HOUR = 3_600_000;
@@ -79,9 +81,11 @@ const SEVERITY_CONFIG: Record<AlertSeverity, {
 
 interface AlertRowProps {
   alert: HealthAlert;
+  onLinkToCase: (alert: HealthAlert) => void;
+  linked: boolean;
 }
 
-const AlertRow: React.FC<AlertRowProps> = ({ alert }) => {
+const AlertRow: React.FC<AlertRowProps> = ({ alert, onLinkToCase, linked }) => {
   const cfg = SEVERITY_CONFIG[alert.severity];
   return (
     <div className={`flex items-start gap-3 p-3 rounded-xl border ${cfg.rowClass}`}>
@@ -96,6 +100,21 @@ const AlertRow: React.FC<AlertRowProps> = ({ alert }) => {
             device: {alert.deviceId.slice(0, 12)}…
           </span>
         </div>
+      </div>
+      <div className="shrink-0">
+        {linked ? (
+          <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+            <CheckCircle2 size={12} /> Linked
+          </span>
+        ) : (
+          <button
+            onClick={() => onLinkToCase(alert)}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 bg-white text-[10px] font-bold text-slate-500 hover:text-indigo-600 hover:border-indigo-300 transition-colors"
+            title="Link this alert to the active support case"
+          >
+            <Link2 size={10} /> Link
+          </button>
+        )}
       </div>
     </div>
   );
@@ -115,6 +134,9 @@ const HealthAlerts: React.FC<HealthAlertsProps> = ({ supabaseClient: injectedCli
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [lastFetchedAt, setLastFetchedAt] = useState<string | null>(null);
+  const [caseId, setCaseId] = useState('');
+  /** Track which alert IDs have been linked to the current case. */
+  const [linkedAlertIds, setLinkedAlertIds] = useState<Set<string>>(new Set());
 
   const missingConfig = !SUPABASE_URL || !SUPABASE_ANON_KEY;
 
@@ -134,6 +156,21 @@ const HealthAlerts: React.FC<HealthAlertsProps> = ({ supabaseClient: injectedCli
       setLoading(false);
     }
   }, [client, missingConfig]);
+
+  const handleLinkToCase = useCallback((alert: HealthAlert) => {
+    const trimmedCaseId = caseId.trim();
+    if (!trimmedCaseId || !client) return;
+    recordAuditEvent(client, {
+      caseId: trimmedCaseId,
+      eventType: 'health_alert_linked',
+      payload: {
+        alertType: alert.alertType,
+        alertSeverity: alert.severity,
+        deviceId: alert.deviceId,
+      },
+    });
+    setLinkedAlertIds(prev => new Set(prev).add(alert.id));
+  }, [client, caseId]);
 
   useEffect(() => {
     fetchAlerts();
@@ -189,6 +226,15 @@ const HealthAlerts: React.FC<HealthAlertsProps> = ({ supabaseClient: injectedCli
           {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
           Refresh
         </button>
+      </div>
+
+      {/* ── Support case linking ───────────────────────────────────────────── */}
+      <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+        <CasePicker
+          value={caseId}
+          onChange={(v) => { setCaseId(v); setLinkedAlertIds(new Set()); }}
+        />
+        <p className="text-[10px] text-slate-400 mt-1.5">Select a case, then click Link on any alert below</p>
       </div>
 
       {/* ── Thresholds summary ──────────────────────────────────────────────── */}
@@ -265,7 +311,12 @@ const HealthAlerts: React.FC<HealthAlertsProps> = ({ supabaseClient: injectedCli
           {/* Alert rows */}
           <div className="space-y-2">
             {alerts.map((alert) => (
-              <AlertRow key={alert.id} alert={alert} />
+              <AlertRow
+                key={alert.id}
+                alert={alert}
+                onLinkToCase={handleLinkToCase}
+                linked={linkedAlertIds.has(alert.id)}
+              />
             ))}
           </div>
         </div>
