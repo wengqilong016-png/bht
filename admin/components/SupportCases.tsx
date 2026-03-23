@@ -24,7 +24,7 @@ import {
   fetchSupportCases,
   closeSupportCase,
   recordAuditEvent,
-  fetchAuditLog,
+  fetchAuditEventCountsByCaseIds,
   type SupportCase,
   type SupportCaseStatus,
 } from '../../services/supportCaseService';
@@ -143,19 +143,16 @@ const SupportCases: React.FC<SupportCasesProps> = ({ supabaseClient: injectedCli
       setCases(result);
       setLastFetchedAt(new Date().toISOString());
       setFetchError(null);
-      // Fetch linked event counts for each case (fire-and-forget per case)
-      const counts: Record<string, number> = {};
-      await Promise.all(
-        result.map(async (c) => {
-          try {
-            const events = await fetchAuditLog(client, { caseId: c.id, limit: 200 });
-            counts[c.id] = events.length;
-          } catch {
-            counts[c.id] = 0;
-          }
-        }),
-      );
-      setEventCounts(counts);
+      // Fetch linked event counts for each case (single count query per case)
+      if (result.length > 0) {
+        const counts = await fetchAuditEventCountsByCaseIds(
+          client,
+          result.map((c) => c.id),
+        );
+        setEventCounts(counts);
+      } else {
+        setEventCounts({});
+      }
     } catch (err) {
       setFetchError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -178,8 +175,8 @@ const SupportCases: React.FC<SupportCasesProps> = ({ supabaseClient: injectedCli
         id: newCaseId.trim(),
         title: newCaseTitle.trim(),
       });
-      // Record audit event for case creation
-      recordAuditEvent(client, {
+      // Record audit event for case creation (fire-and-forget, never throws)
+      await recordAuditEvent(client, {
         caseId: newCaseId.trim(),
         eventType: 'recovery_action',
         payload: { note: `Case created: ${newCaseTitle.trim() || newCaseId.trim()}` },
@@ -199,8 +196,8 @@ const SupportCases: React.FC<SupportCasesProps> = ({ supabaseClient: injectedCli
     setClosingId(caseId);
     try {
       await closeSupportCase(client, caseId);
-      // Record audit event for case closure
-      recordAuditEvent(client, {
+      // Record audit event for case closure (fire-and-forget, never throws)
+      await recordAuditEvent(client, {
         caseId,
         eventType: 'recovery_action',
         payload: { note: `Case closed: ${caseId}` },
