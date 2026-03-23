@@ -430,6 +430,8 @@ alerts, and manual replay workflows.
   case entity with id, title, status (open/closed), timestamps.
 - `support_audit_log` (migration `20260322210000_support_audit_log.sql`) —
   append-only operator audit trail.
+- CHECK constraints (migration `20260323040000_support_check_constraints.sql`) —
+  enforces `status IN ('open','closed')` and valid `event_type` values at the DB level.
 
 **Service:** `services/supportCaseService.ts`.
 
@@ -444,7 +446,9 @@ alerts, and manual replay workflows.
 - **Alerts** panel — case picker + Link button links health alerts to a case.
 
 All action panels use a shared **CasePicker** dropdown that fetches open cases
-from the `support_cases` table, with a manual-entry fallback.
+from the `support_cases` table. Manual free-text entry is available only when no
+open cases exist (e.g. fresh deploy); once real cases are created, operators must
+select from the dropdown to ensure valid linkage.
 
 ### Event types
 
