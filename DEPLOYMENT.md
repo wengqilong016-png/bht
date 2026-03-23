@@ -163,6 +163,7 @@ stages 1 through 9.  Run each step in order.
 | 8.1 | `20260322200001_health_alerts_harden.sql` | RLS hardening, index improvements |
 | 9   | `20260322210000_support_audit_log.sql` | `support_audit_log` table, RLS policies |
 | 9   | `20260323030000_support_cases.sql`     | `support_cases` table, RLS policies |
+| 9   | `20260323040000_support_check_constraints.sql` | CHECK constraints on `status` and `event_type` |
 
 Confirm each migration is applied:
 
