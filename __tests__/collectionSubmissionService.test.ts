@@ -13,7 +13,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 // Because the service imports `supabase` from '../../supabaseClient', we
 // mock that module and control what the `rpc` mock returns.
 
-const mockRpc = jest.fn();
+const mockRpc = jest.fn<(...args: unknown[]) => Promise<unknown>>();
 jest.mock('../supabaseClient', () => ({
   supabase: { rpc: (...args: unknown[]) => mockRpc(...args) },
 }));
@@ -143,8 +143,9 @@ describe('submitCollectionV2', () => {
     const result = await submitCollectionV2({ ...baseInput, driverId: 'drv-other' });
 
     expect(result.success).toBe(false);
-    if (result.success) return;
-    expect(result.error).toContain('Forbidden');
+    if (result.success === false) {
+      expect(result.error).toContain('Forbidden');
+    }
   });
 
   it('returns the persisted row values on idempotent replay (server returns existing row on conflict)', async () => {
@@ -173,8 +174,9 @@ describe('submitCollectionV2', () => {
     const result = await submitCollectionV2(baseInput);
 
     expect(result.success).toBe(false);
-    if (result.success) return;
-    expect(result.error).toContain('Location not found');
+    if (result.success === false) {
+      expect(result.error).toContain('Location not found');
+    }
   });
 
   it('returns failure when the RPC returns no data', async () => {
@@ -183,8 +185,9 @@ describe('submitCollectionV2', () => {
     const result = await submitCollectionV2(baseInput);
 
     expect(result.success).toBe(false);
-    if (result.success) return;
-    expect(result.error).toContain('no data');
+    if (result.success === false) {
+      expect(result.error).toContain('no data');
+    }
   });
 
   it('returns failure when Supabase throws an unexpected error', async () => {
@@ -193,8 +196,9 @@ describe('submitCollectionV2', () => {
     const result = await submitCollectionV2(baseInput);
 
     expect(result.success).toBe(false);
-    if (result.success) return;
-    expect(result.error).toContain('Network timeout');
+    if (result.success === false) {
+      expect(result.error).toContain('Network timeout');
+    }
   });
 
   it('marks isSynced true on the returned transaction', async () => {

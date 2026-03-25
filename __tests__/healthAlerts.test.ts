@@ -242,7 +242,7 @@ function makeAlertClientStub(
     from: jest.fn().mockReturnValue({
       select: jest.fn().mockReturnValue({
         is: jest.fn().mockReturnValue({
-          order: jest.fn().mockResolvedValue({
+          order: jest.fn<() => Promise<unknown>>().mockResolvedValue({
             data: queryError ? null : rows,
             error: queryError,
           }),

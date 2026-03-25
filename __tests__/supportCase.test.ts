@@ -124,7 +124,7 @@ function makeAuditEvent(overrides: Partial<AuditEvent> = {}): AuditEvent {
 function makeInsertClientStub(insertError: { message: string } | null = null) {
   return {
     from: jest.fn().mockReturnValue({
-      insert: jest.fn().mockResolvedValue({
+      insert: jest.fn<() => Promise<unknown>>().mockResolvedValue({
         data: null,
         error: insertError,
       }),
@@ -137,7 +137,7 @@ function makeSelectClientStub(
   rows: Record<string, unknown>[],
   queryError: { message: string } | null = null,
 ) {
-  const limitMock = jest.fn().mockResolvedValue({
+  const limitMock = jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue({
     data: queryError ? null : rows,
     error: queryError,
   });
@@ -318,7 +318,7 @@ describe('recordAuditEvent', () => {
   it('does not throw when the Supabase client itself throws', async () => {
     const stub = {
       from: jest.fn().mockReturnValue({
-        insert: jest.fn().mockRejectedValue(new Error('network failure')),
+        insert: jest.fn<() => Promise<unknown>>().mockRejectedValue(new Error('network failure')),
       }),
     } as any;
     await expect(
@@ -581,7 +581,7 @@ function makeCaseInsertStub(
   returnRow: Record<string, unknown> | null,
   insertError: { message: string } | null = null,
 ) {
-  const singleMock = jest.fn().mockResolvedValue({
+  const singleMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({
     data: insertError ? null : returnRow,
     error: insertError,
   });
@@ -618,7 +618,7 @@ function makeCaseSelectStub(
   rows: Record<string, unknown>[],
   queryError: { message: string } | null = null,
 ) {
-  const limitMock = jest.fn().mockResolvedValue({
+  const limitMock = jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue({
     data: queryError ? null : rows,
     error: queryError,
   });
@@ -640,7 +640,7 @@ function makeCaseSelectStub(
 
 /** Build a Supabase client stub for support_cases update. */
 function makeCaseUpdateStub(updateError: { message: string } | null = null) {
-  const eqMock = jest.fn().mockResolvedValue({
+  const eqMock = jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue({
     data: null,
     error: updateError,
   });
@@ -668,7 +668,7 @@ function makeResolveRpcStub(
   },
   rpcError: { message: string } | null = null,
 ) {
-  const rpcMock = jest.fn().mockResolvedValue({
+  const rpcMock = jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue({
     data: rpcError ? null : (row ? [row] : []),
     error: rpcError,
   });
@@ -683,7 +683,7 @@ function makeCaseMaybeSingleStub(
   row: Record<string, unknown> | null,
   queryError: { message: string } | null = null,
 ) {
-  const maybeSingleMock = jest.fn().mockResolvedValue({
+  const maybeSingleMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({
     data: queryError ? null : row,
     error: queryError,
   });
@@ -844,7 +844,7 @@ describe('fetchAuditEventCountsByCaseIds', () => {
     const client = {
       from: jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ count: null, error: { message: 'fail' } }),
+          eq: jest.fn<() => Promise<unknown>>().mockResolvedValue({ count: null, error: { message: 'fail' } }),
         }),
       }),
     } as any;
@@ -856,7 +856,7 @@ describe('fetchAuditEventCountsByCaseIds', () => {
     const client = {
       from: jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockRejectedValue(new Error('network')),
+          eq: jest.fn<() => Promise<unknown>>().mockRejectedValue(new Error('network')),
         }),
       }),
     } as any;
