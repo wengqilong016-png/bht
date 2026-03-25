@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState, useMemo } from 'react';
+import React, { Suspense, lazy, useMemo, useState } from 'react';
 import {
   LogOut, Globe,
   Crown, Settings,
@@ -14,42 +14,39 @@ import {
   ADMIN_PAGE_TITLES,
   ADMIN_SECONDARY_NAV,
   buildAdminPrimaryNav,
-  mapAdminViewToDashboardTab,
   type AdminView,
 } from './adminShellConfig';
-import { calculateAdminApprovalBadge, isDashboardBackedAdminView } from './adminShellViewState';
+import { calculateAdminApprovalBadge } from './adminShellViewState';
+import AdminShellViewRenderer from './renderAdminShellView';
 
-const Dashboard = lazy(() => import('../components/Dashboard'));
-const CollectionForm = lazy(() => import('../components/CollectionForm'));
-const TransactionHistory = lazy(() => import('../components/TransactionHistory'));
-const FinancialReports = lazy(() => import('../components/FinancialReports'));
-const AIHub = lazy(() => import('../components/ai-hub'));
-const DebtManager = lazy(() => import('../components/DebtManager'));
-const BillingReconciliation = lazy(() => import('../components/BillingReconciliation'));
-const DriverManagement = lazy(() => import('../components/driver-management'));
 const AccountSettings = lazy(() => import('../components/AccountSettings'));
 const PwaInstallPrompt = lazy(() => import('../components/PwaInstallPrompt'));
-const LocationChangeReview = lazy(() => import('./pages/LocationChangeReview'));
-const QueueDiagnostics = lazy(() => import('./components/QueueDiagnostics'));
-const FleetDiagnostics = lazy(() => import('./components/FleetDiagnostics'));
-const HealthAlerts = lazy(() => import('./components/HealthAlerts'));
-const AuditTrail = lazy(() => import('./components/AuditTrail'));
-const SupportCases = lazy(() => import('./components/SupportCases'));
-const CaseDetail = lazy(() => import('./components/CaseDetail'));
 
 const AppAdminShell: React.FC = () => {
   const { currentUser, lang, setLang, handleLogout, activeDriverId } = useAuth();
   const {
     isOnline,
-    locations, drivers, transactions, dailySettlements, aiLogs,
-    filteredLocations, filteredDrivers, filteredTransactions, filteredSettlements,
+    locations,
+    drivers,
+    transactions,
+    dailySettlements,
+    aiLogs,
+    filteredLocations,
+    filteredDrivers,
+    filteredTransactions,
+    filteredSettlements,
     unsyncedCount,
   } = useAppData();
   const {
-    syncOfflineData, updateDrivers, updateLocations, deleteLocations, deleteDrivers,
-    updateTransaction, saveSettlement, logAI,
+    syncOfflineData,
+    updateDrivers,
+    updateLocations,
+    deleteLocations,
+    deleteDrivers,
+    updateTransaction,
+    saveSettlement,
+    logAI,
   } = useMutations();
-  const t = TRANSLATIONS[lang];
   const [view, setView] = useState<AdminView>('dashboard');
   const [showAccountSettings, setShowAccountSettings] = useState(false);
   const [aiContextId, setAiContextId] = useState<string>('');
@@ -57,16 +54,11 @@ const AppAdminShell: React.FC = () => {
   const [selectedCaseId, setSelectedCaseId] = useState<string>('');
 
   const syncStatus = useSyncStatus({ syncMutation: syncOfflineData, isOnline, unsyncedCount, userId: currentUser.id });
-
   const totalApprovalBadge = calculateAdminApprovalBadge(transactions, dailySettlements);
-
   const adminNavItems = useMemo(() => buildAdminPrimaryNav(totalApprovalBadge), [totalApprovalBadge]);
-
-  const showDashboard = isDashboardBackedAdminView(view);
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f3f5f8]">
-      {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-[180px] lg:w-[200px] bg-[#f3f5f8] border-r border-slate-200 flex-shrink-0 h-full z-40">
         <div className="p-4 border-b border-slate-200">
           <div className="flex items-center gap-2.5">
@@ -86,7 +78,7 @@ const AppAdminShell: React.FC = () => {
             return (
               <button
                 key={item.id}
-                onClick={() => setView(item.id as any)}
+                onClick={() => setView(item.id as AdminView)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-subcard text-left transition-colors relative group ${
                   active
                     ? 'bg-white text-indigo-600 shadow-silicone-sm border border-white/80'
@@ -109,7 +101,7 @@ const AppAdminShell: React.FC = () => {
             return (
               <button
                 key={item.id}
-                onClick={() => setView(item.id as any)}
+                onClick={() => setView(item.id as AdminView)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-subcard text-left transition-colors ${
                   active
                     ? 'bg-white text-indigo-600 shadow-silicone-sm border border-white/80'
@@ -146,7 +138,6 @@ const AppAdminShell: React.FC = () => {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header */}
         <header className="border-b flex-shrink-0 z-30 bg-[#f3f5f8] border-slate-200">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
@@ -169,12 +160,11 @@ const AppAdminShell: React.FC = () => {
               <button onClick={handleLogout} className="p-2 rounded-subcard bg-rose-50 border border-rose-100 text-rose-500 hover:text-rose-700"><LogOut size={15}/></button>
             </div>
           </div>
-          {/* Mobile nav */}
           <div className="md:hidden flex border-t border-slate-200 overflow-x-auto scrollbar-hide">
             {adminNavItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setView(item.id as any)}
+                onClick={() => setView(item.id as AdminView)}
                 className={`flex flex-col items-center gap-0.5 px-3 py-2 text-[7px] font-black uppercase whitespace-nowrap transition-all flex-shrink-0 relative ${
                   view === item.id ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-400'
                 }`}
@@ -194,127 +184,37 @@ const AppAdminShell: React.FC = () => {
         <main className="flex-1 overflow-y-auto overflow-x-hidden relative bg-[#f3f5f8]">
           <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
             <Suspense fallback={<ShellLoadingFallback />}>
-              {showDashboard && (
-                <Dashboard
-                  transactions={filteredTransactions}
-                  drivers={filteredDrivers}
-                  locations={filteredLocations}
-                  dailySettlements={filteredSettlements}
-                  aiLogs={aiLogs}
-                  currentUser={currentUser}
-                  onUpdateDrivers={(d) => updateDrivers.mutateAsync(d).then(() => {})}
-                  onUpdateLocations={(l) => updateLocations.mutate(l)}
-                  onDeleteLocations={(ids) => deleteLocations.mutate(ids)}
-                  onUpdateTransaction={(id, updates) => updateTransaction.mutate({txId: id, updates})}
-                  onNewTransaction={() => {}}
-                  onSaveSettlement={(s) => saveSettlement.mutate(s)}
-                  onSync={async () => syncOfflineData.mutate()}
-                  isSyncing={syncOfflineData.isPending}
-                  offlineCount={unsyncedCount}
-                  lang={lang}
-                  onNavigate={(v) => setView(v as any)}
-                  initialTab={mapAdminViewToDashboardTab(view)}
-                  hideTabs={true}
-                />
-              )}
-              {view === 'team' && (
-                <DriverManagement
-                  drivers={filteredDrivers}
-                  locations={locations}
-                  transactions={filteredTransactions}
-                  dailySettlements={filteredSettlements}
-                  onUpdateDrivers={(d) => updateDrivers.mutateAsync(d).then(() => {})}
-                  onUpdateLocations={(l) => updateLocations.mutate(l)}
-                  onDeleteDrivers={(ids) => deleteDrivers.mutate(ids)}
-                />
-              )}
-              {view === 'billing' && (
-                <BillingReconciliation
-                  drivers={filteredDrivers}
-                  transactions={filteredTransactions}
-                  dailySettlements={filteredSettlements}
-                />
-              )}
-              {view === 'collect' && (
-                <CollectionForm
-                  locations={filteredLocations}
-                  currentDriver={drivers.find(d => d.id === activeDriverId) || drivers[0]}
-                  onSubmit={() => syncOfflineData.mutate()}
-                  lang={lang}
-                  onLogAI={(l) => logAI.mutate(l)}
-                  isOnline={isOnline}
-                  allTransactions={filteredTransactions}
-                  onRegisterMachine={async (loc) => {
-                    const newLoc = { ...loc, isSynced: false, assignedDriverId: activeDriverId };
-                    updateLocations.mutate([...locations, newLoc]);
-                  }}
-                />
-              )}
-              {view === 'history' && (
-                <TransactionHistory transactions={filteredTransactions} locations={locations} onAnalyze={() => {}} />
-              )}
-              {view === 'reports' && (
-                <FinancialReports transactions={filteredTransactions} drivers={filteredDrivers} locations={filteredLocations} dailySettlements={filteredSettlements} lang={lang} />
-              )}
-              {view === 'debt' && (
-                <DebtManager drivers={filteredDrivers} locations={filteredLocations} currentUser={currentUser} onUpdateLocations={(l) => updateLocations.mutate(l)} onUpdateDrivers={(d) => updateDrivers.mutateAsync(d).then(() => {})} lang={lang} />
-              )}
-              {view === 'ai' && !showDashboard && (
-                <AIHub
-                  drivers={filteredDrivers}
-                  locations={filteredLocations}
-                  transactions={filteredTransactions}
-                  onLogAI={(l) => logAI.mutate(l)}
-                  currentUser={currentUser}
-                  initialContextId={aiContextId}
-                  onClearContext={() => setAiContextId('')}
-                />
-              )}
-              {view === 'change-review' && (
-                <LocationChangeReview
-                  locations={locations}
-                  lang={lang}
-                />
-              )}
-              {view === 'diagnostics' && (
-                <QueueDiagnostics />
-              )}
-              {view === 'fleet-diagnostics' && (
-                <FleetDiagnostics />
-              )}
-              {view === 'health-alerts' && (
-                <HealthAlerts />
-              )}
-              {view === 'support-cases' && (
-                <SupportCases
-                  onNavigateToAudit={(caseId) => {
-                    setAuditCaseFilter(caseId);
-                    setView('audit-trail');
-                  }}
-                  onNavigateToCaseDetail={(caseId) => {
-                    setSelectedCaseId(caseId);
-                    setView('case-detail');
-                  }}
-                />
-              )}
-              {view === 'case-detail' && selectedCaseId && (
-                <CaseDetail
-                  caseId={selectedCaseId}
-                  onBack={() => setView('support-cases')}
-                  onNavigateToAudit={(caseId) => {
-                    setAuditCaseFilter(caseId);
-                    setView('audit-trail');
-                  }}
-                  currentOperator={currentUser.id}
-                />
-              )}
-              {view === 'audit-trail' && (
-                <AuditTrail
-                  initialCaseFilter={auditCaseFilter}
-                  onCaseFilterConsumed={() => setAuditCaseFilter('')}
-                  onNavigateToCases={() => setView('support-cases')}
-                />
-              )}
+              <AdminShellViewRenderer
+                view={view}
+                currentUser={currentUser}
+                lang={lang}
+                activeDriverId={activeDriverId}
+                isOnline={isOnline}
+                locations={locations}
+                drivers={drivers}
+                filteredLocations={filteredLocations}
+                filteredDrivers={filteredDrivers}
+                filteredTransactions={filteredTransactions}
+                filteredSettlements={filteredSettlements}
+                aiLogs={aiLogs}
+                unsyncedCount={unsyncedCount}
+                aiContextId={aiContextId}
+                auditCaseFilter={auditCaseFilter}
+                selectedCaseId={selectedCaseId}
+                onSetView={setView}
+                onClearAiContext={() => setAiContextId('')}
+                onConsumeAuditCaseFilter={() => setAuditCaseFilter('')}
+                onSelectCaseId={setSelectedCaseId}
+                onSetAuditCaseFilter={setAuditCaseFilter}
+                syncOfflineData={syncOfflineData}
+                updateDrivers={updateDrivers}
+                updateLocations={updateLocations}
+                deleteLocations={deleteLocations}
+                deleteDrivers={deleteDrivers}
+                updateTransaction={updateTransaction}
+                saveSettlement={saveSettlement}
+                logAI={logAI}
+              />
             </Suspense>
           </div>
         </main>
@@ -327,7 +227,7 @@ const AppAdminShell: React.FC = () => {
           isOnline={isOnline}
           onClose={() => setShowAccountSettings(false)}
           onPhoneUpdated={(driverId, phone) => {
-            const updated = drivers.map(d => d.id === driverId ? { ...d, phone } : d);
+            const updated = drivers.map((d) => d.id === driverId ? { ...d, phone } : d);
             updateDrivers.mutate(updated);
           }}
         />
