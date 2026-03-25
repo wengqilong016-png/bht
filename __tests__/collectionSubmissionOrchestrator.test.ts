@@ -113,7 +113,7 @@ describe('buildCollectionSubmissionInput', () => {
 describe('orchestrateCollectionSubmission', () => {
   it('returns server transaction when online submission succeeds', async () => {
     const serverTransaction = makeTransaction({ id: 'server-tx' });
-    const submitCollectionV2 = jest.fn().mockResolvedValue({
+    const submitCollectionV2 = jest.fn<() => Promise<unknown>>().mockResolvedValue({
       success: true,
       transaction: serverTransaction,
       source: 'server',
@@ -138,12 +138,12 @@ describe('orchestrateCollectionSubmission', () => {
 
   it('falls back to offline transaction when online submission fails', async () => {
     const offlineTransaction = makeTransaction({ id: 'offline-tx', isSynced: false });
-    const submitCollectionV2 = jest.fn().mockResolvedValue({
+    const submitCollectionV2 = jest.fn<() => Promise<unknown>>().mockResolvedValue({
       success: false,
       error: 'rpc failed',
     });
     const createCollectionTransaction = jest.fn().mockReturnValue(offlineTransaction);
-    const enqueueTransaction = jest.fn().mockResolvedValue(undefined);
+    const enqueueTransaction = jest.fn<() => Promise<unknown>>().mockResolvedValue(undefined);
     const logger = { warn: jest.fn() };
 
     const result = await orchestrateCollectionSubmission(makeInput(), {
@@ -165,7 +165,7 @@ describe('orchestrateCollectionSubmission', () => {
     const offlineTransaction = makeTransaction({ id: 'offline-direct', isSynced: false });
     const submitCollectionV2 = jest.fn();
     const createCollectionTransaction = jest.fn().mockReturnValue(offlineTransaction);
-    const enqueueTransaction = jest.fn().mockResolvedValue(undefined);
+    const enqueueTransaction = jest.fn<() => Promise<unknown>>().mockResolvedValue(undefined);
 
     const result = await orchestrateCollectionSubmission(
       makeInput({ isOnline: false }),

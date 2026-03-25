@@ -14,7 +14,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { CONSTANTS } from '../types';
 
 // ── Supabase mock ─────────────────────────────────────────────────────────────
-const mockRpc = jest.fn();
+const mockRpc = jest.fn<(...args: unknown[]) => Promise<unknown>>();
 jest.mock('../supabaseClient', () => ({
   supabase: { rpc: (...args: unknown[]) => mockRpc(...args) },
 }));
@@ -34,6 +34,10 @@ function makeLocation(overrides: Partial<{ lastScore: number; commissionRate: nu
     coords: { lat: -6.79, lng: 39.21 },
     lastScore: overrides.lastScore ?? 1000,
     commissionRate: overrides.commissionRate ?? 0.15,
+    machineId: 'M-001',
+    area: 'Test Area',
+    initialStartupDebt: 0,
+    remainingStartupDebt: 0,
     initialFloat: 0,
     assignedDriverId: null,
     status: 'active' as const,

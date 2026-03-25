@@ -74,7 +74,7 @@ function makeRawInput(txId: string): CollectionSubmissionInput {
 function makeSupabaseStub(upsertError: { message: string } | null = null) {
   return {
     from: () => ({
-      upsert: jest.fn().mockResolvedValue({ error: upsertError }),
+      upsert: jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: upsertError }),
     }),
   } as any;
 }
@@ -182,7 +182,7 @@ describe('replayDeadLetterItem — eligibility guards', () => {
     await enqueueTransaction(tx, makeRawInput(tx.id));
     // Do NOT dead-letter it — retryCount stays at 0
 
-    const upsertMock = jest.fn().mockResolvedValue({ error: null });
+    const upsertMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null });
     const supabase = { from: () => ({ upsert: upsertMock }) } as any;
     const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>();
 
@@ -285,7 +285,7 @@ describe('replayDeadLetterItem — collection replay (rawInput present)', () => 
     await enqueueTransaction(tx, makeRawInput(tx.id));
     deadLetterEntry(tx.id);
 
-    const upsertMock = jest.fn().mockResolvedValue({ error: null });
+    const upsertMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null });
     const supabase = { from: () => ({ upsert: upsertMock }) } as any;
 
     // No submitCollection → must return an error without calling upsert
@@ -311,7 +311,7 @@ describe('replayDeadLetterItem — direct upsert fallback (no rawInput)', () => 
     await enqueueTransaction(tx); // no rawInput
     deadLetterEntry(tx.id);
 
-    const upsertMock = jest.fn().mockResolvedValue({ error: null });
+    const upsertMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null });
     const supabase = { from: () => ({ upsert: upsertMock }) } as any;
     const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>();
 
@@ -333,7 +333,7 @@ describe('replayDeadLetterItem — direct upsert fallback (no rawInput)', () => 
     deadLetterEntry(tx.id);
 
     const supabase = {
-      from: () => ({ upsert: jest.fn().mockResolvedValue({ error: { message: 'Service Unavailable' } }) }),
+      from: () => ({ upsert: jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: { message: 'Service Unavailable' } }) }),
     } as any;
 
     const result = await replayDeadLetterItem(tx.id, { supabaseClient: supabase });

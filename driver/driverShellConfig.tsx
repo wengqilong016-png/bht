@@ -8,7 +8,7 @@ export interface DriverNavItem {
   icon: React.ReactElement;
   getLabel: (
     lang: 'zh' | 'sw',
-    translations: { collect: string; dailySettlement: string; debt: string; driverStatus: string },
+    translations: Record<string, string>,
   ) => string;
 }
 
