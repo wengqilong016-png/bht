@@ -803,4 +803,48 @@ Expected result in Stage 11D:
 
 ---
 
-*Last updated: 2026-03-25. Covers stages 1 through 11D.*
+## Stage 13 — Support caseId Lookup Indexes
+
+### Goal
+Improve support-case lookup and audit trail filtering performance by adding
+dedicated indexes. This is a **performance-only** change — no schema redesign,
+no service logic changes, and no application behavior changes.
+
+### Canonical lookup dimension
+The expression indexes use `lower(btrim(...))` so that queries applying the
+same normalization benefit from an index scan regardless of surrounding
+whitespace or letter case in stored values.
+
+### Indexes
+
+| Index | Table | Expression / Columns | Predicate |
+|---|---|---|---|
+| `support_cases_id_canonical_lookup_idx` | `support_cases` | `(lower(btrim(id)))` | — |
+| `support_audit_log_case_id_canonical_lookup_idx` | `support_audit_log` | `(lower(btrim(case_id)))` | `WHERE case_id IS NOT NULL` |
+| `support_audit_log_case_id_created_at_idx` | `support_audit_log` | `(case_id, created_at DESC)` | `WHERE case_id IS NOT NULL` |
+
+### Query patterns supported
+
+- **Canonical case lookup** — `WHERE lower(btrim(id)) = lower(btrim($1))` on `support_cases`.
+- **Canonical audit log filter** — `WHERE lower(btrim(case_id)) = lower(btrim($1))` on `support_audit_log`.
+- **Audit trail newest-first** — `WHERE case_id = $1 ORDER BY created_at DESC` on `support_audit_log`.
+
+### Verification SQL
+
+```sql
+-- Confirm all three indexes exist
+SELECT indexname, indexdef
+FROM pg_indexes
+WHERE schemaname = 'public'
+  AND indexname IN (
+    'support_cases_id_canonical_lookup_idx',
+    'support_audit_log_case_id_canonical_lookup_idx',
+    'support_audit_log_case_id_created_at_idx'
+  );
+```
+
+Expected: three rows returned, one per index.
+
+---
+
+*Last updated: 2026-03-25. Covers stages 1 through 13.*
