@@ -67,7 +67,7 @@ function makeRawInput(txId: string): CollectionSubmissionInput {
 function makeSupabaseStub(upsertError: { message: string } | null = null) {
   return {
     from: () => ({
-      upsert: jest.fn().mockResolvedValue({ error: upsertError }),
+      upsert: jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: upsertError }),
     }),
   } as any;
 }
@@ -194,7 +194,7 @@ describe('flushQueue — collection replay via submitCollection callback', () =>
     const rawInput = makeRawInput(tx.id);
     await enqueueTransaction(tx, rawInput);
 
-    const upsertMock = jest.fn().mockResolvedValue({ error: null });
+    const upsertMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null });
     const supabase = { from: () => ({ upsert: upsertMock }) } as any;
 
     // No submitCollection option → collection entry must NOT fall back to a direct upsert
@@ -214,7 +214,7 @@ describe('flushQueue — collection replay via submitCollection callback', () =>
     const tx = makeTx({ type: 'payout_request' });
     await enqueueTransaction(tx);
 
-    const upsertMock = jest.fn().mockResolvedValue({ error: null });
+    const upsertMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null });
     const supabase = { from: () => ({ upsert: upsertMock }) } as any;
     const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>();
 
