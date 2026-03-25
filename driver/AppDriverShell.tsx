@@ -11,16 +11,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/DataContext';
 import { useMutations } from '../contexts/MutationContext';
 import { DRIVER_NAV_ITEMS, type DriverView } from './driverShellConfig';
-import { resolveCurrentDriver } from './driverShellViewState';
+import DriverShellViewRenderer from './renderDriverShellView';
 
-const Dashboard = lazy(() => import('../components/Dashboard'));
-const DriverCollectionFlow = lazy(() => import('../driver/pages/DriverCollectionFlow'));
-const TransactionHistory = lazy(() => import('../components/TransactionHistory'));
-const DebtManager = lazy(() => import('../components/DebtManager'));
 const AccountSettings = lazy(() => import('../components/AccountSettings'));
 const PwaInstallPrompt = lazy(() => import('../components/PwaInstallPrompt'));
-const LocationChangeRequestForm = lazy(() => import('../driver/components/LocationChangeRequestForm'));
-const DriverStatusPanel = lazy(() => import('../driver/components/DriverStatusPanel'));
 
 const AppDriverShell: React.FC = () => {
   const { currentUser, lang, setLang, handleLogout, activeDriverId } = useAuth();
@@ -39,13 +33,10 @@ const AppDriverShell: React.FC = () => {
   const [showAccountSettings, setShowAccountSettings] = useState(false);
 
   const syncStatus = useSyncStatus({ syncMutation: syncOfflineData, isOnline, unsyncedCount, userId: currentUser.id });
-  const activeDriver = drivers.find(d => d.id === activeDriverId);
-  const currentDriver = resolveCurrentDriver(drivers, activeDriverId);
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f3f5f8]">
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header */}
         <header className="border-b flex-shrink-0 z-30 bg-slate-900 border-white/10">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-2">
@@ -68,7 +59,6 @@ const AppDriverShell: React.FC = () => {
             </div>
           </div>
 
-          {/* Driver nav tabs */}
           <div className="flex border-t border-white/10 overflow-x-auto scrollbar-hide">
             {DRIVER_NAV_ITEMS.map((item) => (
               <button
@@ -88,66 +78,29 @@ const AppDriverShell: React.FC = () => {
         <main className="flex-1 overflow-y-auto overflow-x-hidden relative bg-[#f3f5f8]">
           <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
             <Suspense fallback={<ShellLoadingFallback />}>
-              {view === 'collect' && (
-                <DriverCollectionFlow
-                  locations={filteredLocations}
-                  currentDriver={currentDriver}
-                  onSubmit={() => syncOfflineData.mutate()}
-                  lang={lang}
-                  onLogAI={(l) => logAI.mutate(l)}
-                  isOnline={isOnline}
-                  allTransactions={filteredTransactions}
-                  onRegisterMachine={async (loc) => {
-                    const newLoc = { ...loc, isSynced: false, assignedDriverId: activeDriverId };
-                    updateLocations.mutate([...locations, newLoc]);
-                  }}
-                />
-              )}
-              {view === 'settlement' && (
-                <Dashboard
-                  transactions={filteredTransactions}
-                  drivers={filteredDrivers}
-                  locations={filteredLocations}
-                  dailySettlements={filteredSettlements}
-                  aiLogs={aiLogs}
-                  currentUser={currentUser}
-                  onUpdateDrivers={(d) => updateDrivers.mutateAsync(d).then(() => {})}
-                  onUpdateLocations={(l) => updateLocations.mutate(l)}
-                  onDeleteLocations={(ids) => deleteLocations.mutate(ids)}
-                  onUpdateTransaction={(id, updates) => updateTransaction.mutate({txId: id, updates})}
-                  onNewTransaction={() => {}}
-                  onSaveSettlement={(s) => saveSettlement.mutate(s)}
-                  onSync={async () => syncOfflineData.mutate()}
-                  isSyncing={syncOfflineData.isPending}
-                  offlineCount={unsyncedCount}
-                  lang={lang}
-                  onNavigate={(v) => setView(v as any)}
-                  initialTab="settlement"
-                  hideTabs={true}
-                />
-              )}
-              {view === 'debt' && (
-                <DebtManager drivers={filteredDrivers} locations={filteredLocations} currentUser={currentUser} onUpdateLocations={(l) => updateLocations.mutate(l)} lang={lang} />
-              )}
-              {view === 'history' && (
-                <TransactionHistory transactions={filteredTransactions} locations={locations} onAnalyze={() => {}} />
-              )}
-              {view === 'requests' && (
-                <LocationChangeRequestForm
-                  locations={filteredLocations}
-                  currentUser={currentUser}
-                  lang={lang}
-                  isOnline={isOnline}
-                />
-              )}
-              {view === 'status' && (
-                <DriverStatusPanel
-                  driver={activeDriver}
-                  locations={locations}
-                  transactions={filteredTransactions}
-                  lang={lang}
-                />
-              )}
+              <DriverShellViewRenderer
+                view={view}
+                lang={lang}
+                currentUser={currentUser}
+                activeDriverId={activeDriverId}
+                isOnline={isOnline}
+                locations={locations}
+                drivers={drivers}
+                filteredLocations={filteredLocations}
+                filteredDrivers={filteredDrivers}
+                filteredTransactions={filteredTransactions}
+                filteredSettlements={filteredSettlements}
+                aiLogs={aiLogs}
+                unsyncedCount={unsyncedCount}
+                syncOfflineData={syncOfflineData}
+                updateDrivers={updateDrivers}
+                updateLocations={updateLocations}
+                deleteLocations={deleteLocations}
+                updateTransaction={updateTransaction}
+                saveSettlement={saveSettlement}
+                logAI={logAI}
+                onSetView={setView}
+              />
             </Suspense>
           </div>
         </main>
