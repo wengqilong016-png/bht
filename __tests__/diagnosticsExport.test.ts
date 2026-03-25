@@ -171,12 +171,12 @@ describe('buildLocalExportPayload', () => {
     expect(entry.lastErrorCategory).toBe(tx.lastErrorCategory);
 
     // Fields that MUST NOT be in the exported entry
-    expect((entry as Record<string, unknown>)['gps']).toBeUndefined();
-    expect((entry as Record<string, unknown>)['revenue']).toBeUndefined();
-    expect((entry as Record<string, unknown>)['commission']).toBeUndefined();
-    expect((entry as Record<string, unknown>)['netPayable']).toBeUndefined();
-    expect((entry as Record<string, unknown>)['currentScore']).toBeUndefined();
-    expect((entry as Record<string, unknown>)['previousScore']).toBeUndefined();
+    expect((entry as unknown as Record<string, unknown>)['gps']).toBeUndefined();
+    expect((entry as unknown as Record<string, unknown>)['revenue']).toBeUndefined();
+    expect((entry as unknown as Record<string, unknown>)['commission']).toBeUndefined();
+    expect((entry as unknown as Record<string, unknown>)['netPayable']).toBeUndefined();
+    expect((entry as unknown as Record<string, unknown>)['currentScore']).toBeUndefined();
+    expect((entry as unknown as Record<string, unknown>)['previousScore']).toBeUndefined();
   });
 
   it('filters items by driverId', () => {

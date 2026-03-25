@@ -50,7 +50,7 @@ function makeSupabaseStub(rows: Record<string, unknown>[], queryError: { message
   return {
     from: jest.fn().mockReturnValue({
       select: jest.fn().mockReturnValue({
-        order: jest.fn().mockResolvedValue({
+        order: jest.fn<() => Promise<unknown>>().mockResolvedValue({
           data: queryError ? null : rows,
           error: queryError,
         }),
@@ -296,7 +296,7 @@ describe('reportQueueHealthToServer', () => {
       type: 'collection',
     } as any);
 
-    const upsertMock = jest.fn().mockResolvedValue({ error: null });
+    const upsertMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null });
     const client = { from: jest.fn().mockReturnValue({ upsert: upsertMock }) } as any;
 
     await reportQueueHealthToServer(client, 'drv-1', 'Test Driver', 'device-test');
@@ -320,7 +320,7 @@ describe('reportQueueHealthToServer', () => {
     const { reportQueueHealthToServer, getOrCreateDeviceId } = await import('../offlineQueue');
     const stableId = getOrCreateDeviceId();
 
-    const upsertMock = jest.fn().mockResolvedValue({ error: null });
+    const upsertMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null });
     const client = { from: jest.fn().mockReturnValue({ upsert: upsertMock }) } as any;
 
     await reportQueueHealthToServer(client, 'drv-2', 'Jane Driver');
@@ -332,7 +332,7 @@ describe('reportQueueHealthToServer', () => {
 
   it('silently swallows Supabase upsert errors without throwing', async () => {
     const { reportQueueHealthToServer } = await import('../offlineQueue');
-    const upsertMock = jest.fn().mockResolvedValue({ error: { message: 'network error' } });
+    const upsertMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: { message: 'network error' } });
     const client = { from: jest.fn().mockReturnValue({ upsert: upsertMock }) } as any;
 
     // Should not throw
@@ -376,7 +376,7 @@ describe('reportQueueHealthToServer', () => {
     raw[0].lastErrorCategory = 'permanent';
     localStorage.setItem('bahati_offline_queue', JSON.stringify(raw));
 
-    const upsertMock = jest.fn().mockResolvedValue({ error: null });
+    const upsertMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null });
     const client = { from: jest.fn().mockReturnValue({ upsert: upsertMock }) } as any;
 
     await reportQueueHealthToServer(client, 'drv-1', 'Test Driver', 'dev-1');
@@ -434,7 +434,7 @@ describe('post-replay fleet health reporting', () => {
     localStorage.setItem('bahati_offline_queue', JSON.stringify(raw));
 
     // Before replay: fleet snapshot should show 1 dead-letter item
-    const upsertBeforeMock = jest.fn().mockResolvedValue({ error: null });
+    const upsertBeforeMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null });
     const clientBefore = { from: jest.fn().mockReturnValue({ upsert: upsertBeforeMock }) } as any;
     await reportQueueHealthToServer(clientBefore, 'drv-replay', 'Replay Driver', 'dev-replay');
     const [rowBefore] = upsertBeforeMock.mock.calls[0] as any[];
@@ -442,13 +442,13 @@ describe('post-replay fleet health reporting', () => {
 
     // Replay the dead-letter item successfully
     const replayClient = {
-      from: jest.fn().mockReturnValue({ upsert: jest.fn().mockResolvedValue({ error: null }) }),
+      from: jest.fn().mockReturnValue({ upsert: jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null }) }),
     } as any;
     const replayResult = await replayDeadLetterItem(tx.id, { supabaseClient: replayClient });
     expect(replayResult.success).toBe(true);
 
     // After replay: fleet snapshot should report 0 dead-letter items
-    const upsertAfterMock = jest.fn().mockResolvedValue({ error: null });
+    const upsertAfterMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null });
     const clientAfter = { from: jest.fn().mockReturnValue({ upsert: upsertAfterMock }) } as any;
     await reportQueueHealthToServer(clientAfter, 'drv-replay', 'Replay Driver', 'dev-replay');
     const [rowAfter] = upsertAfterMock.mock.calls[0] as any[];
@@ -498,14 +498,14 @@ describe('post-replay fleet health reporting', () => {
     // Replay with a Supabase error — replay fails
     const replayClient = {
       from: jest.fn().mockReturnValue({
-        upsert: jest.fn().mockResolvedValue({ error: { message: 'DB unavailable' } }),
+        upsert: jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: { message: 'DB unavailable' } }),
       }),
     } as any;
     const replayResult = await replayDeadLetterItem(tx.id, { supabaseClient: replayClient });
     expect(replayResult.success).toBe(false);
 
     // After failed replay: fleet snapshot still shows 1 dead-letter item
-    const upsertAfterMock = jest.fn().mockResolvedValue({ error: null });
+    const upsertAfterMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null });
     const clientAfter = { from: jest.fn().mockReturnValue({ upsert: upsertAfterMock }) } as any;
     await reportQueueHealthToServer(clientAfter, 'drv-fail', 'Fail Driver', 'dev-fail');
     const [rowAfter] = upsertAfterMock.mock.calls[0] as any[];
