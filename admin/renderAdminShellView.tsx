@@ -241,16 +241,33 @@ const AdminShellViewRenderer: React.FC<AdminShellViewRendererProps> = ({
           }}
         />
       );
-    case 'driver-machines':
-      return selectedDriverId ? (
+    case 'driver-machines': {
+      const selectedDriver = selectedDriverId
+        ? drivers.find(d => d.id === selectedDriverId)
+        : undefined;
+      if (!selectedDriver) {
+        return (
+          <div className="py-16 text-center text-slate-400 animate-in fade-in">
+            <p className="text-xs font-black uppercase mb-4">No driver selected or driver not found</p>
+            <button
+              onClick={() => onSetView('driver-lookup')}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase hover:bg-indigo-700 transition-colors"
+            >
+              Back to Driver List
+            </button>
+          </div>
+        );
+      }
+      return (
         <DriverMachines
-          driver={drivers.find(d => d.id === selectedDriverId)}
+          driver={selectedDriver}
           locations={locations}
           drivers={drivers}
           onBack={() => onSetView('driver-lookup')}
           onUpdateLocations={(locs) => updateLocations.mutate(locs)}
         />
-      ) : null;
+      );
+    }
     default:
       return null;
   }
