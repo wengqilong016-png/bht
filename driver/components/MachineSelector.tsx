@@ -310,7 +310,8 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
                     <div className="flex justify-between items-start mb-2">
                       <div className="min-w-0 mr-2">
                         <span className="text-slate-900 text-sm font-black leading-tight uppercase tracking-wide">{loc.machineId || '—'}</span>
-                        <p className="text-[9px] font-bold text-slate-400 leading-tight mt-0.5 truncate">{loc.name}</p>
+                        {loc.area && <p className="text-[9px] font-bold text-slate-400 uppercase leading-tight mt-0.5">{loc.area}</p>}
+                        <p className="text-[9px] font-bold text-slate-500 leading-tight mt-0.5 truncate">{loc.name}</p>
                       </div>
                       {isLocked ? (
                         <span className="text-[8px] font-black text-rose-500 bg-rose-50 px-2 py-0.5 rounded-tag uppercase">{t.resetLocked}</span>
