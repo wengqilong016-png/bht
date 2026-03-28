@@ -9,7 +9,6 @@ const Dashboard = lazy(() => import('../components/Dashboard'));
 const DriverCollectionFlow = lazy(() => import('../driver/pages/DriverCollectionFlow'));
 const TransactionHistory = lazy(() => import('../components/TransactionHistory'));
 const DebtManager = lazy(() => import('../components/DebtManager'));
-const LocationChangeRequestForm = lazy(() => import('../driver/components/LocationChangeRequestForm'));
 const DriverStatusPanel = lazy(() => import('../driver/components/DriverStatusPanel'));
 
 interface DriverShellViewRendererProps {
@@ -115,15 +114,6 @@ const DriverShellViewRenderer: React.FC<DriverShellViewRendererProps> = ({
       );
     case 'history':
       return <TransactionHistory transactions={filteredTransactions} locations={locations} onAnalyze={() => {}} />;
-    case 'requests':
-      return (
-        <LocationChangeRequestForm
-          locations={filteredLocations}
-          currentUser={currentUser}
-          lang={lang}
-          isOnline={isOnline}
-        />
-      );
     case 'status':
       return (
         <DriverStatusPanel

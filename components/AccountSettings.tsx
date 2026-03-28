@@ -3,10 +3,13 @@ import React, { useState } from 'react';
 import { X, Lock, Mail, Phone, CheckCircle, AlertCircle, Loader2, KeyRound, Clock, WifiOff } from 'lucide-react';
 import { User as UserType, TRANSLATIONS, isLikelyEmail } from '../types';
 import { supabase } from '../supabaseClient';
-import { changeUserPassword, updateUserEmail } from '../services/authService';
-import { isPasswordStrong } from '../utils/passwordPolicy';
+import { updateUserEmail } from '../services/authService';
 import { useFormStatus } from '../hooks/useFormStatus';
 import { StatusIcon as StatusIconComponent } from './common/StatusIcon';
+
+const isPasswordStrong = (password: string): boolean => {
+  return /[A-Z]/.test(password) && /[0-9]/.test(password) && password.length >= 8;
+};
 
 interface AccountSettingsProps {
   currentUser: UserType;
@@ -53,13 +56,17 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
       return;
     }
     pwdForm.setLoading();
-    const result = await changeUserPassword(newPwd);
-    if (result.success) {
+    if (!supabase) {
+      pwdForm.setError(t.updateError);
+      return;
+    }
+    const { error: pwdError } = await supabase.auth.updateUser({ password: newPwd });
+    if (!pwdError) {
       pwdForm.setSuccess(t.updateSuccess);
       setNewPwd('');
       setConfirmPwd('');
     } else {
-      pwdForm.setError(result.error ?? t.updateError);
+      pwdForm.setError(pwdError.message ?? t.updateError);
     }
   };
 
