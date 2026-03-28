@@ -20,7 +20,6 @@ import { calculateAdminApprovalBadge } from './adminShellViewState';
 import AdminShellViewRenderer from './renderAdminShellView';
 
 const AccountSettings = lazy(() => import('../components/AccountSettings'));
-const PwaInstallPrompt = lazy(() => import('../components/PwaInstallPrompt'));
 
 const AppAdminShell: React.FC = () => {
   const { currentUser, lang, setLang, handleLogout, activeDriverId } = useAuth();
@@ -49,10 +48,6 @@ const AppAdminShell: React.FC = () => {
   } = useMutations();
   const [view, setView] = useState<AdminView>('dashboard');
   const [showAccountSettings, setShowAccountSettings] = useState(false);
-  const [aiContextId, setAiContextId] = useState<string>('');
-  const [auditCaseFilter, setAuditCaseFilter] = useState<string>('');
-  const [selectedCaseId, setSelectedCaseId] = useState<string>('');
-  const [selectedDriverId, setSelectedDriverId] = useState<string>('');
 
   const syncStatus = useSyncStatus({ syncMutation: syncOfflineData, isOnline, unsyncedCount, userId: currentUser.id });
   const totalApprovalBadge = calculateAdminApprovalBadge(transactions, dailySettlements);
@@ -118,9 +113,6 @@ const AppAdminShell: React.FC = () => {
 
         <div className="p-3 border-t border-slate-200 space-y-2">
           <SyncStatusPill syncStatus={syncStatus} lang={lang} variant="light" fullWidth />
-          <Suspense fallback={null}>
-            <PwaInstallPrompt variant="light" lang={lang} />
-          </Suspense>
           <div className="flex items-center gap-2 px-2">
             <div className="w-7 h-7 rounded-subcard bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-xs flex-shrink-0 shadow-silicone-sm">
               {currentUser.name.charAt(0).toUpperCase()}
@@ -199,16 +191,7 @@ const AppAdminShell: React.FC = () => {
                 filteredSettlements={filteredSettlements}
                 aiLogs={aiLogs}
                 unsyncedCount={unsyncedCount}
-                aiContextId={aiContextId}
-                auditCaseFilter={auditCaseFilter}
-                selectedCaseId={selectedCaseId}
-                selectedDriverId={selectedDriverId}
                 onSetView={setView}
-                onClearAiContext={() => setAiContextId('')}
-                onConsumeAuditCaseFilter={() => setAuditCaseFilter('')}
-                onSelectCaseId={setSelectedCaseId}
-                onSelectDriverId={setSelectedDriverId}
-                onSetAuditCaseFilter={setAuditCaseFilter}
                 syncOfflineData={syncOfflineData}
                 updateDrivers={updateDrivers}
                 updateLocations={updateLocations}

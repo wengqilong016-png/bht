@@ -29,7 +29,7 @@ describe('shell view state helpers', () => {
 
   it('isDashboardBackedAdminView returns false for non-dashboard-backed views', () => {
     expect(isDashboardBackedAdminView('team')).toBe(false);
-    expect(isDashboardBackedAdminView('support-cases')).toBe(false);
+    expect(isDashboardBackedAdminView('history')).toBe(false);
   });
 
   it('resolveCurrentDriver returns active driver when activeDriverId is matched', () => {

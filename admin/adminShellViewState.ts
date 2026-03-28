@@ -21,5 +21,5 @@ export function calculateAdminApprovalBadge(
 }
 
 export function isDashboardBackedAdminView(view: AdminView): boolean {
-  return ['dashboard', 'settlement', 'map', 'sites', 'ai'].includes(view);
+  return ['dashboard', 'settlement', 'map', 'sites'].includes(view);
 }

@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react';
 import { supabase, checkDbHealth } from '../supabaseClient';
 import { localDB } from '../services/localDB';
 import { CONSTANTS, Location, Driver, Transaction, DailySettlement, AILog } from '../types';
-import { isAuthDisabled } from '../utils/authMode';
 import { getSettlementQueryScope, getTransactionQueryScope, SupabaseDataUserRole } from './supabaseRoleScope';
 
 // Helper to sanitize drivers
@@ -57,7 +56,7 @@ export function useSupabaseData(
   // would get 401/403 errors. Excluding that mode prevents the noise.
   // When userRole is null/undefined (pre-auth or after logout) the queries
   // fall through to localDB so the 401 flood caused by expired tokens is avoided.
-  const isAuthenticated = !isAuthDisabled() && !!userRole;
+  const isAuthenticated = !!userRole;
 
   // 1. Health check - High priority
   const { data: isOnline = false } = useQuery({

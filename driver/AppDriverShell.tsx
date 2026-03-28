@@ -14,7 +14,6 @@ import { DRIVER_NAV_ITEMS, type DriverView } from './driverShellConfig';
 import DriverShellViewRenderer from './renderDriverShellView';
 
 const AccountSettings = lazy(() => import('../components/AccountSettings'));
-const PwaInstallPrompt = lazy(() => import('../components/PwaInstallPrompt'));
 
 const AppDriverShell: React.FC = () => {
   const { currentUser, lang, setLang, handleLogout, activeDriverId } = useAuth();
@@ -50,9 +49,6 @@ const AppDriverShell: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <SyncStatusPill syncStatus={syncStatus} lang={lang} variant="dark" />
-              <Suspense fallback={null}>
-                <PwaInstallPrompt variant="dark" lang={lang} />
-              </Suspense>
               <button onClick={() => setLang(lang === 'zh' ? 'sw' : 'zh')} className="p-2 rounded-subcard bg-white/10 text-white hover:bg-white/20"><Globe size={15}/></button>
               <button onClick={() => setShowAccountSettings(true)} className="p-2 rounded-subcard bg-white/10 text-white hover:bg-white/20"><Settings size={15}/></button>
               <button onClick={handleLogout} className="p-2 rounded-subcard bg-rose-500/20 text-rose-400"><LogOut size={15}/></button>
