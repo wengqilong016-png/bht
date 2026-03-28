@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Analytics } from '@vercel/analytics/react';
 
 import { useSupabaseData } from './hooks/useSupabaseData';
 import { useSupabaseMutations } from './hooks/useSupabaseMutations';
@@ -12,9 +11,6 @@ import { NotificationProvider } from './notifications/NotificationProvider';
 import AppRouterShell from './shared/AppRouterShell';
 import { AuthProvider, DataProvider, MutationProvider } from './contexts';
 import Login from './components/Login';
-import LocalDriverPicker from './components/LocalDriverPicker';
-import ForcePasswordChange from './components/ForcePasswordChange';
-import { isAuthDisabled } from './utils/authMode';
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: string }> {
   constructor(props: { children: React.ReactNode }) {
@@ -136,19 +132,7 @@ const App: React.FC = () => {
   }
 
   if (!currentUser) {
-    if (isAuthDisabled()) {
-      return <LocalDriverPicker onConfirm={handleLogin} lang="sw" />;
-    }
     return <Login onLogin={handleLogin} lang={lang} onSetLang={setLang} />;
-  }
-
-  if (currentUser.mustChangePassword) {
-    return (
-      <ForcePasswordChange
-        lang={lang}
-        onSuccess={() => handleLogin({ ...currentUser, mustChangePassword: false })}
-      />
-    );
   }
 
   return (
@@ -160,7 +144,6 @@ const App: React.FC = () => {
           </MutationProvider>
         </DataProvider>
       </AuthProvider>
-      <Analytics />
     </NotificationProvider>
   );
 };

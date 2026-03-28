@@ -6,7 +6,8 @@ import {
 } from 'lucide-react';
 import { Location } from '../../types';
 import InputField from './InputField';
-import { MIN_PASSWORD_LENGTH } from '../../utils/passwordPolicy';
+
+const MIN_PASSWORD_LENGTH = 8;
 
 export interface DriverFormState {
   name: string;
