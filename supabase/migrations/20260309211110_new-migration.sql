@@ -40,8 +40,7 @@ ALTER TABLE public.daily_settlements ADD COLUMN IF NOT EXISTS "hasCheckedOut" BO
 -- ─── Indexes ──────────────────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_transactions_driver_timestamp
   ON public.transactions ("driverId", "timestamp" ASC);
-CREATE INDEX IF NOT EXISTS idx_transactions_driver_date
-  ON public.transactions ("driverId", ("timestamp"::date));
+-- TIMESTAMPTZ::date cast is not IMMUTABLE in PG17 — omitted.
 CREATE INDEX IF NOT EXISTS idx_daily_settlements_driver_date
   ON public.daily_settlements ("driverId", "date");
 

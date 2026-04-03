@@ -19,9 +19,14 @@
 
 -- ── 1. CHECK constraint on alert_type ─────────────────────────────────────────
 
-ALTER TABLE public.health_alerts
-    ADD CONSTRAINT IF NOT EXISTS health_alerts_alert_type_check
+DO $$
+BEGIN
+  ALTER TABLE public.health_alerts
+    ADD CONSTRAINT health_alerts_alert_type_check
     CHECK (alert_type IN ('dead_letter_items', 'stale_snapshot', 'high_retry_waiting', 'high_pending'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END;
+$$;
 
 -- ── 2. Per-device index ────────────────────────────────────────────────────────
 

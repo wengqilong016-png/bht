@@ -160,8 +160,9 @@ CREATE INDEX IF NOT EXISTS idx_transactions_locationId ON public.transactions("l
 CREATE INDEX IF NOT EXISTS idx_transactions_driverId ON public.transactions("driverId");
 CREATE INDEX IF NOT EXISTS idx_transactions_driver_timestamp
   ON public.transactions ("driverId", "timestamp" ASC);
-CREATE INDEX IF NOT EXISTS idx_transactions_driver_date
-  ON public.transactions ("driverId", ("timestamp"::date));
+-- NOTE: TIMESTAMPTZ::date cast is not IMMUTABLE in PG17 (timezone-dependent),
+-- so the per-date expression index is intentionally omitted.
+-- Use idx_transactions_driver_timestamp with date-range predicates instead.
 CREATE INDEX IF NOT EXISTS idx_daily_settlements_driver_date
   ON public.daily_settlements ("driverId", "date");
 

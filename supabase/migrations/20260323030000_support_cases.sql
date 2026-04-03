@@ -52,7 +52,7 @@ BEGIN
             USING (
                 EXISTS (
                     SELECT 1 FROM public.profiles
-                    WHERE profiles.id   = auth.uid()
+                    WHERE profiles.auth_user_id = auth.uid()
                       AND profiles.role = 'admin'
                 )
             );
@@ -73,7 +73,7 @@ BEGIN
             WITH CHECK (
                 EXISTS (
                     SELECT 1 FROM public.profiles
-                    WHERE profiles.id   = auth.uid()
+                    WHERE profiles.auth_user_id = auth.uid()
                       AND profiles.role = 'admin'
                 )
             );
@@ -94,7 +94,7 @@ BEGIN
             USING (
                 EXISTS (
                     SELECT 1 FROM public.profiles
-                    WHERE profiles.id   = auth.uid()
+                    WHERE profiles.auth_user_id = auth.uid()
                       AND profiles.role = 'admin'
                 )
             );

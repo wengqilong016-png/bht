@@ -56,7 +56,7 @@ $$;
 
 DROP TRIGGER IF EXISTS trigger_on_transaction_anomaly ON public.transactions;
 CREATE TRIGGER trigger_on_transaction_anomaly
-AFTER INSERT OR UPDATE ON public.transactions
+AFTER UPDATE ON public.transactions
 FOR EACH ROW
 WHEN (NEW."isAnomaly" IS TRUE AND OLD."isAnomaly" IS DISTINCT FROM TRUE)
 EXECUTE FUNCTION public.on_transaction_anomaly();

@@ -100,7 +100,7 @@ CREATE POLICY "drivers_update"
   );
 
 -- 保护工资与债务等敏感字段：仅管理员（非 authenticated 普通用户）可更新。
-REVOKE UPDATE (baseSalary, commissionRate, initialDebt, remainingDebt)
+REVOKE UPDATE ("baseSalary", "commissionRate", "initialDebt", "remainingDebt")
   ON public.drivers FROM authenticated;
 CREATE POLICY "drivers_delete"
   ON public.drivers FOR DELETE
