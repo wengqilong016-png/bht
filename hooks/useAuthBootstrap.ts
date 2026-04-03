@@ -5,6 +5,7 @@ import {
   restoreCurrentUserFromSession,
   signOutCurrentUser,
 } from '../services/authService';
+import { writeCachedUser, readCachedUser, clearCachedUser } from './useAuthPersistence';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,53 +49,6 @@ export const authReducer = (state: AuthState, action: AuthAction): AuthState => 
 
 /** Reduced from 20 s → 8 s for faster fallback on slow networks. */
 const AUTH_INIT_TIMEOUT_MS = 8000;
-
-/** localStorage key for the cached user profile (fast-path restore). */
-const CACHED_USER_KEY = 'bht-cached-user';
-
-// ─── localStorage helpers ─────────────────────────────────────────────────────
-
-function writeCachedUser(user: User): void {
-  try {
-    localStorage.setItem(CACHED_USER_KEY, JSON.stringify(user));
-  } catch {
-    // localStorage may be unavailable in some environments — fail silently.
-  }
-}
-
-function isValidCachedUser(obj: unknown): obj is User {
-  if (!obj || typeof obj !== 'object') return false;
-  const u = obj as Record<string, unknown>;
-  return (
-    typeof u.id === 'string' && u.id.length > 0 &&
-    typeof u.username === 'string' &&
-    (u.role === 'admin' || u.role === 'driver') &&
-    typeof u.name === 'string'
-  );
-}
-
-function readCachedUser(): User | null {
-  try {
-    const raw = localStorage.getItem(CACHED_USER_KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    if (!isValidCachedUser(parsed)) {
-      clearCachedUser();
-      return null;
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-function clearCachedUser(): void {
-  try {
-    localStorage.removeItem(CACHED_USER_KEY);
-  } catch {
-    // fail silently
-  }
-}
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 

@@ -3,18 +3,17 @@ import {
   User, Truck, Banknote, Percent, Clock,
   CheckCircle, XCircle, TrendingUp, AlertCircle
 } from 'lucide-react';
-import { Driver, Location, Transaction, TRANSLATIONS } from '../../types';
+import { TRANSLATIONS } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { useAppData } from '../../contexts/DataContext';
 
-interface DriverStatusPanelProps {
-  driver: Driver | undefined;
-  locations: Location[];
-  transactions: Transaction[];
-  lang: 'zh' | 'sw';
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface DriverStatusPanelProps {}
 
-const DriverStatusPanel: React.FC<DriverStatusPanelProps> = ({
-  driver, locations, transactions, lang
-}) => {
+const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
+  const { lang, activeDriverId } = useAuth();
+  const { drivers, locations, filteredTransactions: transactions } = useAppData();
+  const driver = drivers.find(d => d.id === activeDriverId);
   const t = TRANSLATIONS[lang];
 
   if (!driver) {

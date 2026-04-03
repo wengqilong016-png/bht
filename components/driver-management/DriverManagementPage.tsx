@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Driver, Location, Transaction, DailySettlement } from '../../types';
+import { Driver, Location } from '../../types';
 import { createDriverAccount, persistDriverBusinessFields } from '../../services/driverManagementService';
 import { useDriverManagement } from './hooks/useDriverManagement';
 import DriverSalaryModal from './DriverSalaryModal';
@@ -9,16 +9,11 @@ import DriverGrid from './DriverGrid';
 import DriverAnalytics from './DriverAnalytics';
 import DriverForm, { DriverFormState } from './DriverForm';
 import { DriverWithStats } from './hooks/useDriverManagement';
+import { useAppData } from '../../contexts/DataContext';
+import { useMutations } from '../../contexts/MutationContext';
 
-interface DriverManagementProps {
-  drivers: Driver[];
-  locations?: Location[];
-  transactions: Transaction[];
-  dailySettlements?: DailySettlement[];
-  onUpdateDrivers: (drivers: Driver[]) => void;
-  onUpdateLocations?: (locations: Location[]) => void;
-  onDeleteDrivers?: (ids: string[]) => void;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface DriverManagementProps {}
 
 const DEFAULT_FORM: DriverFormState = {
   name: '', username: '', email: '', password: '', phone: '',
@@ -27,9 +22,13 @@ const DEFAULT_FORM: DriverFormState = {
   status: 'active'
 };
 
-const DriverManagementPage: React.FC<DriverManagementProps> = ({
-  drivers, locations = [], transactions, dailySettlements = [], onUpdateDrivers, onUpdateLocations, onDeleteDrivers
-}) => {
+const DriverManagementPage: React.FC<DriverManagementProps> = () => {
+  const { filteredDrivers: drivers, locations, filteredTransactions: transactions, filteredSettlements: dailySettlements } = useAppData();
+  const { updateDrivers, updateLocations, deleteDrivers } = useMutations();
+
+  const onUpdateDrivers = (driversToSave: Driver[]) => updateDrivers.mutateAsync(driversToSave).then(() => {});
+  const onUpdateLocations = (locationsToSave: Location[]) => updateLocations.mutate(locationsToSave);
+  const onDeleteDrivers = (ids: string[]) => deleteDrivers.mutate(ids);
   const [viewMode, setViewMode] = useState<'grid' | 'analytics'>('grid');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

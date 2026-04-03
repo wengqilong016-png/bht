@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { MapPin, Radio, Search, Pencil, ChevronRight, Navigation } from 'lucide-react';
 import { Driver, Location, Transaction, TRANSLATIONS } from '../../types';
-import LiveMap from '../LiveMap';
+import { MapErrorBoundary, MapLoadingFallback } from '../MapErrorBoundary';
+
+const LiveMap = lazy(() => import('../LiveMap'));
 
 interface TrackingDriverCard {
   driver: Driver;
@@ -310,7 +312,11 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
           <span className="text-[10px] font-black text-slate-400 uppercase hidden group-open:block">Collapse ▲</span>
         </summary>
         <div className="mt-4">
-          <LiveMap drivers={trackingDriverCards.map(item => item.driver)} locations={trackingVisibleLocations} transactions={trackingVisibleTransactions} />
+          <MapErrorBoundary>
+            <Suspense fallback={<MapLoadingFallback />}>
+              <LiveMap drivers={trackingDriverCards.map(item => item.driver)} locations={trackingVisibleLocations} transactions={trackingVisibleTransactions} />
+            </Suspense>
+          </MapErrorBoundary>
         </div>
       </details>
     </div>

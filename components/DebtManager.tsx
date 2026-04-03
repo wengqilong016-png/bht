@@ -6,18 +6,22 @@ import {
   Loader2, CheckCircle2, AlertCircle,
   CreditCard, PieChart, Check, Pencil, Save
 } from 'lucide-react';
-import { Driver, Location, User as UserType, TRANSLATIONS } from '../types';
+import { Driver, Location, TRANSLATIONS } from '../types';
+import { useAuth } from '../contexts/AuthContext';
+import { useAppData } from '../contexts/DataContext';
+import { useMutations } from '../contexts/MutationContext';
 
-interface DebtManagerProps {
-  drivers: Driver[];
-  locations: Location[];
-  currentUser: UserType;
-  onUpdateLocations?: (locations: Location[]) => void;
-  onUpdateDrivers?: (drivers: Driver[]) => void;
-  lang: 'zh' | 'sw';
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface DebtManagerProps {}
 
-const DebtManager: React.FC<DebtManagerProps> = ({ drivers, locations, currentUser, onUpdateLocations, onUpdateDrivers, lang }) => {
+const DebtManager: React.FC<DebtManagerProps> = () => {
+  const { currentUser, lang } = useAuth();
+  const { filteredDrivers: drivers, filteredLocations: locations } = useAppData();
+  const { updateLocations, updateDrivers } = useMutations();
+
+  const onUpdateLocations = (locationsToSave: Location[]) => updateLocations.mutate(locationsToSave);
+  const onUpdateDrivers = (driversToSave: Driver[]) => updateDrivers.mutateAsync(driversToSave).then(() => {});
+
   const t = TRANSLATIONS[lang];
   const activeDriverId = currentUser.driverId ?? currentUser.id;
   

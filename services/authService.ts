@@ -1,4 +1,5 @@
 import { User } from '../types';
+import { PGRST_NO_ROWS } from '../types/constants';
 import { supabase } from '../supabaseClient';
 
 type UserProfileRow = {
@@ -17,12 +18,11 @@ export type FetchCurrentUserProfileResult =
   | { success: false; error: 'Supabase not configured' | 'Profile not found' | 'Invalid user role' | 'Profile fetch failed' };
 
 /**
- * PostgREST error code returned by `.single()` when no rows match.
+ * PostgREST error code is now centralised in types/constants.ts.
  * Any other error code indicates a network or server-side failure — we must
  * NOT treat those as "profile not found" so that we avoid wiping the
  * Supabase session on transient errors.
  */
-const PGRST_NO_ROWS = 'PGRST116';
 
 export const fetchCurrentUserProfile = async (
   authUserId: string,

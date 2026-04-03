@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Location, Driver, Transaction, CONSTANTS, AILog } from '../../types';
+import { Location, Transaction, CONSTANTS } from '../../types';
 import {
   calculateCollectionFinanceLocal,
   calculateCollectionFinancePreview,
@@ -14,23 +14,32 @@ import SubmitReview from '../components/SubmitReview';
 import ResetRequest from '../components/ResetRequest';
 import PayoutRequest from '../components/PayoutRequest';
 import MachineRegistrationForm from '../../components/MachineRegistrationForm';
+import { useAuth } from '../../contexts/AuthContext';
+import { useAppData } from '../../contexts/DataContext';
+import { useMutations } from '../../contexts/MutationContext';
+import { resolveCurrentDriver } from '../driverShellViewState';
 
 interface DriverCollectionFlowProps {
-  locations: Location[];
-  currentDriver: Driver;
-  onSubmit: (tx: Transaction) => void;
-  lang: 'zh' | 'sw';
-  onLogAI: (log: AILog) => void;
   onRegisterMachine?: (location: Location) => void;
-  isOnline?: boolean;
-  allTransactions?: Transaction[];
 }
 
 type FlowStep = 'selection' | 'capture' | 'amounts' | 'confirm';
 
 const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
-  locations, currentDriver, onSubmit, lang, onLogAI, onRegisterMachine, isOnline = true, allTransactions = [],
+  onRegisterMachine,
 }) => {
+  const { lang, activeDriverId } = useAuth();
+  const { filteredLocations, filteredTransactions, isOnline, drivers } = useAppData();
+  const { logAI, syncOfflineData } = useMutations();
+
+  const locations = filteredLocations;
+  const allTransactions = filteredTransactions;
+  const currentDriver = resolveCurrentDriver(drivers, activeDriverId);
+
+  const onLogAI = (log: Parameters<typeof logAI.mutate>[0]) => logAI.mutate(log);
+  const onSubmit = (_tx: Transaction) => syncOfflineData.mutate();
+
+  if (!currentDriver) return null;
   const [step, setStep] = useState<FlowStep>('selection');
   const { draft, updateDraft, resetDraft } = useCollectionDraft();
 

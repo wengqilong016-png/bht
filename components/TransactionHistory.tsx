@@ -1,15 +1,15 @@
 
 import React, { useState, useMemo } from 'react';
 import { CheckCircle2, Filter, ChevronDown, RefreshCw, List, Map as MapIcon, Navigation, WifiOff, AlertTriangle, Clock, Globe, Calculator, MapPinned, Search, BrainCircuit, ShieldAlert, Target, Sparkles } from 'lucide-react';
-import { Transaction, Location, getDistance } from '../types';
+import { Transaction, getDistance } from '../types';
+import { useAppData } from '../contexts/DataContext';
 
 interface TransactionHistoryProps {
-  transactions: Transaction[];
-  locations: Location[];
-  onAnalyze: (txId: string) => void;
+  onAnalyze?: (txId: string) => void;
 }
 
-const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions, locations, onAnalyze }) => {
+const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze = () => {} }) => {
+  const { filteredTransactions: transactions, locations } = useAppData();
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
