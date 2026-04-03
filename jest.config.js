@@ -8,13 +8,7 @@ export default {
     '^@/(.*)$': '<rootDir>/$1',
   },
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: {
-        jsx: 'react-jsx',
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
-      },
-    }],
+    '^.+\\.tsx?$': ['<rootDir>/jest.vite-transform.cjs'],
   },
   transformIgnorePatterns: [
     'node_modules/(?!(@testing-library/react|@testing-library/jest-dom|@testing-library/user-event|@tanstack/react-query|leaflet|react-leaflet|@vercel/analytics)/)'
