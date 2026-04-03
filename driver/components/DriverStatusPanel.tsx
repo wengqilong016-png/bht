@@ -37,7 +37,7 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
     .reduce((sum, tx) => sum + tx.revenue, 0);
 
   const debtPct = driver.initialDebt > 0
-    ? Math.round(((driver.initialDebt - driver.remainingDebt) / driver.initialDebt) * 100)
+    ? Math.round(((driver.initialDebt - (driver.remainingDebt ?? 0)) / driver.initialDebt) * 100)
     : 100;
 
   const lastActiveDisplay = driver.lastActive
@@ -107,7 +107,7 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
           </p>
           <div className="flex justify-between items-center mb-2">
             <span className="text-[9px] font-bold text-slate-500 uppercase">{t.remainingDebt}</span>
-            <span className="text-sm font-black text-rose-600">TZS {driver.remainingDebt.toLocaleString()}</span>
+            <span className="text-sm font-black text-rose-600">TZS {(driver.remainingDebt ?? 0).toLocaleString()}</span>
           </div>
           <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
             <div
@@ -117,7 +117,7 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
           </div>
           <div className="flex justify-between text-[8px] font-bold text-slate-400 uppercase">
             <span>{t.progress}: {debtPct}%</span>
-            <span>{t.initialDebt}: TZS {driver.initialDebt.toLocaleString()}</span>
+            <span>{t.initialDebt}: TZS {(driver.initialDebt ?? 0).toLocaleString()}</span>
           </div>
         </div>
       )}
