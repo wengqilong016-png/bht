@@ -89,16 +89,13 @@ describe('localDB.set()', () => {
   it('does not throw when both IDB and localStorage fail', async () => {
     mockIdbSet.mockRejectedValue(new Error('IDB write error'));
     // Make localStorage.setItem throw
-    const originalSetItem = localStorage.setItem.bind(localStorage);
-    jest.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+    const setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
       throw new Error('Storage quota exceeded');
     });
 
     await expect(localDB.set('key', { x: 1 })).resolves.toBeUndefined();
 
-    jest.spyOn(Storage.prototype, 'setItem').mockRestore();
-    // Restore
-    Storage.prototype.setItem = originalSetItem;
+    setItemSpy.mockRestore();
   });
 });
 
