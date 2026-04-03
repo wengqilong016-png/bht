@@ -1,11 +1,13 @@
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Driver, Location, Transaction } from '../types';
 import { Navigation, Clock, ShieldCheck, Route, Map as MapIcon, Satellite } from 'lucide-react';
-import RouteAuditMap from './RouteAuditMap';
+import { MapErrorBoundary, MapLoadingFallback } from './MapErrorBoundary';
+
+const RouteAuditMap = lazy(() => import('./RouteAuditMap'));
 
 // Use plain SVG strings to avoid react-dom/server renderToString at module level
 const truckSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg>`;
@@ -55,6 +57,7 @@ const LiveMap: React.FC<LiveMapProps> = ({ drivers, locations, transactions }) =
   const defaultCenter: [number, number] = [-6.7924, 39.2083];
   const activeDrivers = useMemo(() => drivers.filter(d => d.currentGps), [drivers]);
   const mappedLocations = useMemo(() => locations.filter(l => l.coords), [locations]);
+  const isUsingDefaultCenter = activeDrivers.length === 0;
 
   const trajectories = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -93,6 +96,13 @@ const LiveMap: React.FC<LiveMapProps> = ({ drivers, locations, transactions }) =
 
   return (
     <div className="space-y-6">
+      {/* GPS unavailable banner */}
+      {isUsingDefaultCenter && (
+        <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">
+          <span>⚠️</span>
+          <span>GPS 信号不可用，显示默认位置 · GPS unavailable, showing default location</span>
+        </div>
+      )}
       {/* 顶部综合控制栏 */}
       <div className="bg-slate-900 rounded-[32px] p-4 flex flex-wrap items-center justify-between gap-4 border border-white/10 shadow-xl">
          <div className="flex items-center gap-4">
@@ -138,12 +148,16 @@ const LiveMap: React.FC<LiveMapProps> = ({ drivers, locations, transactions }) =
 
       {auditDriverId ? (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <RouteAuditMap 
-            driver={drivers.find(d => d.id === auditDriverId)!}
-            locations={locations}
-            transactions={transactions}
-            date={auditDate}
-          />
+          <MapErrorBoundary>
+            <Suspense fallback={<MapLoadingFallback />}>
+              <RouteAuditMap 
+                driver={drivers.find(d => d.id === auditDriverId)!}
+                locations={locations}
+                transactions={transactions}
+                date={auditDate}
+              />
+            </Suspense>
+          </MapErrorBoundary>
         </div>
       ) : (
         <div className="w-full h-[650px] rounded-[40px] overflow-hidden border-4 border-white shadow-2xl relative">

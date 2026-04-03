@@ -179,27 +179,7 @@ const AppAdminShell: React.FC = () => {
             <Suspense fallback={<ShellLoadingFallback />}>
               <AdminShellViewRenderer
                 view={view}
-                currentUser={currentUser}
-                lang={lang}
-                activeDriverId={activeDriverId}
-                isOnline={isOnline}
-                locations={locations}
-                drivers={drivers}
-                filteredLocations={filteredLocations}
-                filteredDrivers={filteredDrivers}
-                filteredTransactions={filteredTransactions}
-                filteredSettlements={filteredSettlements}
-                aiLogs={aiLogs}
-                unsyncedCount={unsyncedCount}
                 onSetView={setView}
-                syncOfflineData={syncOfflineData}
-                updateDrivers={updateDrivers}
-                updateLocations={updateLocations}
-                deleteLocations={deleteLocations}
-                deleteDrivers={deleteDrivers}
-                updateTransaction={updateTransaction}
-                saveSettlement={saveSettlement}
-                logAI={logAI}
               />
             </Suspense>
           </div>

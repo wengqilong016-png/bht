@@ -76,25 +76,6 @@ const AppDriverShell: React.FC = () => {
             <Suspense fallback={<ShellLoadingFallback />}>
               <DriverShellViewRenderer
                 view={view}
-                lang={lang}
-                currentUser={currentUser}
-                activeDriverId={activeDriverId}
-                isOnline={isOnline}
-                locations={locations}
-                drivers={drivers}
-                filteredLocations={filteredLocations}
-                filteredDrivers={filteredDrivers}
-                filteredTransactions={filteredTransactions}
-                filteredSettlements={filteredSettlements}
-                aiLogs={aiLogs}
-                unsyncedCount={unsyncedCount}
-                syncOfflineData={syncOfflineData}
-                updateDrivers={updateDrivers}
-                updateLocations={updateLocations}
-                deleteLocations={deleteLocations}
-                updateTransaction={updateTransaction}
-                saveSettlement={saveSettlement}
-                logAI={logAI}
                 onSetView={setView}
               />
             </Suspense>

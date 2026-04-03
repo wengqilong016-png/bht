@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Receipt } from 'lucide-react';
-import { Transaction, Driver, Location, User as UserType, DailySettlement, AILog } from '../../types';
+import { Driver, Location, DailySettlement, Transaction } from '../../types';
 import DriverManagement from '../driver-management';
 import DashboardTabs from './DashboardTabs';
 import OverviewTab from './OverviewTab';
@@ -9,24 +9,11 @@ import SitesTab from './SitesTab';
 import SettlementTab from './SettlementTab';
 import AiLogsTab from './AiLogsTab';
 import { useDashboardData } from './hooks/useDashboardData';
+import { useAuth } from '../../contexts/AuthContext';
+import { useAppData } from '../../contexts/DataContext';
+import { useMutations } from '../../contexts/MutationContext';
 
 export interface DashboardProps {
-  transactions: Transaction[];
-  drivers: Driver[];
-  locations: Location[];
-  dailySettlements: DailySettlement[];
-  aiLogs: AILog[];
-  currentUser: UserType;
-  onUpdateDrivers: (drivers: Driver[]) => Promise<void>;
-  onUpdateLocations: (locations: Location[]) => void;
-  onDeleteLocations?: (ids: string[]) => void;
-  onUpdateTransaction: (txId: string, updates: Partial<Transaction>) => void;
-  onNewTransaction: (tx: Transaction) => void;
-  onSaveSettlement: (settlement: DailySettlement) => void;
-  onSync: () => Promise<void>;
-  isSyncing: boolean;
-  offlineCount: number;
-  lang: 'zh' | 'sw';
   onNavigate?: (view: any) => void;
   initialTab?: 'overview' | 'locations' | 'settlement' | 'team' | 'arrears' | 'ai-logs' | 'tracking';
   hideTabs?: boolean;
@@ -35,26 +22,29 @@ export interface DashboardProps {
 type TabKey = 'overview' | 'locations' | 'settlement' | 'team' | 'arrears' | 'ai-logs' | 'tracking';
 
 const DashboardPage: React.FC<DashboardProps> = React.memo(({
-  transactions,
-  drivers,
-  locations,
-  dailySettlements,
-  aiLogs,
-  currentUser,
-  onUpdateDrivers,
-  onUpdateLocations,
-  onDeleteLocations,
-  onUpdateTransaction,
-  onNewTransaction,
-  onSaveSettlement,
-  onSync,
-  isSyncing,
-  offlineCount,
-  lang,
   onNavigate,
   initialTab,
   hideTabs,
 }) => {
+  const { currentUser, lang } = useAuth();
+  const {
+    filteredTransactions: transactions,
+    filteredDrivers: drivers,
+    filteredLocations: locations,
+    filteredSettlements: dailySettlements,
+    aiLogs,
+    unsyncedCount,
+  } = useAppData();
+  const { updateDrivers, updateLocations, deleteLocations, updateTransaction, saveSettlement, syncOfflineData } = useMutations();
+
+  const onUpdateDrivers = (driversToSave: Driver[]) => updateDrivers.mutateAsync(driversToSave).then(() => {});
+  const onUpdateLocations = (locationsToSave: Location[]) => updateLocations.mutate(locationsToSave);
+  const onDeleteLocations = (ids: string[]) => deleteLocations.mutate(ids);
+  const onUpdateTransaction = (txId: string, updates: Partial<Transaction>) => updateTransaction.mutate({ txId, updates });
+  const onSaveSettlement = (settlement: DailySettlement) => saveSettlement.mutate(settlement);
+  const onSync = async () => syncOfflineData.mutate();
+  const isSyncing = syncOfflineData.isPending;
+  const offlineCount = unsyncedCount;
   const isAdmin = currentUser.role === 'admin';
   const activeDriverId = currentUser.driverId ?? currentUser.id;
   const todayStr = new Date().toISOString().split('T')[0];
@@ -173,7 +163,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
 
       {activeTab === 'team' && isAdmin && (
         <div className="space-y-8 animate-in fade-in">
-          <DriverManagement drivers={drivers} transactions={transactions} onUpdateDrivers={onUpdateDrivers} />
+          <DriverManagement />
           {/* Payroll section merged into fleet tab */}
           <div className="space-y-4 border-t border-slate-100 pt-6">
             <div className="bg-white p-5 rounded-[28px] border border-slate-200 flex items-center gap-3">
