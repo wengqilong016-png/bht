@@ -19,7 +19,7 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
   const { filteredDrivers: drivers, filteredLocations: locations } = useAppData();
   const { updateLocations, updateDrivers } = useMutations();
 
-  const onUpdateLocations = (locationsToSave: Location[]) => updateLocations.mutate(locationsToSave);
+  const onUpdateLocations = (locationsToSave: Location[]) => updateLocations.mutateAsync(locationsToSave);
   const onUpdateDrivers = (driversToSave: Driver[]) => updateDrivers.mutateAsync(driversToSave).then(() => {});
 
   const t = TRANSLATIONS[lang];
@@ -75,7 +75,7 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
     if (onUpdateLocations) {
        const updatedLocations = locations.map(l => {
          if (l.id === locationId) {
-           const newDebt = Math.max(0, l.remainingStartupDebt - amount);
+           const newDebt = Math.max(0, (l.remainingStartupDebt ?? 0) - amount);
            return { ...l, remainingStartupDebt: newDebt };
          }
          return l;
@@ -212,11 +212,11 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
                       {isPulsing && <div className="absolute inset-0 bg-emerald-100/50 animate-pulse"></div>}
                       <div className="relative z-10">
                         <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Balance Due</p>
-                        <p className={`text-lg font-black ${isFullyPaid ? 'text-emerald-600' : 'text-slate-900'}`}>TZS {loc.remainingStartupDebt.toLocaleString()}</p>
+                        <p className={`text-lg font-black ${isFullyPaid ? 'text-emerald-600' : 'text-slate-900'}`}>TZS {(loc.remainingStartupDebt ?? 0).toLocaleString()}</p>
                       </div>
                       <div className="text-right relative z-10">
                          <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">总额</p>
-                         <p className="text-[10px] font-bold text-slate-500">{loc.initialStartupDebt.toLocaleString()}</p>
+                         <p className="text-[10px] font-bold text-slate-500">{(loc.initialStartupDebt ?? 0).toLocaleString()}</p>
                       </div>
                    </div>
                    
@@ -301,9 +301,9 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {displayedDrivers.length > 0 ? displayedDrivers.map(driver => {
-            const recovered = driver.initialDebt - driver.remainingDebt;
-            const progress = driver.initialDebt > 0 ? (recovered / driver.initialDebt) * 100 : 100;
-            const isDebtFree = driver.remainingDebt === 0;
+            const recovered = (driver.initialDebt ?? 0) - (driver.remainingDebt ?? 0);
+            const progress = (driver.initialDebt ?? 0) > 0 ? (recovered / (driver.initialDebt ?? 0)) * 100 : 100;
+            const isDebtFree = (driver.remainingDebt ?? 0) === 0;
             const isEditingThis = editingDriverId === driver.id;
             const isPulsing = successPulse === driver.id;
 
@@ -369,7 +369,7 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
                           {isPulsing && <div className="absolute inset-0 bg-emerald-100/50 animate-pulse"></div>}
                           <div className="relative z-10">
                              <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Current Debt</p>
-                             <p className={`text-lg font-black ${isDebtFree ? 'text-emerald-600' : 'text-slate-900'}`}>TZS {driver.remainingDebt.toLocaleString()}</p>
+                             <p className={`text-lg font-black ${isDebtFree ? 'text-emerald-600' : 'text-slate-900'}`}>TZS {(driver.remainingDebt ?? 0).toLocaleString()}</p>
                           </div>
                           <CreditCard size={16} className="text-slate-200 relative z-10" />
                        </div>
