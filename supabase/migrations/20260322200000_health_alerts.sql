@@ -206,18 +206,24 @@ $$;
 
 -- ── pg_cron scheduling ────────────────────────────────────────────────────────
 --
--- Requires the pg_cron extension (enabled by default on Supabase hosted projects).
--- The job runs every 15 minutes so alerts exist in the database regardless of
--- whether any admin has the HealthAlerts page open.
+-- Requires the pg_cron extension. Wrapped in a DO block so the migration
+-- succeeds gracefully on projects where pg_cron is not yet enabled.
 --
--- Idempotent: unschedule any pre-existing job with this name before re-creating.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    -- Idempotent: remove any pre-existing job before re-creating.
+    PERFORM cron.unschedule(jobid)
+      FROM cron.job
+     WHERE jobname = 'generate-health-alerts';
 
-SELECT cron.unschedule(jobid)
-  FROM cron.job
- WHERE jobname = 'generate-health-alerts';
-
-SELECT cron.schedule(
-    'generate-health-alerts',
-    '*/15 * * * *',
-    'SELECT public.generate_health_alerts()'
-);
+    PERFORM cron.schedule(
+      'generate-health-alerts',
+      '*/15 * * * *',
+      'SELECT public.generate_health_alerts()'
+    );
+  ELSE
+    RAISE NOTICE 'pg_cron not enabled — skipping health-alert cron job. Enable the extension and re-run if scheduling is required.';
+  END IF;
+END;
+$$;
