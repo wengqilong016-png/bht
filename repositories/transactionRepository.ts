@@ -17,7 +17,7 @@ const ADMIN_TX_FIELDS = [
   'photoUrl', 'dataUsageKB', 'aiScore', 'isAnomaly', 'notes', 'isClearance',
   'isSynced', 'reportedStatus', 'paymentStatus', 'type', 'approvalStatus',
   'expenseType', 'expenseCategory', 'expenseStatus', 'expenseDescription',
-  'payoutAmount', 'anomalyFlag',
+  'payoutAmount',
 ].join(', ');
 
 export interface FetchTransactionsOptions {
