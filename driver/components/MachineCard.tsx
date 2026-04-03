@@ -26,7 +26,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
 }) => {
   const { loc, distanceMeters, daysSinceActive, isLocked, isUrgent, isPending } = item;
   const machineShortId = loc.machineId ? loc.machineId.substring(0, 6).toUpperCase() : '---';
-  const isNear9999 = loc.lastScore >= 9000;
+  const isNear9999 = (loc.lastScore ?? 0) >= 9000;
 
   return (
     <div className="bg-white rounded-subcard border border-slate-200 shadow-field hover:shadow-field-md transition-shadow overflow-hidden">
@@ -69,7 +69,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
               <div>
                 <p className="text-[7px] font-black text-slate-400 uppercase">Last</p>
                 <p className={`text-[10px] font-black ${isNear9999 ? 'text-rose-600' : 'text-indigo-600'}`}>
-                  {loc.lastScore.toLocaleString()}
+                  {(loc.lastScore ?? 0).toLocaleString()}
                 </p>
               </div>
               <div>
