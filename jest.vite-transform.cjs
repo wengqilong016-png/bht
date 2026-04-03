@@ -18,20 +18,21 @@ const transformer = new TsJestTransformer({
   },
 });
 
+function preprocessViteEnv(sourceText) {
+  return sourceText
+    .replace(/import\.meta\.env\.VITE_([A-Z0-9_]+)/g, (_match, key) => `process.env.VITE_${key}`)
+    .replace(/import\.meta\.env\.DEV\b/g, "(process.env.NODE_ENV !== 'production')")
+    .replace(/import\.meta\.env\.PROD\b/g, "(process.env.NODE_ENV === 'production')")
+    .replace(/import\.meta\.env\.MODE\b/g, "(process.env.NODE_ENV ?? 'test')");
+}
+
 module.exports = {
   process(sourceText, sourcePath, options) {
-    // Replace `import.meta.env.VITE_*` with `(process.env.VITE_* ?? '')`
-    const preprocessed = sourceText.replace(
-      /import\.meta\.env\.([A-Z0-9_]+)/g,
-      (_match, key) => `(process.env.${key} ?? '')`,
-    );
+    const preprocessed = preprocessViteEnv(sourceText);
     return transformer.process(preprocessed, sourcePath, options);
   },
   getCacheKey(sourceText, sourcePath, options) {
-    const preprocessed = sourceText.replace(
-      /import\.meta\.env\.([A-Z0-9_]+)/g,
-      (_match, key) => `(process.env.${key} ?? '')`,
-    );
+    const preprocessed = preprocessViteEnv(sourceText);
     return transformer.getCacheKey(preprocessed, sourcePath, options);
   },
 };
