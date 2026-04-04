@@ -22,6 +22,8 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
   const [commissionRate, setCommissionRate] = useState((CONSTANTS.DEFAULT_PROFIT_SHARE * 100).toString());
   const [machinePhoto, setMachinePhoto] = useState<string | null>(null);
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
+  const [manualLat, setManualLat] = useState('');
+  const [manualLng, setManualLng] = useState('');
   const [isGpsLoading, setIsGpsLoading] = useState(false);
   
   // Interaction States
@@ -35,7 +37,9 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
     setIsGpsLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => { 
-        setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude }); 
+        setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setManualLat(pos.coords.latitude.toFixed(6));
+        setManualLng(pos.coords.longitude.toFixed(6));
         setIsGpsLoading(false); 
       },
       (err) => { 
@@ -44,6 +48,19 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
+  };
+
+  const applyManualGps = () => {
+    const lat = Number.parseFloat(manualLat);
+    const lng = Number.parseFloat(manualLng);
+    const valid = Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+
+    if (!valid) {
+      alert(lang === 'zh' ? '请输入有效的纬度/经度坐标。' : 'Weka latitude na longitude sahihi.');
+      return;
+    }
+
+    setGps({ lat, lng });
   };
 
   const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,7 +126,9 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
     setInitialScore(''); 
     setStartupDebt(''); 
     setMachinePhoto(null); 
-    setGps(null); 
+    setGps(null);
+    setManualLat('');
+    setManualLng('');
     setCommissionRate('15');
     setIsSuccess(false);
     setLastRegisteredMachine(null);
@@ -254,6 +273,56 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
               {isGpsLoading ? <Loader2 size={18} className="animate-spin" /> : (gps ? <CheckCircle2 size={18} /> : <MapPinned size={18} />)}
               <span className="text-[10px] font-black uppercase">{gps ? 'GPS OK' : 'Get GPS'}</span>
            </button>
+        </div>
+        <div className="bg-slate-50 p-4 rounded-[28px] border border-slate-200 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[9px] font-black text-slate-500 uppercase">
+                {lang === 'zh' ? '手动输入 GPS 坐标' : 'Manual GPS Coordinates'}
+              </p>
+              <p className="text-[8px] font-bold text-slate-400 uppercase">
+                {lang === 'zh' ? '可直接粘贴已有定位数据' : 'Paste existing coordinates directly'}
+              </p>
+            </div>
+            {gps && (
+              <span className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-600 text-[8px] font-black uppercase">
+                {gps.lat.toFixed(6)}, {gps.lng.toFixed(6)}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[8px] font-black text-slate-400 uppercase ml-1">Latitude</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.000001"
+                value={manualLat}
+                onChange={e => setManualLat(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all placeholder:text-slate-300"
+                placeholder="-6.823490"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[8px] font-black text-slate-400 uppercase ml-1">Longitude</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.000001"
+                value={manualLng}
+                onChange={e => setManualLng(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all placeholder:text-slate-300"
+                placeholder="39.269510"
+              />
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={applyManualGps}
+            className="w-full py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl text-[10px] font-black uppercase hover:bg-slate-100 transition-all active:scale-95"
+          >
+            {lang === 'zh' ? '使用手动坐标' : 'Use Manual Coordinates'}
+          </button>
         </div>
 
         {/* Debt / Deposit */}
