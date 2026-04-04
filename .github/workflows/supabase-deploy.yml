@@ -2,7 +2,7 @@
 # merge to main.  Requires three repository secrets:
 #   SUPABASE_ACCESS_TOKEN  – personal access token from supabase.com/account/tokens (must start with sbp_)
 #   SUPABASE_DB_PASSWORD   – database password for the linked project
-#   SUPABASE_PROJECT_ID    – project ref (e.g. yctsiudhicztvppddbvk)
+#   SUPABASE_PROJECT_ID    – project ref (e.g. edohkcvzaisrxunwnlvk)
 
 name: Deploy Supabase Migrations
 
