@@ -162,7 +162,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   };
 
   return (
-    <div className="max-w-md mx-auto py-3 px-3 pb-20 animate-in fade-in space-y-3">
+    <div className="max-w-md mx-auto py-3 px-3 pb-24 animate-in fade-in space-y-3">
       <WizardStepBar current="confirm" lang={lang} />
 
       <div className="flex items-center gap-3">
@@ -184,7 +184,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-2xl p-4 text-white flex justify-between items-center">
+      <div className="bg-slate-900 rounded-2xl px-4 py-3 text-white flex justify-between items-center">
         <div>
           <p className="text-[10px] font-black uppercase opacity-60">{t.net}</p>
           <p className="text-[8px] font-bold opacity-40 uppercase mt-0.5">{t.cashToHandIn}</p>
@@ -197,7 +197,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           { label: t.revenue, value: `TZS ${calculations.revenue.toLocaleString()}`, color: 'text-slate-900' },
           { label: t.retention, value: `− TZS ${calculations.finalRetention.toLocaleString()}`, color: 'text-amber-600' },
           { label: t.expenses, value: `− TZS ${(parseInt(expenses) || 0).toLocaleString()}`, color: 'text-rose-500' },
-          ...(parseInt(tip) > 0 ? [{ label: lang === 'zh' ? '小费支出 Tip' : 'Tip / Gratuity', value: `− TZS ${(parseInt(tip) || 0).toLocaleString()}`, color: 'text-amber-500' }] : []),
+          ...(parseInt(tip) > 0 ? [{ label: lang === 'zh' ? '小费支出' : 'Tip / Gratuity', value: `− TZS ${(parseInt(tip) || 0).toLocaleString()}`, color: 'text-amber-500' }] : []),
           ...(calculations.startupDebtDeduction > 0 || parseInt(startupDebtDeduction) > 0
             ? [{ label: lang === 'zh' ? '商家欠款扣减' : 'Merchant Debt Deduction', value: `− TZS ${calculations.startupDebtDeduction.toLocaleString()}`, color: 'text-indigo-600' }]
             : []),
@@ -213,9 +213,9 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
 
       {photoData && (
         <div className="h-20 rounded-2xl overflow-hidden border border-slate-200 relative">
-          <img src={photoData} className="w-full h-full object-cover grayscale brightness-110 contrast-125" alt="Proof" />
+          <img src={photoData} className="w-full h-full object-cover grayscale brightness-110 contrast-125" alt={t.paymentProof} />
           <div className="absolute top-2 right-2 bg-emerald-500 text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-tag flex items-center gap-1">
-            <CheckCircle2 size={9} /> Photo Attached
+            <CheckCircle2 size={9} /> {t.photoReady}
           </div>
         </div>
       )}
@@ -238,9 +238,11 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
             gpsCoords ? 'text-emerald-700' :
             'text-slate-500'
           }`}>
-            {gpsPermission === 'denied' ? 'GPS denied — open browser settings → allow location' :
-             gpsCoords ? 'GPS location confirmed' :
-             'Acquiring GPS signal...'}
+            {gpsPermission === 'denied'
+              ? t.gpsDenied
+              : gpsCoords
+                ? t.gpsLocked
+                : t.gpsAcquiring}
           </p>
         </div>
         {!gpsCoords && gpsPermission !== 'denied' && (
@@ -270,24 +272,26 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={onBack}
-          className="py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl font-black uppercase text-xs hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
-        >
-          <ArrowRight size={15} className="rotate-180" />
-          {lang === 'zh' ? '返回' : 'Back'}
-        </button>
-        <button
-          onClick={handleSubmit}
-          disabled={isProcessing || !currentScore || isScoreBelowLastReading}
-          className="py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2"
-        >
-          {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-          {submissionState.status === 'submitting' ? t.saving :
-           !gpsCoords && gpsPermission !== 'denied' ? t.acquiringGps :
-           t.confirmSubmit}
-        </button>
+      <div className="sticky bottom-0 z-20 -mx-3 mt-4 border-t border-slate-200 bg-white/95 px-3 pb-2 pt-3 backdrop-blur">
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={onBack}
+            className="py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl font-black uppercase text-xs hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
+          >
+            <ArrowRight size={15} className="rotate-180" />
+            {lang === 'zh' ? '返回上一步' : 'Back'}
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isProcessing || !currentScore || isScoreBelowLastReading}
+            className="py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200/40"
+          >
+            {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+            {submissionState.status === 'submitting' ? t.saving :
+             !gpsCoords && gpsPermission !== 'denied' ? t.acquiringGps :
+             t.confirmSubmit}
+          </button>
+        </div>
       </div>
     </div>
   );

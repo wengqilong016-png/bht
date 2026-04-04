@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { X, Receipt, Wallet, Ban } from 'lucide-react';
 import { persistEvidencePhotoUrl } from '../../services/evidenceStorage';
-import type { MonthlyPayroll } from '../../types';
+import { TRANSLATIONS, type MonthlyPayroll } from '../../types';
 
 type PayrollActionMode = 'create' | 'pay' | 'cancel';
 
@@ -32,21 +32,15 @@ interface PayrollActionModalProps {
   }) => Promise<void>;
 }
 
-const ACTION_COPY: Record<PayrollActionMode, { title: string; icon: React.ReactNode; button: string }> = {
+const ACTION_COPY: Record<PayrollActionMode, { icon: React.ReactNode }> = {
   create: {
-    title: 'Generate Payroll',
     icon: <Receipt size={18} />,
-    button: 'Create Payroll',
   },
   pay: {
-    title: 'Mark Payroll Paid',
     icon: <Wallet size={18} />,
-    button: 'Confirm Payment',
   },
   cancel: {
-    title: 'Cancel Payroll',
     icon: <Ban size={18} />,
-    button: 'Cancel Payroll',
   },
 };
 
@@ -73,6 +67,7 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const t = TRANSLATIONS[lang];
   const [note, setNote] = useState(record?.note || '');
   const [paymentMethod, setPaymentMethod] = useState<MonthlyPayroll['paymentMethod']>(
     record?.paymentMethod || 'bank_transfer',
@@ -91,13 +86,10 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
     (!isPayMode || (!!paymentMethod && !!proofPreview));
 
   const title = useMemo(() => {
-    if (lang === 'zh') {
-      if (mode === 'create') return '生成工资单';
-      if (mode === 'pay') return '登记工资已支付';
-      return '取消工资单';
-    }
-    return copy.title;
-  }, [copy.title, lang, mode]);
+    if (mode === 'create') return t.generatePayroll;
+    if (mode === 'pay') return t.markPaid;
+    return t.cancelPayroll;
+  }, [mode, t]);
 
   const handleFileChange = async (file: File | null) => {
     setProofFile(file);
@@ -163,30 +155,30 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
         <div className="p-6 space-y-5">
           <div className="grid grid-cols-2 gap-3 text-[10px] font-bold text-slate-500 uppercase">
             <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-              <p className="text-slate-400 mb-1">Base Salary</p>
+              <p className="text-slate-400 mb-1">{t.baseSalaryLabel}</p>
               <p className="text-sm font-black text-slate-900">TZS {driver.baseSalary.toLocaleString()}</p>
             </div>
             <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-              <p className="text-slate-400 mb-1">Commission</p>
+              <p className="text-slate-400 mb-1">{t.commissionLabel}</p>
               <p className="text-sm font-black text-slate-900">TZS {summary.commission.toLocaleString()}</p>
             </div>
             <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-              <p className="text-slate-400 mb-1">Loans + Shortage</p>
+              <p className="text-slate-400 mb-1">{t.loansAndShortage}</p>
               <p className="text-sm font-black text-rose-600">TZS {(summary.loans + summary.shortage).toLocaleString()}</p>
             </div>
             <div className="bg-indigo-50 rounded-2xl p-4 border border-indigo-100">
-              <p className="text-indigo-400 mb-1">Net Payroll</p>
+              <p className="text-indigo-400 mb-1">{t.netPayroll}</p>
               <p className="text-sm font-black text-indigo-700">TZS {summary.netPayable.toLocaleString()}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-[10px] font-bold text-slate-400 uppercase">
             <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-              <p className="mb-1">Revenue</p>
+              <p className="mb-1">{t.revenueLabel}</p>
               <p className="text-sm font-black text-slate-900">TZS {summary.totalRevenue.toLocaleString()}</p>
             </div>
             <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-              <p className="mb-1">Collections</p>
+              <p className="mb-1">{t.collectionsLabel}</p>
               <p className="text-sm font-black text-slate-900">{summary.collectionCount}</p>
             </div>
           </div>
@@ -194,7 +186,7 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
           {isPayMode && (
             <div className="space-y-3">
               <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">Payment Method</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">{t.paymentMethod}</label>
                 <select
                   value={paymentMethod || 'bank_transfer'}
                   onChange={event => setPaymentMethod(event.target.value as MonthlyPayroll['paymentMethod'])}
@@ -209,7 +201,7 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
 
               <div>
                 <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">
-                  Payment Proof {requiresProof ? '*' : ''}
+                  {t.paymentProof} {requiresProof ? '*' : ''}
                 </label>
                 <input
                   type="file"
@@ -223,7 +215,7 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
                   </p>
                 )}
                 {proofPreview && (
-                  <img src={proofPreview} alt="Payroll proof" className="mt-3 w-full h-44 object-cover rounded-2xl border border-slate-200" />
+                  <img src={proofPreview} alt={t.paymentProof} className="mt-3 w-full h-44 object-cover rounded-2xl border border-slate-200" />
                 )}
               </div>
             </div>
@@ -231,13 +223,13 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
 
           <div>
             <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">
-              {isCancelMode ? 'Cancel Note' : 'Note'}
+              {isCancelMode ? t.cancelNote : t.notes}
             </label>
             <textarea
               value={note}
               onChange={event => setNote(event.target.value)}
               rows={4}
-              placeholder={lang === 'zh' ? '输入备注...' : 'Add a note...'}
+              placeholder={t.notesPlaceholder}
               className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-indigo-500 resize-none"
             />
           </div>
@@ -248,14 +240,20 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
               disabled={isSubmitting || isUploading}
               className="flex-1 py-3 bg-slate-100 text-slate-500 rounded-2xl font-black uppercase text-xs disabled:opacity-50"
             >
-              {lang === 'zh' ? '关闭' : 'Close'}
+              {t.close}
             </button>
             <button
               onClick={handleSubmit}
               disabled={!canSubmit}
               className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs disabled:opacity-50"
             >
-              {isSubmitting || isUploading ? (lang === 'zh' ? '处理中...' : 'Processing...') : copy.button}
+              {isSubmitting || isUploading
+                ? t.processingAction
+                : mode === 'create'
+                  ? t.createPayroll
+                  : mode === 'pay'
+                    ? t.confirmPayment
+                    : t.cancelPayroll}
             </button>
           </div>
         </div>

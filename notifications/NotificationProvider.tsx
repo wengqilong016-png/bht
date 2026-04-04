@@ -162,12 +162,12 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       {/* Floating bell button */}
       <div
         ref={panelRef}
-        className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end gap-2"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] right-4 z-[9999] flex flex-col items-end gap-2 md:bottom-6 md:right-6"
         style={{ pointerEvents: 'auto' }}
       >
         {/* Notification panel */}
         {panelOpen && (
-          <div className="w-80 max-h-[420px] bg-[#1e2235] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+          <div className="w-[min(22rem,calc(100vw-2rem))] max-h-[min(24rem,55vh)] bg-slate-950/95 border border-cyan-400/15 rounded-2xl shadow-2xl shadow-slate-950/40 backdrop-blur flex flex-col overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
               <span className="text-sm font-bold text-white">通知中心</span>
@@ -234,7 +234,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
             setPanelOpen(opening);
             if (opening && unreadCount > 0) markAllRead();
           }}
-          className="w-12 h-12 rounded-full bg-[#1e2235] border border-white/10 shadow-xl flex items-center justify-center text-white hover:bg-indigo-600 transition-colors relative"
+          className="w-11 h-11 rounded-2xl bg-cyan-500 border border-cyan-300/40 shadow-xl shadow-cyan-900/20 flex items-center justify-center text-slate-950 hover:bg-cyan-400 transition-colors relative md:w-12 md:h-12"
           aria-label="通知"
         >
           <Bell size={20} />

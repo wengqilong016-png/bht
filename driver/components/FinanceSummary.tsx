@@ -56,7 +56,7 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
   const isScoreBelowLastReading = hasNumericScore && parsedCurrentScore < (selectedLocation?.lastScore ?? 0);
 
   return (
-    <div className="max-w-md mx-auto py-3 px-3 animate-in fade-in space-y-3">
+    <div className="max-w-md mx-auto py-3 px-3 pb-24 animate-in fade-in space-y-3">
       <WizardStepBar current="amounts" lang={lang} />
 
       {/* Location sub-header */}
@@ -80,12 +80,12 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
       </div>
 
       {/* Revenue summary */}
-      <div className={`p-3 rounded-2xl text-white flex justify-between items-center ${calculations.revenue > 50000 ? 'bg-indigo-600' : 'bg-slate-800'}`}>
+      <div className={`px-3 py-2.5 rounded-2xl text-white flex justify-between items-center ${calculations.revenue > 50000 ? 'bg-indigo-600' : 'bg-slate-800'}`}>
         <div>
           <p className="text-[9px] font-black uppercase opacity-60">{t.formula}</p>
           <p className="text-[9px] font-bold opacity-50">({currentScore} − {selectedLocation?.lastScore}) × 200</p>
           {previewSource && (
-            <span
+              <span
               className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wide ${previewSource === 'server' ? 'bg-white/20 text-white' : 'bg-white/10 text-white/50'}`}
               title={previewSource === 'server' ? 'Preview calculated by server' : 'Preview calculated locally'}
             >
@@ -106,7 +106,7 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
       </div>
 
       {/* Owner Retention */}
-      <div className={`p-4 rounded-2xl border transition-all ${isOwnerRetaining ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-100'}`}>
+      <div className={`p-3 rounded-2xl border transition-all ${isOwnerRetaining ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-100'}`}>
         <div className="flex justify-between items-center mb-3">
           <label className={`text-[10px] font-black uppercase flex items-center gap-2 ${isOwnerRetaining ? 'text-amber-600' : 'text-slate-400'}`}>
             <HandCoins size={13} /> {t.retention}
@@ -131,27 +131,33 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
                 placeholder="0"
               />
             </div>
-            <p className="text-[8px] font-black text-amber-400 uppercase">{(selectedLocation!.commissionRate * 100).toFixed(0)}% Left at machine</p>
+              <p className="text-[8px] font-black text-amber-400 uppercase">
+                {lang === 'zh' ? `留在机器 ${(selectedLocation!.commissionRate * 100).toFixed(0)}%` : `${(selectedLocation!.commissionRate * 100).toFixed(0)}% left at machine`}
+              </p>
           </div>
         ) : (
           <div className="p-3 bg-indigo-600 text-white rounded-btn flex items-center gap-2.5">
             <ShieldAlert size={16} />
             <div className="flex-1">
               <p className="text-[10px] font-black uppercase">{t.fullCollect}</p>
-              <p className="text-[8px] font-bold opacity-80 mt-0.5">TZS {calculations.commission.toLocaleString()} recorded as debt</p>
+              <p className="text-[8px] font-bold opacity-80 mt-0.5">
+                {lang === 'zh'
+                  ? `记为欠款 TZS ${calculations.commission.toLocaleString()}`
+                  : `Recorded as debt TZS ${calculations.commission.toLocaleString()}`}
+              </p>
             </div>
           </div>
         )}
       </div>
 
       {/* Expenses */}
-      <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100">
+      <div className="bg-rose-50 p-3 rounded-2xl border border-rose-100">
         <div className="flex items-center justify-between mb-3">
           <label className="text-[10px] font-black text-rose-500 uppercase flex items-center gap-2">
-            <Banknote size={13} /> Expenses / Advance
+            <Banknote size={13} /> {lang === 'zh' ? '支出 / 预支' : 'Expenses / Advance'}
           </label>
           {parseInt(expenses) > 0 && (
-            <span className="px-2 py-0.5 bg-rose-200 text-rose-800 rounded-tag text-[8px] font-black uppercase">PENDING</span>
+            <span className="px-2 py-0.5 bg-rose-200 text-rose-800 rounded-tag text-[8px] font-black uppercase">{t.pendingApproval}</span>
           )}
         </div>
 
@@ -160,13 +166,13 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
             onClick={() => onUpdateExpenseType('public')}
             className={`flex-1 py-1.5 rounded-tag text-[9px] font-black uppercase transition-all ${expenseType === 'public' ? 'bg-rose-500 text-white shadow-field' : 'text-rose-400 hover:bg-rose-100'}`}
           >
-            Company
+            {t.companyLabel}
           </button>
           <button
             onClick={() => onUpdateExpenseType('private')}
             className={`flex-1 py-1.5 rounded-tag text-[9px] font-black uppercase transition-all ${expenseType === 'private' ? 'bg-indigo-500 text-white shadow-field' : 'text-rose-400 hover:bg-rose-100'}`}
           >
-            Driver Advance
+            {lang === 'zh' ? '司机预支' : 'Driver Advance'}
           </button>
         </div>
 
@@ -178,16 +184,16 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
           >
             {expenseType === 'public' ? (
               <>
-                <option value="fuel">Fuel</option>
-                <option value="repair">Repair</option>
-                <option value="fine">Fine</option>
-                <option value="other">Other</option>
+                <option value="fuel">{t.fuelLabel}</option>
+                <option value="repair">{t.repairLabel}</option>
+                <option value="fine">{t.fineLabel}</option>
+                <option value="other">{t.otherLabel}</option>
               </>
             ) : (
               <>
-                <option value="allowance">Meal Allow.</option>
-                <option value="salary_advance">Salary Adv.</option>
-                <option value="other">Personal</option>
+                <option value="allowance">{t.allowanceLabel}</option>
+                <option value="salary_advance">{t.salaryAdvanceLabel}</option>
+                <option value="other">{lang === 'zh' ? '个人支出' : 'Personal'}</option>
               </>
             )}
           </select>
@@ -205,7 +211,7 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
       </div>
 
       {/* Coin Exchange */}
-      <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+      <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-100">
         <label className="text-[10px] font-black text-emerald-600 uppercase block mb-2 tracking-widest">{t.exchange}</label>
         <div className="flex items-center gap-3">
           <div className="p-2 bg-emerald-500 rounded-btn text-white flex-shrink-0"><Coins size={16} /></div>
@@ -220,10 +226,10 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
       </div>
 
       {/* Tip / Gratuity */}
-      <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
+      <div className="bg-amber-50 p-3 rounded-2xl border border-amber-100">
         <div className="flex items-center justify-between mb-2">
           <label className="text-[10px] font-black text-amber-600 uppercase flex items-center gap-2 tracking-widest">
-            <Gift size={13} /> {lang === 'zh' ? '小费支出 (正常5万-6万给1000-2000)' : 'Tip / Gratuity (Normal 1000-2000 for 50k-60k rev)'}
+            <Gift size={13} /> {lang === 'zh' ? '小费支出（正常5万-6万给1000-2000）' : 'Tip / Gratuity (Normal 1000-2000 for 50k-60k rev)'}
           </label>
         </div>
         <div className="flex items-center gap-3">
@@ -243,7 +249,7 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
         )}
       </div>
 
-      <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
+      <div className="bg-indigo-50 p-3 rounded-2xl border border-indigo-100">
         <div className="flex items-center justify-between mb-2">
           <label className="text-[10px] font-black text-indigo-600 uppercase flex items-center gap-2 tracking-widest">
             <ShieldAlert size={13} /> {lang === 'zh' ? '商家欠款手动扣减' : 'Manual Merchant Debt Deduction'}
@@ -292,22 +298,24 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
           </p>
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={onBack}
-          className="py-4 bg-white border border-slate-200 text-slate-500 rounded-btn font-black uppercase text-xs shadow-field hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
-        >
-          <ArrowRight size={15} className="rotate-180" />
-          {lang === 'zh' ? '返回' : 'Back'}
-        </button>
-        <button
-          onClick={onNext}
-          disabled={isScoreBelowLastReading}
-          className="py-4 bg-indigo-600 text-white rounded-btn font-black uppercase text-xs shadow-field-md active:scale-95 transition-all flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:cursor-not-allowed"
-        >
-          {lang === 'zh' ? '确认提交' : 'Review & Submit'}
-          <ChevronRight size={15} />
-        </button>
+      <div className="sticky bottom-0 z-20 -mx-3 mt-4 border-t border-slate-200 bg-white/95 px-3 pb-2 pt-3 backdrop-blur">
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={onBack}
+            className="py-4 bg-white border border-slate-200 text-slate-500 rounded-btn font-black uppercase text-xs shadow-field hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
+          >
+            <ArrowRight size={15} className="rotate-180" />
+            {lang === 'zh' ? '返回' : 'Back'}
+          </button>
+          <button
+            onClick={onNext}
+            disabled={isScoreBelowLastReading}
+            className="py-4 bg-indigo-600 text-white rounded-btn font-black uppercase text-xs shadow-field-md active:scale-95 transition-all flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:cursor-not-allowed"
+          >
+            {lang === 'zh' ? '复核并提交' : 'Review & Submit'}
+            <ChevronRight size={15} />
+          </button>
+        </div>
       </div>
     </div>
   );

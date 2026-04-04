@@ -40,9 +40,9 @@ export function buildAdminPrimaryNav(totalApprovalBadge: number): AdminNavItem[]
 }
 
 export const ADMIN_SECONDARY_NAV: AdminNavItem[] = [
-  { id: 'collect', icon: <PlusCircle size={18} />, label: '采集录入' },
-  { id: 'debt', icon: <CreditCard size={18} />, label: '债务管理' },
-  { id: 'history', icon: <History size={18} />, label: '操作记录' },
+  { id: 'collect', icon: <PlusCircle size={18} />, label: '采集录入', labelEn: 'Collection Entry' },
+  { id: 'debt', icon: <CreditCard size={18} />, label: '债务管理', labelEn: 'Debt Management' },
+  { id: 'history', icon: <History size={18} />, label: '操作记录', labelEn: 'Activity Log' },
 ];
 
 export const ADMIN_PAGE_TITLES: Record<AdminView, string> = {

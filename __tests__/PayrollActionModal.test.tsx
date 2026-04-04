@@ -99,7 +99,7 @@ describe('PayrollActionModal', () => {
     fireEvent.change(screen.getByRole('textbox'), {
       target: { value: '  ready for payroll  ' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Create Payroll' }));
+    fireEvent.click(screen.getByRole('button', { name: '创建工资单' }));
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith({
@@ -114,20 +114,20 @@ describe('PayrollActionModal', () => {
     mockPersistEvidencePhotoUrl.mockResolvedValue(asMockResult('https://example.com/payroll-proof.jpg'));
     const { container, onSubmit } = renderModal();
 
-    expect((screen.getByRole('button', { name: 'Confirm Payment' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: '确认支付' }) as HTMLButtonElement).disabled).toBe(true);
 
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['proof'], 'proof.jpg', { type: 'image/jpeg' });
     fireEvent.change(fileInput, { target: { files: [file] } });
     await waitFor(() => {
-      expect(screen.getByAltText('Payroll proof').getAttribute('src')).toBe('data:image/jpeg;base64,ZmFrZQ==');
+      expect(screen.getByAltText('支付凭证').getAttribute('src')).toBe('data:image/jpeg;base64,ZmFrZQ==');
     });
-    expect((screen.getByRole('button', { name: 'Confirm Payment' }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole('button', { name: '确认支付' }) as HTMLButtonElement).disabled).toBe(false);
 
     fireEvent.change(screen.getByRole('textbox'), {
       target: { value: 'bank transfer sent' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm Payment' }));
+    fireEvent.click(screen.getByRole('button', { name: '确认支付' }));
 
     await waitFor(() => {
       expect(mockPersistEvidencePhotoUrl).toHaveBeenCalledWith('data:image/jpeg;base64,ZmFrZQ==', {
@@ -151,9 +151,9 @@ describe('PayrollActionModal', () => {
     const file = new File(['proof'], 'proof.jpg', { type: 'image/jpeg' });
     fireEvent.change(fileInput, { target: { files: [file] } });
     await waitFor(() => {
-      expect(screen.getByAltText('Payroll proof').getAttribute('src')).toBe('data:image/jpeg;base64,ZmFrZQ==');
+      expect(screen.getByAltText('支付凭证').getAttribute('src')).toBe('data:image/jpeg;base64,ZmFrZQ==');
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm Payment' }));
+    fireEvent.click(screen.getByRole('button', { name: '确认支付' }));
 
     await waitFor(() => {
       expect(window.alert).toHaveBeenCalledWith('❌ 工资凭证上传失败，请重试。');
@@ -165,6 +165,6 @@ describe('PayrollActionModal', () => {
     renderModal();
 
     expect(screen.getByText('请先上传工资支付凭证。')).toBeTruthy();
-    expect((screen.getByRole('button', { name: 'Confirm Payment' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: '确认支付' }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
