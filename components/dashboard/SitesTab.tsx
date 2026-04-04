@@ -37,6 +37,8 @@ const SitesTab: React.FC<SitesTabProps> = ({
     name: '',
     area: '',
     machineId: '',
+    latitude: '',
+    longitude: '',
     commissionRate: '',
     lastScore: '',
     status: 'active' as Location['status'],
@@ -54,6 +56,8 @@ const SitesTab: React.FC<SitesTabProps> = ({
       name: loc.name,
       area: loc.area || '',
       machineId: loc.machineId || '',
+      latitude: loc.coords?.lat?.toString() || '',
+      longitude: loc.coords?.lng?.toString() || '',
       commissionRate: (loc.commissionRate * 100).toString(),
       lastScore: loc.lastScore.toString(),
       status: loc.status,
@@ -67,6 +71,23 @@ const SitesTab: React.FC<SitesTabProps> = ({
 
   const handleSaveLocation = () => {
     if (!editingLoc) return;
+    const parsedLat = Number.parseFloat(locEditForm.latitude);
+    const parsedLng = Number.parseFloat(locEditForm.longitude);
+    const hasManualCoords = locEditForm.latitude.trim() !== '' || locEditForm.longitude.trim() !== '';
+
+    if (hasManualCoords) {
+      const coordsValid =
+        Number.isFinite(parsedLat) &&
+        Number.isFinite(parsedLng) &&
+        Math.abs(parsedLat) <= 90 &&
+        Math.abs(parsedLng) <= 180;
+
+      if (!coordsValid) {
+        alert('请输入有效的 Latitude / Longitude 坐标。\nEnter valid latitude / longitude coordinates.');
+        return;
+      }
+    }
+
     setIsSavingLoc(true);
     const rate = parseFloat(locEditForm.commissionRate) / 100;
     const updated: Location = {
@@ -74,6 +95,9 @@ const SitesTab: React.FC<SitesTabProps> = ({
       name: locEditForm.name,
       area: locEditForm.area,
       machineId: locEditForm.machineId,
+      coords: hasManualCoords
+        ? { lat: parsedLat, lng: parsedLng }
+        : editingLoc.coords,
       commissionRate: isNaN(rate) ? editingLoc.commissionRate : rate,
       lastScore: parseInt(locEditForm.lastScore) || editingLoc.lastScore,
       status: locEditForm.status,
@@ -195,6 +219,38 @@ const SitesTab: React.FC<SitesTabProps> = ({
                 <div className="space-y-1">
                   <label className="text-[8px] font-black text-slate-400 uppercase ml-1">上次读数 Last Score</label>
                   <input type="number" value={locEditForm.lastScore} onChange={e => setLocEditForm(f => ({ ...f, lastScore: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-indigo-400" />
+                </div>
+              </div>
+              <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-3">
+                <div>
+                  <p className="text-[9px] font-black text-sky-600 uppercase">GPS Coordinates</p>
+                  <p className="text-[8px] font-bold text-slate-400 uppercase">管理端可手动粘贴定位数据 / Paste coordinates manually</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black text-slate-400 uppercase ml-1">Latitude</label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.000001"
+                      value={locEditForm.latitude}
+                      onChange={e => setLocEditForm(f => ({ ...f, latitude: e.target.value }))}
+                      className="w-full bg-white border border-sky-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-sky-400"
+                      placeholder="-6.823490"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black text-slate-400 uppercase ml-1">Longitude</label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.000001"
+                      value={locEditForm.longitude}
+                      onChange={e => setLocEditForm(f => ({ ...f, longitude: e.target.value }))}
+                      className="w-full bg-white border border-sky-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-sky-400"
+                      placeholder="39.269510"
+                    />
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
