@@ -16,6 +16,6 @@ export const DRIVER_NAV_ITEMS: DriverNavItem[] = [
   { id: 'collect', icon: <PlusCircle size={16} />, getLabel: (_lang, t) => t.collect },
   { id: 'settlement', icon: <Banknote size={16} />, getLabel: (_lang, t) => t.dailySettlement },
   { id: 'debt', icon: <CreditCard size={16} />, getLabel: (_lang, t) => t.debt },
-  { id: 'history', icon: <History size={16} />, getLabel: (lang) => (lang === 'sw' ? 'Historia' : '记录') },
+  { id: 'history', icon: <History size={16} />, getLabel: (_lang, t) => t.history },
   { id: 'status', icon: <UserCircle size={16} />, getLabel: (_lang, t) => t.driverStatus },
 ];

@@ -32,47 +32,106 @@ const AppDriverShell: React.FC = () => {
   const [showAccountSettings, setShowAccountSettings] = useState(false);
 
   const syncStatus = useSyncStatus({ syncMutation: syncOfflineData, isOnline, unsyncedCount, userId: currentUser.id });
+  const todayStr = new Date().toISOString().split('T')[0];
+  const assignedMachineCount = filteredLocations.filter((location) => location.assignedDriverId === activeDriverId).length || filteredLocations.length;
+  const todayCollectionCount = filteredTransactions.filter((tx) => tx.driverId === activeDriverId && tx.timestamp.startsWith(todayStr) && (tx.type === undefined || tx.type === 'collection')).length;
+  const pendingSettlementCount = filteredSettlements.filter((settlement) => settlement.driverId === activeDriverId && settlement.status === 'pending').length;
+  const quickStats = [
+    { label: t.todaysCollections, value: todayCollectionCount, tone: 'text-amber-200 bg-amber-500/10 border-amber-500/20' },
+    { label: t.assignedMachines, value: assignedMachineCount, tone: 'text-white bg-white/5 border-white/10' },
+    { label: t.unsyncedLabel, value: unsyncedCount, tone: 'text-rose-200 bg-rose-500/10 border-rose-500/20' },
+    { label: t.pendingSettlementShort, value: pendingSettlementCount, tone: 'text-cyan-200 bg-cyan-500/10 border-cyan-500/20' },
+  ];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f3f5f8]">
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="border-b flex-shrink-0 z-30 bg-slate-900 border-white/10">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-2">
-              <div className="bg-gradient-to-br from-amber-300 to-amber-600 text-slate-900 p-1.5 rounded-[10px]">
-                <Crown size={14} fill="currentColor" />
-              </div>
-              <div>
-                <p className="text-[11px] font-black text-white leading-none">BAHATI</p>
-                <p className="text-[8px] font-bold text-slate-400 uppercase leading-none">{currentUser.name}</p>
-              </div>
+    <div className="flex h-screen overflow-hidden bg-slate-100">
+      <aside className="hidden lg:flex w-64 flex-col border-r border-slate-800 bg-slate-950 text-white">
+        <div className="border-b border-slate-800 p-4">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-amber-400 p-2 text-slate-950 shadow-lg shadow-amber-500/20">
+              <Crown size={16} fill="currentColor" />
             </div>
-            <div className="flex items-center gap-2">
-              <SyncStatusPill syncStatus={syncStatus} lang={lang} variant="dark" />
-              <button onClick={() => setLang(lang === 'zh' ? 'sw' : 'zh')} className="p-2 rounded-subcard bg-white/10 text-white hover:bg-white/20"><Globe size={15}/></button>
-              <button onClick={() => setShowAccountSettings(true)} className="p-2 rounded-subcard bg-white/10 text-white hover:bg-white/20"><Settings size={15}/></button>
-              <button onClick={handleLogout} className="p-2 rounded-subcard bg-rose-500/20 text-rose-400"><LogOut size={15}/></button>
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-white">Bahati Ops</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{currentUser.name}</p>
             </div>
           </div>
-
-          <div className="flex border-t border-white/10 overflow-x-auto scrollbar-hide">
-            {DRIVER_NAV_ITEMS.map((item) => (
+        </div>
+        <div className="border-b border-slate-800 p-4">
+          <SyncStatusPill syncStatus={syncStatus} lang={lang} variant="light" fullWidth />
+        </div>
+        <div className="grid grid-cols-2 gap-2 border-b border-slate-800 p-4">
+          {quickStats.map((stat) => (
+            <div key={stat.label} className={`rounded-2xl border px-3 py-2 ${stat.tone}`}>
+              <p className="text-[8px] font-black uppercase tracking-wide opacity-70">{stat.label}</p>
+              <p className="mt-1 text-lg font-black">{stat.value}</p>
+            </div>
+          ))}
+        </div>
+        <nav className="flex-1 space-y-1 p-3">
+          {DRIVER_NAV_ITEMS.map((item) => {
+            const active = view === item.id;
+            return (
               <button
                 key={item.id}
                 onClick={() => setView(item.id)}
-                className={`flex-1 flex flex-col items-center gap-1 py-2.5 text-[9px] font-black uppercase transition-all flex-shrink-0 min-w-[3.5rem] ${
-                  view === item.id ? 'text-amber-400 border-b-2 border-amber-400' : 'text-slate-400'
+                className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors ${
+                  active
+                    ? 'bg-white text-slate-950'
+                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                {item.icon}
-                <span>{item.getLabel(lang, t)}</span>
+                <span>{item.icon}</span>
+                <span className="text-[11px] font-black uppercase tracking-wide">{item.getLabel(lang, t)}</span>
               </button>
-            ))}
+            );
+          })}
+        </nav>
+        <div className="space-y-2 border-t border-slate-800 p-3">
+          <button onClick={() => setLang(lang === 'zh' ? 'sw' : 'zh')} className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-slate-400 hover:bg-white/5 hover:text-white">
+            <Globe size={15} />
+            <span className="text-[10px] font-black uppercase">{t.language}</span>
+          </button>
+          <button onClick={() => setShowAccountSettings(true)} className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-slate-400 hover:bg-white/5 hover:text-white">
+            <Settings size={15} />
+            <span className="text-[10px] font-black uppercase">{t.settings}</span>
+          </button>
+          <button onClick={handleLogout} className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-rose-300 hover:bg-rose-500/10 hover:text-rose-200">
+            <LogOut size={15} />
+            <span className="text-[10px] font-black uppercase">{t.logout}</span>
+          </button>
+        </div>
+      </aside>
+
+      <div className="flex-1 flex min-w-0 flex-col overflow-hidden">
+        <header className="z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+          <div className="flex items-center justify-between gap-3 px-3 py-3 md:px-4">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">{t.driverWorkspace}</p>
+              <h1 className="truncate text-sm font-black uppercase text-slate-900">{DRIVER_NAV_ITEMS.find(item => item.id === view)?.getLabel(lang, t)}</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:flex">
+                <SyncStatusPill syncStatus={syncStatus} lang={lang} variant="light" />
+              </div>
+              <button onClick={() => setLang(lang === 'zh' ? 'sw' : 'zh')} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:text-slate-900 lg:hidden"><Globe size={15}/></button>
+              <button onClick={() => setShowAccountSettings(true)} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:text-slate-900 lg:hidden"><Settings size={15}/></button>
+            </div>
+          </div>
+          <div className="border-t border-slate-200 px-3 py-2 lg:hidden">
+            <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {quickStats.map((stat) => (
+                <div key={stat.label} className="min-w-[88px] rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+                  <p className="text-[7px] font-black uppercase tracking-wide text-slate-400">{stat.label}</p>
+                  <p className="mt-1 text-sm font-black text-slate-900">{stat.value}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden relative bg-[#f3f5f8]">
-          <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+        <main className="relative flex-1 overflow-y-auto overflow-x-hidden bg-slate-100">
+          <div className="mx-auto max-w-7xl p-3 pb-28 md:p-5 lg:p-6">
             <Suspense fallback={<ShellLoadingFallback />}>
               <DriverShellViewRenderer
                 view={view}
@@ -81,6 +140,26 @@ const AppDriverShell: React.FC = () => {
             </Suspense>
           </div>
         </main>
+
+        <nav className="lg:hidden border-t border-slate-200 bg-white/95 px-2 py-2 backdrop-blur supports-[padding:max(0px)]:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          <div className="grid grid-cols-5 gap-1">
+            {DRIVER_NAV_ITEMS.map((item) => {
+              const active = view === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setView(item.id)}
+                  className={`flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[8px] font-black uppercase transition-colors ${
+                    active ? 'bg-slate-900 text-white' : 'text-slate-500'
+                  }`}
+                >
+                  {item.icon}
+                  <span className="truncate">{item.getLabel(lang, t)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
       </div>
 
       {showAccountSettings && currentUser && (

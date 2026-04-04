@@ -3,6 +3,9 @@ import { Calculator, CheckCircle2, Banknote, Receipt, ThumbsUp, AlertTriangle, S
 import { Transaction, Driver, Location, DailySettlement, User as UserType, TRANSLATIONS } from '../../types';
 import { getOptimizedImageUrl } from '../../utils/imageUtils';
 
+const taskCard = 'bg-white rounded-2xl border p-4 shadow-[0_10px_28px_rgba(15,23,42,0.04)]';
+const pill = 'inline-flex items-center rounded-full px-2 py-1 text-[8px] font-black uppercase tracking-wide';
+
 interface PayrollEntry {
   driver: Driver;
   monthlyBreakdown: {
@@ -92,7 +95,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
             <div>
               <h3 className="text-lg font-black text-slate-900 uppercase">{t.approvalCenter}</h3>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                {lang === 'zh' ? '结算' : 'Settlements'} ({pendingSettlements.length}) • {t.anomalyReview} ({anomalyTransactions.length}) • {t.resetApproval} ({pendingResetRequests.length}) • {t.payoutApproval} ({pendingPayoutRequests.length})
+                {lang === 'zh' ? '结算任务' : 'Settlement tasks'} ({pendingSettlements.length}) • {t.anomalyReview} ({anomalyTransactions.length}) • {t.resetApproval} ({pendingResetRequests.length}) • {t.payoutApproval} ({pendingPayoutRequests.length})
               </p>
             </div>
             <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl"><Calculator size={20} /></div>
@@ -101,39 +104,39 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
           {pendingSettlements.length === 0 ? (
             <div className="py-10 text-center bg-white rounded-2xl border border-dashed border-slate-200">
               <CheckCircle2 size={40} className="mx-auto text-emerald-200 mb-3" />
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">All settlements processed</p>
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.allSettlementsProcessed}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
               {pendingSettlements.map(s => (
-                <div key={s.id} className="bg-white p-4 rounded-2xl border border-amber-200 relative overflow-hidden">
+                <div key={s.id} className={`${taskCard} border-amber-200 relative overflow-hidden`}>
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <p className="text-sm font-black text-slate-900 uppercase">{s.driverName}</p>
                       <p className="text-[9px] font-bold text-slate-400 uppercase">{new Date(s.timestamp).toLocaleString()}</p>
                     </div>
-                    <div className="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-[8px] font-black uppercase">PENDING</div>
+                    <div className={`${pill} bg-amber-100 text-amber-700`}>{t.pendingApproval}</div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 mb-3">
                     <div className="bg-slate-50 p-3 rounded-xl">
-                      <p className="text-[8px] font-black text-slate-400 uppercase">Expected Total</p>
+                      <p className="text-[8px] font-black text-slate-400 uppercase">{t.expectedTotalLabel}</p>
                       <p className="text-xs font-black text-slate-900">TZS {s.expectedTotal.toLocaleString()}</p>
                     </div>
                     <div className="bg-slate-50 p-3 rounded-xl">
-                      <p className="text-[8px] font-black text-slate-400 uppercase">Actual Submitted</p>
+                      <p className="text-[8px] font-black text-slate-400 uppercase">{t.actualSubmittedLabel}</p>
                       <p className="text-xs font-black text-indigo-600">TZS {(s.actualCash + s.actualCoins).toLocaleString()}</p>
                     </div>
                   </div>
                   {s.shortage !== 0 && (
                     <div className={`p-3 rounded-xl mb-4 flex items-center justify-between ${s.shortage < 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                      <span className="text-[9px] font-black uppercase">{s.shortage < 0 ? 'Shortage' : 'Surplus'}</span>
+                      <span className="text-[9px] font-black uppercase">{s.shortage < 0 ? t.shortage : t.surplus}</span>
                       <span className="text-xs font-black">TZS {Math.abs(s.shortage).toLocaleString()}</span>
                     </div>
                   )}
                   {(s as any).transferProofUrl && (
                     <div className="mb-3">
-                      <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Settlement Proof</p>
-                      <img src={(s as any).transferProofUrl} alt="Proof" className="w-full h-28 object-cover rounded-xl border border-slate-200" />
+                      <p className="text-[8px] font-black text-slate-400 uppercase mb-1">{t.settlementProof}</p>
+                      <img src={(s as any).transferProofUrl} alt={t.settlementProof} className="w-full h-28 object-cover rounded-xl border border-slate-200" />
                     </div>
                   )}
                   <div className="flex gap-2">
@@ -142,14 +145,14 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                           onClick={() => runApprovalAction(`settlement:${s.id}`, () => onReviewSettlement(s.id, 'confirmed'))}
                           className="flex-1 py-3 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-emerald-100 disabled:opacity-50"
                         >
-                          ✓ Approve
+                          ✓ {t.approveBtn}
                         </button>
                         <button
                           disabled={pendingActionKey === `settlement:${s.id}`}
                           onClick={() => runApprovalAction(`settlement:${s.id}`, () => onReviewSettlement(s.id, 'rejected'))}
                           className="flex-1 py-3 bg-slate-100 text-slate-400 rounded-xl text-[10px] font-black uppercase disabled:opacity-50"
                         >
-                          ✗ Reject
+                          ✗ {t.rejectBtn}
                         </button>
                       </div>
                 </div>
@@ -162,24 +165,24 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
             <div className="space-y-4">
               <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100 flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-black text-rose-800 uppercase">Expense Requests</h3>
-                  <p className="text-[9px] font-bold text-rose-500 uppercase">Loans / Repairs / Fuel — Pending Approval ({pendingExpenses.length})</p>
+                  <h3 className="text-sm font-black text-rose-800 uppercase">{t.expenseRequests}</h3>
+                  <p className="text-[9px] font-bold text-rose-500 uppercase">{t.expenseRequestsSubtitle} ({pendingExpenses.length})</p>
                 </div>
-                <div className="bg-rose-200 text-rose-800 px-3 py-1 rounded-lg text-[10px] font-black uppercase">{pendingExpenses.length} Pending</div>
+                <div className="bg-rose-200 text-rose-800 px-3 py-1 rounded-lg text-[10px] font-black uppercase">{pendingExpenses.length} {t.pendingApproval}</div>
               </div>
               <div className="grid grid-cols-1 gap-3">
                 {pendingExpenses.map(tx => {
                   const driver = driverMap.get(tx.driverId);
                   const categoryLabel = {
-                    fuel: '⛽ Fuel',
-                    repair: '🔧 Repair',
-                    fine: '🚨 Fine',
-                    allowance: '🍽 Allowance',
-                    salary_advance: '💰 Salary Advance',
-                    other: '📋 Other',
-                  }[tx.expenseCategory || 'other'] || '📋 Other';
+                    fuel: `⛽ ${t.fuelLabel}`,
+                    repair: `🔧 ${t.repairLabel}`,
+                    fine: `🚨 ${t.fineLabel}`,
+                    allowance: `🍽 ${t.allowanceLabel}`,
+                    salary_advance: `💰 ${t.salaryAdvanceLabel}`,
+                    other: `📋 ${t.otherLabel}`,
+                  }[tx.expenseCategory || 'other'] || `📋 ${t.otherLabel}`;
                   return (
-                    <div key={tx.id} className="bg-white p-4 rounded-2xl border border-rose-100">
+                    <div key={tx.id} className={`${taskCard} border-rose-100`}>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-rose-100 text-rose-700 rounded-xl flex items-center justify-center font-black text-xs">{driver?.name?.charAt(0) || '?'}</div>
@@ -188,8 +191,8 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                             <p className="text-[8px] font-bold text-slate-400">{new Date(tx.timestamp).toLocaleDateString()}</p>
                           </div>
                         </div>
-                        <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${tx.expenseType === 'private' ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-50 text-rose-600'}`}>
-                          {tx.expenseType === 'private' ? 'Loan' : 'Company'}
+                        <div className={`${pill} ${tx.expenseType === 'private' ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-50 text-rose-600'}`}>
+                          {tx.expenseType === 'private' ? t.loanLabel : t.companyLabel}
                         </div>
                       </div>
                       <div className="flex items-center justify-between mb-3">
@@ -205,14 +208,14 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                           onClick={() => runApprovalAction(`expense:${tx.id}`, () => onApproveExpenseRequest(tx.id, true))}
                           className="flex-1 py-2.5 bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase disabled:opacity-50"
                         >
-                          ✓ Approve
+                          ✓ {t.approveBtn}
                         </button>
                         <button
                           disabled={pendingActionKey === `expense:${tx.id}`}
                           onClick={() => runApprovalAction(`expense:${tx.id}`, () => onApproveExpenseRequest(tx.id, false))}
                           className="flex-1 py-2.5 bg-slate-100 text-slate-400 rounded-xl text-[9px] font-black uppercase disabled:opacity-50"
                         >
-                          ✗ Reject
+                          ✗ {t.rejectBtn}
                         </button>
                       </div>
                     </div>
@@ -228,7 +231,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-black text-amber-800 uppercase flex items-center gap-2"><ShieldAlert size={16} /> {t.anomalyReview}</h3>
-                  <p className="text-[9px] font-bold text-amber-500 uppercase">AI flagged discrepancies ({anomalyTransactions.length})</p>
+                  <p className="text-[9px] font-bold text-amber-500 uppercase">{t.anomalyFlagged} ({anomalyTransactions.length})</p>
                 </div>
                 <div className="bg-amber-200 text-amber-800 px-3 py-1 rounded-lg text-[10px] font-black uppercase">{anomalyTransactions.length}</div>
               </div>
@@ -236,7 +239,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                 {anomalyTransactions.map(tx => {
                   const driver = driverMap.get(tx.driverId);
                   return (
-                    <div key={tx.id} className="bg-white p-4 rounded-2xl border border-amber-200">
+                    <div key={tx.id} className={`${taskCard} border-amber-200`}>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center font-black text-xs">{driver?.name?.charAt(0) || '?'}</div>
@@ -245,21 +248,21 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                             <p className="text-[8px] font-bold text-slate-400">{tx.locationName} — {new Date(tx.timestamp).toLocaleDateString()}</p>
                           </div>
                         </div>
-                        <div className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded text-[8px] font-black uppercase">⚠️ Anomaly</div>
+                        <div className={`${pill} bg-amber-50 text-amber-600`}>⚠️ {t.issueStatus}</div>
                       </div>
                       <div className="grid grid-cols-2 gap-2 mb-3">
                         <div className="bg-slate-50 p-2 rounded-xl">
-                          <p className="text-[8px] font-black text-slate-400 uppercase">Driver Input</p>
+                          <p className="text-[8px] font-black text-slate-400 uppercase">{lang === 'zh' ? '司机输入' : 'Driver Input'}</p>
                           <p className="text-xs font-black text-slate-900">{tx.currentScore}</p>
                         </div>
                         <div className="bg-amber-50 p-2 rounded-xl">
-                          <p className="text-[8px] font-black text-amber-400 uppercase">AI Detected</p>
+                          <p className="text-[8px] font-black text-amber-400 uppercase">{lang === 'zh' ? 'AI 识别' : 'AI Detected'}</p>
                           <p className="text-xs font-black text-amber-700">{tx.aiScore ?? 'N/A'}</p>
                         </div>
                       </div>
                       {tx.photoUrl && (
                         <div className="mb-3">
-                          <img src={getOptimizedImageUrl(tx.photoUrl, 400, 300)} alt="Evidence" className="w-full h-24 object-cover rounded-xl border border-slate-200" />
+                          <img src={getOptimizedImageUrl(tx.photoUrl, 400, 300)} alt={t.paymentProof} className="w-full h-24 object-cover rounded-xl border border-slate-200" />
                         </div>
                       )}
                       <div className="flex gap-2">
@@ -299,7 +302,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                 {pendingResetRequests.map(tx => {
                   const loc = locationMap.get(tx.locationId);
                   return (
-                    <div key={tx.id} className="bg-white p-4 rounded-2xl border border-purple-200">
+                    <div key={tx.id} className={`${taskCard} border-purple-200`}>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-purple-100 text-purple-700 rounded-xl flex items-center justify-center font-black text-xs"><RefreshCw size={14} /></div>
@@ -308,7 +311,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                             <p className="text-[8px] font-bold text-slate-400">{tx.locationName} — {loc?.machineId}</p>
                           </div>
                         </div>
-                        <div className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[8px] font-black uppercase">RESET</div>
+                        <div className={`${pill} bg-purple-50 text-purple-600`}>{t.resetApproval}</div>
                       </div>
                       <div className="bg-slate-50 p-3 rounded-xl mb-3">
                         <p className="text-[8px] font-black text-slate-400 uppercase">Current Score (Before Reset)</p>
@@ -316,8 +319,8 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                       </div>
                       {tx.photoUrl && (
                         <div className="mb-3">
-                          <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Reset Evidence Photo</p>
-                          <img src={getOptimizedImageUrl(tx.photoUrl, 400, 300)} alt="Reset proof" className="w-full h-28 object-cover rounded-xl border border-slate-200" />
+                          <p className="text-[8px] font-black text-slate-400 uppercase mb-1">{t.paymentProof}</p>
+                          <img src={getOptimizedImageUrl(tx.photoUrl, 400, 300)} alt={t.paymentProof} className="w-full h-28 object-cover rounded-xl border border-slate-200" />
                         </div>
                       )}
                       <div className="flex gap-2">
@@ -326,7 +329,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                           onClick={() => runApprovalAction(`reset:${tx.id}`, () => onApproveResetRequest(tx.id, true))}
                           className="flex-1 py-2.5 bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase disabled:opacity-50"
                         >
-                          ✓ {t.approveBtn} & Reset to 0
+                          ✓ {t.approveAndReset}
                         </button>
                         <button
                           disabled={pendingActionKey === `reset:${tx.id}`}
@@ -349,7 +352,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
               <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-black text-emerald-800 uppercase flex items-center gap-2"><Wallet size={16} /> {t.payoutApproval}</h3>
-                  <p className="text-[9px] font-bold text-emerald-500 uppercase">Owner Dividend Withdrawal ({pendingPayoutRequests.length})</p>
+                  <p className="text-[9px] font-bold text-emerald-500 uppercase">{t.ownerWithdrawal} ({pendingPayoutRequests.length})</p>
                 </div>
                 <div className="bg-emerald-200 text-emerald-800 px-3 py-1 rounded-lg text-[10px] font-black uppercase">{pendingPayoutRequests.length}</div>
               </div>
@@ -357,22 +360,22 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                 {pendingPayoutRequests.map(tx => {
                   const loc = locationMap.get(tx.locationId);
                   return (
-                    <div key={tx.id} className="bg-white p-4 rounded-2xl border border-emerald-200">
+                    <div key={tx.id} className={`${taskCard} border-emerald-200`}>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center font-black text-xs"><Wallet size={14} /></div>
                           <div>
                             <p className="text-[10px] font-black text-slate-900">{tx.locationName}</p>
-                            <p className="text-[8px] font-bold text-slate-400">{lang === 'zh' ? '店主' : 'Owner'}: {loc?.ownerName || 'N/A'} — {lang === 'zh' ? '提交人' : 'By'}: {tx.driverName}</p>
+                            <p className="text-[8px] font-bold text-slate-400">{t.ownerLabel}: {loc?.ownerName || 'N/A'} — {t.submittedBy}: {tx.driverName}</p>
                           </div>
                         </div>
-                        <div className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[8px] font-black uppercase">PAYOUT</div>
+                        <div className={`${pill} bg-emerald-50 text-emerald-600`}>{t.payoutApproval}</div>
                       </div>
                       <div className="bg-emerald-50 p-3 rounded-xl mb-3 text-center">
                         <p className="text-[8px] font-black text-emerald-400 uppercase">{t.payoutAmount}</p>
                         <p className="text-2xl font-black text-emerald-700">TZS {(tx.payoutAmount || 0).toLocaleString()}</p>
                         <p className="text-[8px] font-bold text-slate-400 mt-1">
-                          {lang === 'zh' ? '可用余额' : 'Available'}: TZS {(loc?.dividendBalance || 0).toLocaleString()}
+                          {t.availableBalance}: TZS {(loc?.dividendBalance || 0).toLocaleString()}
                         </p>
                       </div>
                       <div className="flex gap-2">
@@ -406,7 +409,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
               <Banknote size={40} />
             </div>
             <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">{t.dailySettlement}</h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2">{todayStr} • {todayDriverTxs.length} Collections</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2">{todayStr} • {todayDriverTxs.length} {t.collectionsCount}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -422,7 +425,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
 
           <div className="space-y-3">
             <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-              <label className="text-[10px] font-black text-slate-500 uppercase block mb-3 tracking-widest text-center">{t.inputCash} (TZS Notes)</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase block mb-3 tracking-widest text-center">{t.inputCash} (TZS {t.notesUnit})</label>
               <input
                 type="number"
                 value={actualCash}
@@ -432,7 +435,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
               />
             </div>
             <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-              <label className="text-[10px] font-black text-slate-500 uppercase block mb-3 tracking-widest text-center">{t.inputCoins} (TZS Coins)</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase block mb-3 tracking-widest text-center">{t.inputCoins} (TZS {t.coinsUnitLabel})</label>
               <input
                 type="number"
                 value={actualCoins}
@@ -446,7 +449,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
           {hasSettlementInput && (
             <div className={`p-4 rounded-2xl flex justify-between items-center animate-in slide-in-from-top-4 border ${cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
               <div>
-                <p className={`text-[10px] font-black uppercase ${cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'text-emerald-400' : 'text-rose-400'}`}>Variance</p>
+                <p className={`text-[10px] font-black uppercase ${cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'text-emerald-400' : 'text-rose-400'}`}>{t.varianceLabel}</p>
                 <p className={`text-2xl font-black ${cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'text-emerald-600' : 'text-rose-600'}`}>TZS {(cashAmount + coinAmount - todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0)).toLocaleString()}</p>
               </div>
               <div className={`p-3 rounded-2xl bg-white ${cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'text-emerald-500' : 'text-rose-500'}`}>
@@ -480,7 +483,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
               };
               try {
                 await onCreateSettlement(settlement);
-                alert('✅ Settlement submitted! Waiting for approval.');
+                alert(lang === 'zh' ? '✅ 结算已提交，等待审批。' : '✅ Settlement submitted. Waiting for approval.');
                 setActualCash('');
                 setActualCoins('');
               } catch (error) {
@@ -492,7 +495,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
             }}
             className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-sm transition-all disabled:opacity-30"
           >
-            ✓ Submit Settlement
+            ✓ {t.settlementSubmitCta}
           </button>
         </div>
       )}

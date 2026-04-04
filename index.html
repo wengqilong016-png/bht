@@ -77,9 +77,54 @@
         <p>Bahati Engine Initializing...</p>
     </div>
     <div id="root"></div>
+    <script>
+      (function() {
+        var reloadKey = 'bahati-module-reload-once';
+
+        function recoverFromModuleFailure() {
+          try {
+            if (sessionStorage.getItem(reloadKey) === '1') return;
+            sessionStorage.setItem(reloadKey, '1');
+            var next = new URL(window.location.href);
+            next.searchParams.set('v', Date.now().toString());
+            window.location.replace(next.toString());
+          } catch (err) {
+            window.location.reload();
+          }
+        }
+
+        window.addEventListener('error', function(event) {
+          var target = event && event.target;
+          if (target && target.tagName === 'SCRIPT' && target.type === 'module') {
+            console.warn('Module script failed to load, attempting one-time recovery.');
+            recoverFromModuleFailure();
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function(event) {
+          var reason = event && event.reason;
+          var message = reason && (reason.message || String(reason));
+          if (message && /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(message)) {
+            console.warn('Dynamic import failed after deployment, attempting one-time recovery.');
+            recoverFromModuleFailure();
+          }
+        });
+
+        window.addEventListener('load', function() {
+          try {
+            sessionStorage.removeItem(reloadKey);
+          } catch (err) {
+            console.warn('Failed to clear module reload guard.', err);
+          }
+        });
+      })();
+    </script>
+
     <!-- Entry Point -->
     <script type="module" src="./index.tsx"></script>
+
     <script>
+
       // Hide native loading overlay once React has rendered something in #root
       (function() {
         var loading = document.getElementById('app-loading');

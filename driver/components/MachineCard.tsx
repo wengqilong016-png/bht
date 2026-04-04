@@ -45,14 +45,14 @@ const MachineCard: React.FC<MachineCardProps> = ({
           : loc.status;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-[0_8px_20px_rgba(15,23,42,0.03)]">
       <button
         onClick={() => { if (!isLocked) onSelect(loc.id); }}
         disabled={isLocked}
         className={`w-full text-left transition-colors ${isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:bg-slate-50 active:bg-slate-100'}`}
       >
         <div className="flex items-center gap-3 px-4 py-3">
-          <div className="w-11 h-11 shrink-0 rounded-xl bg-slate-900 text-white flex flex-col items-center justify-center">
+          <div className="w-10 h-10 shrink-0 rounded-xl bg-slate-900 text-white flex flex-col items-center justify-center">
             {isLocked ? (
               <Lock size={14} className="text-white" />
             ) : (
@@ -74,11 +74,11 @@ const MachineCard: React.FC<MachineCardProps> = ({
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="truncate text-sm font-black text-slate-900 uppercase leading-tight">
+                <p className="truncate text-[13px] font-black text-slate-900 uppercase leading-tight">
                   {loc.machineId || '—'} <span className="text-slate-500 normal-case">{loc.name}</span>
                 </p>
                 <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                  {loc.area || '—'} · {lang === 'zh' ? '分数' : 'score'} {(loc.lastScore ?? 0).toLocaleString()}
+                  {loc.area || '—'} · {t.score} {(loc.lastScore ?? 0).toLocaleString()}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -94,13 +94,13 @@ const MachineCard: React.FC<MachineCardProps> = ({
                   {isPending ? t.pendingToday : t.visitedToday}
               </span>
               <span className={`rounded-full px-2 py-1 text-[8px] font-black uppercase ${isNear9999 ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500'}`}>
-                9999 {isNear9999 ? 'near' : 'normal'}
+                9999 {isNear9999 ? t.nearThreshold : t.normalThreshold}
               </span>
               <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-black uppercase text-slate-500">
                 {(loc.commissionRate * 100).toFixed(0)}%
               </span>
               <span className="rounded-full bg-amber-50 px-2 py-1 text-[8px] font-black uppercase text-amber-700">
-                {lang === 'zh' ? '分红' : 'div'} {(loc.dividendBalance || 0).toLocaleString()}
+                {t.dividendShort} {(loc.dividendBalance || 0).toLocaleString()}
               </span>
               {distanceMeters !== null ? (
                 <span className="rounded-full bg-emerald-50 px-2 py-1 text-[8px] font-black uppercase text-emerald-700">
@@ -108,7 +108,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
                 </span>
               ) : (
                 <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-black uppercase text-slate-500">
-                  {t.awaitingGps}
+                  {t.distanceWaiting}
                 </span>
               )}
               {isUrgent && daysSinceActive !== null && daysSinceActive >= CONSTANTS.STAGNANT_DAYS_THRESHOLD && (
@@ -126,7 +126,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
           {isNear9999 && (
             <button
               onClick={(e) => { e.stopPropagation(); onRequestReset(loc.id); }}
-              className="flex-1 px-3 py-2 text-[10px] font-black uppercase text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center gap-1.5 border-r border-slate-100"
+              className="flex-1 px-3 py-2.5 text-[10px] font-black uppercase text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center gap-1.5 border-r border-slate-100"
             >
               <RefreshCw size={11} /> {lang === 'zh' ? '重置' : 'Reset'}
             </button>
@@ -137,7 +137,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
               if (hasDividendBalance) onRequestPayout(loc.id);
             }}
             disabled={!hasDividendBalance}
-            className="flex-1 px-3 py-2 text-[10px] font-black uppercase text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center justify-center gap-1.5 disabled:text-slate-300 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+            className="flex-1 px-3 py-2.5 text-[10px] font-black uppercase text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center justify-center gap-1.5 disabled:text-slate-300 disabled:hover:bg-transparent disabled:cursor-not-allowed"
           >
             <Wallet size={11} /> {lang === 'zh' ? '提现' : 'Payout'}
           </button>

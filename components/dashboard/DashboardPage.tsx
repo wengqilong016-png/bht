@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Receipt } from 'lucide-react';
-import { Driver, Location, DailySettlement, MonthlyPayroll, Transaction } from '../../types';
+import { Driver, Location, DailySettlement, MonthlyPayroll, Transaction, TRANSLATIONS } from '../../types';
 import DriverManagement from '../driver-management';
 import DashboardTabs from './DashboardTabs';
 import OverviewTab from './OverviewTab';
@@ -54,6 +54,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
   hideTabs,
 }) => {
   const { currentUser, lang } = useAuth();
+  const t = TRANSLATIONS[lang];
   const queryClient = useQueryClient();
   const {
     filteredTransactions: transactions,
@@ -341,13 +342,13 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
           <DriverManagement />
           {/* Payroll section merged into fleet tab */}
           <div className="space-y-3 border-t border-slate-100 pt-5">
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><Receipt size={18} /></div>
-              <div>
-                <h2 className="text-base font-black text-slate-900 uppercase">Payroll</h2>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Compensation Reports — Electronic Payslip</p>
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-center gap-3">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><Receipt size={18} /></div>
+                <div>
+                  <h2 className="text-base font-black text-slate-900 uppercase">{t.payrollTitle}</h2>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t.payrollSubtitle}</p>
+                </div>
               </div>
-            </div>
             <div className="grid grid-cols-1 gap-3">
               {payrollStats.map(({ driver, monthlyBreakdown }) => (
                 <div key={driver.id} className="bg-white p-4 rounded-2xl border border-slate-200">
@@ -355,11 +356,11 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                     <div>
                       <h3 className="font-black text-slate-900 uppercase text-sm">{driver.name}</h3>
                       <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                        {monthlyBreakdown.length} payroll month{monthlyBreakdown.length === 1 ? '' : 's'}
+                        {monthlyBreakdown.length} {t.payrollMonths}
                       </p>
                     </div>
                     <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-black uppercase text-slate-500">
-                      Base {driver.baseSalary?.toLocaleString() || 0}
+                      {t.baseShort} {driver.baseSalary?.toLocaleString() || 0}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 gap-2">
@@ -391,7 +392,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                             <div>
                               <span className="text-[10px] font-black text-slate-400 uppercase">{m.month}</span>
                               <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">
-                                Revenue {summary.totalRevenue.toLocaleString()} · {summary.collectionCount} tx
+                                {t.revenueShort} {summary.totalRevenue.toLocaleString()} · {summary.collectionCount} {t.collectionsShort}
                               </p>
                             </div>
                             <div className="flex flex-col items-end gap-1">
@@ -410,15 +411,15 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-1 text-[8px] text-slate-400 mb-3">
-                            <span>Base: {summary.baseSalary.toLocaleString()}</span>
-                            <span>Comm: {summary.commission.toLocaleString()}</span>
-                            <span>Loans: {summary.loans.toLocaleString()}</span>
-                            <span>Short: {summary.shortage.toLocaleString()}</span>
+                            <span>{t.baseShort}: {summary.baseSalary.toLocaleString()}</span>
+                            <span>{t.commissionLabel}: {summary.commission.toLocaleString()}</span>
+                            <span>{t.loansShort}: {summary.loans.toLocaleString()}</span>
+                            <span>{t.shortageShort}: {summary.shortage.toLocaleString()}</span>
                           </div>
                           {record?.paidAt && (
                             <div className="mb-2 space-y-2">
                               <p className="text-[8px] font-bold text-emerald-600">
-                                Paid {new Date(record.paidAt).toLocaleString()} · {record.paymentMethod || 'other'}
+                                {t.paidAtLabel} {new Date(record.paidAt).toLocaleString()} · {record.paymentMethod || 'other'}
                               </p>
                               {record.paymentProofUrl && (
                                 <img
@@ -456,7 +457,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                                 })}
                                 className="w-full py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase disabled:opacity-50"
                               >
-                                {record?.status === 'cancelled' ? 'Reopen Payroll' : 'Generate Payroll'}
+                                {record?.status === 'cancelled' ? t.reopenPayroll : t.generatePayroll}
                               </button>
                             )}
                             {record?.status === 'pending' && (
@@ -476,7 +477,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                                   })}
                                   className="flex-1 py-2 bg-amber-500 text-white rounded-lg text-[9px] font-black uppercase disabled:opacity-50"
                                 >
-                                  Mark Paid
+                                  {t.markPaid}
                                 </button>
                                 <button
                                   disabled={!!pendingPayrollAction}
@@ -493,7 +494,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                                   })}
                                   className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-lg text-[9px] font-black uppercase disabled:opacity-50"
                                 >
-                                  Cancel
+                                  {t.cancelPayroll}
                                 </button>
                               </>
                             )}
@@ -501,7 +502,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                         </div>
                       );
                     })}
-                    {monthlyBreakdown.length === 0 && <p className="col-span-2 text-center text-[10px] text-slate-300 font-black uppercase py-4">No payroll data</p>}
+                    {monthlyBreakdown.length === 0 && <p className="col-span-2 text-center text-[10px] text-slate-300 font-black uppercase py-4">{t.noPayrollData}</p>}
                   </div>
                 </div>
               ))}

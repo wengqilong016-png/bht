@@ -141,7 +141,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
   }, [assignedLocations.length, locationCards]);
 
   return (
-    <div className="max-w-md mx-auto py-3 px-3 animate-in fade-in space-y-3">
+    <div className="max-w-md mx-auto py-3 px-3 animate-in fade-in space-y-2.5">
       {/* Offline status banner */}
       {!isOnline && (
         <div className="flex items-center gap-3 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-2xl">
@@ -175,7 +175,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
         </div>
       )}
 
-      <div className="flex items-start justify-between gap-3 px-1">
+      <div className="flex items-start justify-between gap-3 rounded-3xl bg-white border border-slate-200 px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
         <div>
           <h2 className="text-lg font-black text-slate-900 flex items-center gap-2 uppercase">
             <ScanLine className="text-indigo-600" size={18} />
@@ -185,13 +185,13 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
             {todayDriverTransactions.length} {t.todaysCollections}
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-slate-900 px-3 py-2 rounded-xl">
+        <div className="flex items-center gap-2 bg-slate-900 px-3 py-2 rounded-2xl shadow-[0_10px_24px_rgba(15,23,42,0.18)]">
           <Coins size={13} className="text-emerald-400" />
           <span className="text-xs font-black text-white">{(currentDriver?.dailyFloatingCoins ?? 0).toLocaleString()}</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {[
           { label: t.totalMachines, value: collectionOverview.totalMachines, tone: 'text-slate-900 bg-white border-slate-200' },
           { label: t.pendingStops, value: collectionOverview.pendingStops, tone: 'text-indigo-700 bg-indigo-50 border-indigo-100' },
@@ -202,7 +202,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
             tone: 'text-emerald-700 bg-emerald-50 border-emerald-100',
           },
         ].map((tile) => (
-          <div key={tile.label} className={`rounded-2xl border px-3 py-2 ${tile.tone}`}>
+          <div key={tile.label} className={`min-w-[88px] rounded-2xl border px-3 py-2.5 shadow-[0_8px_20px_rgba(15,23,42,0.03)] ${tile.tone}`}>
             <p className="text-[8px] font-black uppercase tracking-wide opacity-70">{tile.label}</p>
             <p className="mt-1 text-lg font-black">{tile.value}</p>
           </div>
@@ -225,9 +225,9 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
         onStartRegister={onStartRegister}
       />
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {isShowingAllLocations && (
-          <div className="px-3 py-2 bg-amber-50 border border-amber-100 rounded-2xl flex items-center gap-2">
+          <div className="px-3 py-2.5 bg-amber-50 border border-amber-100 rounded-2xl flex items-center gap-2">
             <AlertTriangle size={13} className="text-amber-500 flex-shrink-0" />
             <p className="text-[9px] font-black text-amber-700 uppercase tracking-widest">
               {lang === 'zh' ? 'Showing all machines (none assigned)' : 'Showing all machines (none assigned)'}

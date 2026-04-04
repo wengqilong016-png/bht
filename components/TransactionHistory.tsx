@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { CheckCircle2, Filter, ChevronDown, RefreshCw, List, Map as MapIcon, Navigation, WifiOff, AlertTriangle, Clock, Globe, Calculator, MapPinned, Search, BrainCircuit, ShieldAlert, Target, Sparkles } from 'lucide-react';
+import { CheckCircle2, Filter, ChevronDown, WifiOff, AlertTriangle, Clock, Globe, Calculator, Search, BrainCircuit, ShieldAlert, Target, Sparkles } from 'lucide-react';
 import { Transaction, getDistance } from '../types';
 import { useAppData } from '../contexts/DataContext';
 
@@ -12,9 +12,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze = () 
   const { filteredTransactions: transactions, locations } = useAppData();
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [showUnsyncedOnly, setShowUnsyncedOnly] = useState(false);
-  const [activeMapTx, setActiveMapTx] = useState<Transaction | null>(null);
 
   const filteredTransactions = useMemo(() => {
     const locFilter = selectedLocation !== 'all';
@@ -41,44 +39,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze = () 
     [transactions]
   );
 
-  // Center for the interactive map background
-  const mapCenter = useMemo(() => {
-    if (filteredTransactions.length > 0) return filteredTransactions[0].gps;
-    return { lat: -6.82, lng: 39.25 }; // Default Dar es Salaam
-  }, [filteredTransactions]);
-
-  // Scaling logic for overlay markers
-  const mapCoords = (lat: number, lng: number) => {
-    const centerLat = mapCenter.lat, centerLng = mapCenter.lng;
-    // Calculate relative offset (magnified for visual separation)
-    return { 
-      x: Math.max(10, Math.min(90, 50 + (lng - centerLng) * 1500)), 
-      y: Math.max(10, Math.min(90, 50 + (centerLat - lat) * 1500)) 
-    };
-  };
-
   const hasGps = (tx: Transaction) =>
     tx.gps != null && Number.isFinite(tx.gps.lat) && Number.isFinite(tx.gps.lng);
-
-  const mappableTransactions = useMemo(
-    () => filteredTransactions.filter(hasGps),
-    [filteredTransactions]
-  );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col gap-4 bg-white p-5 rounded-[32px] border border-slate-200 shadow-sm">
         <div className="flex flex-wrap justify-between items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner">
-              <button onClick={() => setViewMode('list')} className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-2 ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-                <List size={14} /> 列表
-              </button>
-              <button onClick={() => setViewMode('map')} className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-2 ${viewMode === 'map' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-                <MapIcon size={14} /> 地图
-              </button>
-            </div>
-            
             <button 
               onClick={() => setShowUnsyncedOnly(!showUnsyncedOnly)}
               className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2 border ${showUnsyncedOnly ? 'bg-amber-50 border-amber-200 text-amber-600 shadow-md shadow-amber-100' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'}`}
@@ -103,8 +71,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze = () 
         </div>
       </div>
 
-      {viewMode === 'list' ? (
-        <div className="space-y-3">
+      <div className="space-y-3">
           {filteredTransactions.map(tx => (
             <div key={tx.id} className="bg-white rounded-3xl border border-slate-200 overflow-hidden hover:border-indigo-300 transition-all group shadow-sm hover:shadow-md">
               <div className="p-5 flex items-center justify-between">
@@ -260,93 +227,6 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze = () 
             </div>
           )}
         </div>
-      ) : (
-        <div className="bg-slate-900 rounded-[40px] h-[550px] relative overflow-hidden border border-slate-800 shadow-2xl">
-          {/* Real Map Background Layer */}
-          {mappableTransactions.length > 0 ? (
-            <div className="absolute inset-0">
-               <iframe 
-                width="100%" 
-                height="100%" 
-                frameBorder="0" 
-                scrolling="no" 
-                src={`https://maps.google.com/maps?q=${mapCenter.lat},${mapCenter.lng}&z=14&output=embed&iwloc=near`}
-                className="grayscale-[0.6] brightness-[0.7] contrast-[1.2] opacity-50 pointer-events-none"
-              />
-              
-              {/* Overlay Interactive Markers */}
-              <div className="absolute inset-0 z-10">
-                {mappableTransactions.map((tx) => {
-                  const coords = mapCoords(tx.gps.lat, tx.gps.lng);
-                  const isActive = activeMapTx?.id === tx.id;
-                  
-                  return (
-                    <div 
-                      key={tx.id} 
-                      className="absolute -translate-x-1/2 -translate-y-1/2 group transition-all duration-500" 
-                      style={{ left: `${coords.x}%`, top: `${coords.y}%` }}
-                      onClick={() => setActiveMapTx(isActive ? null : tx)}
-                    >
-                      <div className={`p-2 rounded-2xl border-2 shadow-2xl transition-all cursor-pointer ${isActive ? 'bg-indigo-600 border-white scale-150 z-30' : 'bg-slate-900/80 border-indigo-500/50 hover:scale-110'}`}>
-                        <MapPinned size={isActive ? 16 : 14} className={isActive ? 'text-white' : 'text-indigo-400'} />
-                      </div>
-
-                      {isActive && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-48 bg-white rounded-2xl p-4 shadow-2xl border border-indigo-100 animate-in zoom-in-95">
-                           <h5 className="text-[11px] font-black text-slate-900 mb-1">{tx.locationName}</h5>
-                           <p className="text-[9px] font-bold text-indigo-600 uppercase mb-3">应收: TZS {tx.netPayable.toLocaleString()}</p>
-                           <div className="flex gap-2">
-                             <a 
-                               href={`https://www.google.com/maps?q=${tx.gps.lat},${tx.gps.lng}`} 
-                               target="_blank" 
-                               className="flex-1 bg-slate-900 text-white p-2 rounded-lg flex items-center justify-center gap-1 text-[8px] font-black uppercase"
-                             >
-                               <Navigation size={10} /> 导航
-                             </a>
-                             <button 
-                               onClick={() => onAnalyze(tx.id)}
-                               className="flex-1 bg-indigo-50 text-indigo-600 p-2 rounded-lg text-[8px] font-black uppercase flex items-center justify-center gap-1"
-                             >
-                               <BrainCircuit size={10} /> 审计
-                             </button>
-                           </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 space-y-4">
-              <MapPinned size={48} className="opacity-20" />
-              <p className="text-[10px] font-black uppercase tracking-widest">暂无地理轨迹数据</p>
-            </div>
-          )}
-
-          {/* Map Controls / HUD */}
-          <div className="absolute top-6 left-6 right-6 z-20 flex justify-between items-start pointer-events-none">
-             <div className="bg-slate-900/80 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 pointer-events-auto">
-                <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">全域打卡轨迹审计图</p>
-                <p className="text-[8px] font-bold text-slate-500 uppercase mt-0.5">Tracking {filteredTransactions.length} Check-ins</p>
-             </div>
-             
-             <div className="bg-slate-900/80 backdrop-blur-md p-2 rounded-xl border border-white/10 flex flex-col gap-2 pointer-events-auto">
-                <button onClick={() => window.location.reload()} className="p-2 text-white hover:bg-white/10 rounded-lg transition-all" title="刷新数据"><RefreshCw size={14}/></button>
-                <div className="h-px bg-white/10 mx-1"></div>
-                <button onClick={() => setViewMode('list')} className="p-2 text-indigo-400 hover:bg-white/10 rounded-lg transition-all"><List size={14}/></button>
-             </div>
-          </div>
-          
-          <div className="absolute bottom-6 left-6 right-6 z-20 pointer-events-none flex justify-center">
-             <div className="bg-slate-900/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-3 pointer-events-auto">
-                <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-indigo-500 rounded-full shadow-[0_0_8px_#6366f1]"></div><span className="text-[8px] font-black text-white uppercase">已同步</span></div>
-                <div className="w-px h-3 bg-white/10"></div>
-                <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-amber-500 rounded-full shadow-[0_0_8px_#f59e0b] animate-pulse"></div><span className="text-[8px] font-black text-white uppercase">离线队列</span></div>
-             </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
