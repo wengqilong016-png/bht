@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Location, Driver, Transaction, DailySettlement, AILog, User } from '../types';
+import { Location, Driver, Transaction, DailySettlement, AILog, User, CONSTANTS } from '../types';
 import { enqueueTransaction, flushQueue, reportQueueHealthToServer } from '../offlineQueue';
 import { submitCollectionV2 } from '../services/collectionSubmissionService';
 import { getTransactionQueryScope, getSettlementQueryScope } from './supabaseRoleScope';
@@ -18,6 +18,7 @@ import { createSettlement as repoCreateSettlement, reviewSettlement as repoRevie
 import { insertAiLog } from '../repositories/aiLogRepository';
 import { supabase } from '../supabaseClient';
 import { shouldApplySettlementDriverCoinUpdate } from '../utils/settlementRules';
+import { localDB } from '../services/localDB';
 
 export function useSupabaseMutations(isOnline: boolean, currentUser?: User | null) {
   const queryClient = useQueryClient();
@@ -32,6 +33,16 @@ export function useSupabaseMutations(isOnline: boolean, currentUser?: User | nul
     'dailySettlements',
     getSettlementQueryScope(currentUser?.role, currentUser?.driverId).cacheScope,
   ] as const;
+  const transactionStorageKey = `${CONSTANTS.STORAGE_TRANSACTIONS_KEY}:${transactionQueryKey[1]}`;
+  const settlementStorageKey = `${CONSTANTS.STORAGE_SETTLEMENTS_KEY}:${settlementQueryKey[1]}`;
+
+  const persistQuerySnapshot = <T,>(queryKey: readonly unknown[], storageKey: string) => {
+    const snapshot = queryClient.getQueryData<T[]>(queryKey);
+    if (!snapshot) return;
+    localDB.set(storageKey, snapshot).catch((error) => {
+      console.warn(`Failed to persist query snapshot for ${storageKey}.`, error);
+    });
+  };
 
   const syncOfflineData = useMutation({
     mutationFn: async () => {
@@ -155,6 +166,7 @@ export function useSupabaseMutations(isOnline: boolean, currentUser?: User | nul
       queryClient.setQueryData(transactionQueryKey, (old: Transaction[] = []) =>
         old.map(t => t.id === txId ? { ...t, ...updates, isSynced: false } : t)
       );
+      persistQuerySnapshot<Transaction>(transactionQueryKey, transactionStorageKey);
       return { previousTransactions };
     },
     mutationFn: async ({ txId, updates }: { txId: string; updates: Partial<Transaction> }) => {
@@ -171,6 +183,7 @@ export function useSupabaseMutations(isOnline: boolean, currentUser?: User | nul
     onError: (_error, _variables, context) => {
       if (context?.previousTransactions !== undefined) {
         queryClient.setQueryData(transactionQueryKey, context.previousTransactions);
+        persistQuerySnapshot<Transaction>(transactionQueryKey, transactionStorageKey);
       }
     },
     onSettled: () => {
@@ -189,6 +202,7 @@ export function useSupabaseMutations(isOnline: boolean, currentUser?: User | nul
         const withoutExisting = old.filter(existing => existing.id !== tx.id);
         return [{ ...tx, isSynced: false }, ...withoutExisting];
       });
+      persistQuerySnapshot<Transaction>(transactionQueryKey, transactionStorageKey);
 
       if (tx.type === 'reset_request') {
         queryClient.setQueryData(['locations'], (old: Location[] = []) =>
@@ -225,6 +239,7 @@ export function useSupabaseMutations(isOnline: boolean, currentUser?: User | nul
     onError: (_error, _variables, context) => {
       if (context?.previousTransactions !== undefined) {
         queryClient.setQueryData(transactionQueryKey, context.previousTransactions);
+        persistQuerySnapshot<Transaction>(transactionQueryKey, transactionStorageKey);
       }
       if (context?.previousLocations !== undefined) {
         queryClient.setQueryData(['locations'], context.previousLocations);
@@ -247,6 +262,7 @@ export function useSupabaseMutations(isOnline: boolean, currentUser?: User | nul
         if (exists) return old.map(s => s.id === settlement.id ? { ...settlement, isSynced: false } : s);
         return [{ ...settlement, isSynced: false }, ...old];
       });
+      persistQuerySnapshot<DailySettlement>(settlementQueryKey, settlementStorageKey);
       return { previousSettlements };
     },
     mutationFn: async (settlement: DailySettlement) => {
@@ -256,6 +272,7 @@ export function useSupabaseMutations(isOnline: boolean, currentUser?: User | nul
     onError: (_error, _variables, context) => {
       if (context?.previousSettlements !== undefined) {
         queryClient.setQueryData(settlementQueryKey, context.previousSettlements);
+        persistQuerySnapshot<DailySettlement>(settlementQueryKey, settlementStorageKey);
       }
     },
     onSettled: () => {
@@ -288,6 +305,7 @@ export function useSupabaseMutations(isOnline: boolean, currentUser?: User | nul
             : settlement
         )
       );
+      persistQuerySnapshot<DailySettlement>(settlementQueryKey, settlementStorageKey);
 
       if (targetSettlement?.driverId && shouldApplySettlementDriverCoinUpdate(status)) {
         const nextDayStartingCoins = targetSettlement.actualCoins || 0;
@@ -321,6 +339,7 @@ export function useSupabaseMutations(isOnline: boolean, currentUser?: User | nul
     onError: (_error, _variables, context) => {
       if (context?.previousSettlements !== undefined) {
         queryClient.setQueryData(settlementQueryKey, context.previousSettlements);
+        persistQuerySnapshot<DailySettlement>(settlementQueryKey, settlementStorageKey);
       }
       if (context?.previousDrivers !== undefined) {
         queryClient.setQueryData(['drivers'], context.previousDrivers);

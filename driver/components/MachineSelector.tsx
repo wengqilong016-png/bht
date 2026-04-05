@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useDeferredValue } from 'react';
 import { Layers, Coins, ScanLine, AlertTriangle, WifiOff, DatabaseBackup } from 'lucide-react';
 import { Location, Driver, Transaction, CONSTANTS, TRANSLATIONS, getDistance } from '../../types';
 import { getPendingTransactions } from '../../offlineQueue';
@@ -39,6 +39,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
 }) => {
   const t = TRANSLATIONS[lang];
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [selectedArea, setSelectedArea] = useState<string>('all');
   const [locationFilter, setLocationFilter] = useState<'all' | 'pending' | 'urgent' | 'nearby'>('all');
   const [offlineQueueCount, setOfflineQueueCount] = useState(0);
@@ -105,14 +106,14 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
   }, [assignedLocations, gpsCoords, visitedLocationIds]);
 
   const locationCards = useMemo(() => {
-    const lowerSearch = searchQuery.toLowerCase();
+    const lowerSearch = deferredSearchQuery.toLowerCase();
     return assignedLocations
       .map(loc => {
         const meta = locationMetadata.get(loc.id)!;
         return { loc, ...meta };
       })
       .filter(({ loc, isPending, isUrgent, isNearby }) => {
-        const matchSearch = !searchQuery ||
+        const matchSearch = !deferredSearchQuery ||
           loc.name.toLowerCase().includes(lowerSearch) ||
           loc.machineId.toLowerCase().includes(lowerSearch) ||
           loc.area.toLowerCase().includes(lowerSearch);
@@ -131,7 +132,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
         if (distanceA !== distanceB) return distanceA - distanceB;
         return a.loc.name.localeCompare(b.loc.name);
       });
-  }, [assignedLocations, locationMetadata, searchQuery, selectedArea, locationFilter]);
+  }, [assignedLocations, locationMetadata, deferredSearchQuery, selectedArea, locationFilter]);
 
   const collectionOverview = useMemo(() => {
     // Single pass instead of three separate filter() calls
