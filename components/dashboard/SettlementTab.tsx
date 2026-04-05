@@ -106,15 +106,14 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
     /** extra data for expanded detail */
     extra: Record<string, unknown>;
   }
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const approvalTasks = useMemo<ApprovalTask[]>(() => {
     const tasks: ApprovalTask[] = [
       ...pendingSettlements.map(s => ({
         key: `settlement:${s.id}`,
         type: 'settlement' as ApprovalTaskType,
         id: s.id,
-        driverName: s.driverName,
-        locationName: s.driverName,
+        driverName: s.driverName ?? '',
+        locationName: lang === 'zh' ? '日结汇总' : 'Daily summary',
         amount: s.expectedTotal,
         timestamp: s.timestamp,
         severity: 4,
