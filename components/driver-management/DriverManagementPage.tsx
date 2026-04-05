@@ -27,7 +27,7 @@ const DriverManagementPage: React.FC<DriverManagementProps> = () => {
   const { updateDrivers, updateLocations, deleteDrivers } = useMutations();
 
   const onUpdateDrivers = (driversToSave: Driver[]) => updateDrivers.mutateAsync(driversToSave).then(() => {});
-  const onUpdateLocations = (locationsToSave: Location[]) => updateLocations.mutate(locationsToSave);
+  const onUpdateLocations = (locationsToSave: Location[]) => updateLocations.mutateAsync(locationsToSave).then(() => {});
   const onDeleteDrivers = (ids: string[]) => deleteDrivers.mutate(ids);
   const [viewMode, setViewMode] = useState<'grid' | 'analytics'>('grid');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -155,9 +155,9 @@ const DriverManagementPage: React.FC<DriverManagementProps> = () => {
 
     if (editingId) {
       // ── Edit existing driver ──────────────────────────────────────────
-      const remainingDebt = parseNum(form.remainingDebt);
-      onUpdateDrivers(drivers.map(d => d.id === editingId ? { ...d, ...driverData, remainingDebt } : d));
-      if (onUpdateLocations) {
+      try {
+        const remainingDebt = parseNum(form.remainingDebt);
+        const updatedDrivers = drivers.map(d => d.id === editingId ? { ...d, ...driverData, remainingDebt } : d);
         const updatedLocations = locations.map(loc => {
           if (pendingLocationIds.includes(loc.id)) {
             return { ...loc, assignedDriverId: editingId };
@@ -168,10 +168,17 @@ const DriverManagementPage: React.FC<DriverManagementProps> = () => {
           }
           return loc;
         });
-        onUpdateLocations(updatedLocations);
+        await Promise.all([
+          onUpdateDrivers(updatedDrivers),
+          onUpdateLocations(updatedLocations),
+        ]);
+        resetForm();
+      } catch (error) {
+        console.error('Failed to save driver assignment changes.', error);
+        alert('保存司机资料失败，请重试。\nFailed to save driver changes. Please retry.');
+      } finally {
+        setIsSaving(false);
       }
-      resetForm();
-      setIsSaving(false);
     } else {
       // ── Create new driver via Edge Function ───────────────────────────
       const email = form.email.trim();
@@ -224,7 +231,7 @@ const DriverManagementPage: React.FC<DriverManagementProps> = () => {
           ...driverData,
           remainingDebt: driverData.initialDebt,
         };
-        onUpdateDrivers([...drivers, newDriver]);
+        await onUpdateDrivers([...drivers, newDriver]);
         resetForm();
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);

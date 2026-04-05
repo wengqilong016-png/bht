@@ -44,7 +44,7 @@ const AdminShellViewRenderer: React.FC<AdminShellViewRendererProps> = ({
         <CollectionForm
           onRegisterMachine={async (location) => {
             const newLocation: Location = { ...location, isSynced: false, assignedDriverId: activeDriverId };
-            updateLocations.mutate([...locations, newLocation]);
+            await updateLocations.mutateAsync([...locations, newLocation]);
           }}
         />
       );

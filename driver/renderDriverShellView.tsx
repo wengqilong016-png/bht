@@ -30,7 +30,7 @@ const DriverShellViewRenderer: React.FC<DriverShellViewRendererProps> = ({
         <DriverCollectionFlow
           onRegisterMachine={async (location) => {
             const newLocation: Location = { ...location, isSynced: false, assignedDriverId: activeDriverId };
-            updateLocations.mutate([...locations, newLocation]);
+            await updateLocations.mutateAsync([...locations, newLocation]);
           }}
         />
       );

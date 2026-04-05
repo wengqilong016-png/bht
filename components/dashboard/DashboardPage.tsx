@@ -79,7 +79,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
   } = useMutations();
 
   const onUpdateDrivers = (driversToSave: Driver[]) => updateDrivers.mutateAsync(driversToSave).then(() => {});
-  const onUpdateLocations = (locationsToSave: Location[]) => updateLocations.mutate(locationsToSave);
+  const onUpdateLocations = (locationsToSave: Location[]) => updateLocations.mutateAsync(locationsToSave).then(() => {});
   const onDeleteLocations = (ids: string[]) => deleteLocations.mutate(ids);
   const onUpdateTransaction = (txId: string, updates: Partial<Transaction>) => updateTransaction.mutate({ txId, updates });
   const onCreateSettlement = async (settlement: DailySettlement) => {
@@ -300,7 +300,11 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
           transactions={transactions}
           locations={locations}
           drivers={drivers}
+          dailySettlements={dailySettlements}
+          monthlyPayrolls={monthlyPayrolls}
+          unsyncedCount={unsyncedCount}
           lang={lang}
+          onOpenTab={(tab) => setActiveTab(tab)}
         />
       )}
 

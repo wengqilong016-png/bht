@@ -8,7 +8,17 @@ const LOCATION_FIELDS = [
   'ownerName', 'shopOwnerPhone', 'ownerPhotoUrl', 'machinePhotoUrl',
   'initialStartupDebt', 'remainingStartupDebt', 'isNewOffice', 'coords',
   'status', 'lastRevenueDate', 'commissionRate', 'resetLocked', 'dividendBalance',
+  'createdAt', 'lastRelocatedAt:last_relocated_at',
 ].join(', ');
+
+function toDbLocation(location: Partial<Location>): Record<string, unknown> {
+  const payload: Record<string, unknown> = { ...location };
+
+  delete payload.createdAt;
+  delete payload.lastRelocatedAt;
+
+  return payload;
+}
 
 export async function fetchLocations(signal?: AbortSignal): Promise<Location[]> {
   if (!supabase) throw new Error('Supabase client unavailable');
@@ -21,7 +31,7 @@ export async function fetchLocations(signal?: AbortSignal): Promise<Location[]> 
 
 export async function upsertLocations(locations: Partial<Location>[]): Promise<void> {
   if (!supabase) throw new Error('Supabase client unavailable');
-  const { error } = await supabase.from('locations').upsert(locations);
+  const { error } = await supabase.from('locations').upsert(locations.map(toDbLocation));
   if (error) throw error;
 }
 

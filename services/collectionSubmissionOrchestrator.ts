@@ -69,6 +69,13 @@ function parseInteger(value: string): number {
   return parseInt(value, 10) || 0;
 }
 
+function parseAmount(value: string): number {
+  const normalized = value.replace(/,/g, '').trim();
+  if (!normalized) return 0;
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function normalizeReportedStatus(
   condition: string | null | undefined,
   fallbackStatus: Location['status'] | undefined,
@@ -137,8 +144,8 @@ export function buildCollectionSubmissionInput(
     tip:             parseInteger(input.tip),
     startupDebtDeduction: input.calculations.startupDebtDeduction,
     isOwnerRetaining: input.isOwnerRetaining,
-    ownerRetention:  input.isOwnerRetaining && input.ownerRetention !== ''
-      ? ((value) => (isNaN(value) ? null : value))(parseInt(input.ownerRetention, 10))
+    ownerRetention:  input.ownerRetention !== ''
+      ? ((value) => (Number.isFinite(value) ? value : null))(parseAmount(input.ownerRetention))
       : null,
     coinExchange:    parseInteger(input.coinExchange),
     gps:             input.resolvedGps.lat === 0 && input.resolvedGps.lng === 0 ? null : input.resolvedGps,

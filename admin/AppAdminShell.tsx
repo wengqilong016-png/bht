@@ -92,6 +92,7 @@ const AppAdminShell: React.FC = () => {
             const active = view === item.id;
             const itemLabel = lang === 'zh' ? item.label : item.labelEn || item.label;
             const stat = navStatByView[item.id];
+            const statVisible = !(item.id === 'settlement' && item.badge && item.badge > 0);
             return (
               <button
                 key={item.id}
@@ -105,7 +106,7 @@ const AppAdminShell: React.FC = () => {
                 <span className="flex-shrink-0">{item.icon}</span>
                 <div className="min-w-0 flex-1">
                   <span className="block text-[10px] font-black uppercase leading-tight truncate">{itemLabel}</span>
-                  {stat && (
+                  {stat && statVisible && (
                     <span className={`mt-1 block text-[8px] font-bold uppercase truncate ${active ? 'text-slate-500' : 'text-slate-600 group-hover:text-slate-300'}`}>
                       {stat.value} {stat.label}
                     </span>
@@ -160,7 +161,7 @@ const AppAdminShell: React.FC = () => {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="border-b flex-shrink-0 z-30 bg-white/95 backdrop-blur border-slate-200">
+        <header className="border-b flex-shrink-0 z-30 bg-white/95 backdrop-blur border-slate-200 pt-[max(env(safe-area-inset-top),0px)]">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="md:hidden flex items-center gap-2">
@@ -187,6 +188,7 @@ const AppAdminShell: React.FC = () => {
             {adminNavItems.map((item) => (
               (() => {
                 const stat = navStatByView[item.id];
+                const statVisible = !(item.id === 'settlement' && item.badge && item.badge > 0);
                 return (
               <button
                 key={item.id}
@@ -197,7 +199,7 @@ const AppAdminShell: React.FC = () => {
               >
                 {item.icon}
                 <span>{lang === 'zh' ? item.label : item.labelEn || item.label}</span>
-                {stat && (
+                {stat && statVisible && (
                   <span className={`text-[6px] font-bold normal-case ${view === item.id ? 'text-slate-300' : 'text-slate-500'}`}>
                     {stat.value}
                   </span>
@@ -232,9 +234,9 @@ const AppAdminShell: React.FC = () => {
           lang={lang}
           isOnline={isOnline}
           onClose={() => setShowAccountSettings(false)}
-          onPhoneUpdated={(driverId, phone) => {
+          onPhoneUpdated={async (driverId, phone) => {
             const updated = drivers.map((d) => d.id === driverId ? { ...d, phone } : d);
-            updateDrivers.mutate(updated);
+            await updateDrivers.mutateAsync(updated);
           }}
         />
       )}

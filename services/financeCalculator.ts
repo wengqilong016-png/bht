@@ -27,6 +27,13 @@ export interface CollectionFinanceInput {
   initialFloat?: number;
 }
 
+function parseAmount(value: string): number {
+  const normalized = value.replace(/,/g, '').trim();
+  if (!normalized) return 0;
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 const EMPTY_RESULT: FinanceCalculationResult = {
   diff: 0,
   revenue: 0,
@@ -49,10 +56,7 @@ export function calculateCollectionFinanceLocal(input: CollectionFinanceInput): 
   const commissionRate = selectedLocation.commissionRate || CONSTANTS.DEFAULT_PROFIT_SHARE;
   const commission = Math.floor(revenue * commissionRate);
 
-  let finalRetention = 0;
-  if (input.isOwnerRetaining) {
-    finalRetention = input.ownerRetention !== '' ? parseInt(input.ownerRetention, 10) || 0 : commission;
-  }
+  const finalRetention = input.ownerRetention !== '' ? parseAmount(input.ownerRetention) : commission;
 
   const expenseValue = parseInt(input.expenses, 10) || 0;
   const tipValue = parseInt(input.tip, 10) || 0;
@@ -100,8 +104,8 @@ export async function calculateCollectionFinancePreview(
       p_expenses: parseInt(input.expenses, 10) || 0,
       p_tip: parseInt(input.tip, 10) || 0,
       p_is_owner_retaining: input.isOwnerRetaining,
-      p_owner_retention: input.isOwnerRetaining && input.ownerRetention !== ''
-        ? parseInt(input.ownerRetention, 10) || 0
+      p_owner_retention: input.ownerRetention !== ''
+        ? parseAmount(input.ownerRetention)
         : null,
       p_startup_debt_deduction_request: Math.max(0, parseInt(input.startupDebtDeduction, 10) || 0),
       p_startup_debt_balance: Math.max(0, selectedLocation.remainingStartupDebt || 0),

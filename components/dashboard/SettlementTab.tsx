@@ -69,6 +69,9 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
   const [actualCash, setActualCash] = useState<string>('');
   const [actualCoins, setActualCoins] = useState<string>('');
   const [pendingActionKey, setPendingActionKey] = useState<string | null>(null);
+  const myPendingSettlements = pendingSettlements
+    .filter(settlement => settlement.driverId === activeDriverId && settlement.status === 'pending')
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   const cashAmount = parseInt(actualCash) || 0;
   const coinAmount = parseInt(actualCoins) || 0;
@@ -403,100 +406,166 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
         </div>
       ) : (
         // Driver view: Today's Settlement
-        <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 space-y-4 animate-in zoom-in-95">
-          <div className="text-center">
+        <div className="space-y-4 animate-in zoom-in-95">
+          {myPendingSettlements.length > 0 && (
+            <div className="bg-amber-50 p-4 rounded-3xl border border-amber-100 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-black text-amber-900 uppercase tracking-tight">
+                    {lang === 'zh' ? '待审批结算' : 'Pending Settlements'}
+                  </h3>
+                  <p className="text-[10px] font-bold text-amber-600 uppercase tracking-[0.18em]">
+                    {myPendingSettlements.length} {t.pendingApproval}
+                  </p>
+                </div>
+                <div className={`${pill} bg-white text-amber-700 border border-amber-200`}>
+                  {myPendingSettlements.length}
+                </div>
+              </div>
+              <div className="space-y-2">
+                {myPendingSettlements.map(settlement => {
+                  const submittedTotal = settlement.actualCash + settlement.actualCoins;
+                  const variance = settlement.shortage;
+                  return (
+                    <div key={settlement.id} className="rounded-2xl border border-amber-200 bg-white/90 p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] font-black text-slate-900 uppercase">
+                            {new Date(settlement.timestamp).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-GB')}
+                          </p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase">
+                            {new Date(settlement.timestamp).toLocaleTimeString(lang === 'zh' ? 'zh-CN' : 'en-GB', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </p>
+                        </div>
+                        <div className={`${pill} bg-amber-100 text-amber-700`}>
+                          {t.pendingApproval}
+                        </div>
+                      </div>
+                      <div className="mt-3 grid grid-cols-3 gap-2">
+                        <div className="rounded-xl bg-slate-50 p-2">
+                          <p className="text-[8px] font-black uppercase text-slate-400">{t.expectedTotalLabel}</p>
+                          <p className="text-[10px] font-black text-slate-900">TZS {settlement.expectedTotal.toLocaleString()}</p>
+                        </div>
+                        <div className="rounded-xl bg-indigo-50 p-2">
+                          <p className="text-[8px] font-black uppercase text-indigo-400">
+                            {lang === 'zh' ? '已提交' : 'Submitted'}
+                          </p>
+                          <p className="text-[10px] font-black text-indigo-700">TZS {submittedTotal.toLocaleString()}</p>
+                        </div>
+                        <div className={`rounded-xl p-2 ${variance === 0 ? 'bg-emerald-50' : 'bg-rose-50'}`}>
+                          <p className={`text-[8px] font-black uppercase ${variance === 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {t.varianceLabel}
+                          </p>
+                          <p className={`text-[10px] font-black ${variance === 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                            TZS {Math.abs(variance).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 space-y-4">
+            <div className="text-center">
             <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mx-auto mb-4 border border-indigo-100">
               <Banknote size={40} />
             </div>
             <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">{t.dailySettlement}</h2>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2">{todayStr} • {todayDriverTxs.length} {t.collectionsCount}</p>
-          </div>
+            </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <p className="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">{t.revenue}</p>
-              <p className="text-xl font-black text-slate-800">TZS {todayDriverTxs.reduce((sum, tx) => sum + tx.revenue, 0).toLocaleString()}</p>
-            </div>
-            <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
-              <p className="text-[10px] font-black text-indigo-400 uppercase mb-1 tracking-widest">{t.cashInHand}</p>
-              <p className="text-xl font-black text-indigo-600">TZS {todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0).toLocaleString()}</p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-              <label className="text-[10px] font-black text-slate-500 uppercase block mb-3 tracking-widest text-center">{t.inputCash} (TZS {t.notesUnit})</label>
-              <input
-                type="number"
-                value={actualCash}
-                onChange={e => setActualCash(e.target.value)}
-                className="w-full text-4xl font-black bg-transparent text-center outline-none text-slate-800 placeholder:text-slate-300"
-                placeholder="0"
-              />
-            </div>
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-              <label className="text-[10px] font-black text-slate-500 uppercase block mb-3 tracking-widest text-center">{t.inputCoins} (TZS {t.coinsUnitLabel})</label>
-              <input
-                type="number"
-                value={actualCoins}
-                onChange={e => setActualCoins(e.target.value)}
-                className="w-full text-4xl font-black bg-transparent text-center outline-none text-slate-800 placeholder:text-slate-300"
-                placeholder="0"
-              />
-            </div>
-          </div>
-
-          {hasSettlementInput && (
-            <div className={`p-4 rounded-2xl flex justify-between items-center animate-in slide-in-from-top-4 border ${cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
-              <div>
-                <p className={`text-[10px] font-black uppercase ${cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'text-emerald-400' : 'text-rose-400'}`}>{t.varianceLabel}</p>
-                <p className={`text-2xl font-black ${cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'text-emerald-600' : 'text-rose-600'}`}>TZS {(cashAmount + coinAmount - todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0)).toLocaleString()}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">{t.revenue}</p>
+                <p className="text-xl font-black text-slate-800">TZS {todayDriverTxs.reduce((sum, tx) => sum + tx.revenue, 0).toLocaleString()}</p>
               </div>
-              <div className={`p-3 rounded-2xl bg-white ${cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'text-emerald-500' : 'text-rose-500'}`}>
-                {cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? <ThumbsUp size={32} /> : <AlertTriangle size={32} />}
+              <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
+                <p className="text-[10px] font-black text-indigo-400 uppercase mb-1 tracking-widest">{t.cashInHand}</p>
+                <p className="text-xl font-black text-indigo-600">TZS {todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0).toLocaleString()}</p>
               </div>
             </div>
-          )}
 
-          <button
-            disabled={!hasSettlementInput || pendingActionKey === 'driver:settlement-submit'}
-            onClick={async () => {
-              setPendingActionKey('driver:settlement-submit');
-              const totalNet = todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0);
-              const actual = cashAmount + coinAmount;
-              const settlement: DailySettlement = {
-                id: `STL-${Date.now()}`,
-                date: todayStr,
-                driverId: activeDriverId,
-                driverName: currentUser.name,
-                totalRevenue: todayDriverTxs.reduce((sum, tx) => sum + tx.revenue, 0),
-                totalNetPayable: totalNet,
-                totalExpenses: todayDriverTxs.reduce((sum, tx) => sum + tx.expenses, 0),
-                driverFloat: myProfile?.dailyFloatingCoins || 0,
-                expectedTotal: totalNet,
-                actualCash: cashAmount,
-                actualCoins: coinAmount,
-                shortage: actual - totalNet,
-                status: 'pending',
-                timestamp: new Date().toISOString(),
-                isSynced: false,
-              };
-              try {
-                await onCreateSettlement(settlement);
-                alert(lang === 'zh' ? '✅ 结算已提交，等待审批。' : '✅ Settlement submitted. Waiting for approval.');
-                setActualCash('');
-                setActualCoins('');
-              } catch (error) {
-                console.error('Settlement submission failed.', error);
-                alert(lang === 'zh' ? '❌ 结算提交失败，请重试。' : '❌ Settlement submission failed. Please retry.');
-              } finally {
-                setPendingActionKey(current => (current === 'driver:settlement-submit' ? null : current));
-              }
-            }}
-            className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-sm transition-all disabled:opacity-30"
-          >
-            ✓ {t.settlementSubmitCta}
-          </button>
+            <div className="space-y-3">
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                <label className="text-[10px] font-black text-slate-500 uppercase block mb-3 tracking-widest text-center">{t.inputCash} (TZS {t.notesUnit})</label>
+                <input
+                  type="number"
+                  value={actualCash}
+                  onChange={e => setActualCash(e.target.value)}
+                  className="w-full text-4xl font-black bg-transparent text-center outline-none text-slate-800 placeholder:text-slate-300"
+                  placeholder="0"
+                />
+              </div>
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                <label className="text-[10px] font-black text-slate-500 uppercase block mb-3 tracking-widest text-center">{t.inputCoins} (TZS {t.coinsUnitLabel})</label>
+                <input
+                  type="number"
+                  value={actualCoins}
+                  onChange={e => setActualCoins(e.target.value)}
+                  className="w-full text-4xl font-black bg-transparent text-center outline-none text-slate-800 placeholder:text-slate-300"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            {hasSettlementInput && (
+              <div className={`p-4 rounded-2xl flex justify-between items-center animate-in slide-in-from-top-4 border ${cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
+                <div>
+                  <p className={`text-[10px] font-black uppercase ${cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'text-emerald-400' : 'text-rose-400'}`}>{t.varianceLabel}</p>
+                  <p className={`text-2xl font-black ${cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'text-emerald-600' : 'text-rose-600'}`}>TZS {(cashAmount + coinAmount - todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0)).toLocaleString()}</p>
+                </div>
+                <div className={`p-3 rounded-2xl bg-white ${cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  {cashAmount + coinAmount === todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0) ? <ThumbsUp size={32} /> : <AlertTriangle size={32} />}
+                </div>
+              </div>
+            )}
+
+            <button
+              disabled={!hasSettlementInput || pendingActionKey === 'driver:settlement-submit'}
+              onClick={async () => {
+                setPendingActionKey('driver:settlement-submit');
+                const totalNet = todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0);
+                const actual = cashAmount + coinAmount;
+                const settlement: DailySettlement = {
+                  id: `STL-${Date.now()}`,
+                  date: todayStr,
+                  driverId: activeDriverId,
+                  driverName: currentUser.name,
+                  totalRevenue: todayDriverTxs.reduce((sum, tx) => sum + tx.revenue, 0),
+                  totalNetPayable: totalNet,
+                  totalExpenses: todayDriverTxs.reduce((sum, tx) => sum + tx.expenses, 0),
+                  driverFloat: myProfile?.dailyFloatingCoins || 0,
+                  expectedTotal: totalNet,
+                  actualCash: cashAmount,
+                  actualCoins: coinAmount,
+                  shortage: actual - totalNet,
+                  status: 'pending',
+                  timestamp: new Date().toISOString(),
+                  isSynced: false,
+                };
+                try {
+                  await onCreateSettlement(settlement);
+                  alert(lang === 'zh' ? '✅ 结算已提交，等待审批。' : '✅ Settlement submitted. Waiting for approval.');
+                  setActualCash('');
+                  setActualCoins('');
+                } catch (error) {
+                  console.error('Settlement submission failed.', error);
+                  alert(lang === 'zh' ? '❌ 结算提交失败，请重试。' : '❌ Settlement submission failed. Please retry.');
+                } finally {
+                  setPendingActionKey(current => (current === 'driver:settlement-submit' ? null : current));
+                }
+              }}
+              className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-sm transition-all disabled:opacity-30"
+            >
+              ✓ {t.settlementSubmitCta}
+            </button>
+          </div>
         </div>
       )}
     </div>

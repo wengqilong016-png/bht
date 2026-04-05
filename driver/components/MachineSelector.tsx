@@ -22,7 +22,10 @@ interface MachineSelectorProps {
   lang: 'zh' | 'sw';
   isOnline: boolean;
   gpsCoords: { lat: number; lng: number } | null;
+  currentDraftLocation?: Location | null;
+  hasDraftInProgress?: boolean;
   onSelectMachine: (locId: string) => void;
+  onResumeDraft?: (locId: string) => void;
   onStartRegister: () => void;
   onRequestReset: (locId: string) => void;
   onRequestPayout: (locId: string) => void;
@@ -31,7 +34,8 @@ interface MachineSelectorProps {
 
 const MachineSelector: React.FC<MachineSelectorProps> = ({
   locations, currentDriver, allTransactions, lang, isOnline, gpsCoords,
-  onSelectMachine, onStartRegister, onRequestReset, onRequestPayout, onRegisterMachine,
+  currentDraftLocation, hasDraftInProgress = false,
+  onSelectMachine, onResumeDraft, onStartRegister, onRequestReset, onRequestPayout, onRegisterMachine,
 }) => {
   const t = TRANSLATIONS[lang];
   const [searchQuery, setSearchQuery] = useState('');
@@ -140,6 +144,9 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
     return { totalMachines: assignedLocations.length, pendingStops, urgentMachines, nearbySites };
   }, [assignedLocations.length, locationCards]);
 
+  const nextPriorityMachine = locationCards[0] ?? null;
+  const followUpQueue = locationCards.slice(1, 4);
+
   return (
     <div className="max-w-md mx-auto py-3 px-3 animate-in fade-in space-y-2.5">
       {/* Offline status banner */}
@@ -190,6 +197,125 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
           <span className="text-xs font-black text-white">{(currentDriver?.dailyFloatingCoins ?? 0).toLocaleString()}</span>
         </div>
       </div>
+
+      {nextPriorityMachine && (
+        <div className="rounded-[28px] border border-slate-200 bg-white px-4 py-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-[0.25em] text-indigo-500">
+                {t.todayWorkbench}
+              </p>
+              <h3 className="mt-1 truncate text-base font-black uppercase text-slate-900">
+                {nextPriorityMachine.loc.machineId} <span className="normal-case text-slate-500">{nextPriorityMachine.loc.name}</span>
+              </h3>
+              <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                {nextPriorityMachine.loc.area || '—'} · {t.score} {(nextPriorityMachine.loc.lastScore ?? 0).toLocaleString()}
+              </p>
+            </div>
+            <button
+              onClick={() => onSelectMachine(nextPriorityMachine.loc.id)}
+              disabled={nextPriorityMachine.isLocked}
+              className="shrink-0 rounded-2xl bg-slate-900 px-4 py-3 text-[10px] font-black uppercase tracking-wide text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+              {t.startNow}
+            </button>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {nextPriorityMachine.isPending && (
+              <span className="rounded-full bg-indigo-50 px-2 py-1 text-[8px] font-black uppercase text-indigo-700">
+                {t.pendingToday}
+              </span>
+            )}
+            {nextPriorityMachine.isUrgent && (
+              <span className="rounded-full bg-amber-50 px-2 py-1 text-[8px] font-black uppercase text-amber-700">
+                {t.urgentMachines}
+              </span>
+            )}
+            {nextPriorityMachine.isNearby && (
+              <span className="rounded-full bg-emerald-50 px-2 py-1 text-[8px] font-black uppercase text-emerald-700">
+                {t.nearbySites}
+              </span>
+            )}
+            {nextPriorityMachine.distanceMeters !== null ? (
+              <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-black uppercase text-slate-600">
+                {Math.round(nextPriorityMachine.distanceMeters)}m
+              </span>
+            ) : (
+              <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-black uppercase text-slate-500">
+                {t.distanceWaiting}
+              </span>
+            )}
+          </div>
+
+          {followUpQueue.length > 0 && (
+            <div className="mt-4 border-t border-slate-100 pt-3">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">{t.priorityQueue}</p>
+                <p className="text-[8px] font-bold uppercase tracking-wide text-slate-300">
+                  {collectionOverview.pendingStops} {t.pendingStops}
+                </p>
+              </div>
+              <div className="space-y-2">
+                {followUpQueue.map((item) => (
+                  <button
+                    key={item.loc.id}
+                    onClick={() => onSelectMachine(item.loc.id)}
+                    disabled={item.isLocked}
+                    className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:border-slate-200 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-[11px] font-black uppercase text-slate-900">
+                        {item.loc.machineId} <span className="normal-case text-slate-500">{item.loc.name}</span>
+                      </p>
+                      <p className="mt-1 truncate text-[8px] font-bold uppercase tracking-wide text-slate-400">
+                        {item.loc.area || '—'} · {t.score} {(item.loc.lastScore ?? 0).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {item.isUrgent && (
+                        <span className="rounded-full bg-amber-50 px-2 py-1 text-[7px] font-black uppercase text-amber-700">
+                          {t.urgentMachines}
+                        </span>
+                      )}
+                      {item.isPending && (
+                        <span className="rounded-full bg-indigo-50 px-2 py-1 text-[7px] font-black uppercase text-indigo-700">
+                          {t.pendingToday}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {hasDraftInProgress && currentDraftLocation && (
+        <button
+          type="button"
+          onClick={() => (onResumeDraft ?? onSelectMachine)(currentDraftLocation.id)}
+          className="flex w-full items-center justify-between gap-3 rounded-[24px] border border-indigo-200 bg-indigo-50 px-4 py-3 text-left shadow-[0_10px_24px_rgba(79,70,229,0.08)] transition-colors hover:bg-indigo-100"
+        >
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.22em] text-indigo-500">
+              {t.resumeCurrentTask}
+            </p>
+            <p className="mt-1 truncate text-[11px] font-black uppercase text-slate-900">
+              {currentDraftLocation.machineId}{' '}
+              <span className="normal-case text-slate-500">{currentDraftLocation.name}</span>
+            </p>
+            <p className="mt-1 truncate text-[8px] font-bold uppercase tracking-wide text-slate-400">
+              {currentDraftLocation.area || '—'} · {t.score} {(currentDraftLocation.lastScore ?? 0).toLocaleString()}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2 rounded-2xl bg-white px-3 py-2 text-[9px] font-black uppercase tracking-wide text-indigo-600">
+            <ScanLine size={13} />
+            {t.resumeEntry}
+          </div>
+        </button>
+      )}
 
       <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {[

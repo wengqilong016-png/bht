@@ -3,7 +3,7 @@ import { Location } from '../types';
 import DriverCollectionFlow from '../driver/pages/DriverCollectionFlow';
 
 interface CollectionFormProps {
-  onRegisterMachine?: (location: Location) => void;
+  onRegisterMachine?: (location: Location) => Promise<void>;
 }
 
 /**
