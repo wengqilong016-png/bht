@@ -19,6 +19,7 @@ import { useAppData } from '../../contexts/DataContext';
 import { useMutations } from '../../contexts/MutationContext';
 import { resolveCurrentDriver } from '../driverShellViewState';
 import { useQueryClient } from '@tanstack/react-query';
+import { localDB } from '../../services/localDB';
 
 interface DriverCollectionFlowProps {
   onRegisterMachine?: (location: Location) => Promise<void>;
@@ -33,6 +34,8 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
   const { filteredLocations, filteredTransactions, isOnline, drivers } = useAppData();
   const { logAI, submitTransaction, syncOfflineData } = useMutations();
   const queryClient = useQueryClient();
+  const transactionQueryKey = ['transactions', `driver:${activeDriverId}`] as const;
+  const transactionStorageKey = `${CONSTANTS.STORAGE_TRANSACTIONS_KEY}:driver:${activeDriverId}`;
 
   const locations = filteredLocations;
   const allTransactions = filteredTransactions;
@@ -85,7 +88,21 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     } catch (error) {
       console.warn('Failed to persist optimistic locations update locally.', error);
     }
-    syncOfflineData.mutate();
+
+    queryClient.setQueryData<Transaction[]>(transactionQueryKey, (old: Transaction[] = []) => {
+      const withoutExisting = old.filter(existing => existing.id !== tx.id);
+      return [{ ...tx }, ...withoutExisting];
+    });
+
+    const cachedTransactions =
+      (queryClient.getQueryData<Transaction[]>(transactionQueryKey) ?? [{ ...tx }, ...allTransactions.filter(existing => existing.id !== tx.id)]);
+    localDB.set(transactionStorageKey, cachedTransactions).catch((error) => {
+      console.warn('Failed to persist submitted transaction locally.', error);
+    });
+
+    if (isOnline) {
+      syncOfflineData.mutate();
+    }
   };
 
   if (!currentDriver) return null;
