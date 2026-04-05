@@ -18,7 +18,7 @@ interface AccountSettingsProps {
   isOnline?: boolean;
   onClose: () => void;
   /** Called when the driver's phone is updated so parent can reflect it */
-  onPhoneUpdated?: (driverId: string, phone: string) => void;
+  onPhoneUpdated?: (driverId: string, phone: string) => Promise<void> | void;
 }
 
 const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, isOnline = true, onClose, onPhoneUpdated }) => {
@@ -97,8 +97,8 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
     phoneForm.setLoading();
     try {
       await updateDriverPhone(currentUser.driverId, newPhone.trim());
+      await onPhoneUpdated?.(currentUser.driverId, newPhone.trim());
       phoneForm.setSuccess(t.updateSuccess);
-      onPhoneUpdated?.(currentUser.driverId, newPhone.trim());
       setNewPhone('');
     } catch (err) {
       phoneForm.setError((err as Error).message || t.updateError);

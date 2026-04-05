@@ -129,8 +129,31 @@ CREATE TABLE IF NOT EXISTS public.locations (
     "lastRevenueDate"      TEXT,
     "resetLocked"          BOOLEAN DEFAULT FALSE,
     "dividendBalance"      NUMERIC DEFAULT 0,
-    created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_relocated_at      TIMESTAMPTZ
 );
+
+CREATE OR REPLACE FUNCTION public.touch_location_relocation_timestamp()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF TG_OP = 'UPDATE' AND (
+        NEW.area IS DISTINCT FROM OLD.area
+        OR NEW.coords IS DISTINCT FROM OLD.coords
+    ) THEN
+        NEW.last_relocated_at := NOW();
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_touch_location_relocation_timestamp ON public.locations;
+CREATE TRIGGER trg_touch_location_relocation_timestamp
+    BEFORE UPDATE ON public.locations
+    FOR EACH ROW
+    EXECUTE FUNCTION public.touch_location_relocation_timestamp();
 
 -- ── transactions ─────────────────────────────────────────────────────────────
 
@@ -1587,7 +1610,7 @@ CREATE OR REPLACE FUNCTION public.calculate_finance_v2(
     p_expenses           INTEGER DEFAULT 0,
     p_tip                INTEGER DEFAULT 0,
     p_is_owner_retaining BOOLEAN DEFAULT TRUE,
-    p_owner_retention    INTEGER DEFAULT NULL,
+    p_owner_retention    NUMERIC DEFAULT NULL,
     p_startup_debt_deduction_request INTEGER DEFAULT 0,
     p_startup_debt_balance NUMERIC DEFAULT 0
 )
@@ -1596,22 +1619,17 @@ SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_diff                           INTEGER;
-    v_revenue                        BIGINT;
-    v_commission                     BIGINT;
-    v_final_retention                BIGINT;
-    v_available_after_core_deductions BIGINT;
-    v_startup_debt_deduction         BIGINT;
-    v_net_payable                    BIGINT;
+    v_revenue                        NUMERIC;
+    v_commission                     NUMERIC;
+    v_final_retention                NUMERIC;
+    v_available_after_core_deductions NUMERIC;
+    v_startup_debt_deduction         NUMERIC;
+    v_net_payable                    NUMERIC;
 BEGIN
     v_diff     := GREATEST(0, p_current_score - p_previous_score);
     v_revenue  := v_diff * 200;
     v_commission := FLOOR(v_revenue * COALESCE(p_commission_rate, 0.15));
-
-    IF p_is_owner_retaining THEN
-        v_final_retention := COALESCE(p_owner_retention, v_commission);
-    ELSE
-        v_final_retention := 0;
-    END IF;
+    v_final_retention := GREATEST(0, COALESCE(p_owner_retention, v_commission));
 
     v_available_after_core_deductions := GREATEST(
         0,
@@ -1637,8 +1655,8 @@ BEGIN
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.calculate_finance_v2(INTEGER, INTEGER, NUMERIC, INTEGER, INTEGER, BOOLEAN, INTEGER, INTEGER, NUMERIC) FROM PUBLIC;
-GRANT  EXECUTE ON FUNCTION public.calculate_finance_v2(INTEGER, INTEGER, NUMERIC, INTEGER, INTEGER, BOOLEAN, INTEGER, INTEGER, NUMERIC) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.calculate_finance_v2(INTEGER, INTEGER, NUMERIC, INTEGER, INTEGER, BOOLEAN, NUMERIC, INTEGER, NUMERIC) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION public.calculate_finance_v2(INTEGER, INTEGER, NUMERIC, INTEGER, INTEGER, BOOLEAN, NUMERIC, INTEGER, NUMERIC) TO authenticated;
 
 -- ── submit_collection_v2 ─────────────────────────────────────────────────────
 -- 服务端授权收款提交，鉴权 + 幂等 (ON CONFLICT DO NOTHING)
@@ -1653,7 +1671,7 @@ CREATE OR REPLACE FUNCTION public.submit_collection_v2(
     p_tip                INTEGER DEFAULT 0,
     p_startup_debt_deduction INTEGER DEFAULT 0,
     p_is_owner_retaining BOOLEAN DEFAULT TRUE,
-    p_owner_retention    INTEGER DEFAULT NULL,
+    p_owner_retention    NUMERIC DEFAULT NULL,
     p_coin_exchange      INTEGER DEFAULT 0,
     p_gps                JSONB   DEFAULT NULL,
     p_photo_url          TEXT    DEFAULT NULL,
@@ -1672,12 +1690,12 @@ DECLARE
     v_location        RECORD;
     v_driver          RECORD;
     v_diff            INTEGER;
-    v_revenue         BIGINT;
-    v_commission      BIGINT;
-    v_final_retention BIGINT;
-    v_available_after_core_deductions BIGINT;
-    v_startup_debt_deduction BIGINT;
-    v_net_payable     BIGINT;
+    v_revenue         NUMERIC;
+    v_commission      NUMERIC;
+    v_final_retention NUMERIC;
+    v_available_after_core_deductions NUMERIC;
+    v_startup_debt_deduction NUMERIC;
+    v_net_payable     NUMERIC;
     v_now             TIMESTAMPTZ := NOW();
     v_rows_inserted   INTEGER;
     v_existing_tx     RECORD;
@@ -1716,12 +1734,7 @@ BEGIN
     v_diff     := GREATEST(0, p_current_score - v_location."lastScore");
     v_revenue  := v_diff * 200;
     v_commission := FLOOR(v_revenue * COALESCE(v_location."commissionRate", 0.15));
-
-    IF p_is_owner_retaining THEN
-        v_final_retention := COALESCE(p_owner_retention, v_commission);
-    ELSE
-        v_final_retention := 0;
-    END IF;
+    v_final_retention := GREATEST(0, COALESCE(p_owner_retention, v_commission));
 
     v_available_after_core_deductions := GREATEST(
         0,
@@ -1776,7 +1789,12 @@ BEGIN
             "remainingStartupDebt" = GREATEST(
                 0,
                 COALESCE("remainingStartupDebt", 0) - v_startup_debt_deduction
-            )
+            ),
+            "dividendBalance" = CASE
+                WHEN p_is_owner_retaining
+                    THEN COALESCE("dividendBalance", 0) + v_final_retention
+                ELSE COALESCE("dividendBalance", 0)
+            END
         WHERE id = p_location_id;
     END IF;
 

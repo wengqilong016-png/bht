@@ -23,7 +23,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, setActiveTab, 
             activeTab === 'overview' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
           }`}
         >
-          OVERVIEW
+          {t.overviewLabel}
         </button>
       )}
       {isAdmin && (
@@ -33,7 +33,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, setActiveTab, 
             activeTab === 'locations' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
           }`}
         >
-          SITES
+          {t.sitesLabel}
         </button>
       )}
       <button
@@ -42,7 +42,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, setActiveTab, 
           activeTab === 'settlement' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
         }`}
       >
-        {isAdmin ? 'APPROVE' : 'SETTLEMENT'}
+        {isAdmin ? t.approvalsLabel : t.dailySettlement}
       </button>
       {isAdmin && (
         <button
@@ -51,7 +51,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, setActiveTab, 
             activeTab === 'team' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
           }`}
         >
-          FLEET
+          {t.fleetLabel}
         </button>
       )}
       {isAdmin && (
@@ -61,7 +61,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, setActiveTab, 
             activeTab === 'tracking' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
           }`}
         >
-          TRACKING
+          {t.trackingLabel}
         </button>
       )}
       {isAdmin && (

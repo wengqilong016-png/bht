@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Send, Loader2, CheckCircle2, ArrowRight, AlertTriangle, Satellite, RotateCcw } from 'lucide-react';
 import WizardStepBar from './WizardStepBar';
+import CollectionWorkbenchHeader from './CollectionWorkbenchHeader';
 import { Location, Driver, Transaction, TRANSLATIONS } from '../../types';
 import { extractGpsFromExif, estimateLocationFromContext } from '../../offlineQueue';
 import type { AIReviewData } from '../hooks/useCollectionDraft';
@@ -38,16 +39,20 @@ interface SubmitReviewProps {
   };
   onSubmit: (tx: Transaction) => void;
   onBack: () => void;
+  onSwitchMachine?: () => void;
   onReset: () => void;
+  onContinueNext?: (locId: string) => void;
   onUpdateGps: (coords: { lat: number; lng: number }) => void;
   onUpdateGpsPermission: (perm: 'prompt' | 'granted' | 'denied') => void;
+  nextMachine?: Location | null;
+  pendingCount?: number;
 }
 
 const SubmitReview: React.FC<SubmitReviewProps> = ({
   selectedLocation, currentDriver, lang, isOnline, currentScore, photoData,
   aiReviewData, expenses, expenseType, expenseCategory, coinExchange, tip, startupDebtDeduction, draftTxId,
   gpsCoords, gpsPermission, isOwnerRetaining, ownerRetention, calculations,
-  onSubmit, onBack, onReset, onUpdateGps, onUpdateGpsPermission,
+  onSubmit, onBack, onSwitchMachine, onReset, onContinueNext, onUpdateGps, onUpdateGpsPermission, nextMachine, pendingCount,
 }) => {
   const t = TRANSLATIONS[lang];
   const parsedCurrentScore = parseInt(currentScore, 10);
@@ -67,12 +72,12 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       onSubmit(transaction);
       resetSubmissionState();
       if (source === 'server') {
-        alert(lang === 'zh' ? '✅ 采集记录已保存' : '✅ Collection report saved');
+        alert(lang === 'zh' ? '✅ 采集记录已保存，返回工作台。' : '✅ Collection report saved. Returning to the workbench.');
       } else {
         alert(
           lang === 'zh'
-            ? '✅ 离线已保存！恢复网络后自动上传。'
-            : '✅ Saved offline! Will auto-upload when connected.',
+            ? '✅ 离线已保存，恢复网络后会自动上传，现返回工作台。'
+            : '✅ Saved offline and queued. Returning to the workbench.'
         );
       }
       onReset();
@@ -162,27 +167,17 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   };
 
   return (
-    <div className="max-w-md mx-auto py-3 px-3 pb-24 animate-in fade-in space-y-3">
+    <div className="max-w-md mx-auto py-2.5 px-3 pb-24 animate-in fade-in space-y-2.5">
       <WizardStepBar current="confirm" lang={lang} />
 
-      <div className="flex items-center gap-3">
-        <button onClick={onBack} className="p-2.5 bg-white border border-slate-200 rounded-2xl text-slate-500 hover:text-indigo-600 transition-colors flex-shrink-0">
-          <ArrowRight size={18} className="rotate-180" />
-        </button>
-        <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-3 py-2">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h2 className="truncate text-sm font-black text-slate-900 leading-tight">{selectedLocation?.name}</h2>
-              <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.15em]">
-                {selectedLocation?.machineId} • {selectedLocation?.area || '—'}
-              </p>
-            </div>
-            <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-black uppercase text-slate-500">
-              {((selectedLocation?.commissionRate ?? 0) * 100).toFixed(0)}%
-            </span>
-          </div>
-        </div>
-      </div>
+      <CollectionWorkbenchHeader
+        selectedLocation={selectedLocation}
+        lang={lang}
+        onBack={onBack}
+        onSwitchMachine={onSwitchMachine}
+        nextMachine={nextMachine}
+        pendingCount={pendingCount}
+      />
 
       <div className="bg-slate-900 rounded-2xl px-4 py-3 text-white flex justify-between items-center">
         <div>
@@ -192,12 +187,26 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         <p className="text-4xl font-black">TZS {calculations.netPayable.toLocaleString()}</p>
       </div>
 
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+          <p className="text-[8px] font-black uppercase tracking-wide text-slate-400">{t.score}</p>
+          <p className="mt-1 text-sm font-black text-slate-900">{currentScore || '0'}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+          <p className="text-[8px] font-black uppercase tracking-wide text-slate-400">{t.exchange}</p>
+          <p className="mt-1 text-sm font-black text-slate-900">TZS {(parseInt(coinExchange) || 0).toLocaleString()}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+          <p className="text-[8px] font-black uppercase tracking-wide text-slate-400">{t.coinStock}</p>
+          <p className="mt-1 text-sm font-black text-slate-900">{calculations.remainingCoins.toLocaleString()}</p>
+        </div>
+      </div>
+
       <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100">
         {[
           { label: t.revenue, value: `TZS ${calculations.revenue.toLocaleString()}`, color: 'text-slate-900' },
           { label: t.retention, value: `− TZS ${calculations.finalRetention.toLocaleString()}`, color: 'text-amber-600' },
-          { label: t.expenses, value: `− TZS ${(parseInt(expenses) || 0).toLocaleString()}`, color: 'text-rose-500' },
-          ...(parseInt(tip) > 0 ? [{ label: lang === 'zh' ? '小费支出' : 'Tip / Gratuity', value: `− TZS ${(parseInt(tip) || 0).toLocaleString()}`, color: 'text-amber-500' }] : []),
+          { label: t.expenses, value: `− TZS ${((parseInt(expenses) || 0) + (parseInt(tip) || 0)).toLocaleString()}`, color: 'text-rose-500' },
           ...(calculations.startupDebtDeduction > 0 || parseInt(startupDebtDeduction) > 0
             ? [{ label: lang === 'zh' ? '商家欠款扣减' : 'Merchant Debt Deduction', value: `− TZS ${calculations.startupDebtDeduction.toLocaleString()}`, color: 'text-indigo-600' }]
             : []),

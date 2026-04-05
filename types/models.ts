@@ -20,6 +20,8 @@ export interface Location {
   commissionRate: number;
   resetLocked?: boolean;
   dividendBalance?: number;
+  createdAt?: string;
+  lastRelocatedAt?: string;
   isSynced?: boolean;
 }
 
@@ -83,7 +85,7 @@ export interface Transaction {
 
   /** Public = Company Cost, Private = Driver Loan */
   expenseType?: 'public' | 'private';
-  expenseCategory?: 'fuel' | 'repair' | 'fine' | 'allowance' | 'salary_advance' | 'other' | 'transport';
+  expenseCategory?: 'tip' | 'fuel' | 'repair' | 'fine' | 'allowance' | 'salary_advance' | 'other' | 'transport';
   expenseStatus?: 'pending' | 'approved' | 'rejected';
   expenseDescription?: string;
 

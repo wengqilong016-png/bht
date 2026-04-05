@@ -1,6 +1,7 @@
 import React from 'react';
-import { ArrowRight, HandCoins, Banknote, Coins, ShieldAlert, Trophy, ChevronRight, Gift } from 'lucide-react';
+import { ArrowRight, HandCoins, Banknote, Coins, Trophy, ChevronRight, Gift, ShieldAlert } from 'lucide-react';
 import WizardStepBar from './WizardStepBar';
+import CollectionWorkbenchHeader from './CollectionWorkbenchHeader';
 import { Location, CONSTANTS, TRANSLATIONS, Transaction } from '../../types';
 import type { FinanceCalculationSource } from '../../services/financeCalculator';
 
@@ -13,7 +14,6 @@ interface FinanceSummaryProps {
   lang: 'zh' | 'sw';
   currentScore: string;
   expenses: string;
-  expenseType: 'public' | 'private';
   expenseCategory: Transaction['expenseCategory'];
   coinExchange: string;
   ownerRetention: string;
@@ -31,7 +31,6 @@ interface FinanceSummaryProps {
     isCoinStockNegative: boolean;
   };
   onUpdateExpenses: (val: string) => void;
-  onUpdateExpenseType: (val: 'public' | 'private') => void;
   onUpdateExpenseCategory: (val: Transaction['expenseCategory']) => void;
   onUpdateCoinExchange: (val: string) => void;
   onUpdateOwnerRetention: (val: string) => void;
@@ -40,44 +39,41 @@ interface FinanceSummaryProps {
   onUpdateStartupDebtDeduction: (val: string) => void;
   onNext: () => void;
   onBack: () => void;
+  onSwitchMachine?: () => void;
   previewSource?: FinanceCalculationSource;
+  nextMachine?: Location | null;
+  pendingCount?: number;
 }
 
 const FinanceSummary: React.FC<FinanceSummaryProps> = ({
-  selectedLocation, lang, currentScore, expenses, expenseType, expenseCategory,
+  selectedLocation, lang, currentScore, expenses, expenseCategory,
   coinExchange, ownerRetention, isOwnerRetaining, tip, startupDebtDeduction, calculations,
-  onUpdateExpenses, onUpdateExpenseType, onUpdateExpenseCategory,
+  onUpdateExpenses, onUpdateExpenseCategory,
   onUpdateCoinExchange, onUpdateOwnerRetention, onUpdateIsOwnerRetaining, onUpdateTip, onUpdateStartupDebtDeduction,
-  onNext, onBack, previewSource,
+  onNext, onBack, onSwitchMachine, previewSource, nextMachine, pendingCount,
 }) => {
   const t = TRANSLATIONS[lang];
+  const isTipExpense = expenseCategory === 'tip';
+  const displayedExpenseValue = isTipExpense ? tip : expenses;
+  const currentDividendBalance = Number(selectedLocation.dividendBalance || 0);
+  const projectedDividendBalance = currentDividendBalance + calculations.finalRetention;
+  const displayedOwnerAmount = ownerRetention === '' ? String(calculations.commission) : ownerRetention;
   const parsedCurrentScore = parseInt(currentScore, 10);
   const hasNumericScore = !isNaN(parsedCurrentScore);
   const isScoreBelowLastReading = hasNumericScore && parsedCurrentScore < (selectedLocation?.lastScore ?? 0);
 
   return (
-    <div className="max-w-md mx-auto py-3 px-3 pb-24 animate-in fade-in space-y-3">
+    <div className="max-w-md mx-auto py-2.5 px-3 pb-24 animate-in fade-in space-y-2.5">
       <WizardStepBar current="amounts" lang={lang} />
 
-      {/* Location sub-header */}
-      <div className="flex items-center gap-3">
-        <button onClick={onBack} className="p-2.5 bg-white border border-slate-200 rounded-2xl text-slate-500 hover:text-indigo-600 transition-colors flex-shrink-0">
-          <ArrowRight size={18} className="rotate-180" />
-        </button>
-        <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-3 py-2">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h2 className="truncate text-sm font-black text-slate-900 leading-tight">{selectedLocation?.name}</h2>
-              <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.15em]">
-                {selectedLocation?.machineId} • {selectedLocation?.area || '—'}
-              </p>
-            </div>
-            <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-black uppercase text-slate-500">
-              {((selectedLocation?.commissionRate ?? 0) * 100).toFixed(0)}%
-            </span>
-          </div>
-        </div>
-      </div>
+      <CollectionWorkbenchHeader
+        selectedLocation={selectedLocation}
+        lang={lang}
+        onBack={onBack}
+        onSwitchMachine={onSwitchMachine}
+        nextMachine={nextMachine}
+        pendingCount={pendingCount}
+      />
 
       {/* Revenue summary */}
       <div className={`px-3 py-2.5 rounded-2xl text-white flex justify-between items-center ${calculations.revenue > 50000 ? 'bg-indigo-600' : 'bg-slate-800'}`}>
@@ -105,75 +101,100 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
         </div>
       </div>
 
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+          <p className="text-[8px] font-black uppercase tracking-wide text-slate-400">{t.retention}</p>
+          <p className="mt-1 text-sm font-black text-slate-900">TZS {calculations.finalRetention.toLocaleString()}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+          <p className="text-[8px] font-black uppercase tracking-wide text-slate-400">{t.expenses}</p>
+          <p className="mt-1 text-sm font-black text-slate-900">TZS {(parseInt(displayedExpenseValue) || 0).toLocaleString()}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+          <p className="text-[8px] font-black uppercase tracking-wide text-slate-400">{t.net}</p>
+          <p className="mt-1 text-sm font-black text-slate-900">TZS {calculations.netPayable.toLocaleString()}</p>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              {lang === 'zh' ? '金额录入' : 'Cash Inputs'}
+            </p>
+            <p className="mt-1 text-[8px] font-bold uppercase tracking-wide text-slate-300">
+              {lang === 'zh' ? '分红、公账支出、换币、商家欠款' : 'Retention, company expenses, exchange, merchant debt'}
+            </p>
+          </div>
+          <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-black uppercase text-slate-500">
+            {previewSource === 'server' ? 'server' : 'local'}
+          </span>
+        </div>
+
       {/* Owner Retention */}
-      <div className={`p-3 rounded-2xl border transition-all ${isOwnerRetaining ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-100'}`}>
+      <div className={`p-3 rounded-2xl border transition-all ${isOwnerRetaining ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'}`}>
         <div className="flex justify-between items-center mb-3">
-          <label className={`text-[10px] font-black uppercase flex items-center gap-2 ${isOwnerRetaining ? 'text-amber-600' : 'text-slate-400'}`}>
-            <HandCoins size={13} /> {t.retention}
+          <label className={`text-[10px] font-black uppercase flex items-center gap-2 ${isOwnerRetaining ? 'text-amber-600' : 'text-emerald-600'}`}>
+            <HandCoins size={13} /> {isOwnerRetaining ? t.retention : (lang === 'zh' ? '支付商家分红' : 'Pay Owner Share')}
           </label>
           <button
             type="button"
             onClick={() => onUpdateIsOwnerRetaining(!isOwnerRetaining)}
-            className={`relative w-9 h-5 rounded-full transition-colors ${isOwnerRetaining ? 'bg-amber-500' : 'bg-slate-300'}`}
+            className={`relative w-9 h-5 rounded-full transition-colors ${isOwnerRetaining ? 'bg-amber-500' : 'bg-emerald-500'}`}
           >
             <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${isOwnerRetaining ? 'translate-x-4' : 'translate-x-0'}`} />
           </button>
         </div>
-        {isOwnerRetaining ? (
-          <div className="space-y-1">
-            <div className="flex items-baseline gap-1">
-              <span className="text-xs font-black text-amber-300">TZS</span>
-              <input
-                type="number"
-                value={ownerRetention}
-                onChange={e => onUpdateOwnerRetention(e.target.value)}
-                className="w-full text-2xl font-black bg-transparent outline-none text-amber-900 placeholder:text-amber-200"
-                placeholder="0"
-              />
-            </div>
-              <p className="text-[8px] font-black text-amber-400 uppercase">
-                {lang === 'zh' ? `留在机器 ${(selectedLocation!.commissionRate * 100).toFixed(0)}%` : `${(selectedLocation!.commissionRate * 100).toFixed(0)}% left at machine`}
-              </p>
+        <div className="space-y-2">
+          <div className="flex items-baseline gap-1">
+            <span className={`text-xs font-black ${isOwnerRetaining ? 'text-amber-300' : 'text-emerald-300'}`}>TZS</span>
+            <input
+              type="number"
+              step="0.01"
+              value={displayedOwnerAmount}
+              onChange={e => onUpdateOwnerRetention(e.target.value)}
+              className={`w-full text-2xl font-black bg-transparent outline-none placeholder:opacity-40 ${isOwnerRetaining ? 'text-amber-900 placeholder:text-amber-200' : 'text-emerald-900 placeholder:text-emerald-200'}`}
+              placeholder={String(calculations.commission)}
+            />
           </div>
-        ) : (
-          <div className="p-3 bg-indigo-600 text-white rounded-btn flex items-center gap-2.5">
-            <ShieldAlert size={16} />
-            <div className="flex-1">
-              <p className="text-[10px] font-black uppercase">{t.fullCollect}</p>
-              <p className="text-[8px] font-bold opacity-80 mt-0.5">
-                {lang === 'zh'
-                  ? `记为欠款 TZS ${calculations.commission.toLocaleString()}`
-                  : `Recorded as debt TZS ${calculations.commission.toLocaleString()}`}
+          <p className={`text-[8px] font-black uppercase ${isOwnerRetaining ? 'text-amber-500' : 'text-emerald-500'}`}>
+            {isOwnerRetaining
+              ? (lang === 'zh'
+                  ? `系统建议 TZS ${calculations.commission.toLocaleString()}，本次将留存到分红余额`
+                  : `System default TZS ${calculations.commission.toLocaleString()} retained into dividend balance`)
+              : (lang === 'zh'
+                  ? `系统建议 TZS ${calculations.commission.toLocaleString()}，本次将现场支付给商家`
+                  : `System default TZS ${calculations.commission.toLocaleString()} paid to the owner this run`)}
+          </p>
+          <div className={`grid grid-cols-2 gap-2 rounded-2xl border px-3 py-2 ${isOwnerRetaining ? 'border-amber-200 bg-white/70' : 'border-emerald-200 bg-white/70'}`}>
+            <div>
+              <p className="text-[8px] font-black uppercase text-slate-400">{lang === 'zh' ? '当前分红余额' : 'Current Balance'}</p>
+              <p className="mt-1 text-[11px] font-black text-slate-900">
+                TZS {currentDividendBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div>
+              <p className="text-[8px] font-black uppercase text-slate-400">
+                {isOwnerRetaining ? (lang === 'zh' ? '留存后余额' : 'Projected Balance') : (lang === 'zh' ? '本次支付' : 'Paid This Run')}
+              </p>
+              <p className={`mt-1 text-[11px] font-black ${isOwnerRetaining ? 'text-amber-700' : 'text-emerald-700'}`}>
+                TZS {(isOwnerRetaining ? projectedDividendBalance : calculations.finalRetention).toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
+      <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
       {/* Expenses */}
       <div className="bg-rose-50 p-3 rounded-2xl border border-rose-100">
         <div className="flex items-center justify-between mb-3">
           <label className="text-[10px] font-black text-rose-500 uppercase flex items-center gap-2">
-            <Banknote size={13} /> {lang === 'zh' ? '支出 / 预支' : 'Expenses / Advance'}
+            <Banknote size={13} /> {lang === 'zh' ? '公账支出' : 'Company Expense'}
           </label>
-          {parseInt(expenses) > 0 && (
+          {(parseInt(displayedExpenseValue) || 0) > 0 && (
             <span className="px-2 py-0.5 bg-rose-200 text-rose-800 rounded-tag text-[8px] font-black uppercase">{t.pendingApproval}</span>
           )}
-        </div>
-
-        <div className="flex bg-white/60 p-1 rounded-btn mb-3">
-          <button
-            onClick={() => onUpdateExpenseType('public')}
-            className={`flex-1 py-1.5 rounded-tag text-[9px] font-black uppercase transition-all ${expenseType === 'public' ? 'bg-rose-500 text-white shadow-field' : 'text-rose-400 hover:bg-rose-100'}`}
-          >
-            {t.companyLabel}
-          </button>
-          <button
-            onClick={() => onUpdateExpenseType('private')}
-            className={`flex-1 py-1.5 rounded-tag text-[9px] font-black uppercase transition-all ${expenseType === 'private' ? 'bg-indigo-500 text-white shadow-field' : 'text-rose-400 hover:bg-rose-100'}`}
-          >
-            {lang === 'zh' ? '司机预支' : 'Driver Advance'}
-          </button>
         </div>
 
         <div className="flex items-center gap-2">
@@ -182,32 +203,36 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
             onChange={e => onUpdateExpenseCategory(e.target.value as any)}
             className="bg-white border border-rose-100 rounded-btn px-2 py-2 text-[10px] font-black text-rose-600 outline-none uppercase w-28 flex-shrink-0"
           >
-            {expenseType === 'public' ? (
-              <>
-                <option value="fuel">{t.fuelLabel}</option>
-                <option value="repair">{t.repairLabel}</option>
-                <option value="fine">{t.fineLabel}</option>
-                <option value="other">{t.otherLabel}</option>
-              </>
-            ) : (
-              <>
-                <option value="allowance">{t.allowanceLabel}</option>
-                <option value="salary_advance">{t.salaryAdvanceLabel}</option>
-                <option value="other">{lang === 'zh' ? '个人支出' : 'Personal'}</option>
-              </>
-            )}
+            <option value="tip">{lang === 'zh' ? '小费支出' : 'Tip / Gratuity'}</option>
+            <option value="fuel">{t.fuelLabel}</option>
+            <option value="repair">{t.repairLabel}</option>
+            <option value="fine">{t.fineLabel}</option>
+            <option value="other">{t.otherLabel}</option>
           </select>
           <div className="flex-1 flex items-baseline gap-1 border-b border-rose-200 px-1">
             <span className="text-xs font-black text-rose-300">TZS</span>
             <input
               type="number"
-              value={expenses}
-              onChange={e => onUpdateExpenses(e.target.value)}
+              value={displayedExpenseValue}
+              onChange={e => {
+                if (isTipExpense) {
+                  onUpdateTip(e.target.value);
+                  onUpdateExpenses('');
+                } else {
+                  onUpdateExpenses(e.target.value);
+                  onUpdateTip('');
+                }
+              }}
               className="w-full text-xl font-black bg-transparent outline-none text-rose-900 placeholder:text-rose-200"
               placeholder="0"
             />
           </div>
         </div>
+        <p className="mt-2 text-[8px] font-black uppercase text-rose-400">
+          {lang === 'zh'
+            ? '司机预支已移到债务窗口处理。'
+            : 'Driver advances now live in the debt window.'}
+        </p>
       </div>
 
       {/* Coin Exchange */}
@@ -224,29 +249,32 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
           />
         </div>
       </div>
+      </div>
 
-      {/* Tip / Gratuity */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
       <div className="bg-amber-50 p-3 rounded-2xl border border-amber-100">
         <div className="flex items-center justify-between mb-2">
           <label className="text-[10px] font-black text-amber-600 uppercase flex items-center gap-2 tracking-widest">
-            <Gift size={13} /> {lang === 'zh' ? '小费支出（正常5万-6万给1000-2000）' : 'Tip / Gratuity (Normal 1000-2000 for 50k-60k rev)'}
+            <Gift size={13} /> {lang === 'zh' ? '现场提示' : 'Field Note'}
           </label>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-baseline gap-1 border-b border-amber-200 px-1 flex-1">
-            <span className="text-xs font-black text-amber-300">TZS</span>
-            <input
-              type="number"
-              value={tip}
-              onChange={e => onUpdateTip(e.target.value)}
-              className="w-full text-2xl font-black bg-transparent outline-none text-amber-900 placeholder:text-amber-200"
-              placeholder="0"
-            />
-          </div>
+        <div className="rounded-2xl border border-amber-200 bg-white/70 px-3 py-3">
+          <p className="text-[9px] font-black uppercase text-amber-700">
+            {lang === 'zh'
+              ? '小费支出已并入公账支出的第一项。'
+              : 'Tip expense is now the first company-expense option.'}
+          </p>
+          <p className="mt-2 text-[8px] font-black uppercase text-amber-500">
+            {lang === 'zh'
+              ? '司机预支请到司机自己的债务窗口处理。'
+              : 'Use the driver debt window for personal advances.'}
+          </p>
+          {isTipExpense && (parseInt(tip) || 0) > TIP_WARNING_THRESHOLD && calculations.revenue < REVENUE_WARNING_THRESHOLD && (
+            <p className="mt-2 text-[8px] font-black uppercase text-amber-700">
+              ⚠️ {lang === 'zh' ? '小费偏高，请确认' : 'High tip for this revenue – confirm with admin'}
+            </p>
+          )}
         </div>
-        {parseInt(tip) > TIP_WARNING_THRESHOLD && calculations.revenue < REVENUE_WARNING_THRESHOLD && (
-          <p className="text-[8px] font-black text-amber-600 uppercase mt-2">⚠️ {lang === 'zh' ? '小费偏高，请确认' : 'High tip for this revenue – confirm with admin'}</p>
-        )}
       </div>
 
       <div className="bg-indigo-50 p-3 rounded-2xl border border-indigo-100">
@@ -277,6 +305,8 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
             ? '手动填写，本次只会按可扣上限和剩余商家欠款计入。'
             : 'Manual entry. This run is capped by available cash and remaining merchant debt.'}
         </p>
+      </div>
+      </div>
       </div>
 
       {/* Navigation */}

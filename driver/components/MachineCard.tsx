@@ -85,7 +85,12 @@ const MachineCard: React.FC<MachineCardProps> = ({
                 <span className={`rounded-full px-2 py-1 text-[8px] font-black uppercase ${statusTone}`}>
                   {statusLabel}
                 </span>
-                <ChevronRight size={15} className="text-slate-300" />
+                {!isLocked && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2.5 py-1 text-[8px] font-black uppercase text-white">
+                    {lang === 'zh' ? '收款' : 'Collect'}
+                    <ChevronRight size={11} className="text-white/80" />
+                  </span>
+                )}
               </div>
             </div>
 

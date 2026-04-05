@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowRight, Store } from 'lucide-react';
-import { Transaction, Driver, Location, TRANSLATIONS } from '../../types';
+import { Transaction, Driver, Location, DailySettlement, MonthlyPayroll, TRANSLATIONS } from '../../types';
 import { getOptimizedImageUrl } from '../../utils/imageUtils';
 import SmartInsights from '../SmartInsights';
 
@@ -25,7 +25,11 @@ interface OverviewTabProps {
   transactions: Transaction[];
   locations: Location[];
   drivers: Driver[];
+  dailySettlements: DailySettlement[];
+  monthlyPayrolls: MonthlyPayroll[];
+  unsyncedCount: number;
   lang: 'zh' | 'sw';
+  onOpenTab?: (tab: 'settlement' | 'locations' | 'team' | 'tracking') => void;
 }
 
 const OverviewTab: React.FC<OverviewTabProps> = ({
@@ -35,19 +39,91 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   transactions,
   locations,
   drivers,
+  dailySettlements,
+  monthlyPayrolls,
+  unsyncedCount,
   lang,
+  onOpenTab,
 }) => {
   const [revDrilldown, setRevDrilldown] = React.useState<'none' | 'drivers' | string>('none');
   const t = TRANSLATIONS[lang];
+  const todayActionItems = React.useMemo(() => {
+    const pendingApprovals =
+      dailySettlements.filter((settlement) => settlement.status === 'pending').length +
+      transactions.filter((tx) =>
+        (tx.expenses > 0 && tx.expenseStatus === 'pending') ||
+        (tx.isAnomaly === true && tx.approvalStatus !== 'approved' && tx.approvalStatus !== 'rejected') ||
+        (tx.type === 'reset_request' && tx.approvalStatus === 'pending') ||
+        (tx.type === 'payout_request' && tx.approvalStatus === 'pending')
+      ).length;
+
+    const attentionSiteIds = new Set(
+      locations
+        .filter((location) => location.status !== 'active' || location.resetLocked || location.lastScore >= 9000)
+        .map((location) => location.id)
+    );
+    bossStats.stagnantMachines.forEach((location) => attentionSiteIds.add(location.id));
+
+    const pendingPayrolls = monthlyPayrolls.filter((payroll) => payroll.status === 'pending').length;
+
+    return [
+      {
+        key: 'approvals',
+        title: t.approvalCenter,
+        count: pendingApprovals,
+        subtitle: t.pendingApproval,
+        detail: lang === 'zh' ? '结算、费用、异常、重置、提现待处理' : 'Settlements, expenses, anomalies, reset and payout need review',
+        tone: 'border-amber-100 bg-amber-50 text-amber-700',
+        severity: 4,
+        action: 'settlement' as const,
+      },
+      {
+        key: 'sites',
+        title: t.attentionSites,
+        count: attentionSiteIds.size,
+        subtitle: t.highRiskAssets,
+        detail: lang === 'zh' ? '异常、锁定、9999 风险和静默点位' : 'Abnormal, locked, near-9999 and silent locations',
+        tone: 'border-rose-100 bg-rose-50 text-rose-700',
+        severity: 3,
+        action: 'locations' as const,
+      },
+      {
+        key: 'payroll',
+        title: t.payrollTitle,
+        count: pendingPayrolls,
+        subtitle: t.pendingSettlementShort,
+        detail: lang === 'zh' ? '待生成、待支付或待取消的工资单' : 'Payrolls waiting to generate, pay or cancel',
+        tone: 'border-indigo-100 bg-indigo-50 text-indigo-700',
+        severity: 2,
+        action: 'team' as const,
+      },
+      {
+        key: 'sync',
+        title: t.unsyncedLabel,
+        count: unsyncedCount,
+        subtitle: t.historyLog,
+        detail: lang === 'zh' ? '待同步记录和轨迹审计异常' : 'Unsynced records and tracking audit issues',
+        tone: 'border-slate-200 bg-slate-100 text-slate-700',
+        severity: 1,
+        action: 'tracking' as const,
+      },
+    ];
+  }, [bossStats.stagnantMachines, dailySettlements, lang, locations, monthlyPayrolls, t, transactions, unsyncedCount]);
+  const actionableItems = React.useMemo(
+    () => todayActionItems.filter((item) => item.count > 0).sort((a, b) => b.severity - a.severity),
+    [todayActionItems]
+  );
+  const primaryAction = actionableItems[0] ?? null;
+  const queuedActions = actionableItems.slice(1);
 
   return (
     <div className="space-y-5 animate-in fade-in">
       {revDrilldown === 'none' ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr] gap-3">
             <button
               onClick={() => setRevDrilldown('drivers')}
-              className="rounded-[28px] border border-slate-200 bg-white px-5 py-4 text-left shadow-sm transition-all hover:border-indigo-200 hover:bg-indigo-50/40 group"
+              className="col-span-2 lg:col-span-1 rounded-[28px] border border-slate-200 bg-white px-5 py-4 text-left shadow-sm transition-all hover:border-indigo-200 hover:bg-indigo-50/40 group"
             >
               <p className="text-[9px] font-black uppercase text-slate-400 group-hover:text-indigo-600 transition-colors">{t.revenue} ↗</p>
               <p className="mt-1 text-2xl font-black text-slate-900">TZS {bossStats.todayRev.toLocaleString()}</p>
@@ -60,6 +136,73 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
               <p className="text-[9px] font-black uppercase text-amber-500">{t.highRiskAssets}</p>
               <p className="mt-1 text-2xl font-black text-amber-700">{bossStats.riskyDrivers.length}</p>
             </div>
+          </div>
+          <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">{t.actionCenter}</p>
+                <h3 className="mt-1 text-sm font-black uppercase text-slate-900">{t.todayActionCenter}</h3>
+              </div>
+              <p className="text-[9px] font-bold uppercase tracking-wide text-slate-300">{t.reviewNow}</p>
+            </div>
+            {primaryAction ? (
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => onOpenTab?.(primaryAction.action)}
+                  className="flex w-full items-start justify-between gap-4 rounded-[28px] border border-slate-200 bg-slate-950 px-4 py-4 text-left text-white transition-colors hover:bg-slate-900"
+                >
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-black uppercase tracking-[0.22em] text-white/55">{t.reviewNow}</p>
+                    <h4 className="mt-1 text-sm font-black uppercase">{primaryAction.title}</h4>
+                    <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white/55">{primaryAction.subtitle}</p>
+                    <p className="mt-2 max-w-xl text-[11px] font-bold leading-relaxed text-white/80">{primaryAction.detail}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="rounded-full bg-white px-3 py-1.5 text-[10px] font-black uppercase text-slate-900">
+                      {primaryAction.count}
+                    </span>
+                    <ArrowRight size={15} className="text-white/50" />
+                  </div>
+                </button>
+                {queuedActions.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="px-1 text-[9px] font-black uppercase tracking-[0.22em] text-slate-400">{t.nextActionQueue}</p>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {queuedActions.map((item) => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => onOpenTab?.(item.action)}
+                          className="flex items-center justify-between gap-3 rounded-[24px] border border-slate-100 bg-slate-50 px-4 py-3 text-left transition-colors hover:border-slate-200 hover:bg-white"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-[10px] font-black uppercase tracking-wide text-slate-900">{item.title}</p>
+                            <p className="mt-1 truncate text-[8px] font-bold uppercase tracking-[0.18em] text-slate-400">{item.subtitle}</p>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <span className={`rounded-full border px-3 py-1.5 text-[10px] font-black uppercase ${item.tone}`}>
+                              {item.count}
+                            </span>
+                            <ArrowRight size={14} className="text-slate-300" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-[24px] border border-emerald-100 bg-emerald-50 px-4 py-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">{t.allQueuesClear}</p>
+                <p className="mt-2 text-sm font-black text-emerald-800">{t.noUrgentWork}</p>
+                <p className="mt-2 text-[11px] font-bold leading-relaxed text-emerald-700/80">
+                  {lang === 'zh'
+                    ? '审批、网点风险、工资和同步队列目前都没有堆积，可以转去看营收和轨迹。'
+                    : 'Approvals, site risks, payroll, and sync queues are currently clear. Move on to revenue and tracking review.'}
+                </p>
+              </div>
+            )}
           </div>
           <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-sm">
             <SmartInsights transactions={transactions} locations={locations} drivers={drivers} lang={lang} />

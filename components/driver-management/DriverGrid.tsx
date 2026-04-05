@@ -1,5 +1,7 @@
 import React from 'react';
 import { Phone, ShieldCheck, Calculator, Trash2, Percent } from 'lucide-react';
+import { TRANSLATIONS } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 import { DriverWithStats } from './hooks/useDriverManagement';
 
 interface DriverGridProps {
@@ -14,6 +16,8 @@ interface DriverGridProps {
 const DriverGrid: React.FC<DriverGridProps> = ({
   paginatedDrivers, driversWithStats, onEdit, onDelete, onToggleStatus, onShowSalary
 }) => {
+  const { lang } = useAuth();
+  const t = TRANSLATIONS[lang];
   const revenueMax = Math.max(...driversWithStats.map(d => d.stats.totalRevenue), 1);
 
   return (
@@ -48,13 +52,13 @@ const DriverGrid: React.FC<DriverGridProps> = ({
             <div className="grid grid-cols-2 gap-2.5 px-5 pb-4">
               <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
                 <p className="text-[7px] font-black text-slate-400 uppercase flex items-center gap-1 mb-1">
-                  <span className="text-indigo-400">$</span> Base Salary
+                  <span className="text-indigo-400">$</span> {t.baseSalaryShort}
                 </p>
                 <p className="text-xs font-black text-slate-900">TZS {(driver.baseSalary || 300000).toLocaleString()}</p>
               </div>
               <div className="bg-indigo-50 rounded-2xl p-3 border border-indigo-100">
                 <p className="text-[7px] font-black text-indigo-400 uppercase flex items-center gap-1 mb-1">
-                  <Percent size={8} /> Commission
+                  <Percent size={8} /> {t.commissionShort}
                 </p>
                 <p className="text-xs font-black text-indigo-700">{((driver.commissionRate ?? 0.05) * 100).toFixed(0)}%</p>
               </div>
@@ -62,7 +66,7 @@ const DriverGrid: React.FC<DriverGridProps> = ({
 
             <div className="px-5 pb-4">
               <div className="flex justify-between items-center mb-1.5">
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Lifetime Revenue</p>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">{t.totalRevenue}</p>
                 <p className="text-[10px] font-black text-slate-900">TZS {driver.stats.totalRevenue.toLocaleString()}</p>
               </div>
               <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -80,10 +84,10 @@ const DriverGrid: React.FC<DriverGridProps> = ({
                   <Trash2 size={10} />
                 </button>
                 <button onClick={() => onShowSalary(driver.id)} className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl text-[8px] font-black uppercase hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition-all flex items-center gap-1">
-                  <Calculator size={10} /> Payroll
+                  <Calculator size={10} /> {t.payrollTitle}
                 </button>
                 <button onClick={() => onEdit(driver)} className="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-[8px] font-black uppercase hover:bg-indigo-700 transition-all">
-                  Edit
+                  {t.saveChanges}
                 </button>
               </div>
             </div>
@@ -92,7 +96,7 @@ const DriverGrid: React.FC<DriverGridProps> = ({
       })}
       {paginatedDrivers.length === 0 && (
         <div className="col-span-full py-12 text-center text-slate-400">
-          <p className="text-xs font-black uppercase">No Drivers Found</p>
+          <p className="text-xs font-black uppercase">{t.noDriversFound}</p>
         </div>
       )}
     </div>

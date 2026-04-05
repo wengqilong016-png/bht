@@ -17,13 +17,13 @@ interface WizardStepBarProps {
 const WizardStepBar: React.FC<WizardStepBarProps> = ({ current, lang }) => {
   const currentIdx = WIZARD_STEPS.findIndex(s => s.key === current);
   return (
-    <div className="flex items-center gap-2 mb-5">
+    <div className="flex items-center gap-1.5 mb-2.5">
       {WIZARD_STEPS.map((s, i) => {
         const done = i < currentIdx;
         const active = s.key === current;
         return (
           <React.Fragment key={s.key}>
-            <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-tag text-[9px] font-black uppercase transition-all ${
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-[8px] font-black uppercase transition-all ${
               active ? 'bg-indigo-600 text-white' :
               done    ? 'bg-emerald-100 text-emerald-600' :
                         'bg-slate-100 text-slate-400'

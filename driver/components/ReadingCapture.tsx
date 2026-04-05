@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Camera, CheckCircle2, ArrowRight, RotateCcw, AlertTriangle, Satellite, ChevronRight, WifiOff } from 'lucide-react';
 import { useGpsCapture } from '../hooks/useGpsCapture';
 import WizardStepBar from './WizardStepBar';
+import CollectionWorkbenchHeader from './CollectionWorkbenchHeader';
 import { Location, Driver, TRANSLATIONS, AILog } from '../../types';
 import type { AIReviewData } from '../hooks/useCollectionDraft';
 
@@ -23,15 +24,18 @@ interface ReadingCaptureProps {
   onUpdateGpsPermission: (perm: 'prompt' | 'granted' | 'denied') => void;
   onNext: () => void;
   onBack: () => void;
+  onSwitchMachine?: () => void;
   revenue: number;
   diff: number;
+  nextMachine?: Location | null;
+  pendingCount?: number;
 }
 
 const ReadingCapture: React.FC<ReadingCaptureProps> = ({
   selectedLocation, currentDriver, lang, currentScore, photoData, aiReviewData,
   gpsCoords, gpsPermission, draftTxId, onLogAI,
   onUpdateScore, onUpdatePhoto, onUpdateAiReview, onUpdateGps, onUpdateGpsPermission,
-  onNext, onBack, revenue, diff,
+  onNext, onBack, onSwitchMachine, revenue, diff, nextMachine, pendingCount,
 }) => {
   const t = TRANSLATIONS[lang];
   const parsedCurrentScore = parseInt(currentScore, 10);
@@ -75,38 +79,37 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
   };
 
   return (
-    <div className="max-w-md mx-auto py-3 px-3 pb-24 animate-in fade-in space-y-3">
+    <div className="max-w-md mx-auto py-2.5 px-3 pb-24 animate-in fade-in space-y-2.5">
       <WizardStepBar current="capture" lang={lang} />
 
-      {/* Location sub-header */}
-      <div className="flex items-center gap-3">
-        <button onClick={onBack} className="p-2.5 bg-white border border-slate-200 rounded-2xl text-slate-500 hover:text-indigo-600 transition-colors flex-shrink-0">
-          <ArrowRight size={18} className="rotate-180" />
-        </button>
-        <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-3 py-2">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h2 className="truncate text-sm font-black text-slate-900 leading-tight">{selectedLocation?.name}</h2>
-              <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.15em]">
-                {selectedLocation?.machineId} • {selectedLocation?.area || '—'}
-              </p>
-            </div>
+      <CollectionWorkbenchHeader
+        selectedLocation={selectedLocation}
+        lang={lang}
+        onBack={onBack}
+        onSwitchMachine={onSwitchMachine}
+        nextMachine={nextMachine}
+        pendingCount={pendingCount}
+      />
+
+      {/* Score input */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-3">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.currentReading}</label>
+          <div className="flex items-center gap-1.5">
             <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-black uppercase text-slate-500">
-              {(selectedLocation?.lastScore ?? 0).toLocaleString()} {lang === 'zh' ? '上次' : 'last'}
+              {t.diff} {diff}
+            </span>
+            <span className="rounded-full bg-indigo-50 px-2 py-1 text-[8px] font-black uppercase text-indigo-600">
+              TZS {revenue.toLocaleString()}
             </span>
           </div>
         </div>
-      </div>
-
-      {/* Score input */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4">
-        <label className="text-[10px] font-black text-slate-400 uppercase block mb-3 tracking-widest">{t.currentReading}</label>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <input
             type="number"
             value={currentScore}
             onChange={e => onUpdateScore(e.target.value)}
-            className="w-1/2 text-3xl font-black bg-transparent outline-none text-slate-900 placeholder:text-slate-200"
+            className="w-1/2 text-[30px] font-black bg-transparent outline-none text-slate-900 placeholder:text-slate-200"
             placeholder="0000"
             inputMode="numeric"
             autoFocus
@@ -132,7 +135,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
 
         {/* Photo preview */}
         {photoData && (
-          <div className="mt-4 h-20 w-full rounded-2xl overflow-hidden border border-slate-200 relative">
+          <div className="mt-3 h-16 w-full rounded-2xl overflow-hidden border border-slate-200 relative">
             <img src={photoData} className="w-full h-full object-cover grayscale brightness-110 contrast-125" alt={t.paymentProof} />
             <div className="absolute top-2 right-2 bg-emerald-500 text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-tag flex items-center gap-1">
               <CheckCircle2 size={9} /> {t.photoReady}
@@ -142,7 +145,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
 
         {/* Revenue preview */}
         {currentScore && (
-          <div className={`mt-4 p-3 rounded-2xl text-white flex justify-between items-center ${revenue > 50000 ? 'bg-indigo-600' : 'bg-slate-800'}`}>
+          <div className={`mt-3 p-3 rounded-2xl text-white flex justify-between items-center ${revenue > 50000 ? 'bg-indigo-600' : 'bg-slate-800'}`}>
             <div>
               <p className="text-[9px] font-black uppercase opacity-60">{t.diff} {diff}</p>
               <p className="text-[9px] font-black uppercase opacity-60">{diff} × 200 TZS</p>
@@ -225,6 +228,20 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
           </p>
         </div>
       </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+          <p className="text-[8px] font-black uppercase tracking-wide text-slate-400">{t.lastScore}</p>
+          <p className="mt-1 text-sm font-black text-slate-900">{(selectedLocation?.lastScore ?? 0).toLocaleString()}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+          <p className="text-[8px] font-black uppercase tracking-wide text-slate-400">{t.diff}</p>
+          <p className="mt-1 text-sm font-black text-slate-900">{diff.toLocaleString()}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+          <p className="text-[8px] font-black uppercase tracking-wide text-slate-400">{t.revenue}</p>
+          <p className="mt-1 text-sm font-black text-slate-900">TZS {revenue.toLocaleString()}</p>
+        </div>
       </div>
 
       {/* Next button */}

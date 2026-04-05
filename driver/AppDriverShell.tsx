@@ -104,7 +104,7 @@ const AppDriverShell: React.FC = () => {
       </aside>
 
       <div className="flex-1 flex min-w-0 flex-col overflow-hidden">
-        <header className="z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <header className="z-30 border-b border-slate-200 bg-white/95 backdrop-blur pt-[max(env(safe-area-inset-top),0px)]">
           <div className="flex items-center justify-between gap-3 px-3 py-3 md:px-4">
             <div className="min-w-0">
               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">{t.driverWorkspace}</p>
@@ -164,9 +164,9 @@ const AppDriverShell: React.FC = () => {
           lang={lang}
           isOnline={isOnline}
           onClose={() => setShowAccountSettings(false)}
-          onPhoneUpdated={(driverId, phone) => {
+          onPhoneUpdated={async (driverId, phone) => {
             const updated = drivers.map(d => d.id === driverId ? { ...d, phone } : d);
-            updateDrivers.mutate(updated);
+            await updateDrivers.mutateAsync(updated);
           }}
         />
       )}

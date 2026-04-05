@@ -37,7 +37,7 @@ const EMPTY_DRAFT: CollectionDraft = {
   aiReviewData: null,
   expenses: '',
   expenseType: 'public',
-  expenseCategory: 'fuel',
+  expenseCategory: 'tip',
   coinExchange: '',
   ownerRetention: '',
   isOwnerRetaining: true,

@@ -13,7 +13,7 @@ interface SitesTabProps {
   driverMap: Map<string, Driver>;
   drivers: Driver[];
   locations: Location[];
-  onUpdateLocations: (locations: Location[]) => void;
+  onUpdateLocations: (locations: Location[]) => Promise<void> | void;
   onDeleteLocations?: (ids: string[]) => void;
   lang: 'zh' | 'sw';
 }
@@ -70,7 +70,7 @@ const SitesTab: React.FC<SitesTabProps> = ({
     });
   };
 
-  const handleSaveLocation = () => {
+  const handleSaveLocation = async () => {
     if (!editingLoc) return;
     const parsedLat = Number.parseFloat(locEditForm.latitude);
     const parsedLng = Number.parseFloat(locEditForm.longitude);
@@ -109,9 +109,15 @@ const SitesTab: React.FC<SitesTabProps> = ({
       remainingStartupDebt: parseInt(locEditForm.remainingStartupDebt) || 0,
       isSynced: false,
     };
-    onUpdateLocations(locations.map(l => l.id === updated.id ? updated : l));
-    setIsSavingLoc(false);
-    setEditingLoc(null);
+    try {
+      await onUpdateLocations(locations.map(l => l.id === updated.id ? updated : l));
+      setEditingLoc(null);
+    } catch (error) {
+      console.error('Failed to save location changes:', error);
+      alert('点位保存失败，未写入系统。\nFailed to save location changes.');
+    } finally {
+      setIsSavingLoc(false);
+    }
   };
 
   const handleDeleteLocation = (locId: string) => {
@@ -192,6 +198,18 @@ const SitesTab: React.FC<SitesTabProps> = ({
                 {loc.ownerName && (
                   <p className="text-[8px] font-bold text-slate-400 uppercase mt-2 truncate">Owner: {loc.ownerName}</p>
                 )}
+                <div className="mt-2 space-y-1">
+                  {loc.createdAt && (
+                    <p className="text-[8px] font-bold text-slate-400 uppercase truncate">
+                      {lang === 'zh' ? '注册时间' : 'Registered'}: {new Date(loc.createdAt).toLocaleString()}
+                    </p>
+                  )}
+                  {loc.lastRelocatedAt && (
+                    <p className="text-[8px] font-bold text-slate-400 uppercase truncate">
+                      {lang === 'zh' ? '最近迁点' : 'Moved'}: {new Date(loc.lastRelocatedAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           );

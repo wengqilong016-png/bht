@@ -33,7 +33,7 @@ export interface CollectionSubmissionInput {
   /** Manual merchant/site debt deduction for this collection. */
   startupDebtDeduction: number;
   isOwnerRetaining: boolean;
-  /** Explicit owner retention amount; null means "use commission as retention". */
+  /** Explicit owner amount; null means "use system commission result". */
   ownerRetention: number | null;
   coinExchange: number;
   gps: { lat: number; lng: number } | null;

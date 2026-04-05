@@ -21,7 +21,7 @@ import { resolveCurrentDriver } from '../driverShellViewState';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface DriverCollectionFlowProps {
-  onRegisterMachine?: (location: Location) => void;
+  onRegisterMachine?: (location: Location) => Promise<void>;
 }
 
 type FlowStep = 'selection' | 'capture' | 'amounts' | 'confirm';
@@ -113,6 +113,38 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     () => locations.find(l => l.id === draft.selectedLocId),
     [draft.selectedLocId, locations]
   );
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const assignedLocations = useMemo(() => {
+    const mine = locations.filter((location) => location.assignedDriverId === currentDriver.id);
+    return mine.length > 0 ? mine : locations;
+  }, [locations, currentDriver.id]);
+  const visitedLocationIds = useMemo(() => {
+    return new Set(
+      allTransactions
+        .filter((tx) => tx.driverId === currentDriver.id && tx.timestamp.startsWith(todayStr) && (tx.type === undefined || tx.type === 'collection'))
+        .map((tx) => tx.locationId)
+    );
+  }, [allTransactions, currentDriver.id, todayStr]);
+  const nextQueuedMachine = useMemo(() => {
+    return assignedLocations
+      .filter((location) => location.id !== draft.selectedLocId)
+      .map((location) => ({
+        location,
+        isPending: !visitedLocationIds.has(location.id),
+        isUrgent:
+          location.status !== 'active' ||
+          location.resetLocked === true ||
+          (location.lastScore ?? 0) >= 9000,
+      }))
+      .sort((a, b) => {
+        if (Number(b.isPending) !== Number(a.isPending)) return Number(b.isPending) - Number(a.isPending);
+        if (Number(b.isUrgent) !== Number(a.isUrgent)) return Number(b.isUrgent) - Number(a.isUrgent);
+        return a.location.name.localeCompare(b.location.name);
+      })[0]?.location ?? null;
+  }, [assignedLocations, draft.selectedLocId, visitedLocationIds]);
+  const remainingPendingStops = useMemo(() => {
+    return assignedLocations.filter((location) => location.id !== draft.selectedLocId && !visitedLocationIds.has(location.id)).length;
+  }, [assignedLocations, draft.selectedLocId, visitedLocationIds]);
 
   // Finance preview state — starts with local calc, upgrades to server result when available
   const [financeResult, setFinanceResult] = useState<FinanceCalculationResult>(() =>
@@ -170,7 +202,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       aiReviewData: null,
       expenses: '',
       expenseType: 'public',
-      expenseCategory: 'fuel',
+      expenseCategory: 'tip',
       coinExchange: '',
       ownerRetention: '',
       isOwnerRetaining: true,
@@ -178,6 +210,28 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       startupDebtDeduction: '',
     });
     setStep('capture');
+  };
+  const hasDraftInProgress = Boolean(
+    draft.selectedLocId &&
+      (draft.currentScore ||
+        draft.photoData ||
+        draft.expenses ||
+        draft.tip ||
+        draft.coinExchange ||
+        draft.startupDebtDeduction)
+  );
+  const handleResumeDraft = (locId: string) => {
+    if (draft.selectedLocId !== locId) {
+      handleSelectMachine(locId);
+      return;
+    }
+    setStep('capture');
+  };
+  const handleContinueToNextMachine = (locId: string) => {
+    handleSelectMachine(locId);
+  };
+  const handleSwitchMachine = () => {
+    setStep('selection');
   };
 
   const handleBackToSelection = () => {
@@ -194,7 +248,10 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
   if (isRegistering && onRegisterMachine) {
     return (
       <MachineRegistrationForm
-        onSubmit={(loc) => { onRegisterMachine(loc); setIsRegistering(false); }}
+        onSubmit={async (loc) => {
+          await onRegisterMachine(loc);
+          setIsRegistering(false);
+        }}
         onCancel={() => setIsRegistering(false)}
         currentDriver={currentDriver}
         lang={lang}
@@ -252,7 +309,10 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         lang={lang}
         isOnline={isOnline}
         gpsCoords={draft.gpsCoords}
+        currentDraftLocation={selectedLocation ?? null}
+        hasDraftInProgress={hasDraftInProgress}
         onSelectMachine={handleSelectMachine}
+        onResumeDraft={handleResumeDraft}
         onStartRegister={() => setIsRegistering(true)}
         onRequestReset={(locId) => { requestGps(); setResetRequestLocId(locId); }}
         onRequestPayout={(locId) => { requestGps(); setPayoutRequestLocId(locId); }}
@@ -287,6 +347,9 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         onUpdateGpsPermission={(perm) => updateDraft({ gpsPermission: perm })}
         onNext={() => setStep('amounts')}
         onBack={handleBackToSelection}
+        onSwitchMachine={handleSwitchMachine}
+        nextMachine={nextQueuedMachine}
+        pendingCount={remainingPendingStops}
         revenue={financeResult.revenue}
         diff={financeResult.diff}
       />
@@ -301,7 +364,6 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         lang={lang}
         currentScore={draft.currentScore}
         expenses={draft.expenses}
-        expenseType={draft.expenseType}
         expenseCategory={draft.expenseCategory}
         coinExchange={draft.coinExchange}
         ownerRetention={draft.ownerRetention}
@@ -311,7 +373,6 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         calculations={financeResult}
         previewSource={financeResult.source}
         onUpdateExpenses={(v) => updateDraft({ expenses: v })}
-        onUpdateExpenseType={(v) => updateDraft({ expenseType: v })}
         onUpdateExpenseCategory={(v) => updateDraft({ expenseCategory: v })}
         onUpdateCoinExchange={(v) => updateDraft({ coinExchange: v })}
         onUpdateOwnerRetention={(v) => updateDraft({ ownerRetention: v })}
@@ -320,6 +381,9 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         onUpdateStartupDebtDeduction={(v) => updateDraft({ startupDebtDeduction: v })}
         onNext={() => setStep('confirm')}
         onBack={() => setStep('capture')}
+        onSwitchMachine={handleSwitchMachine}
+        nextMachine={nextQueuedMachine}
+        pendingCount={remainingPendingStops}
       />
     );
   }
@@ -348,9 +412,13 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       calculations={financeResult}
       onSubmit={onSubmit}
       onBack={() => setStep('amounts')}
+      onSwitchMachine={handleSwitchMachine}
       onReset={handleFullReset}
+      onContinueNext={handleContinueToNextMachine}
       onUpdateGps={(coords) => updateDraft({ gpsCoords: coords })}
       onUpdateGpsPermission={(perm) => updateDraft({ gpsPermission: perm })}
+      nextMachine={nextQueuedMachine}
+      pendingCount={remainingPendingStops}
     />
   );
 };

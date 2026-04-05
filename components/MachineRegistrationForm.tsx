@@ -5,7 +5,7 @@ import { Location, Driver, CONSTANTS, safeRandomUUID } from '../types';
 import { compressAndResizeImage } from '../utils/imageUtils';
 
 interface MachineRegistrationFormProps {
-  onSubmit: (location: Location) => void;
+  onSubmit: (location: Location) => Promise<void>;
   onCancel: () => void;
   currentDriver: Driver;
   lang: 'zh' | 'sw';
@@ -150,10 +150,23 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
         assignedDriverId: currentDriver.id
     };
 
-    onSubmit(newLocation);
-    setLastRegisteredMachine(newLocation);
-    setIsSubmitting(false);
-    setIsSuccess(true);
+    try {
+      await onSubmit({
+        ...newLocation,
+        createdAt: new Date().toISOString(),
+      });
+      setLastRegisteredMachine(newLocation);
+      setIsSuccess(true);
+    } catch (error) {
+      console.error('Machine registration failed:', error);
+      alert(
+        lang === 'zh'
+          ? '机器注册失败，数据还没有保存到系统。请检查网络后重试。'
+          : 'Usajili wa mashine umeshindikana. Data haijahifadhiwa kwenye mfumo. Tafadhali jaribu tena.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {

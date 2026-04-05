@@ -162,6 +162,26 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
         </div>
       </div>
 
+      {currentUser.role !== 'admin' && (
+        <div className="rounded-[24px] border border-indigo-100 bg-indigo-50 px-4 py-4">
+          <div className="flex items-start gap-3">
+            <div className="rounded-xl bg-indigo-500 p-2 text-white flex-shrink-0">
+              <CreditCard size={16} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">
+                {lang === 'zh' ? '司机预支窗口' : 'Driver Advance Window'}
+              </p>
+              <p className="mt-1 text-[11px] font-black text-indigo-900">
+                {lang === 'zh'
+                  ? '司机预支已从收款流程移出，请在这里查看个人借款与预支状态。'
+                  : 'Driver advances are no longer part of collection. Review personal loans and advances here.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 1. Site Startup Capital Recovery */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
