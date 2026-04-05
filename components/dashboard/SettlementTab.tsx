@@ -169,7 +169,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
         ? b.severity - a.severity
         : new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
-  }, [pendingSettlements, anomalyTransactions, pendingResetRequests, pendingExpenses, pendingPayoutRequests]);
+  }, [lang, pendingSettlements, anomalyTransactions, pendingResetRequests, pendingExpenses, pendingPayoutRequests]);
 
   const TYPE_CONFIG: Record<ApprovalTaskType, { label: string; labelEn: string; pillClass: string; iconBg: string; icon: React.ReactNode }> = {
     settlement: { label: '日结', labelEn: 'Settlement', pillClass: 'bg-amber-100 text-amber-700', iconBg: 'bg-amber-100 text-amber-700', icon: <Calculator size={14} /> },
