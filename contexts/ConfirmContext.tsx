@@ -42,7 +42,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
       {children}
       {state && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 px-4"
           onClick={() => handleResult(false)}
           aria-modal="true"
           role="dialog"
