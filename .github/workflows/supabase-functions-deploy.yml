@@ -81,4 +81,4 @@ jobs:
           fi
 
       - name: Deploy all Edge Functions
-        run: supabase functions deploy
+        run: supabase functions deploy --no-verify-jwt
