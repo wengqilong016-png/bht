@@ -1,4 +1,11 @@
+import OpenAI from 'openai';
 import { readEnv } from './_lib/readEnv';
+
+const LANG_NAMES: Record<string, string> = {
+  zh: 'Simplified Chinese',
+  sw: 'Swahili',
+  en: 'English',
+};
 
 export default {
   async fetch(request: Request) {
@@ -6,7 +13,7 @@ export default {
       return new Response('Method Not Allowed', { status: 405 });
     }
 
-    const apiKey = readEnv('GOOGLE_TRANSLATE_API_KEY', 'GEMINI_API_KEY', 'VITE_GEMINI_API_KEY');
+    const apiKey = readEnv('OPENAI_API_KEY', 'VITE_OPENAI_API_KEY');
     if (!apiKey) {
       return new Response(null, { status: 204 });
     }
@@ -24,35 +31,30 @@ export default {
     }
 
     const target = body.target?.trim() || 'zh';
-    const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        q: text,
-        target,
-      }),
-    });
+    const targetName = LANG_NAMES[target] ?? target;
 
-    if (!response.ok) {
-      const errorText = await response.text();
+    try {
+      const client = new OpenAI({ apiKey });
+      const response = await client.chat.completions.create({
+        model: 'gpt-4o-mini',
+        temperature: 0.1,
+        messages: [
+          {
+            role: 'system',
+            content: `You are a professional translator. Translate the user's text into ${targetName}. Return only the translated text, no explanations.`,
+          },
+          { role: 'user', content: text },
+        ],
+      });
+
+      const translatedText = response.choices[0]?.message?.content?.trim() || text;
       return Response.json(
-        { error: 'Upstream translation request failed', detail: errorText },
-        { status: 502 },
+        { translatedText },
+        { headers: { 'Cache-Control': 'no-store' } },
       );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown translation error';
+      return Response.json({ error: message }, { status: 502 });
     }
-
-    const data = await response.json();
-    const translatedText = data?.data?.translations?.[0]?.translatedText;
-
-    return Response.json(
-      { translatedText: translatedText || text },
-      {
-        headers: {
-          'Cache-Control': 'no-store',
-        },
-      },
-    );
   },
 };

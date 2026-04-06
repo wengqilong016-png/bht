@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import OpenAI from 'openai';
 import { readEnv } from './_lib/readEnv';
 
 const stripJsonFence = (value: string) =>
@@ -14,7 +14,7 @@ export default {
       return new Response('Method Not Allowed', { status: 405 });
     }
 
-    const apiKey = readEnv('GEMINI_API_KEY', 'VITE_GEMINI_API_KEY');
+    const apiKey = readEnv('OPENAI_API_KEY', 'VITE_OPENAI_API_KEY');
     if (!apiKey) {
       return new Response(null, { status: 204 });
     }
@@ -31,29 +31,29 @@ export default {
     }
 
     try {
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: [{
-          parts: [
-            {
-              inlineData: {
-                data: body.imageBase64,
-                mimeType: 'image/jpeg',
+      const client = new OpenAI({ apiKey });
+      const response = await client.chat.completions.create({
+        model: 'gpt-4o-mini',
+        temperature: 0.1,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image_url',
+                image_url: { url: `data:image/jpeg;base64,${body.imageBase64}`, detail: 'low' },
               },
-            },
-            {
-              text: 'Analyze this vending machine counter image.\n1. Read the red 7-segment LED number.\n2. Check for screen damage or physical tampering.\nReturn JSON: {"score": "12345", "condition": "Normal" | "Damaged" | "Unclear", "notes": "Short observation"}',
-            },
-          ],
-        }],
-        config: {
-          responseMimeType: 'application/json',
-          temperature: 0.1,
-        },
+              {
+                type: 'text',
+                text: 'Analyze this vending machine counter image.\n1. Read the red 7-segment LED number.\n2. Check for screen damage or physical tampering.\nReturn JSON: {"score": "12345", "condition": "Normal" | "Damaged" | "Unclear", "notes": "Short observation"}',
+              },
+            ],
+          },
+        ],
       });
 
-      const rawText = response.text?.trim();
+      const rawText = response.choices[0]?.message?.content?.trim();
       if (!rawText) {
         return Response.json({ error: 'Empty AI response' }, { status: 502 });
       }
