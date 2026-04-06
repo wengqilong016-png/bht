@@ -67,7 +67,13 @@ export function useSupabaseMutations(isOnline: boolean, currentUser?: User | nul
       // This is a simplified approach. In a fully offline-first app,
       // you would use a robust sync engine (e.g., WatermelonDB or rxdb).
       // Here we trigger refetches to let React Query pull the latest truth.
-      await queryClient.invalidateQueries();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+        queryClient.invalidateQueries({ queryKey: ['dailySettlements'] }),
+        queryClient.invalidateQueries({ queryKey: ['locations'] }),
+        queryClient.invalidateQueries({ queryKey: ['drivers'] }),
+        queryClient.invalidateQueries({ queryKey: ['aiLogs'] }),
+      ]);
     }
   });
 
