@@ -218,7 +218,7 @@ const AppAdminShell: React.FC = () => {
         </header>
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden relative bg-[#f3f5f8]">
-          <div className="p-3 pb-28 md:p-5 lg:p-6 max-w-7xl mx-auto">
+          <div className="p-3 pb-[max(7rem,calc(7rem+env(safe-area-inset-bottom)))] md:p-5 lg:p-6 max-w-7xl mx-auto">
             <Suspense fallback={<ShellLoadingFallback />}>
               <AdminShellViewRenderer
                 view={view}

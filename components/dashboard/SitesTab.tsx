@@ -206,6 +206,7 @@ const SitesTab: React.FC<SitesTabProps> = ({
 
     try {
       await onDeleteLocations([locId]);
+      setEditingLoc(null);
       showToast(lang === 'zh' ? '机器已删除' : 'Location deleted', 'success');
     } catch (error) {
       console.error('Failed to delete location:', error);
@@ -227,116 +228,119 @@ const SitesTab: React.FC<SitesTabProps> = ({
             {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {managedLocations.map(loc => {
             const sitePhotoUrl = loc.machinePhotoUrl || loc.ownerPhotoUrl;
             const deletionDiagnostics = deletionDiagnosticsById.get(loc.id);
             const deleteBlocked = (deletionDiagnostics?.blockers.length ?? 0) > 0;
+            const debtPct = loc.initialStartupDebt > 0
+              ? Math.round((1 - loc.remainingStartupDebt / loc.initialStartupDebt) * 100)
+              : 100;
             return (
-            <div key={loc.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-              <div className="h-36 bg-slate-100 relative overflow-hidden">
+            <div key={loc.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+              {/* Photo / placeholder header */}
+              <div className="h-40 bg-slate-100 relative rounded-t-2xl overflow-hidden flex-shrink-0">
                 {sitePhotoUrl ? (
                   <img src={getOptimizedImageUrl(sitePhotoUrl, 400, 400)} alt={loc.name} className="w-full h-full object-cover" loading="lazy" />
                 ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-slate-100 text-slate-300">
-                    <Store size={32} />
-                    <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">No Photo</span>
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                    <Store size={36} className="text-slate-300" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">No Photo</span>
                   </div>
                 )}
-                <div className={`absolute top-2 right-2 px-2 py-0.5 rounded text-[8px] font-black uppercase backdrop-blur-sm ${loc.status === 'active' ? 'bg-emerald-500/80 text-white' : loc.status === 'maintenance' ? 'bg-amber-500/80 text-white' : 'bg-rose-500/80 text-white'}`}>{loc.status}</div>
+                {/* Status badge */}
+                <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase backdrop-blur-sm ${loc.status === 'active' ? 'bg-emerald-500/90 text-white' : loc.status === 'maintenance' ? 'bg-amber-500/90 text-white' : 'bg-rose-500/90 text-white'}`}>
+                  {loc.status === 'active' ? (lang === 'zh' ? '运营中' : 'Active') : loc.status === 'maintenance' ? (lang === 'zh' ? '维护中' : 'Maint.') : (lang === 'zh' ? '停用' : 'Inactive')}
+                </div>
+                {/* View photo button */}
                 {sitePhotoUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setViewingPhotoLoc(loc)}
-                    className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-xl bg-slate-950/75 px-2.5 py-1.5 text-[8px] font-black uppercase text-white backdrop-blur-sm"
-                  >
-                    <ImageIcon size={11} />
-                    {lang === 'zh' ? '查看照片' : 'View Photo'}
+                  <button type="button" onClick={() => setViewingPhotoLoc(loc)} className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-xl bg-slate-950/70 px-2.5 py-1.5 text-[8px] font-black uppercase text-white backdrop-blur-sm">
+                    <ImageIcon size={10} />
+                    {lang === 'zh' ? '查看' : 'View'}
                   </button>
                 )}
               </div>
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-black text-slate-900 leading-tight uppercase tracking-wide">{loc.machineId || '—'}</p>
+
+              {/* Card body */}
+              <div className="p-4 flex-1 flex flex-col gap-3">
+                {/* Title row */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base font-black text-slate-900 uppercase tracking-wide leading-tight">{loc.machineId || '—'}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate">{loc.name}</p>
                     {loc.area && <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{loc.area}</p>}
-                    <p className="text-[9px] font-bold text-slate-500 mt-0.5 truncate">{loc.name}</p>
                     {loc.assignedDriverId && (
-                      <p className="text-[9px] font-bold text-indigo-500 uppercase mt-0.5">
-                        {driverMap.get(loc.assignedDriverId)?.name || loc.assignedDriverId}
+                      <p className="text-[9px] font-bold text-indigo-500 mt-1">
+                        👤 {driverMap.get(loc.assignedDriverId)?.name || loc.assignedDriverId}
                       </p>
                     )}
-                    {loc.remainingStartupDebt > 0 && (
-                      <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[8px] font-black uppercase text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                          {lang === 'zh' ? '启动债务' : 'Startup Debt'}
-                        </span>
-                        <span className="text-[8px] font-bold text-amber-700">
-                          TZS {loc.remainingStartupDebt.toLocaleString()}
-                        </span>
-                        <span className="text-[8px] text-slate-400">
-                          / {loc.initialStartupDebt.toLocaleString()} ({Math.round((1 - loc.remainingStartupDebt / (loc.initialStartupDebt || 1)) * 100)}% {lang === 'zh' ? '已还' : 'repaid'})
-                        </span>
-                      </div>
-                    )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => void handleDeleteLocation(loc.id)}
-                      disabled={deleteBlocked}
-                      title={deleteBlocked ? deletionDiagnostics?.blockers.join(' | ') : (lang === 'zh' ? '删除点位' : 'Delete location')}
-                      className="p-2 text-slate-300 hover:text-rose-500 bg-slate-50 rounded-xl transition-colors disabled:cursor-not-allowed disabled:text-slate-200 disabled:bg-slate-100"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                    <button onClick={() => handleEditLocation(loc)} className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 rounded-xl transition-colors"><Pencil size={13} /></button>
-                  </div>
+                  {/* Edit button only in top-right; delete is in footer */}
+                  <button onClick={() => handleEditLocation(loc)} className="flex-shrink-0 p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors">
+                    <Pencil size={15} />
+                  </button>
                 </div>
+
+                {/* Stats row */}
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-slate-50 p-2 rounded-xl">
-                    <p className="text-[7px] font-black text-slate-400 uppercase">Last Score</p>
-                    <p className="text-[10px] font-black text-slate-800">{loc.lastScore.toLocaleString()}</p>
+                  <div className="bg-slate-50 p-2.5 rounded-xl text-center">
+                    <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">{lang === 'zh' ? '分数' : 'Score'}</p>
+                    <p className="text-sm font-black text-slate-800">{loc.lastScore.toLocaleString()}</p>
                   </div>
-                  <div className="bg-indigo-50 p-2 rounded-xl">
-                    <p className="text-[7px] font-black text-indigo-400 uppercase">Commission</p>
-                    <p className="text-[10px] font-black text-indigo-700">{(loc.commissionRate * 100).toFixed(0)}%</p>
+                  <div className="bg-indigo-50 p-2.5 rounded-xl text-center">
+                    <p className="text-[8px] font-black text-indigo-400 uppercase mb-0.5">{lang === 'zh' ? '佣金' : 'Comm.'}</p>
+                    <p className="text-sm font-black text-indigo-700">{(loc.commissionRate * 100).toFixed(0)}%</p>
                   </div>
-                  <div className="bg-amber-50 p-2 rounded-xl">
-                    <p className="text-[7px] font-black text-amber-400 uppercase">Startup</p>
-                    <p className="text-[10px] font-black text-amber-700">{loc.remainingStartupDebt > 0 ? `${Math.round((1 - loc.remainingStartupDebt / (loc.initialStartupDebt || 1)) * 100)}%` : 'Paid'}</p>
+                  <div className={`p-2.5 rounded-xl text-center ${loc.remainingStartupDebt > 0 ? 'bg-amber-50' : 'bg-emerald-50'}`}>
+                    <p className={`text-[8px] font-black uppercase mb-0.5 ${loc.remainingStartupDebt > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>{lang === 'zh' ? '启动债' : 'Debt'}</p>
+                    <p className={`text-sm font-black ${loc.remainingStartupDebt > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>{loc.remainingStartupDebt > 0 ? `${debtPct}%` : '✓'}</p>
                   </div>
                 </div>
-                {loc.ownerName && (
-                  <p className="text-[8px] font-bold text-slate-400 uppercase mt-2 truncate">Owner: {loc.ownerName}</p>
+
+                {/* Startup debt detail (only if has debt) */}
+                {loc.remainingStartupDebt > 0 && (
+                  <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[9px] font-black text-amber-700 uppercase">{lang === 'zh' ? '启动债务余额' : 'Startup Debt Remaining'}</span>
+                      <span className="text-[9px] font-bold text-amber-600">{debtPct}% {lang === 'zh' ? '已还' : 'repaid'}</span>
+                    </div>
+                    <div className="w-full bg-amber-200 rounded-full h-1.5 mb-1">
+                      <div className="bg-amber-500 h-1.5 rounded-full transition-all" style={{ width: `${debtPct}%` }} />
+                    </div>
+                    <p className="text-[9px] text-amber-700 font-bold">
+                      TZS {loc.remainingStartupDebt.toLocaleString()} / {loc.initialStartupDebt.toLocaleString()}
+                    </p>
+                  </div>
                 )}
-                <div className="flex items-center gap-2 mt-1.5">
-                  <span className={`text-[8px] font-black ${loc.shopOwnerPhone ? 'text-emerald-600' : 'text-slate-300'}`}>
-                    📞 {loc.shopOwnerPhone ? '✓' : '—'}
-                  </span>
-                  <span className={`text-[8px] font-black ${loc.ownerPhotoUrl ? 'text-emerald-600' : 'text-slate-300'}`}>
-                    📷 {loc.ownerPhotoUrl ? '✓' : '—'}
-                  </span>
-                  <span className={`text-[8px] font-black ${loc.coords?.lat ? 'text-emerald-600' : 'text-slate-300'}`}>
-                    📍 {loc.coords?.lat ? '✓' : '—'}
-                  </span>
+
+                {/* Info pills */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${loc.shopOwnerPhone ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-300'}`}>📞 {loc.shopOwnerPhone || (lang === 'zh' ? '无' : 'None')}</span>
+                  <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${loc.ownerPhotoUrl ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-300'}`}>📷 {loc.ownerPhotoUrl ? (lang === 'zh' ? '已上传' : 'Photo') : (lang === 'zh' ? '无' : 'None')}</span>
+                  <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${loc.coords?.lat ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-300'}`}>📍 {loc.coords?.lat ? (lang === 'zh' ? '已定位' : 'GPS') : (lang === 'zh' ? '无' : 'None')}</span>
                 </div>
-                <div className="mt-2 space-y-1">
-                  {deleteBlocked && (
-                    <p className="text-[8px] font-bold text-rose-500 uppercase truncate">
-                      {lang === 'zh' ? '删除被阻止' : 'Delete blocked'}: {deletionDiagnostics?.blockers[0]}
-                    </p>
-                  )}
-                  {loc.createdAt && (
-                    <p className="text-[8px] font-bold text-slate-400 uppercase truncate">
-                      {lang === 'zh' ? '注册时间' : 'Registered'}: {new Date(loc.createdAt).toLocaleString()}
-                    </p>
-                  )}
-                  {loc.lastRelocatedAt && (
-                    <p className="text-[8px] font-bold text-slate-400 uppercase truncate">
-                      {lang === 'zh' ? '最近迁点' : 'Moved'}: {new Date(loc.lastRelocatedAt).toLocaleString()}
-                    </p>
-                  )}
-                </div>
+
+                {/* Owner name */}
+                {loc.ownerName && (
+                  <p className="text-xs text-slate-500 truncate">👤 {loc.ownerName}</p>
+                )}
+              </div>
+
+              {/* Footer: delete button (only if not blocked) */}
+              <div className="px-4 pb-4">
+                {deleteBlocked ? (
+                  <div className="w-full bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 text-center">
+                    <p className="text-[9px] font-bold text-rose-500">{lang === 'zh' ? '⚠️ 无法删除：' : '⚠️ Blocked: '}{deletionDiagnostics?.blockers[0]}</p>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => void handleDeleteLocation(loc.id)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-rose-100 bg-rose-50 text-rose-400 hover:bg-rose-100 hover:text-rose-600 text-xs font-bold transition-colors"
+                  >
+                    <Trash2 size={13} />
+                    {lang === 'zh' ? '删除此点位' : 'Delete Location'}
+                  </button>
+                )}
               </div>
             </div>
           );
