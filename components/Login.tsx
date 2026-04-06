@@ -172,6 +172,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
               <p className={`text-[8px] font-bold uppercase tracking-widest ${dbStatus === 'online' ? 'text-emerald-400' : dbStatus === 'offline' ? 'text-rose-400' : 'text-slate-300'}`}>
                 {dbStatus === 'online' ? '● Connected' : dbStatus === 'offline' ? '● Offline' : '● Checking...'}
               </p>
+              <p className="mt-1 text-[8px] font-bold text-slate-600 tracking-widest">
+                v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '—'}
+              </p>
             </div>
           </form>
         </div>

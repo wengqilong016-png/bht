@@ -1,5 +1,15 @@
 apply plugin: 'com.android.application'
 
+// Read version from package.json and git commit count
+def packageJson = new groovy.json.JsonSlurper().parseText(file('../../package.json').text)
+def appVersionName = packageJson.version ?: "1.0.0"
+def gitCommitCount = 1
+try {
+    def proc = ['git', 'rev-list', '--count', 'HEAD'].execute(null, file('../..'))
+    proc.waitFor()
+    gitCommitCount = proc.text.trim().toInteger()
+} catch (ignored) {}
+
 android {
     namespace = "com.bahati.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +17,8 @@ android {
         applicationId "com.bahati.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode gitCommitCount
+        versionName appVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

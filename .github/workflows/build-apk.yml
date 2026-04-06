@@ -18,7 +18,7 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   JAVA_VERSION: '21'
@@ -122,6 +122,29 @@ jobs:
       - name: Get version
         id: version
         run: echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+
+      - name: Bump patch version & update version.json (release builds only)
+        if: github.event.inputs.build_type == 'release' || startsWith(github.ref, 'refs/tags/')
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version patch --no-git-tag-version
+          NEW_VERSION=$(node -p 'require("./package.json").version')
+          REPO="${{ github.repository }}"
+          APK_URL="https://github.com/${REPO}/releases/latest/download/bahati-latest-release.apk"
+          node -e "
+            const fs = require('fs');
+            fs.writeFileSync('public/version.json', JSON.stringify({
+              version: '${NEW_VERSION}',
+              apkUrl: '${APK_URL}',
+              releaseNotes: 'v${NEW_VERSION} released'
+            }, null, 2) + '\n');
+          "
+          git add package.json package-lock.json public/version.json
+          git commit -m "chore: bump version to v${NEW_VERSION} [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Rename APK
         run: |
