@@ -46,6 +46,10 @@ export function useRealtimeSubscription(userRole?: 'admin' | 'driver') {
 
   useEffect(() => {
     if (!supabase) return;
+    // Do not subscribe until the user's role is known.  Subscribing before the
+    // role is resolved would default to ADMIN_CHANNELS and expose admin-scoped
+    // broadcast events to an unauthenticated or driver-role session.
+    if (!userRole) return;
 
     const { queue, cleanup } = createRealtimeInvalidator(queryClient);
 

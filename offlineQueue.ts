@@ -223,23 +223,40 @@ export async function markSynced(id: string, authoritativeData?: Partial<Transac
 export async function pruneOldSynced(daysOld = 7): Promise<void> {
   try {
     const db    = await openDB();
-    const store = db.transaction(STORE_TX, 'readwrite').objectStore(STORE_TX);
     const cutoff = new Date(Date.now() - daysOld * MS_PER_DAY).toISOString();
-    const idx  = store.index('timestamp');
-    const req  = idx.openCursor(IDBKeyRange.upperBound(cutoff));
-    req.onsuccess = () => {
-      const cursor = req.result;
-      if (!cursor) { db.close(); return; }
-      const item = cursor.value as (Transaction & { isSynced: boolean });
-      if (item.isSynced) cursor.delete();
-      cursor.continue();
-    };
+    await new Promise<void>((resolve, reject) => {
+      const txn  = db.transaction(STORE_TX, 'readwrite');
+      const store = txn.objectStore(STORE_TX);
+      const idx  = store.index('timestamp');
+      const req  = idx.openCursor(IDBKeyRange.upperBound(cutoff));
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (!cursor) return; // cursor exhausted — transaction will complete
+        const item = cursor.value as (Transaction & { isSynced: boolean });
+        if (item.isSynced) cursor.delete();
+        cursor.continue();
+      };
+      req.onerror = () => reject(req.error);
+      // Resolve when the IDB transaction itself completes (after all cursor ops).
+      txn.oncomplete = () => { db.close(); resolve(); };
+      txn.onerror   = () => { db.close(); reject(txn.error); };
+    });
   } catch {
     // ignore
   }
 }
 
 // ── Flush queue → Supabase (called by App on reconnect) ──────────────────────
+
+/**
+ * Module-level mutex that prevents concurrent `flushQueue` invocations.
+ * Without this guard, two simultaneous flush triggers (e.g. an online-transition
+ * event firing while a 60-second interval tick also fires) would both read the
+ * same pending items from IDB and submit them twice, wasting server round-trips
+ * and risking duplicate-submission errors on non-idempotent legacy entries.
+ */
+let _isFlushing = false;
+
 /**
  * Replay all pending offline entries against the server.
  *
@@ -266,11 +283,20 @@ export async function pruneOldSynced(daysOld = 7): Promise<void> {
  *     retry budget and remain visible for admin inspection.
  *   - 'transient' errors (network, server-side 5xx) apply exponential backoff
  *     and will be retried on the next flush call.
+ *
+ * Concurrent calls: if a flush is already in progress, the new call returns 0
+ * immediately.  The in-progress flush will process all pending items; the
+ * caller can retry on the next scheduled interval.
  */
 export async function flushQueue(
   supabaseClient: SupabaseClient,
   options?: FlushOptions,
 ): Promise<number> {
+  // Prevent concurrent flushes from double-submitting the same queued entries.
+  if (_isFlushing) return 0;
+  _isFlushing = true;
+
+  try {
   const pending = await getPendingTransactions();
   if (pending.length === 0) return 0;
 
@@ -416,6 +442,9 @@ export async function flushQueue(
     }
   }
   return flushed;
+  } finally {
+    _isFlushing = false;
+  }
 }
 
 /**
