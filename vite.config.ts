@@ -39,8 +39,8 @@ export default defineConfig({
               return 'vendor-supabase';
             }
 
-            // Gemini AI SDK
-            if (id.includes('@google/genai')) {
+            // OpenAI SDK
+            if (id.includes('openai')) {
               return 'vendor-ai';
             }
 
