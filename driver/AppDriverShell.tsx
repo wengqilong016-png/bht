@@ -34,7 +34,7 @@ const AppDriverShell: React.FC = () => {
 
   const syncStatus = useSyncStatus({ syncMutation: syncOfflineData, isOnline, unsyncedCount, userId: currentUser.id });
   const todayStr = getTodayLocalDate();
-  const assignedMachineCount = filteredLocations.filter((location) => location.assignedDriverId === activeDriverId).length || filteredLocations.length;
+  const assignedMachineCount = filteredLocations.length;
   const todayCollectionCount = filteredTransactions.filter((tx) => tx.driverId === activeDriverId && tx.timestamp.startsWith(todayStr) && (tx.type === undefined || tx.type === 'collection')).length;
   const pendingSettlementCount = filteredSettlements.filter((settlement) => settlement.driverId === activeDriverId && settlement.status === 'pending').length;
   const navStatByView: Partial<Record<DriverView, { value: number; label: string }>> = {
