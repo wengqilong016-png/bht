@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Location, Driver, Transaction, DailySettlement, AILog, User, CONSTANTS } from '../types';
-import { enqueueTransaction, flushQueue, reportQueueHealthToServer } from '../offlineQueue';
+import { enqueueTransaction, flushQueue, reportQueueHealthToServer, resetRetryBackoff } from '../offlineQueue';
 import { submitCollectionV2 } from '../services/collectionSubmissionService';
 import { getTransactionQueryScope, getSettlementQueryScope } from './supabaseRoleScope';
 import { stripClientFields } from '../utils/stripClientFields';
@@ -54,6 +54,11 @@ export function useSupabaseMutations(isOnline: boolean, currentUser?: User | nul
       // getSession() triggers a silent token refresh when the access token is
       // near expiry, without requiring a full re-login.
       await supabase.auth.getSession().catch(() => {});
+
+      // Clear exponential-backoff timestamps before every manual sync trigger.
+      // Items stuck in a retry-waiting window would otherwise be silently skipped
+      // by flushQueue, making "Retry Now" appear to do nothing.
+      await resetRetryBackoff().catch(() => {});
 
       // 1. Flush offline queue (IndexedDB).
       // Re-throw on failure so syncMutation.isError becomes true and the

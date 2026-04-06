@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getQueueHealthSummary, resetDeadLetterItems } from '../offlineQueue';
+import { getQueueHealthSummary, resetDeadLetterItems, resetRetryBackoff } from '../offlineQueue';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -164,7 +164,9 @@ export function useSyncStatus({
     : 'synced';
 
   const forceRetry = useCallback(async () => {
+    // Reset dead-letter AND backoff-waiting items so everything is eligible
     await resetDeadLetterItems();
+    await resetRetryBackoff();
     await refreshQueueHealth();
     syncMutation.mutate();
   }, [refreshQueueHealth, syncMutation]);

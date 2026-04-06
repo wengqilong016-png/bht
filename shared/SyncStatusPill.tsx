@@ -231,7 +231,7 @@ const SyncStatusPill: React.FC<SyncStatusPillProps> = ({
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
-                  trigger();
+                  forceRetry();
                   setIsOpen(false);
                 }}
                 className="w-full rounded-xl bg-slate-900 px-3 py-2 text-[10px] font-black uppercase text-white transition hover:bg-slate-800"
