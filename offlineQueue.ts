@@ -595,6 +595,52 @@ export async function resetDeadLetterItems(): Promise<number> {
   }
 }
 
+/**
+ * Clear the `nextRetryAt` backoff timestamp for every non-dead-letter item,
+ * making them immediately eligible for `flushQueue`.
+ *
+ * Call this before a manual "Retry Now" so that items stuck in exponential
+ * backoff don't silently get skipped.  Does NOT touch `retryCount` — the
+ * retry budget is preserved so permanent errors still dead-letter correctly.
+ *
+ * Returns the number of items whose backoff was cleared.
+ */
+export async function resetRetryBackoff(): Promise<number> {
+  try {
+    const all = await getAllQueuedTransactions();
+    const now = Date.now();
+    const db = await openDB();
+    let count = 0;
+
+    for (const tx of all) {
+      const entry = tx as Transaction & Partial<QueueMeta>;
+      if (entry.isSynced) continue;
+      if ((entry.retryCount ?? 0) >= MAX_RETRIES) continue; // dead-letter, skip
+      if (!entry.nextRetryAt) continue; // no backoff set, nothing to clear
+      if (new Date(entry.nextRetryAt).getTime() <= now) continue; // already eligible
+
+      await new Promise<void>((resolve, reject) => {
+        const t = db.transaction(STORE_TX, 'readwrite');
+        const store = t.objectStore(STORE_TX);
+        const req = store.get(entry.id);
+        req.onsuccess = () => {
+          const e = req.result as (Transaction & Partial<QueueMeta>) | undefined;
+          if (!e) { resolve(); return; }
+          e.nextRetryAt = undefined;
+          const put = store.put(e);
+          put.onsuccess = () => { count++; resolve(); };
+          put.onerror = () => reject(put.error);
+        };
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    return count;
+  } catch {
+    return 0;
+  }
+}
+
 // ── Queue size (for badge display) ───────────────────────────────────────────
 export async function getQueueSize(): Promise<number> {
   try {

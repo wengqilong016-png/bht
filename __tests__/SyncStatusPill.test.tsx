@@ -43,14 +43,14 @@ describe('SyncStatusPill', () => {
   });
 
   it('lets the user retry from the detail panel', () => {
-    const trigger = jest.fn();
+    const forceRetry = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
     render(
       <SyncStatusPill
         syncStatus={makeSyncStatus({
           unsyncedCount: 1,
           pendingCount: 1,
           state: 'queued',
-          trigger,
+          forceRetry,
         })}
         lang="sw"
         variant="light"
@@ -59,7 +59,7 @@ describe('SyncStatusPill', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /1 Pending/i }));
     fireEvent.click(screen.getByRole('button', { name: /Retry Now/i }));
-    expect(trigger).toHaveBeenCalledTimes(1);
+    expect(forceRetry).toHaveBeenCalledTimes(1);
   });
 
   it('shows dead-letter state details', () => {
