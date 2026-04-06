@@ -106,7 +106,29 @@ export const signInWithEmailPassword = async (email: string, password: string) =
 };
 
 export const signOutCurrentUser = async () => {
-  await supabase?.auth.signOut();
+  if (!supabase) {
+    return;
+  }
+
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (!error) {
+      return;
+    }
+
+    console.warn('Supabase global sign-out failed; attempting local session clear.', error);
+  } catch (error) {
+    console.warn('Supabase global sign-out threw; attempting local session clear.', error);
+  }
+
+  try {
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    if (error) {
+      console.warn('Supabase local sign-out fallback failed.', error);
+    }
+  } catch (error) {
+    console.warn('Supabase local sign-out fallback threw.', error);
+  }
 };
 
 export const updateUserEmail = async (newEmail: string) => {
