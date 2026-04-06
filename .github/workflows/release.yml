@@ -120,9 +120,32 @@ jobs:
         run: |
           APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
           DEST="android/app/build/outputs/apk/bahati-v${{ steps.version.outputs.version }}-release.apk"
+          # Also create a stable "latest" filename for the update URL
+          cp "$APK_PATH" "android/app/build/outputs/apk/bahati-latest-release.apk" 2>/dev/null || true
           if [ -f "$APK_PATH" ]; then
             cp "$APK_PATH" "$DEST"
           fi
+
+      - name: Update version.json in repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          REPO="${{ github.repository }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          APK_URL="https://github.com/${REPO}/releases/download/v${VERSION}/bahati-latest-release.apk"
+          node -e "
+            const fs = require('fs');
+            fs.writeFileSync('public/version.json', JSON.stringify({
+              version: '${VERSION}',
+              apkUrl: '${APK_URL}',
+              releaseNotes: 'v${VERSION} — 正式发布'
+            }, null, 2) + '\n');
+          "
+          git add public/version.json
+          git diff --cached --quiet || git commit -m "chore: update version.json to v${VERSION} [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload APK to GitHub Release
         uses: softprops/action-gh-release@v2

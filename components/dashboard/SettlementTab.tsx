@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Calculator, CheckCircle2, Banknote, ThumbsUp, AlertTriangle, ShieldAlert, RefreshCw, Wallet, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { Calculator, CheckCircle2, Banknote, ThumbsUp, AlertTriangle, ShieldAlert, RefreshCw, Wallet, ChevronDown, ChevronUp, ScanEye, Loader2 } from 'lucide-react';
 import { Transaction, Driver, Location, DailySettlement, User as UserType, TRANSLATIONS } from '../../types';
 import { getOptimizedImageUrl } from '../../utils/imageUtils';
 import { useToast } from '../../contexts/ToastContext';
@@ -76,6 +76,60 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
   const [actualCoins, setActualCoins] = useState<string>('');
   const [pendingActionKey, setPendingActionKey] = useState<string | null>(null);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+
+  // AI scan results: txId → { status, detectedScore, notes }
+  type ScanResult = { status: 'loading' | 'matched' | 'mismatch' | 'unclear' | 'error'; detectedScore?: string; notes?: string };
+  const [scanResults, setScanResults] = useState<Map<string, ScanResult>>(new Map());
+
+  const triggerAIScan = useCallback(async (tx: Transaction) => {
+    if (!tx.photoUrl || scanResults.has(tx.id)) return;
+    setScanResults(prev => new Map(prev).set(tx.id, { status: 'loading' }));
+    try {
+      // Convert image URL to base64
+      const resp = await fetch(tx.photoUrl);
+      const blob = await resp.blob();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      const apiResp = await fetch('/api/scan-meter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64 }),
+      });
+      if (!apiResp.ok || apiResp.status === 204) {
+        setScanResults(prev => new Map(prev).set(tx.id, { status: 'error', notes: 'API unavailable' }));
+        return;
+      }
+      const data: { score?: string; condition?: string; notes?: string; error?: string } = await apiResp.json();
+      if (data.error) {
+        setScanResults(prev => new Map(prev).set(tx.id, { status: 'error', notes: data.error }));
+        return;
+      }
+      const detectedScore = data.score ?? '';
+      const submittedScore = String(tx.currentScore ?? '');
+      const diff = Math.abs(parseInt(detectedScore || '0') - parseInt(submittedScore || '0'));
+      const status = detectedScore === '' || data.condition === 'Unclear'
+        ? 'unclear'
+        : diff <= 5 ? 'matched' : 'mismatch';
+      setScanResults(prev => new Map(prev).set(tx.id, { status, detectedScore, notes: data.notes }));
+    } catch {
+      setScanResults(prev => new Map(prev).set(tx.id, { status: 'error', notes: 'Fetch error' }));
+    }
+  }, [scanResults]);
+
+  // Auto-trigger scan for anomaly transactions with photos when admin views
+  useEffect(() => {
+    if (!isAdmin) return;
+    for (const tx of anomalyTransactions) {
+      if (tx.photoUrl && !scanResults.has(tx.id)) {
+        triggerAIScan(tx);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anomalyTransactions, isAdmin]);
   const myPendingSettlements = pendingSettlements
     .filter(settlement => settlement.driverId === activeDriverId && settlement.status === 'pending')
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -323,6 +377,8 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
 
                         {task.type === 'anomaly' && (() => {
                           const tx = (task.extra as { tx: Transaction }).tx;
+                          const scan = scanResults.get(tx.id);
+                          const showThumbnail = scan?.status === 'matched';
                           return (
                             <>
                               <div className="grid grid-cols-2 gap-2">
@@ -332,11 +388,34 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                                 </div>
                                 <div className="bg-amber-50 p-2 rounded-xl">
                                   <p className="text-[8px] font-black text-amber-400 uppercase">{lang === 'zh' ? 'AI 识别' : 'AI Detected'}</p>
-                                  <p className="text-xs font-black text-amber-700">{tx.aiScore ?? 'N/A'}</p>
+                                  <p className="text-xs font-black text-amber-700">
+                                    {scan?.status === 'loading' && <Loader2 size={12} className="inline animate-spin" />}
+                                    {scan?.status === 'matched' && <span className="text-emerald-600">✓ {scan.detectedScore}</span>}
+                                    {scan?.status === 'mismatch' && <span className="text-rose-600">⚠ {scan.detectedScore}</span>}
+                                    {scan?.status === 'unclear' && <span className="text-slate-400">{lang === 'zh' ? '不清晰' : 'Unclear'}</span>}
+                                    {scan?.status === 'error' && <span className="text-slate-400">{tx.aiScore ?? 'N/A'}</span>}
+                                    {!scan && (tx.aiScore ?? 'N/A')}
+                                  </p>
                                 </div>
                               </div>
+                              {/* AI scan status badge */}
+                              {scan && scan.status !== 'loading' && (
+                                <div className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[10px] font-black ${
+                                  scan.status === 'matched' ? 'bg-emerald-50 text-emerald-700' :
+                                  scan.status === 'mismatch' ? 'bg-rose-50 text-rose-700' :
+                                  'bg-slate-50 text-slate-500'
+                                }`}>
+                                  <ScanEye size={11} />
+                                  {scan.status === 'matched' && (lang === 'zh' ? 'AI 已验证 — 数字吻合' : 'AI Verified — numbers match')}
+                                  {scan.status === 'mismatch' && (lang === 'zh' ? `AI 警告 — 检测到 ${scan.detectedScore}，与提交不符` : `AI Warning — detected ${scan.detectedScore}, mismatch`)}
+                                  {scan.status === 'unclear' && (lang === 'zh' ? 'AI 无法识别图像' : 'AI could not read image')}
+                                  {scan.status === 'error' && (lang === 'zh' ? 'AI 扫描不可用' : 'AI scan unavailable')}
+                                </div>
+                              )}
                               {tx.photoUrl && (
-                                <img src={getOptimizedImageUrl(tx.photoUrl, 400, 300)} alt={t.paymentProof} className="w-full h-24 object-cover rounded-xl border border-slate-200" />
+                                showThumbnail
+                                  ? <img src={getOptimizedImageUrl(tx.photoUrl, 80, 60)} alt={t.paymentProof} className="h-10 w-14 object-cover rounded-lg border-2 border-emerald-300 opacity-70" title={lang === 'zh' ? 'AI已验证，缩略预览' : 'AI verified'} />
+                                  : <img src={getOptimizedImageUrl(tx.photoUrl, 400, 300)} alt={t.paymentProof} className="w-full h-24 object-cover rounded-xl border border-slate-200" />
                               )}
                               <div className="flex gap-2">
                                 <button disabled={isPending || !isOnline} onClick={() => runApprovalAction(task.key, () => onReviewAnomalyTransaction(task.id, true))} className="flex-1 py-2.5 bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase disabled:opacity-50">✓ {t.approveBtn}</button>

@@ -13,6 +13,7 @@ import { getTodayLocalDate } from '../utils/dateUtils';
 import { useMutations } from '../contexts/MutationContext';
 import { DRIVER_NAV_ITEMS, type DriverView } from './driverShellConfig';
 import DriverShellViewRenderer from './renderDriverShellView';
+import DriverAIAssistPanel from './components/DriverAIAssistPanel';
 
 const AccountSettings = lazy(() => import('../components/AccountSettings'));
 
@@ -174,6 +175,16 @@ const AppDriverShell: React.FC = () => {
           }}
         />
       )}
+
+      <DriverAIAssistPanel
+        lang={lang}
+        isOnline={isOnline}
+        unsyncedCount={unsyncedCount}
+        filteredLocations={filteredLocations}
+        filteredTransactions={filteredTransactions}
+        filteredSettlements={filteredSettlements}
+        activeDriverId={activeDriverId ?? ''}
+      />
     </div>
   );
 };

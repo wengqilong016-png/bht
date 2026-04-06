@@ -9,17 +9,27 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { CalendarDays, TrendingUp, Users, MapPin, DollarSign } from 'lucide-react';
+import { CalendarDays, TrendingUp, Users, MapPin, DollarSign, Download, Building2 } from 'lucide-react';
 import { useAppData } from '../contexts/DataContext';
 
 interface MonthlyStats {
-  month: string;         // "YYYY-MM"
-  label: string;         // "1月" / "2月" ...
+  month: string;
+  label: string;
   revenue: number;
   commission: number;
   netPayable: number;
   collections: number;
   activeDrivers: number;
+  activeSites: number;
+}
+
+interface DriverMonthStat {
+  month: string;
+  label: string;
+  revenue: number;
+  commission: number;
+  netPayable: number;
+  collections: number;
   activeSites: number;
 }
 
@@ -53,7 +63,6 @@ function buildMonthlyStats(
     stat.collections += 1;
   }
 
-  // Count unique drivers/sites per month
   for (const stat of months) {
     const monthTxs = transactions.filter((tx) => {
       if (tx.type !== 'collection' && tx.type !== undefined) return false;
@@ -70,27 +79,120 @@ function buildMonthlyStats(
   return months;
 }
 
+function buildDriverStats(
+  transactions: import('../types/models').Transaction[],
+  driverId: string,
+  monthCount: number,
+): DriverMonthStat[] {
+  const now = new Date();
+  const months: DriverMonthStat[] = [];
+
+  for (let i = monthCount - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = `${d.getMonth() + 1}月`;
+    months.push({ month: key, label, revenue: 0, commission: 0, netPayable: 0, collections: 0, activeSites: 0 });
+  }
+
+  const byMonth = new Map<string, DriverMonthStat>(months.map((m) => [m.month, m]));
+
+  for (const tx of transactions) {
+    if (tx.driverId !== driverId) continue;
+    if (tx.type !== 'collection' && tx.type !== undefined) continue;
+    const ts = tx.timestamp || tx.uploadTimestamp;
+    if (!ts) continue;
+    const d = new Date(ts);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const stat = byMonth.get(key);
+    if (!stat) continue;
+    stat.revenue += tx.revenue ?? 0;
+    stat.commission += tx.commission ?? 0;
+    stat.netPayable += tx.netPayable ?? 0;
+    stat.collections += 1;
+  }
+
+  // Count unique sites per month for this driver
+  for (const stat of months) {
+    const monthTxs = transactions.filter((tx) => {
+      if (tx.driverId !== driverId) return false;
+      if (tx.type !== 'collection' && tx.type !== undefined) return false;
+      const ts = tx.timestamp || tx.uploadTimestamp;
+      if (!ts) return false;
+      const d = new Date(ts);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === stat.month;
+    });
+    stat.activeSites = new Set(monthTxs.map((t) => t.locationId)).size;
+  }
+
+  return months;
+}
+
+function downloadCSV(filename: string, rows: string[][], headers: string[]) {
+  const escape = (s: string | number) => `"${String(s).replace(/"/g, '""')}"`;
+  const lines = [headers.map(escape).join(','), ...rows.map(r => r.map(escape).join(','))];
+  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 const MONTH_OPTIONS = [3, 6, 12] as const;
 
 const MonthlyReportPage: React.FC = () => {
-  const { transactions } = useAppData();
+  const { transactions, drivers } = useAppData();
   const [monthCount, setMonthCount] = useState<(typeof MONTH_OPTIONS)[number]>(6);
+  const [tab, setTab] = useState<'fleet' | 'driver'>('fleet');
+  const [selectedDriverId, setSelectedDriverId] = useState<string>('');
 
-  const stats = useMemo(
+  const activeDriverId = selectedDriverId || drivers[0]?.id || '';
+
+  const fleetStats = useMemo(
     () => buildMonthlyStats(transactions, monthCount),
     [transactions, monthCount],
   );
 
-  const totals = useMemo(() => {
-    const revenue = stats.reduce((s, m) => s + m.revenue, 0);
-    const commission = stats.reduce((s, m) => s + m.commission, 0);
-    const netPayable = stats.reduce((s, m) => s + m.netPayable, 0);
-    const collections = stats.reduce((s, m) => s + m.collections, 0);
-    return { revenue, commission, netPayable, collections };
-  }, [stats]);
+  const driverStats = useMemo(
+    () => activeDriverId ? buildDriverStats(transactions, activeDriverId, monthCount) : [],
+    [transactions, activeDriverId, monthCount],
+  );
+
+  const fleetTotals = useMemo(() => ({
+    revenue: fleetStats.reduce((s, m) => s + m.revenue, 0),
+    commission: fleetStats.reduce((s, m) => s + m.commission, 0),
+    netPayable: fleetStats.reduce((s, m) => s + m.netPayable, 0),
+    collections: fleetStats.reduce((s, m) => s + m.collections, 0),
+  }), [fleetStats]);
+
+  const driverTotals = useMemo(() => ({
+    revenue: driverStats.reduce((s, m) => s + m.revenue, 0),
+    commission: driverStats.reduce((s, m) => s + m.commission, 0),
+    netPayable: driverStats.reduce((s, m) => s + m.netPayable, 0),
+    collections: driverStats.reduce((s, m) => s + m.collections, 0),
+  }), [driverStats]);
 
   const fmt = (n: number) =>
     n.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+  const selectedDriver = drivers.find(d => d.id === activeDriverId);
+
+  const exportFleetCSV = () => {
+    downloadCSV(
+      `fleet-report-${monthCount}months.csv`,
+      fleetStats.map(m => [m.label, String(m.revenue), String(m.commission), String(m.netPayable), String(m.collections), String(m.activeDrivers), String(m.activeSites)]),
+      ['月份', '营收(TZS)', '提成(TZS)', '净应付(TZS)', '收款次数', '活跃司机', '活跃机器'],
+    );
+  };
+
+  const exportDriverCSV = () => {
+    downloadCSV(
+      `driver-${selectedDriver?.name ?? activeDriverId}-${monthCount}months.csv`,
+      driverStats.map(m => [m.label, String(m.revenue), String(m.commission), String(m.netPayable), String(m.collections), String(m.activeSites)]),
+      ['月份', '营收(TZS)', '提成(TZS)', '净应付(TZS)', '收款次数', '活跃机器'],
+    );
+  };
 
   return (
     <div className="p-4 space-y-5">
@@ -117,106 +219,206 @@ const MonthlyReportPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp size={14} className="text-indigo-600" />
-            <p className="text-[10px] font-black text-indigo-500 uppercase">总营收</p>
-          </div>
-          <p className="text-xl font-black text-indigo-800">¥{fmt(totals.revenue)}</p>
-        </div>
-        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <DollarSign size={14} className="text-emerald-600" />
-            <p className="text-[10px] font-black text-emerald-500 uppercase">净应付</p>
-          </div>
-          <p className="text-xl font-black text-emerald-800">¥{fmt(totals.netPayable)}</p>
-        </div>
-        <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Users size={14} className="text-amber-600" />
-            <p className="text-[10px] font-black text-amber-500 uppercase">提成总额</p>
-          </div>
-          <p className="text-xl font-black text-amber-800">¥{fmt(totals.commission)}</p>
-        </div>
-        <div className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <MapPin size={14} className="text-rose-600" />
-            <p className="text-[10px] font-black text-rose-500 uppercase">总收款次数</p>
-          </div>
-          <p className="text-xl font-black text-rose-800">{fmt(totals.collections)}</p>
-        </div>
+      {/* Tab Toggle */}
+      <div className="flex items-center gap-1 bg-slate-100 rounded-2xl p-1">
+        <button
+          onClick={() => setTab('fleet')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black uppercase transition-all ${tab === 'fleet' ? 'bg-white text-indigo-700 shadow' : 'text-slate-500'}`}
+        >
+          <Building2 size={13} /> 总站汇总
+        </button>
+        <button
+          onClick={() => setTab('driver')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black uppercase transition-all ${tab === 'driver' ? 'bg-white text-indigo-700 shadow' : 'text-slate-500'}`}
+        >
+          <Users size={13} /> 司机明细
+        </button>
       </div>
 
-      {/* Revenue Chart */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-        <p className="text-xs font-black text-slate-600 uppercase mb-3">月度营收趋势</p>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={stats} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-            <XAxis dataKey="label" tick={{ fontSize: 10, fontWeight: 700 }} />
-            <YAxis tick={{ fontSize: 9 }} tickFormatter={(v: number) => `¥${(v / 1000).toFixed(0)}k`} />
-            <Tooltip
-              formatter={(value: number, name: string) => [`¥${fmt(value)}`, name]}
-              labelStyle={{ fontWeight: 700 }}
-            />
-            <Legend wrapperStyle={{ fontSize: 10, fontWeight: 700 }} />
-            <Bar dataKey="revenue" name="营收" fill="#6366f1" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="commission" name="提成" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="netPayable" name="净应付" fill="#10b981" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      {tab === 'fleet' && (
+        <>
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-indigo-600" /><p className="text-[10px] font-black text-indigo-500 uppercase">总营收</p></div>
+              <p className="text-xl font-black text-indigo-800">TZS {fmt(fleetTotals.revenue)}</p>
+            </div>
+            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-1"><DollarSign size={14} className="text-emerald-600" /><p className="text-[10px] font-black text-emerald-500 uppercase">净应付</p></div>
+              <p className="text-xl font-black text-emerald-800">TZS {fmt(fleetTotals.netPayable)}</p>
+            </div>
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-1"><Users size={14} className="text-amber-600" /><p className="text-[10px] font-black text-amber-500 uppercase">提成总额</p></div>
+              <p className="text-xl font-black text-amber-800">TZS {fmt(fleetTotals.commission)}</p>
+            </div>
+            <div className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-1"><MapPin size={14} className="text-rose-600" /><p className="text-[10px] font-black text-rose-500 uppercase">总收款次数</p></div>
+              <p className="text-xl font-black text-rose-800">{fmt(fleetTotals.collections)}</p>
+            </div>
+          </div>
 
-      {/* Active Drivers / Sites Chart */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-        <p className="text-xs font-black text-slate-600 uppercase mb-3">月度活跃司机 & 机器</p>
-        <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={stats} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-            <XAxis dataKey="label" tick={{ fontSize: 10, fontWeight: 700 }} />
-            <YAxis tick={{ fontSize: 9 }} allowDecimals={false} />
-            <Tooltip labelStyle={{ fontWeight: 700 }} />
-            <Legend wrapperStyle={{ fontSize: 10, fontWeight: 700 }} />
-            <Bar dataKey="activeDrivers" name="活跃司机" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="activeSites" name="活跃机器" fill="#ec4899" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+          {/* Revenue Chart */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+            <p className="text-xs font-black text-slate-600 uppercase mb-3">月度营收趋势</p>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={fleetStats} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fontWeight: 700 }} />
+                <YAxis tick={{ fontSize: 9 }} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(value: number, name: string) => [`TZS ${fmt(value)}`, name]} labelStyle={{ fontWeight: 700 }} />
+                <Legend wrapperStyle={{ fontSize: 10, fontWeight: 700 }} />
+                <Bar dataKey="revenue" name="营收" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="commission" name="提成" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="netPayable" name="净应付" fill="#10b981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
 
-      {/* Monthly Table */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <p className="text-xs font-black text-slate-600 uppercase px-4 pt-4 pb-2">明细数据</p>
-        <div className="overflow-x-auto">
-          <table className="w-full text-[10px] font-bold">
-            <thead>
-              <tr className="bg-slate-50 text-slate-500 uppercase">
-                <th className="px-3 py-2 text-left">月份</th>
-                <th className="px-3 py-2 text-right">营收</th>
-                <th className="px-3 py-2 text-right">提成</th>
-                <th className="px-3 py-2 text-right">净应付</th>
-                <th className="px-3 py-2 text-right">收款次</th>
-                <th className="px-3 py-2 text-right">活跃司机</th>
-                <th className="px-3 py-2 text-right">活跃机器</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stats.map((m, i) => (
-                <tr key={m.month} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}>
-                  <td className="px-3 py-2 font-black text-slate-700">{m.label}</td>
-                  <td className="px-3 py-2 text-right text-indigo-700">¥{fmt(m.revenue)}</td>
-                  <td className="px-3 py-2 text-right text-amber-700">¥{fmt(m.commission)}</td>
-                  <td className="px-3 py-2 text-right text-emerald-700">¥{fmt(m.netPayable)}</td>
-                  <td className="px-3 py-2 text-right text-slate-600">{m.collections}</td>
-                  <td className="px-3 py-2 text-right text-violet-600">{m.activeDrivers}</td>
-                  <td className="px-3 py-2 text-right text-pink-600">{m.activeSites}</td>
-                </tr>
+          {/* Active Drivers / Sites Chart */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+            <p className="text-xs font-black text-slate-600 uppercase mb-3">月度活跃司机 & 机器</p>
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={fleetStats} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fontWeight: 700 }} />
+                <YAxis tick={{ fontSize: 9 }} allowDecimals={false} />
+                <Tooltip labelStyle={{ fontWeight: 700 }} />
+                <Legend wrapperStyle={{ fontSize: 10, fontWeight: 700 }} />
+                <Bar dataKey="activeDrivers" name="活跃司机" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="activeSites" name="活跃机器" fill="#ec4899" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Fleet Table + Export */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-4 pt-4 pb-2">
+              <p className="text-xs font-black text-slate-600 uppercase">总站明细数据</p>
+              <button onClick={exportFleetCSV} className="flex items-center gap-1 rounded-xl bg-indigo-50 px-2.5 py-1.5 text-[10px] font-black text-indigo-600 hover:bg-indigo-100">
+                <Download size={11} /> 导出 CSV
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-[10px] font-bold">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-500 uppercase">
+                    <th className="px-3 py-2 text-left">月份</th>
+                    <th className="px-3 py-2 text-right">营收</th>
+                    <th className="px-3 py-2 text-right">提成</th>
+                    <th className="px-3 py-2 text-right">净应付</th>
+                    <th className="px-3 py-2 text-right">收款次</th>
+                    <th className="px-3 py-2 text-right">活跃司机</th>
+                    <th className="px-3 py-2 text-right">活跃机器</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fleetStats.map((m, i) => (
+                    <tr key={m.month} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}>
+                      <td className="px-3 py-2 font-black text-slate-700">{m.label}</td>
+                      <td className="px-3 py-2 text-right text-indigo-700">{fmt(m.revenue)}</td>
+                      <td className="px-3 py-2 text-right text-amber-700">{fmt(m.commission)}</td>
+                      <td className="px-3 py-2 text-right text-emerald-700">{fmt(m.netPayable)}</td>
+                      <td className="px-3 py-2 text-right text-slate-600">{m.collections}</td>
+                      <td className="px-3 py-2 text-right text-violet-600">{m.activeDrivers}</td>
+                      <td className="px-3 py-2 text-right text-pink-600">{m.activeSites}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {tab === 'driver' && (
+        <>
+          {/* Driver selector */}
+          <div className="flex items-center gap-2">
+            <Users size={15} className="text-indigo-500 shrink-0" />
+            <select
+              value={activeDriverId}
+              onChange={e => setSelectedDriverId(e.target.value)}
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            >
+              {drivers.map(d => (
+                <option key={d.id} value={d.id}>{d.name} ({d.id})</option>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </select>
+          </div>
+
+          {/* Driver summary cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-indigo-600" /><p className="text-[10px] font-black text-indigo-500 uppercase">营收合计</p></div>
+              <p className="text-xl font-black text-indigo-800">TZS {fmt(driverTotals.revenue)}</p>
+            </div>
+            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-1"><DollarSign size={14} className="text-emerald-600" /><p className="text-[10px] font-black text-emerald-500 uppercase">提成合计</p></div>
+              <p className="text-xl font-black text-emerald-800">TZS {fmt(driverTotals.commission)}</p>
+            </div>
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-1"><MapPin size={14} className="text-amber-600" /><p className="text-[10px] font-black text-amber-500 uppercase">收款总次</p></div>
+              <p className="text-xl font-black text-amber-800">{fmt(driverTotals.collections)}</p>
+            </div>
+            <div className="bg-gradient-to-br from-violet-50 to-violet-100 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-1"><DollarSign size={14} className="text-violet-600" /><p className="text-[10px] font-black text-violet-500 uppercase">净应付</p></div>
+              <p className="text-xl font-black text-violet-800">TZS {fmt(driverTotals.netPayable)}</p>
+            </div>
+          </div>
+
+          {/* Driver revenue chart */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+            <p className="text-xs font-black text-slate-600 uppercase mb-3">{selectedDriver?.name ?? activeDriverId} — 月度营收</p>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={driverStats} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fontWeight: 700 }} />
+                <YAxis tick={{ fontSize: 9 }} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(value: number, name: string) => [`TZS ${fmt(value)}`, name]} labelStyle={{ fontWeight: 700 }} />
+                <Legend wrapperStyle={{ fontSize: 10, fontWeight: 700 }} />
+                <Bar dataKey="revenue" name="营收" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="commission" name="提成" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Driver monthly table + export */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-4 pt-4 pb-2">
+              <p className="text-xs font-black text-slate-600 uppercase">{selectedDriver?.name ?? activeDriverId} — 明细</p>
+              <button onClick={exportDriverCSV} className="flex items-center gap-1 rounded-xl bg-indigo-50 px-2.5 py-1.5 text-[10px] font-black text-indigo-600 hover:bg-indigo-100">
+                <Download size={11} /> 导出 CSV
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-[10px] font-bold">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-500 uppercase">
+                    <th className="px-3 py-2 text-left">月份</th>
+                    <th className="px-3 py-2 text-right">营收</th>
+                    <th className="px-3 py-2 text-right">提成</th>
+                    <th className="px-3 py-2 text-right">净应付</th>
+                    <th className="px-3 py-2 text-right">收款次</th>
+                    <th className="px-3 py-2 text-right">活跃机器</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {driverStats.map((m, i) => (
+                    <tr key={m.month} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}>
+                      <td className="px-3 py-2 font-black text-slate-700">{m.label}</td>
+                      <td className="px-3 py-2 text-right text-indigo-700">{fmt(m.revenue)}</td>
+                      <td className="px-3 py-2 text-right text-amber-700">{fmt(m.commission)}</td>
+                      <td className="px-3 py-2 text-right text-emerald-700">{fmt(m.netPayable)}</td>
+                      <td className="px-3 py-2 text-right text-slate-600">{m.collections}</td>
+                      <td className="px-3 py-2 text-right text-violet-600">{m.activeSites}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

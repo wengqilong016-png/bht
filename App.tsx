@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
 import { useSupabaseData } from './hooks/useSupabaseData';
@@ -7,9 +7,11 @@ import { useDevicePerformance } from './hooks/useDevicePerformance';
 import { useAuthBootstrap } from './hooks/useAuthBootstrap';
 import { useOfflineSyncLoop } from './hooks/useOfflineSyncLoop';
 import { useRealtimeSubscription } from './hooks/useRealtimeSubscription';
+import { useAppUpdateCheck } from './hooks/useAppUpdateCheck';
 import { NotificationProvider } from './contexts/NotificationContext';
 import AppRouterShell from './shared/AppRouterShell';
 import UpdatePrompt from './shared/UpdatePrompt';
+import AppUpdateModal from './components/AppUpdateModal';
 import { AuthProvider, DataProvider, MutationProvider } from './contexts';
 import { ToastProvider } from './contexts/ToastContext';
 import { ConfirmProvider } from './contexts/ConfirmContext';
@@ -185,6 +187,7 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
         <DataProvider value={dataValue}>
           <MutationProvider value={mutationValue}>
             <UpdatePrompt lang={lang} />
+            <AppUpdateModal lang={lang} />
             <AppRouterShell />
           </MutationProvider>
         </DataProvider>
