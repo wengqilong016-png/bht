@@ -68,11 +68,9 @@ function makeTransaction(overrides: Partial<Transaction> = {}): Transaction {
 
 describe('machine workflow self-check', () => {
   const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
-  const confirmSpy = jest.spyOn(window, 'confirm').mockImplementation(() => true);
 
   beforeEach(() => {
     alertSpy.mockClear();
-    confirmSpy.mockClear();
   });
 
   it('blocks duplicate machine registration and normalizes a valid new machine id before submit', async () => {
@@ -197,7 +195,10 @@ describe('machine workflow self-check', () => {
 
     fireEvent.click(enabledDeleteButton);
 
-    await waitFor(() => expect(confirmSpy).toHaveBeenCalled());
+    // The React confirmation modal should now be visible with a "确认删除" button
+    const confirmButton = await screen.findByRole('button', { name: /确认删除/ });
+    fireEvent.click(confirmButton);
+
     await waitFor(() => expect(onDeleteLocations).toHaveBeenCalledWith(['loc-b1-clean']));
   });
 
@@ -228,6 +229,10 @@ describe('machine workflow self-check', () => {
     );
 
     fireEvent.click(screen.getByTitle('Delete location'));
+
+    // Click "确认删除" in the confirmation modal
+    const confirmButton = await screen.findByRole('button', { name: /确认删除/ });
+    fireEvent.click(confirmButton);
 
     await waitFor(() =>
       expect(alertSpy).toHaveBeenCalledWith('删除失败，系统拒绝了本次操作。\nDelete failed: row is still referenced'),

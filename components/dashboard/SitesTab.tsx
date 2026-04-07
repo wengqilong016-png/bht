@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Search, Pencil, Trash2, Save, Loader2, Store, X, Image as ImageIcon } from 'lucide-react';
+import { Search, Pencil, Trash2, Save, Loader2, Store, X, Image as ImageIcon, Phone, MapPin, Upload } from 'lucide-react';
 import { Location, Driver, Transaction, TRANSLATIONS } from '../../types';
 import { getOptimizedImageUrl } from '../../utils/imageUtils';
 import { getLocationDeletionDiagnostics, normalizeMachineId } from '../../utils/locationWorkflow';
@@ -59,6 +59,8 @@ const SitesTab: React.FC<SitesTabProps> = ({
     remainingStartupDebt: '',
   });
   const [isSavingLoc, setIsSavingLoc] = useState(false);
+  const [pendingDeleteLocId, setPendingDeleteLocId] = useState<string | null>(null);
+  const [isDeletingLoc, setIsDeletingLoc] = useState(false);
   const deletionDiagnosticsById = useMemo(() => {
     return new Map(
       managedLocations.map((loc) => [
@@ -178,20 +180,21 @@ const SitesTab: React.FC<SitesTabProps> = ({
       return;
     }
 
-    const warningText =
-      diagnostics.warnings.length > 0
-        ? `\n\n删除提醒：\n- ${diagnostics.warnings.join('\n- ')}`
-        : '';
+    setPendingDeleteLocId(locId);
+  };
 
-    if (!window.confirm(`确认删除此机器点位？此操作不可撤销。\nDelete this location? This cannot be undone.${warningText}`)) return;
-    if (!onDeleteLocations) return;
-
+  const handleConfirmDelete = async () => {
+    if (!pendingDeleteLocId || !onDeleteLocations) return;
+    setIsDeletingLoc(true);
     try {
-      await onDeleteLocations([locId]);
+      await onDeleteLocations([pendingDeleteLocId]);
     } catch (error) {
       console.error('Failed to delete location:', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       alert(`删除失败，系统拒绝了本次操作。\nDelete failed: ${message}`);
+    } finally {
+      setIsDeletingLoc(false);
+      setPendingDeleteLocId(null);
     }
   };
 
@@ -277,11 +280,41 @@ const SitesTab: React.FC<SitesTabProps> = ({
                 {loc.ownerName && (
                   <p className="text-[8px] font-bold text-slate-400 uppercase mt-2 truncate">Owner: {loc.ownerName}</p>
                 )}
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  {loc.shopOwnerPhone && (
+                    <span className="inline-flex items-center gap-1 text-[8px] font-bold text-emerald-600">
+                      <Phone size={10} /> {loc.shopOwnerPhone}
+                    </span>
+                  )}
+                  {loc.machinePhotoUrl && (
+                    <span className="inline-flex items-center gap-1 text-[8px] font-bold text-emerald-600">
+                      <Upload size={10} /> {lang === 'zh' ? '已上传' : 'Uploaded'}
+                    </span>
+                  )}
+                  {loc.coords && (
+                    <span className="inline-flex items-center gap-1 text-[8px] font-bold text-rose-500">
+                      <MapPin size={10} /> {lang === 'zh' ? '已定位' : 'Located'}
+                    </span>
+                  )}
+                </div>
+                {loc.assignedDriverId && (
+                  <p className="text-[8px] font-bold text-indigo-500 mt-1 truncate flex items-center gap-1">
+                    👤 {driverMap.get(loc.assignedDriverId)?.name || loc.assignedDriverId}
+                  </p>
+                )}
                 <div className="mt-2 space-y-1">
-                  {deleteBlocked && (
-                    <p className="text-[8px] font-bold text-rose-500 uppercase truncate">
-                      {lang === 'zh' ? '删除被阻止' : 'Delete blocked'}: {deletionDiagnostics?.blockers[0]}
+                  {deleteBlocked ? (
+                    <p className="text-[8px] font-bold text-amber-600 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 truncate">
+                      ⚠ {lang === 'zh' ? '无法删除' : 'Cannot delete'}: {deletionDiagnostics?.blockers[0]}
                     </p>
+                  ) : onDeleteLocations && (
+                    <button
+                      onClick={() => void handleDeleteLocation(loc.id)}
+                      className="w-full flex items-center justify-center gap-2 text-[10px] font-black text-rose-500 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2.5 hover:bg-rose-100 transition-colors uppercase"
+                    >
+                      <Trash2 size={12} />
+                      {lang === 'zh' ? '删除此点位' : 'Delete Location'}
+                    </button>
                   )}
                   {loc.createdAt && (
                     <p className="text-[8px] font-bold text-slate-400 uppercase truncate">
@@ -456,6 +489,57 @@ const SitesTab: React.FC<SitesTabProps> = ({
                 alt={viewingPhotoLoc.name}
                 className="w-full max-h-[70vh] object-contain rounded-[24px] border border-slate-200 bg-white"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {pendingDeleteLocId && (
+        <div className="fixed inset-0 z-[90] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white w-full max-w-sm rounded-[24px] shadow-2xl overflow-hidden animate-in zoom-in-95">
+            <div className="p-6 space-y-2">
+              <h3 className="text-base font-black text-slate-900">
+                {lang === 'zh' ? '确认删除机器点位' : 'Confirm Delete Location'}
+              </h3>
+              <p className="text-sm text-slate-500">
+                {lang === 'zh' ? '此操作不可撤销。' : 'This action cannot be undone.'}
+              </p>
+              {(() => {
+                const diag = deletionDiagnosticsById.get(pendingDeleteLocId);
+                if (diag && diag.warnings.length > 0) {
+                  return (
+                    <div className="mt-2 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                      <p className="text-[10px] font-bold text-amber-700">
+                        {lang === 'zh' ? '删除提醒：' : 'Warnings:'}
+                      </p>
+                      <ul className="mt-1 space-y-0.5">
+                        {diag.warnings.map((w, i) => (
+                          <li key={i} className="text-[10px] text-amber-600">• {w}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </div>
+            <div className="p-4 border-t border-slate-100 flex gap-3">
+              <button
+                onClick={() => setPendingDeleteLocId(null)}
+                disabled={isDeletingLoc}
+                className="flex-1 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-xs font-black uppercase hover:bg-slate-50 transition-colors disabled:opacity-50"
+              >
+                {lang === 'zh' ? '取消' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => void handleConfirmDelete()}
+                disabled={isDeletingLoc}
+                className="flex-1 py-3 bg-rose-500 text-white rounded-2xl text-xs font-black uppercase shadow-lg shadow-rose-100 flex items-center justify-center gap-2 hover:bg-rose-600 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {isDeletingLoc ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                {lang === 'zh' ? '确认删除' : 'Confirm Delete'}
+              </button>
             </div>
           </div>
         </div>
