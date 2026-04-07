@@ -16,6 +16,7 @@ import { AuthProvider, DataProvider, MutationProvider } from './contexts';
 import { ToastProvider } from './contexts/ToastContext';
 import { ConfirmProvider } from './contexts/ConfirmContext';
 import Login from './components/Login';
+import ForcePasswordChange from './components/ForcePasswordChange';
 import type { User } from './types';
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: string }> {
@@ -214,6 +215,16 @@ const App: React.FC = () => {
 
   if (!currentUser) {
     return <Login onLogin={handleLogin} lang={lang} onSetLang={setLang} />;
+  }
+
+  if (currentUser.mustChangePassword) {
+    return (
+      <ForcePasswordChange
+        currentUser={currentUser}
+        lang={lang}
+        onComplete={() => handleLogin({ ...currentUser, mustChangePassword: false })}
+      />
+    );
   }
 
   return (

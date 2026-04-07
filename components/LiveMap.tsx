@@ -181,9 +181,16 @@ const LiveMap: React.FC<LiveMapProps> = ({ drivers, locations, transactions, lan
             {mappedLocations.map(loc => (
               <Marker key={loc.id} position={[loc.coords!.lat, loc.coords!.lng]} icon={loc.status === 'broken' ? brokenLocationIcon : locationIcon}>
                 <Popup>
-                  <div className="p-1">
+                  <div className="p-1 min-w-[140px]">
                     <p className="text-xs font-black text-slate-900">{loc.name}</p>
                     <p className="text-caption text-slate-400 uppercase font-bold">{loc.machineId}</p>
+                    <button
+                      onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${loc.coords!.lat},${loc.coords!.lng}`, '_blank')}
+                      className="mt-2 w-full flex items-center justify-center gap-1 rounded-lg bg-indigo-600 px-2 py-1.5 text-[10px] font-black uppercase text-white hover:bg-indigo-700 transition-colors"
+                    >
+                      <Navigation size={11} />
+                      {t.navigateTo}
+                    </button>
                   </div>
                 </Popup>
               </Marker>

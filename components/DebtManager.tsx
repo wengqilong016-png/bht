@@ -10,6 +10,8 @@ import { Driver, Location, TRANSLATIONS } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/DataContext';
 import { useMutations } from '../contexts/MutationContext';
+import { logFinanceAudit, logFinanceAuditBatch } from '../services/financeAuditService';
+import FinanceAuditPanel from './dashboard/FinanceAuditPanel';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface DebtManagerProps {}
@@ -83,6 +85,18 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
        
        try {
          await onUpdateLocations(updatedLocations);
+         const loc = locations.find(l => l.id === locationId);
+         const oldDebt = loc?.remainingStartupDebt ?? 0;
+         logFinanceAudit({
+           event_type: 'startup_debt_recovery',
+           entity_type: 'location',
+           entity_id: locationId,
+           entity_name: loc?.name,
+           actor_id: activeDriverId,
+           old_value: oldDebt,
+           new_value: Math.max(0, oldDebt - amount),
+           payload: { recoveryAmount: amount },
+         });
          setSuccessPulse(locationId);
          setRecoveringLocId(null);
          setRecoveryAmount('');
@@ -114,6 +128,30 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
     };
     try {
       await onUpdateDrivers(drivers.map(d => d.id === driver.id ? updated : d));
+      const auditEntries: Parameters<typeof logFinanceAuditBatch>[0] = [];
+      if ((driver.remainingDebt ?? 0) !== updated.remainingDebt) {
+        auditEntries.push({
+          event_type: 'driver_debt_change',
+          entity_type: 'driver',
+          entity_id: driver.id,
+          entity_name: driver.name,
+          actor_id: activeDriverId,
+          old_value: driver.remainingDebt ?? 0,
+          new_value: updated.remainingDebt,
+        });
+      }
+      if ((driver.dailyFloatingCoins ?? 0) !== updated.dailyFloatingCoins) {
+        auditEntries.push({
+          event_type: 'floating_coins_change',
+          entity_type: 'driver',
+          entity_id: driver.id,
+          entity_name: driver.name,
+          actor_id: activeDriverId,
+          old_value: driver.dailyFloatingCoins ?? 0,
+          new_value: updated.dailyFloatingCoins,
+        });
+      }
+      if (auditEntries.length > 0) logFinanceAuditBatch(auditEntries);
       setSuccessPulse(driver.id);
       setTimeout(() => setSuccessPulse(null), 2000);
     } catch (err) {
@@ -438,6 +476,8 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
          <AlertCircle size={16} className="text-indigo-500 shrink-0 mt-0.5" />
          <p className="text-caption text-slate-500 font-bold leading-relaxed">Startup capital is auto-deducted from each collection. Manual repayment for large lump sum settlements only. All records sync to daily settlement.</p>
       </div>
+
+      {currentUser.role === 'admin' && <FinanceAuditPanel lang={lang} />}
     </div>
   );
 };

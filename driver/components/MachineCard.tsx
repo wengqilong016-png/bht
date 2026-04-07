@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { ChevronRight, Lock, RefreshCw, Wallet, UserPen, Camera, X, Save, Loader2 } from 'lucide-react';
+import { ChevronRight, Lock, RefreshCw, Wallet, UserPen, Camera, X, Save, Loader2, Navigation } from 'lucide-react';
 import { Location, CONSTANTS } from '../../types';
 import { compressAndResizeImage } from '../../utils/imageUtils';
 
@@ -184,6 +184,17 @@ const MachineCard: React.FC<MachineCardProps> = ({
           >
             <Wallet size={11} /> {lang === 'zh' ? '提现' : 'Payout'}
           </button>
+          {loc.coords && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(`https://www.google.com/maps/dir/?api=1&destination=${loc.coords!.lat},${loc.coords!.lng}`, '_blank');
+              }}
+              className="flex-1 px-3 py-2 min-h-11 text-[10px] font-black uppercase text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center justify-center gap-1.5 border-l border-slate-100"
+            >
+              <Navigation size={11} /> {t.navigateTo}
+            </button>
+          )}
           {onUpdateLocation && (
             <button
               onClick={(e) => { e.stopPropagation(); setShowSiteInfoForm(v => !v); }}

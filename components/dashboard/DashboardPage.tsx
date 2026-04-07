@@ -354,6 +354,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                   pendingPayoutRequests={pendingPayoutRequests}
                   isOnline={isOnline}
                   lang={lang}
+                  actorId={currentUser.driverId ?? currentUser.id}
                 />
         </PageErrorBoundary>
       )}

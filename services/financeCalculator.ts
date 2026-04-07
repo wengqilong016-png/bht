@@ -111,7 +111,7 @@ export async function calculateCollectionFinancePreview(
         : null,
       p_startup_debt_deduction_request: Math.max(0, parseInt(input.startupDebtDeduction, 10) || 0),
       p_startup_debt_balance: Math.max(0, selectedLocation.remainingStartupDebt || 0),
-    });
+    }).abortSignal(AbortSignal.timeout(10_000));
 
     if (error || !data) {
       return fallback;

@@ -15,8 +15,15 @@ import { CONSTANTS } from '../types';
 
 // ── Supabase mock ─────────────────────────────────────────────────────────────
 const mockRpc = jest.fn<(...args: unknown[]) => Promise<unknown>>();
+
+/** Wraps a value/promise so .abortSignal() chains like the real Supabase builder */
+function asBuilder(val: unknown) {
+  const p = val instanceof Promise ? val : Promise.resolve(val);
+  return Object.assign(p, { abortSignal: () => p });
+}
+
 jest.mock('../supabaseClient', () => ({
-  supabase: { rpc: (...args: unknown[]) => mockRpc(...args) },
+  supabase: { rpc: (...args: unknown[]) => asBuilder(mockRpc(...args)) },
 }));
 
 import {

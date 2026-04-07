@@ -147,7 +147,12 @@ export async function enqueueTransaction(tx: Transaction, rawInput?: CollectionS
     const raw  = localStorage.getItem('bahati_offline_queue') || '[]';
     const list = JSON.parse(raw) as Transaction[];
     const updated = [...list.filter(t => t.id !== tx.id), { ...tx, isSynced: false, ...meta }];
-    try { localStorage.setItem('bahati_offline_queue', JSON.stringify(updated)); } catch (_) {}
+    try {
+      localStorage.setItem('bahati_offline_queue', JSON.stringify(updated));
+    } catch (lsErr) {
+      console.error('[OfflineQueue] Both IDB and localStorage failed:', lsErr);
+      throw new Error('Failed to queue transaction: all storage backends unavailable');
+    }
   }
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { User } from '../types';
 import { supabase } from '../supabaseClient';
-import { getQueueHealthSummary } from '../offlineQueue';
+import { getQueueHealthSummary, pruneOldSynced } from '../offlineQueue';
 
 /** Retry interval for background auto-sync while there are pending items. */
 const AUTO_SYNC_INTERVAL_MS = 60_000;
@@ -90,8 +90,10 @@ export function useOfflineSyncLoop({
   }, []);
 
   // Poll IDB queue health every 30 s (cheap local read; no network).
+  // Also prune old synced entries on mount to prevent unbounded IDB growth.
   useEffect(() => {
     void refreshIdbPending();
+    pruneOldSynced().catch(() => {});
     const id = setInterval(() => void refreshIdbPending(), 30_000);
     return () => clearInterval(id);
   }, [refreshIdbPending]);

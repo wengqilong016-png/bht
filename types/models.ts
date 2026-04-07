@@ -32,6 +32,8 @@ export interface User {
   name: string;
   /** For driver-role users, references public.drivers.id (User.id stays the auth user id). */
   driverId?: string;
+  /** When true, user must change password before accessing the app. */
+  mustChangePassword?: boolean;
 }
 
 export interface AILog {
@@ -204,4 +206,24 @@ export interface LocationChangeRequest {
   reviewedAt?: string;
   reviewedByAuthUserId?: string;
   reviewNote?: string;
+}
+
+export type FinanceAuditEventType =
+  | 'startup_debt_recovery'
+  | 'driver_debt_change'
+  | 'commission_rate_change'
+  | 'startup_debt_edit'
+  | 'floating_coins_change';
+
+export interface FinanceAuditLog {
+  id: string;
+  event_type: FinanceAuditEventType;
+  entity_type: 'location' | 'driver';
+  entity_id: string;
+  entity_name?: string;
+  actor_id: string;
+  old_value: number | null;
+  new_value: number | null;
+  payload: Record<string, unknown>;
+  created_at: string;
 }

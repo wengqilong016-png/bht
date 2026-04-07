@@ -6,6 +6,7 @@ type UserProfileRow = {
   role: string;
   display_name: string | null;
   driver_id: string | null;
+  must_change_password: boolean | null;
 };
 
 const VALID_USER_ROLES = ['admin', 'driver'] as const;
@@ -36,7 +37,7 @@ export const fetchCurrentUserProfile = async (
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('role, display_name, driver_id')
+    .select('role, display_name, driver_id, must_change_password')
     .eq('auth_user_id', authUserId)
     .single<UserProfileRow>();
 
@@ -63,6 +64,7 @@ export const fetchCurrentUserProfile = async (
       role: profile.role,
       name: profile.display_name || fallbackIdentity,
       driverId: profile.driver_id || undefined,
+      mustChangePassword: profile.must_change_password === true,
     },
   };
 };

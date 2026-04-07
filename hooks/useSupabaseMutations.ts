@@ -388,6 +388,10 @@ export function useSupabaseMutations(isOnline: boolean, currentUser?: User | nul
           old.map(s => s.id === reviewedSettlement.id ? { ...reviewedSettlement, isSynced: true } : s)
         );
         persistQuerySnapshot<DailySettlement>(settlementQueryKey, settlementStorageKey);
+        // Also persist transaction cache (paymentStatus was updated in onMutate)
+        persistQuerySnapshot<Transaction>(transactionQueryKey, transactionStorageKey);
+        // Persist driver cache (dailyFloatingCoins was updated in onMutate)
+        localDB.set(CONSTANTS.STORAGE_DRIVERS_KEY, queryClient.getQueryData<Driver[]>(['drivers']) ?? []).catch(() => {});
       }
     },
     onError: (_error, _variables, context) => {
@@ -583,10 +587,20 @@ export function useSupabaseMutations(isOnline: boolean, currentUser?: User | nul
   });
 
   const logAI = useMutation({
-    mutationFn: async (log: AILog) => {
+    onMutate: async (log: AILog) => {
+      await queryClient.cancelQueries({ queryKey: ['aiLogs'] });
+      const previousAiLogs = queryClient.getQueryData<AILog[]>(['aiLogs']);
       queryClient.setQueryData(['aiLogs'], (old: AILog[] = []) => [{...log, isSynced: false}, ...old]);
+      return { previousAiLogs };
+    },
+    mutationFn: async (log: AILog) => {
       if (isOnline) {
         await insertAiLog(log);
+      }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousAiLogs !== undefined) {
+        queryClient.setQueryData(['aiLogs'], context.previousAiLogs);
       }
     },
     onSettled: () => {

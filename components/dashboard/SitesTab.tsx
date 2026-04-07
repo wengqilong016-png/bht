@@ -5,6 +5,7 @@ import { getOptimizedImageUrl } from '../../utils/imageUtils';
 import { getLocationDeletionDiagnostics, normalizeMachineId } from '../../utils/locationWorkflow';
 import { useToast } from '../../contexts/ToastContext';
 import { useConfirm } from '../../contexts/ConfirmContext';
+import { logFinanceAuditBatch } from '../../services/financeAuditService';
 
 interface SitesTabProps {
   managedLocations: Location[];
@@ -23,6 +24,7 @@ interface SitesTabProps {
   pendingPayoutRequests: Transaction[];
   isOnline: boolean;
   lang: 'zh' | 'sw';
+  actorId?: string;
 }
 
 const SitesTab: React.FC<SitesTabProps> = ({
@@ -42,6 +44,7 @@ const SitesTab: React.FC<SitesTabProps> = ({
   pendingPayoutRequests,
   isOnline,
   lang,
+  actorId,
 }) => {
   const { showToast } = useToast();
   const { confirm } = useConfirm();
@@ -155,6 +158,33 @@ const SitesTab: React.FC<SitesTabProps> = ({
     };
     try {
       await onUpdateLocations(locations.map(l => l.id === updated.id ? updated : l));
+
+      // Fire-and-forget audit entries for financial field changes
+      const auditEntries: Parameters<typeof logFinanceAuditBatch>[0] = [];
+      if (editingLoc.commissionRate !== updated.commissionRate) {
+        auditEntries.push({
+          event_type: 'commission_rate_change',
+          entity_type: 'location',
+          entity_id: updated.id,
+          entity_name: updated.name,
+          actor_id: actorId ?? 'unknown',
+          old_value: editingLoc.commissionRate,
+          new_value: updated.commissionRate,
+        });
+      }
+      if ((editingLoc.remainingStartupDebt ?? 0) !== (updated.remainingStartupDebt ?? 0)) {
+        auditEntries.push({
+          event_type: 'startup_debt_edit',
+          entity_type: 'location',
+          entity_id: updated.id,
+          entity_name: updated.name,
+          actor_id: actorId ?? 'unknown',
+          old_value: editingLoc.remainingStartupDebt ?? 0,
+          new_value: updated.remainingStartupDebt ?? 0,
+        });
+      }
+      if (auditEntries.length > 0) logFinanceAuditBatch(auditEntries);
+
       setEditingLoc(null);
       showToast(lang === 'zh' ? '点位已保存' : 'Location saved', 'success');
     } catch (error) {
