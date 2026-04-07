@@ -11,6 +11,8 @@ const QUICK_PROMPTS = [
   '哪些机器需要关注？',
   '本周营业额趋势如何？',
   '有哪些待处理事项？',
+  '哪些机器无法删除？为什么？',
+  '机器债务明细',
 ];
 
 function AlertCard({ alert }: { alert: AdminAIAlert }) {

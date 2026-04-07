@@ -1,5 +1,4 @@
-import OpenAI from 'openai';
-import { readEnv } from './_lib/readEnv.js';
+import { createAIClient, getVisionModel } from './_lib/aiClient.js';
 
 const stripJsonFence = (value: string) =>
   value
@@ -14,8 +13,8 @@ export default {
       return new Response('Method Not Allowed', { status: 405 });
     }
 
-    const apiKey = readEnv('OPENAI_API_KEY', 'VITE_OPENAI_API_KEY');
-    if (!apiKey) {
+    const aiConfig = createAIClient();
+    if (!aiConfig) {
       return new Response(null, { status: 204 });
     }
 
@@ -31,9 +30,10 @@ export default {
     }
 
     try {
-      const client = new OpenAI({ apiKey });
+      const { client } = aiConfig;
+      const visionModel = getVisionModel(aiConfig);
       const response = await client.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: visionModel,
         temperature: 0.1,
         response_format: { type: 'json_object' },
         messages: [

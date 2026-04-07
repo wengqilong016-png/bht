@@ -1,5 +1,4 @@
-import OpenAI from 'openai';
-import { readEnv } from './_lib/readEnv.js';
+import { createAIClient } from './_lib/aiClient.js';
 
 const LANG_NAMES: Record<string, string> = {
   zh: 'Simplified Chinese',
@@ -13,8 +12,8 @@ export default {
       return new Response('Method Not Allowed', { status: 405 });
     }
 
-    const apiKey = readEnv('OPENAI_API_KEY', 'VITE_OPENAI_API_KEY');
-    if (!apiKey) {
+    const aiConfig = createAIClient();
+    if (!aiConfig) {
       return new Response(null, { status: 204 });
     }
 
@@ -34,9 +33,9 @@ export default {
     const targetName = LANG_NAMES[target] ?? target;
 
     try {
-      const client = new OpenAI({ apiKey });
+      const { client, model } = aiConfig;
       const response = await client.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model,
         temperature: 0.1,
         messages: [
           {

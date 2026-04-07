@@ -213,7 +213,8 @@ export type FinanceAuditEventType =
   | 'driver_debt_change'
   | 'commission_rate_change'
   | 'startup_debt_edit'
-  | 'floating_coins_change';
+  | 'floating_coins_change'
+  | 'force_clear_blockers';
 
 export interface FinanceAuditLog {
   id: string;

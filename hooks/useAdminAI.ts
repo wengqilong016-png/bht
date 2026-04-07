@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import type { Location, Driver, Transaction, DailySettlement } from '../types';
 import { getTodayLocalDate } from '../utils/dateUtils';
 import type { AdminAIMessage, SystemSnapshot } from '../api/admin-ai';
+import { getLocationDeletionDiagnostics } from '../utils/locationWorkflow';
 
 export type { AdminAIMessage };
 
@@ -106,6 +107,33 @@ function buildSnapshot(
         : `近7天营业额 TZS ${r7.toLocaleString()}，比前7天 ↓${Math.abs(pct)}%`;
   }
 
+  // Blocked machines (cannot be deleted)
+  const pendingResetRequests = transactions.filter(
+    (t) => t.type === 'reset_request' && t.approvalStatus === 'pending',
+  );
+  const pendingPayoutRequests = transactions.filter(
+    (t) => t.type === 'payout_request' && t.approvalStatus === 'pending',
+  );
+  const blockedMachines = locations
+    .map((loc) => {
+      const diag = getLocationDeletionDiagnostics({
+        location: loc,
+        transactions,
+        pendingResetRequests,
+        pendingPayoutRequests,
+        isAdminOverride: true,
+      });
+      if (diag.blockers.length === 0) return null;
+      return {
+        name: loc.name,
+        machineId: loc.machineId || '—',
+        blockers: diag.blockers,
+        debt: loc.remainingStartupDebt ?? 0,
+        dividendBalance: loc.dividendBalance ?? 0,
+      };
+    })
+    .filter(Boolean) as NonNullable<SystemSnapshot['blockedMachines']>;
+
   return {
     today,
     totalLocations: locations.length,
@@ -124,6 +152,7 @@ function buildSnapshot(
     topAnomalies,
     pendingApprovals,
     recentTrend,
+    blockedMachines,
   };
 }
 
@@ -237,8 +266,15 @@ export function useAdminAI(
         });
 
         const data = (await res.json()) as { reply?: string; error?: string };
-        const reply = data.reply ?? data.error ?? '（无响应）';
-        setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
+        if (data.error) {
+          setMessages((prev) => [
+            ...prev,
+            { role: 'assistant', content: `⚠️ AI 服务暂不可用：${data.error}` },
+          ]);
+        } else {
+          const reply = data.reply ?? '（无响应）';
+          setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
+        }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : '网络错误';
         setMessages((prev) => [

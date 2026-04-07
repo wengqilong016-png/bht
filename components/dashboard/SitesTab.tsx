@@ -245,6 +245,64 @@ const SitesTab: React.FC<SitesTabProps> = ({
     }
   };
 
+  const handleForceClearBlockers = async (locId: string) => {
+    if (!isOnline) {
+      showToast(lang === 'zh' ? '离线状态无法执行此操作' : 'Cannot clear while offline', 'warning');
+      return;
+    }
+    const loc = managedLocations.find((l) => l.id === locId);
+    if (!loc) return;
+
+    const diagnostics = deletionDiagnosticsById.get(locId);
+    if (!diagnostics || diagnostics.blockers.length === 0) return;
+
+    const ok = await confirm({
+      title: lang === 'zh' ? '强制清除删除阻塞' : 'Force Clear Blockers',
+      message: lang === 'zh'
+        ? `将对机器「${loc.name}」执行以下操作：\n• 启动债务清零\n• 解除重置锁定\n\n注意：分红余额不会被清零，需通过结算流程处理。\n此操作不可撤销，请确认。`
+        : `This will clear startup debt and reset lock for "${loc.name}".\nNote: Dividend balance must be settled through payout flow.\nThis cannot be undone.`,
+      confirmLabel: lang === 'zh' ? '确认清除' : 'Clear',
+      cancelLabel: lang === 'zh' ? '取消' : 'Cancel',
+      destructive: true,
+    });
+    if (!ok) return;
+
+    try {
+      const cleared: Location = {
+        ...loc,
+        remainingStartupDebt: 0,
+        resetLocked: false,
+        isSynced: false,
+      };
+      await onUpdateLocations(locations.map((l) => (l.id === locId ? cleared : l)));
+
+      // Audit trail
+      await logFinanceAuditBatch([{
+        event_type: 'force_clear_blockers',
+        entity_type: 'location',
+        entity_id: locId,
+        entity_name: loc.name,
+        actor_id: actorId ?? 'admin',
+        old_value: loc.remainingStartupDebt,
+        new_value: 0,
+        payload: {
+          action: 'force_clear_blockers',
+          cleared: {
+            remainingStartupDebt: loc.remainingStartupDebt,
+            dividendBalance: loc.dividendBalance,
+            resetLocked: loc.resetLocked,
+          },
+        },
+      }]);
+
+      showToast(lang === 'zh' ? '阻塞项已清除，现在可以删除该机器' : 'Blockers cleared, machine can now be deleted', 'success');
+    } catch (error) {
+      console.error('Failed to clear blockers:', error);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      showToast(`清除失败：${message}`, 'error');
+    }
+  };
+
   return (
     <>
       <div className="space-y-3 animate-in fade-in">
@@ -359,13 +417,24 @@ const SitesTab: React.FC<SitesTabProps> = ({
               {/* Footer: delete button */}
               <div className="px-4 pb-4">
                 {deleteBlocked ? (
-                  <button
-                    disabled
-                    title={deletionDiagnostics?.blockers.join(' | ')}
-                    className="w-full bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 text-center cursor-not-allowed opacity-80"
-                  >
-                    <p className="text-caption font-bold text-rose-400">{lang === 'zh' ? '⚠️ 无法删除：' : '⚠️ Blocked: '}{deletionDiagnostics?.blockers[0]}</p>
-                  </button>
+                  <div className="space-y-1.5">
+                    <button
+                      disabled
+                      title={deletionDiagnostics?.blockers.join(' | ')}
+                      className="w-full bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 text-center cursor-not-allowed"
+                    >
+                      <p className="text-caption font-bold text-rose-400">{lang === 'zh' ? '⚠️ 无法删除：' : '⚠️ Blocked: '}{deletionDiagnostics?.blockers[0]}</p>
+                      {(deletionDiagnostics?.blockers.length ?? 0) > 1 && (
+                        <p className="text-caption text-rose-300 mt-0.5">+{(deletionDiagnostics?.blockers.length ?? 1) - 1} {lang === 'zh' ? '个阻塞项' : 'more'}</p>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => void handleForceClearBlockers(loc.id)}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 text-caption font-bold transition-colors"
+                    >
+                      🔓 {lang === 'zh' ? '强制清除阻塞（清零债务/余额/锁定）' : 'Force Clear Blockers'}
+                    </button>
+                  </div>
                 ) : (
                   <button
                     onClick={() => void handleDeleteLocation(loc.id)}

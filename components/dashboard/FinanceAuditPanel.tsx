@@ -13,6 +13,7 @@ const EVENT_LABEL: Record<FinanceAuditEventType, { zh: string; sw: string }> = {
   commission_rate_change:{ zh: '调整佣金比例', sw: 'Commission Rate Change' },
   startup_debt_edit:     { zh: '编辑铺底债务', sw: 'Startup Debt Edit' },
   floating_coins_change: { zh: '调整流动硬币', sw: 'Floating Coins Change' },
+  force_clear_blockers:  { zh: '强制清除阻塞', sw: 'Force Clear Blockers' },
 };
 
 function formatValue(eventType: FinanceAuditEventType, val: number | null): string {
