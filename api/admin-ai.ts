@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { readEnv } from './_lib/readEnv';
+import { readEnv } from './_lib/readEnv.js';
 
 export interface AdminAIMessage {
   role: 'user' | 'assistant';
