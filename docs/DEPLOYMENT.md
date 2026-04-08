@@ -27,15 +27,17 @@ Only browser-safe frontend variables should be prefixed with `VITE_`. Any secret
 |---|---|---|
 | `VITE_SUPABASE_URL` | Your Supabase project URL (e.g. `https://xxxx.supabase.co`) | Yes |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anonymous/public key | Yes |
+| `OPENAI_API_KEY` | Server-side OpenAI API key used by `/api/admin-ai` and `/api/scan-meter` | Optional |
 | `GEMINI_API_KEY` | Server-side Gemini API key used by `/api/scan-meter` | Yes, if AI scan is enabled |
 | `GOOGLE_TRANSLATE_API_KEY` | Server-side Google Translate API key used by `/api/translate` | Optional |
 | `STATUS_API_BASE` | Server-side base URL for an external status API | Optional |
 | `INTERNAL_API_KEY` | Server-side key sent as `X-API-KEY` to the status API | Optional |
+| `VITE_DISABLE_AUTH` | Local/test-only auth bypass flag; production builds ignore `true` and stay authenticated | Optional |
 | `VITE_VERCEL_ANALYTICS_ENABLED` | Set `true` only when Vercel Web Analytics is enabled for this deployment | Optional |
 
 > **Note on Supabase credentials:** `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are required for the app to connect to Supabase. If they are not set, the client is initialized with empty strings and logs a console error: `[Bahati] VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set. Copy .env.example to .env.local and fill in your Supabase project credentials.` There are no built-in fallback credentials — the app will not connect to Supabase until valid values are configured.
 
-> **Security note:** The Supabase service role key (`SUPABASE_KEY`) grants admin-level database access and **must never be placed in frontend code or any `VITE_` variable**. Keep it only in server-side/backend environments.
+> **Security note:** The Supabase service role key (`SUPABASE_KEY`) and all AI keys (`OPENAI_API_KEY`, `GEMINI_API_KEY`) must never be placed in frontend code or any `VITE_` variable. Keep them only in server-side/backend environments.
 
 ## Vercel Setup
 
@@ -60,6 +62,8 @@ cp .env.example .env.local
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
 VITE_VERCEL_ANALYTICS_ENABLED=false
+VITE_DISABLE_AUTH=false
+OPENAI_API_KEY=your_openai_api_key_here
 GEMINI_API_KEY=your_gemini_api_key_here
 GOOGLE_TRANSLATE_API_KEY=your_google_translate_api_key_here
 STATUS_API_BASE=http://localhost:5000
@@ -196,7 +200,7 @@ stages 1 through 11A.  Run each step in order.
 - [ ] Confirm all required migrations are present in `supabase/migrations/`
       (see table below).
 - [ ] Confirm `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and
-      `GEMINI_API_KEY` are set in the deployment platform (Vercel /
+      `OPENAI_API_KEY` and/or `GEMINI_API_KEY` are set in the deployment platform (Vercel /
       Firebase).
 - [ ] Check [status.supabase.com](https://status.supabase.com) — no active
       incidents.

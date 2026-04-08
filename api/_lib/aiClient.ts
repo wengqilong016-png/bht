@@ -13,11 +13,11 @@ export interface AIClientConfig {
 
 /**
  * Create an OpenAI-compatible client from available API keys.
- * Priority: OPENAI_API_KEY → GEMINI_API_KEY
- * Gemini uses Google's OpenAI-compatible endpoint.
+ * Priority: OPENAI_API_KEY → GEMINI_API_KEY.
+ * Both values must remain server-side only; do not expose them via VITE_ vars.
  */
 export function createAIClient(): AIClientConfig | null {
-  const openaiKey = readEnv('OPENAI_API_KEY', 'VITE_OPENAI_API_KEY');
+  const openaiKey = readEnv('OPENAI_API_KEY');
   if (openaiKey) {
     return {
       client: new OpenAI({ apiKey: openaiKey }),
@@ -26,7 +26,7 @@ export function createAIClient(): AIClientConfig | null {
     };
   }
 
-  const geminiKey = readEnv('GEMINI_API_KEY', 'VITE_GEMINI_API_KEY');
+  const geminiKey = readEnv('GEMINI_API_KEY');
   if (geminiKey) {
     return {
       client: new OpenAI({

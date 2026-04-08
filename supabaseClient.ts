@@ -1,10 +1,11 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import FRONTEND_ENV from './env';
 
 // Supabase credentials MUST be provided via environment variables.
 // See .env.example for the required variables and docs/SECURITY_OPERATIONS.md
 // for how to configure them in each deployment target (Vercel, GitHub Actions, local).
-const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const envUrl = FRONTEND_ENV.supabaseUrl;
+const envKey = FRONTEND_ENV.supabaseAnonKey;
 
 if (!envUrl || !envKey) {
   console.error(

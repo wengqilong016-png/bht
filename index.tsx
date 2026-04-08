@@ -5,11 +5,12 @@ import { Analytics } from '@vercel/analytics/react';
 import * as Sentry from '@sentry/react';
 import './styles.css';
 import App from './App';
+import FRONTEND_ENV from './env';
 
-if (import.meta.env.VITE_SENTRY_DSN) {
+if (FRONTEND_ENV.sentryDsn) {
   Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN as string,
-    environment: import.meta.env.MODE,
+    dsn: FRONTEND_ENV.sentryDsn,
+    environment: FRONTEND_ENV.mode,
     integrations: [Sentry.browserTracingIntegration()],
     tracesSampleRate: 0.2,
     replaysOnErrorSampleRate: 1.0,
@@ -26,16 +27,14 @@ const queryClient = new QueryClient({
   },
 });
 
-const enableVercelAnalytics =
-  import.meta.env.PROD &&
-  import.meta.env.VITE_VERCEL_ANALYTICS_ENABLED === 'true';
+const enableVercelAnalytics = FRONTEND_ENV.vercelAnalyticsEnabled;
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
-const Root = import.meta.env.DEV ? React.StrictMode : React.Fragment;
+const Root = FRONTEND_ENV.isDev ? React.StrictMode : React.Fragment;
 
 ReactDOM.createRoot(rootElement).render(
   <Root>

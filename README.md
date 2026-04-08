@@ -132,14 +132,15 @@ Copy `.env.example` to `.env.local` and fill in the values:
 |----------|----------|---------|
 | `VITE_SUPABASE_URL` | ✅ | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | ✅ | Supabase `anon` public key |
+| `OPENAI_API_KEY` | Recommended | Server-side OpenAI key used by Vercel API routes such as `api/admin-ai` and `api/scan-meter` |
 | `GEMINI_API_KEY` | Recommended | Server-side Gemini key used by Vercel API routes such as `api/scan-meter` |
 | `GOOGLE_TRANSLATE_API_KEY` | Recommended | Server-side Google Translate key used by `api/translate` |
 | `STATUS_API_BASE` | Optional | Server-side status proxy base URL (currently unused) |
 | `INTERNAL_API_KEY` | Optional | Server-side internal key for the status proxy (currently unused) |
-| `VITE_DISABLE_AUTH` | Optional | Set `true` to bypass Supabase Auth (local/offline dev only) |
+| `VITE_DISABLE_AUTH` | Optional | Local/test-only auth bypass flag; production builds ignore `true` and stay authenticated |
 | `VITE_VERCEL_ANALYTICS_ENABLED` | Optional | Set `true` only when Vercel Web Analytics is enabled for this project |
 
-> Only `VITE_*` variables are exposed to the browser bundle. Do **not** store secrets such as API keys in `VITE_*` variables.
+> Only `VITE_*` variables are exposed to the browser bundle. Do **not** store secrets such as AI keys, service-role keys, or internal API keys in `VITE_*` variables.
 ---
 
 ## Run locally
