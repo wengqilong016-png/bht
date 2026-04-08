@@ -69,9 +69,6 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
   setLang,
   handleLogout,
 }) => {
-  // Start realtime subscriptions only now that a session exists.
-  useRealtimeSubscription(userRole ?? undefined);
-
   const { showToast } = useToast();
   const t = TRANSLATIONS[lang];
   const handleMutationError = useCallback(
@@ -95,6 +92,10 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
     dailySettlements: cloudDailySettlements,
     aiLogs,
   } = useSupabaseData(userRole, activeDriverId);
+
+  // Start realtime subscriptions only now that a session exists.
+  // Pass isOnline so the hook can re-authenticate the realtime JWT on reconnect.
+  useRealtimeSubscription(userRole ?? undefined, isOnline);
 
   const locations = cloudLocations;
   const drivers = cloudDrivers;

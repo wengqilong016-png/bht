@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 
-export type RealtimeTable = 'transactions' | 'drivers' | 'daily_settlements';
+export type RealtimeTable = 'transactions' | 'drivers' | 'daily_settlements' | 'locations';
 
 export const REALTIME_INVALIDATE_DEBOUNCE_MS = 250;
 
@@ -8,6 +8,7 @@ const TABLE_TO_QUERY_KEY: Record<RealtimeTable, readonly [string]> = {
   transactions: ['transactions'],
   drivers: ['drivers'],
   daily_settlements: ['dailySettlements'],
+  locations: ['locations'],
 };
 
 /**

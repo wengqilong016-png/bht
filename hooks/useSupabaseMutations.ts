@@ -84,12 +84,19 @@ export function useSupabaseMutations(
       // This is a simplified approach. In a fully offline-first app,
       // you would use a robust sync engine (e.g., WatermelonDB or rxdb).
       // Here we trigger refetches to let React Query pull the latest truth.
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['transactions'] }),
-        queryClient.invalidateQueries({ queryKey: ['dailySettlements'] }),
-        queryClient.invalidateQueries({ queryKey: ['locations'] }),
-        queryClient.invalidateQueries({ queryKey: ['drivers'] }),
-        queryClient.invalidateQueries({ queryKey: ['aiLogs'] }),
+      // Use refetchQueries (not invalidateQueries) so stale data is replaced
+      // immediately rather than waiting for the next consumer render.
+      // Wrap in a race with a 20-second ceiling so the mutation doesn't hang
+      // indefinitely on weak networks.
+      await Promise.race([
+        Promise.all([
+          queryClient.refetchQueries({ queryKey: ['transactions'] }),
+          queryClient.refetchQueries({ queryKey: ['dailySettlements'] }),
+          queryClient.refetchQueries({ queryKey: ['locations'] }),
+          queryClient.refetchQueries({ queryKey: ['drivers'] }),
+          queryClient.refetchQueries({ queryKey: ['aiLogs'] }),
+        ]),
+        new Promise((resolve) => setTimeout(resolve, 20_000)),
       ]);
     }
   });
@@ -102,9 +109,10 @@ export function useSupabaseMutations(
       return { previousDrivers };
     },
     mutationFn: async (updatedDrivers: Driver[]) => {
-      if (isOnline) {
-        await upsertDrivers(updatedDrivers.map(d => stripClientFields(d as unknown as Record<string, unknown>) as Partial<Driver>));
+      if (!isOnline) {
+        throw new Error('当前处于离线状态，无法修改司机信息。请连接网络后重试。/ Offline — cannot update drivers. Please reconnect and try again.');
       }
+      await upsertDrivers(updatedDrivers.map(d => stripClientFields(d as unknown as Record<string, unknown>) as Partial<Driver>));
     },
     onError: (error, _variables, context) => {
       if (context?.previousDrivers !== undefined) {
@@ -125,9 +133,10 @@ export function useSupabaseMutations(
       return { previousLocations };
     },
     mutationFn: async (updatedLocations: Location[]) => {
-      if (isOnline) {
-        await upsertLocations(updatedLocations.map(l => stripClientFields(l as unknown as Record<string, unknown>) as Partial<Location>));
+      if (!isOnline) {
+        throw new Error('当前处于离线状态，无法注册或修改机器。请连接网络后重试。/ Offline — cannot register or update machines. Please reconnect and try again.');
       }
+      await upsertLocations(updatedLocations.map(l => stripClientFields(l as unknown as Record<string, unknown>) as Partial<Location>));
     },
     onError: (error, _variables, context) => {
       if (context?.previousLocations !== undefined) {

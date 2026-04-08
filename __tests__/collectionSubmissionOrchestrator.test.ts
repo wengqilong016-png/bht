@@ -296,12 +296,12 @@ describe('buildCollectionSubmissionInput() — normalizeReportedStatus branches'
 // ── orchestrateCollectionSubmission — IDB enqueue error paths ─────────────────
 
 describe('orchestrateCollectionSubmission() — IDB enqueue failure', () => {
-  it('continues and returns offline result even when enqueueTransaction rejects (online→fallback path)', async () => {
+  it('throws a user-visible error when enqueueTransaction rejects (online→fallback path)', async () => {
     const offlineTransaction = makeTransaction({ id: 'tx-idb-fail', isSynced: false });
     const logger = { warn: jest.fn() };
     const enqueueTransaction = jest.fn<() => Promise<unknown>>().mockRejectedValue(new Error('IDB full'));
 
-    const result = await orchestrateCollectionSubmission(
+    await expect(orchestrateCollectionSubmission(
       makeInput({ isOnline: true }),
       {
         submitCollectionV2: jest.fn<() => Promise<{ success: false; error: string }>>().mockResolvedValue(
@@ -311,22 +311,20 @@ describe('orchestrateCollectionSubmission() — IDB enqueue failure', () => {
         enqueueTransaction,
         logger,
       } as any,
-    );
+    )).rejects.toThrow('采集数据暂存失败');
 
-    expect(result.source).toBe('offline');
-    expect(result.transaction).toBe(offlineTransaction);
     expect(logger.warn).toHaveBeenCalledWith(
       expect.stringContaining('IDB enqueue failed'),
       expect.any(Error),
     );
   });
 
-  it('continues and returns offline result even when enqueueTransaction rejects (pure offline path)', async () => {
+  it('throws a user-visible error when enqueueTransaction rejects (pure offline path)', async () => {
     const offlineTransaction = makeTransaction({ id: 'tx-idb-fail-offline', isSynced: false });
     const logger = { warn: jest.fn() };
     const enqueueTransaction = jest.fn<() => Promise<unknown>>().mockRejectedValue(new Error('IDB quota'));
 
-    const result = await orchestrateCollectionSubmission(
+    await expect(orchestrateCollectionSubmission(
       makeInput({ isOnline: false }),
       {
         submitCollectionV2: jest.fn(),
@@ -334,10 +332,8 @@ describe('orchestrateCollectionSubmission() — IDB enqueue failure', () => {
         enqueueTransaction,
         logger,
       } as any,
-    );
+    )).rejects.toThrow('采集数据暂存失败');
 
-    expect(result.source).toBe('offline');
-    expect(result.transaction).toBe(offlineTransaction);
     expect(logger.warn).toHaveBeenCalledWith(
       expect.stringContaining('IDB enqueue failed'),
       expect.any(Error),

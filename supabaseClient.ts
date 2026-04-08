@@ -34,7 +34,7 @@ export const checkDbHealth = async (): Promise<boolean> => {
     // doesn't log a 401 on every connectivity poll.
     const res = await fetch(`${SUPABASE_URL}/auth/v1/health`, {
       headers: { apikey: SUPABASE_ANON_KEY },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(10_000),
       cache: 'no-store',
     });
     return res.ok;

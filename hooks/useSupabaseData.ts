@@ -85,7 +85,7 @@ export function useSupabaseData(
     queryFn: async () => {
       if (isOnline && isAuthenticated) {
         try {
-          const signal = AbortSignal.timeout(8000);
+          const signal = AbortSignal.timeout(12_000);
           const data = await fetchLocations(signal);
           await localDB.set(CONSTANTS.STORAGE_LOCATIONS_KEY, data);
           return data;
@@ -103,7 +103,7 @@ export function useSupabaseData(
     queryFn: async () => {
       if (isOnline && isAuthenticated) {
         try {
-          const signal = AbortSignal.timeout(8000);
+          const signal = AbortSignal.timeout(12_000);
           const data = await fetchDrivers(signal);
           const sanitized = sanitizeDrivers(data);
           await localDB.set(CONSTANTS.STORAGE_DRIVERS_KEY, sanitized);
@@ -127,7 +127,7 @@ export function useSupabaseData(
             isDriver,
             driverIdFilter: transactionScope.driverIdFilter,
             limit: transactionScope.txLimit,
-            signal: AbortSignal.timeout(8000),
+            signal: AbortSignal.timeout(12_000),
           });
           const mapped = data.map(t => ({ ...t, isSynced: true })) as Transaction[];
           await localDB.set(transactionStorageKey, mapped);
@@ -155,7 +155,7 @@ export function useSupabaseData(
           const data = await fetchSettlements({
             driverIdFilter: settlementScope.driverIdFilter,
             limit: settlementScope.settlementLimit,
-            signal: AbortSignal.timeout(8000),
+            signal: AbortSignal.timeout(12_000),
           });
           const mapped = data.map(s => ({ ...s, isSynced: true })) as DailySettlement[];
           await localDB.set(settlementStorageKey, mapped);
@@ -180,7 +180,7 @@ export function useSupabaseData(
     queryFn: async () => {
       if (isOnline && isAuthenticated) {
         try {
-          const data = await fetchAiLogs(AbortSignal.timeout(8000));
+          const data = await fetchAiLogs(AbortSignal.timeout(12_000));
           const mapped = data.map(l => ({ ...l, isSynced: true })) as AILog[];
           await localDB.set(CONSTANTS.STORAGE_AI_LOGS_KEY, mapped);
           return mapped;
@@ -201,12 +201,16 @@ export function useSupabaseData(
 
   useEffect(() => {
     if (!isOnline || !isAuthenticated) return;
-    queryClient.invalidateQueries({ queryKey: ['locations'] });
-    queryClient.invalidateQueries({ queryKey: ['drivers'] });
-    queryClient.invalidateQueries({ queryKey: ['transactions'] });
-    queryClient.invalidateQueries({ queryKey: ['dailySettlements'] });
+    // Force an immediate refetch (not just cache invalidation) so stale local
+    // data is replaced as soon as connectivity is restored.  invalidateQueries
+    // only marks entries stale and waits for the next consumer render, which can
+    // leave the UI showing old data for seconds after reconnect.
+    void queryClient.refetchQueries({ queryKey: ['locations'] });
+    void queryClient.refetchQueries({ queryKey: ['drivers'] });
+    void queryClient.refetchQueries({ queryKey: ['transactions'] });
+    void queryClient.refetchQueries({ queryKey: ['dailySettlements'] });
     if (!isDriverRef.current) {
-      queryClient.invalidateQueries({ queryKey: ['aiLogs', userRoleRef.current ?? 'none'] });
+      void queryClient.refetchQueries({ queryKey: ['aiLogs', userRoleRef.current ?? 'none'] });
     }
   }, [isOnline, isAuthenticated, queryClient]);
 

@@ -42,10 +42,11 @@ const DRIVER_CHANNELS = [
   { topic: 'db:transactions',      table: 'transactions'      },
 ] as const;
 
-export function useRealtimeSubscription(userRole?: 'admin' | 'driver') {
+export function useRealtimeSubscription(userRole?: 'admin' | 'driver', isOnline?: boolean) {
   const queryClient = useQueryClient();
   const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>('disconnected');
 
+  // Main subscription setup — depends on userRole to pick channels.
   useEffect(() => {
     if (!supabase) return;
     // Do not subscribe until the user's role is known.  Subscribing before the
@@ -98,6 +99,16 @@ export function useRealtimeSubscription(userRole?: 'admin' | 'driver') {
       channels.forEach((ch) => supabase.removeChannel(ch));
     };
   }, [queryClient, userRole]);
+
+  // Re-authenticate realtime when connectivity is restored.  The JWT may have
+  // expired during the offline period; refreshing the auth session first ensures
+  // the SDK's built-in reconnect uses a valid token instead of silently failing.
+  useEffect(() => {
+    if (!supabase || !userRole || !isOnline) return;
+    supabase.auth.getSession().then(() => {
+      supabase.realtime.setAuth();
+    }).catch(() => {});
+  }, [isOnline, userRole]);
 
   return { realtimeStatus };
 }

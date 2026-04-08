@@ -279,6 +279,9 @@ export async function orchestrateCollectionSubmission(
       });
     } catch (error) {
       deps.logger.warn('[collectionSubmissionOrchestrator] IDB enqueue failed:', error);
+      throw new Error(
+        `采集数据暂存失败，请截图并联系管理员。/ Collection could not be saved locally. ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     return {
@@ -336,6 +339,9 @@ export async function orchestrateCollectionSubmission(
     });
   } catch (error) {
     deps.logger.warn('[collectionSubmissionOrchestrator] IDB enqueue failed:', error);
+    throw new Error(
+      `采集数据暂存失败，请截图并联系管理员。/ Collection could not be saved locally. ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 
   return {
