@@ -10,6 +10,7 @@ export default defineConfig({
     base: './',
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version),
+      __UPDATE_MANIFEST_URL__: JSON.stringify(process.env.VITE_UPDATE_MANIFEST_URL || ''),
     },
     server: {
       port: 3000,

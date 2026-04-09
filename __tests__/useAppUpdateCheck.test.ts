@@ -33,7 +33,9 @@ describe('useAppUpdateCheck', () => {
     const { result } = renderHook(() => useAppUpdateCheck());
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/version.json', expect.objectContaining({
+      const [url, init] = mockFetch.mock.calls[0] ?? [];
+      expect(String(url)).toContain('/version.json');
+      expect(init).toEqual(expect.objectContaining({
         cache: 'no-store',
       }));
     });

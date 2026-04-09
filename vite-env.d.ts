@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 declare const __APP_VERSION__: string;
+declare const __UPDATE_MANIFEST_URL__: string;
 
 interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL: string

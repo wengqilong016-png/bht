@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 
 export interface VersionInfo {
   version: string;
@@ -11,6 +12,18 @@ export interface UpdateStatus {
   latestVersion: string;
   apkUrl: string;
   releaseNotes: string;
+}
+
+function getUpdateManifestUrl(): string {
+  // In the Android APK we run at `https://localhost` and `/version.json` points to the bundled asset,
+  // which will always match the currently-installed version. For native builds we must read a remote
+  // manifest (served by Vercel) to detect updates.
+  if (Capacitor.isNativePlatform()) {
+    const configured =
+      typeof __UPDATE_MANIFEST_URL__ !== 'undefined' ? (__UPDATE_MANIFEST_URL__ || '') : '';
+    return configured || 'https://b-ht.vercel.app/version.json';
+  }
+  return '/version.json';
 }
 
 function compareVersions(a: string, b: string): number {
@@ -28,11 +41,13 @@ export function useAppUpdateCheck(): UpdateStatus | null {
 
   useEffect(() => {
     const currentVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
+    const manifestUrl = getUpdateManifestUrl();
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
 
-    fetch('/version.json', { signal: controller.signal, cache: 'no-store' })
+    // Add a cache-buster as extra protection against stale edge caches.
+    fetch(`${manifestUrl}?t=${Date.now()}`, { signal: controller.signal, cache: 'no-store' })
       .then(r => r.json() as Promise<VersionInfo>)
       .then(data => {
         clearTimeout(timeout);

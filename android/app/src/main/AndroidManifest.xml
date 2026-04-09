@@ -38,6 +38,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Required on Android 8+ to request installs from within the app (still user-confirmed). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     
     <!-- Location: Fine + Coarse for GPS collection & driver heartbeat tracking -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />

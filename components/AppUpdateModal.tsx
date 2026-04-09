@@ -1,23 +1,51 @@
 import { Download, X, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 
 import { useAppUpdateCheck } from '../hooks/useAppUpdateCheck';
+import { ApkUpdate } from '../services/apkUpdate';
+import { useToast } from '../contexts/ToastContext';
 
 interface Props {
   lang: 'zh' | 'sw';
 }
 
 const AppUpdateModal: React.FC<Props> = ({ lang }) => {
+  const { showToast } = useToast();
   const update = useAppUpdateCheck();
   const [dismissed, setDismissed] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const currentVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '—';
 
   if (!update?.hasUpdate || dismissed) return null;
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     setDownloading(true);
-    window.open(update.apkUrl, '_blank');
-    setTimeout(() => setDownloading(false), 3000);
+    try {
+      if (Capacitor.getPlatform() === 'android') {
+        await ApkUpdate.downloadAndInstall({ url: update.apkUrl });
+      } else {
+        window.open(update.apkUrl, '_blank');
+      }
+    } catch (err) {
+      const anyErr = err as any;
+      const msg = err instanceof Error ? err.message : String(anyErr?.message ?? err);
+      if (anyErr?.code === 'INSTALL_PERMISSION_REQUIRED') {
+        showToast(
+          lang === 'zh'
+            ? '请先允许“安装未知应用”，然后再点击更新。'
+            : 'Please allow "Install unknown apps" for this app, then try again.',
+          'error',
+        );
+        try {
+          await ApkUpdate.openUnknownSourcesSettings();
+        } catch {}
+      } else {
+        showToast(lang === 'zh' ? `更新失败：${msg}` : `Update failed: ${msg}`, 'error');
+      }
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -40,6 +68,9 @@ const AppUpdateModal: React.FC<Props> = ({ lang }) => {
                 {lang === 'zh' ? '发现新版本' : 'Update Available'}
               </p>
               <p className="text-lg font-black text-white">v{update.latestVersion}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                {lang === 'zh' ? '当前版本' : 'Current'} v{currentVersion}
+              </p>
             </div>
           </div>
           {update.releaseNotes && (
