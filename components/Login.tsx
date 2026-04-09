@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { User, Lock, ArrowRight, AlertCircle, Loader2, Languages, Crown } from 'lucide-react';
 import { User as UserType, TRANSLATIONS } from '../types';
-import { checkDbHealth, supabase } from '../supabaseClient';
+import { checkDbHealth, envVarsMissing, supabase } from '../supabaseClient';
 import { fetchCurrentUserProfile, signInWithEmailPassword, signOutCurrentUser } from '../services/authService';
+import EnvMissingErrorPage from './EnvMissingErrorPage';
 
 interface LoginProps {
   onLogin: (user: UserType) => void;
@@ -52,6 +53,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
       .then(isOnline => setDbStatus(isOnline ? 'online' : 'offline'))
       .catch(() => setDbStatus('offline'));
   }, []);
+
+  if (envVarsMissing) {
+    return <EnvMissingErrorPage lang={lang} />;
+  }
 
   const fetchUserProfile = async (authUserId: string, fallbackEmail?: string) => {
     const result = await fetchCurrentUserProfile(authUserId, fallbackEmail || '');

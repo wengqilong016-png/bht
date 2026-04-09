@@ -6,8 +6,9 @@ import FRONTEND_ENV from './env';
 // for how to configure them in each deployment target (Vercel, GitHub Actions, local).
 const envUrl = FRONTEND_ENV.supabaseUrl;
 const envKey = FRONTEND_ENV.supabaseAnonKey;
+export const envVarsMissing = !envUrl || !envKey;
 
-if (!envUrl || !envKey) {
+if (envVarsMissing) {
   console.error(
     '[Bahati] VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set. ' +
     'Copy .env.example to .env.local and fill in your Supabase project credentials.',
@@ -18,7 +19,7 @@ export const SUPABASE_URL: string = envUrl ?? '';
 export const SUPABASE_ANON_KEY: string = envKey ?? '';
 
 export const supabase: SupabaseClient | null =
-  envUrl && envKey
+  !envVarsMissing
     ? createClient(envUrl, envKey, {
         auth: {
           storageKey: 'bht-main-auth',
