@@ -43,7 +43,7 @@
     "exif-js": "^2.3.0",
     "idb-keyval": "^6.2.2",
     "leaflet": "^1.9.4",
-    "lucide-react": "^0.563.0",
+    "lucide-react": "^1.7.0",
     "openai": "^6.34.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
