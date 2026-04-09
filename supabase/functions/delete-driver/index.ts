@@ -3,7 +3,7 @@
 // Edge Function: POST /functions/v1/delete-driver
 //
 // Fully removes a driver account in three steps:
-//   1. Looks up the auth_user_id from public.drivers.
+//   1. Looks up the auth_user_id from public.profiles via driver_id.
 //   2. Deletes the Supabase Auth user.
 //   3. Deletes the public.drivers row.
 //
@@ -88,11 +88,11 @@ Deno.serve(async (req: Request) => {
     return errorJson('driver_id is required', 400, 'MISSING_DRIVER_ID');
   }
 
-  // ── 3. Look up auth_user_id from drivers ─────────────────────────────────
-  const { data: driverRow, error: driverLookupError } = await supabaseAdmin
-    .from('drivers')
+  // ── 3. Look up auth_user_id from profiles via driver_id ──────────────────
+  const { data: profileRow, error: driverLookupError } = await supabaseAdmin
+    .from('profiles')
     .select('auth_user_id')
-    .eq('id', driverId)
+    .eq('driver_id', driverId)
     .maybeSingle<{ auth_user_id: string | null }>();
 
   if (driverLookupError) {
@@ -100,9 +100,9 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── 4. Delete Supabase Auth user when linked ─────────────────────────────
-  if (driverRow?.auth_user_id) {
+  if (profileRow?.auth_user_id) {
     const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(
-      driverRow.auth_user_id,
+      profileRow.auth_user_id,
     );
     if (authDeleteError) {
       return errorJson(authDeleteError.message, 500, 'AUTH_DELETE_FAILED');

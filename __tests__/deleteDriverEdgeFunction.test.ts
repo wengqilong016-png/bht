@@ -1,20 +1,23 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 
 type MutationResult = { error: { message: string } | null };
-type DriverLookupResult = {
+type ProfileLookupResult = {
   data: { auth_user_id: string | null } | null;
   error: { message: string } | null;
 };
 type DeleteUserResult = { error: { message: string } | null };
 
 type DriversTableStub = {
-  select: () => {
-    eq: () => {
-      maybeSingle: () => Promise<DriverLookupResult>;
-    };
-  };
   delete: () => {
     eq: (column: string, value: string) => Promise<MutationResult>;
+  };
+};
+
+type ProfilesTableStub = {
+  select: () => {
+    eq: (column: string, value: string) => {
+      maybeSingle: () => Promise<ProfileLookupResult>;
+    };
   };
 };
 
@@ -36,11 +39,11 @@ type MutableEdgeGlobals = {
 
 const mockIsAdmin = jest.fn<() => Promise<string | null>>();
 const mockDeleteUser = jest.fn<(userId: string) => Promise<DeleteUserResult>>();
-const mockDriverMaybeSingle = jest.fn<() => Promise<DriverLookupResult>>();
+const mockProfileMaybeSingle = jest.fn<() => Promise<ProfileLookupResult>>();
 const mockTransactionUpdateEq = jest.fn<(column: string, value: string) => Promise<MutationResult>>();
 const mockSettlementUpdateEq = jest.fn<(column: string, value: string) => Promise<MutationResult>>();
 const mockDriverDeleteEq = jest.fn<(column: string, value: string) => Promise<MutationResult>>();
-const mockFrom = jest.fn<(table: string) => DriversTableStub | UpdateTableStub>();
+const mockFrom = jest.fn<(table: string) => DriversTableStub | ProfilesTableStub | UpdateTableStub>();
 const mockServe = jest.fn<(handler: (req: Request) => Promise<Response>) => void>();
 const originalResponse = globalThis.Response;
 
@@ -113,13 +116,18 @@ function makeRequest(body: Record<string, unknown>, method = 'POST') {
 }
 
 function makeSupabaseTableStub(table: string) {
-  if (table === 'drivers') {
+  if (table === 'profiles') {
     return {
       select: () => ({
-        eq: () => ({
-          maybeSingle: () => mockDriverMaybeSingle(),
+        eq: (_column: string, _value: string) => ({
+          maybeSingle: () => mockProfileMaybeSingle(),
         }),
       }),
+    };
+  }
+
+  if (table === 'drivers') {
+    return {
       delete: () => ({
         eq: (column: string, value: string) => mockDriverDeleteEq(column, value),
       }),
@@ -149,7 +157,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockIsAdmin.mockResolvedValue('admin-1');
   mockDeleteUser.mockResolvedValue({ error: null });
-  mockDriverMaybeSingle.mockResolvedValue({ data: { auth_user_id: 'auth-1' }, error: null });
+  mockProfileMaybeSingle.mockResolvedValue({ data: { auth_user_id: 'auth-1' }, error: null });
   mockTransactionUpdateEq.mockResolvedValue({ error: null });
   mockSettlementUpdateEq.mockResolvedValue({ error: null });
   mockDriverDeleteEq.mockResolvedValue({ error: null });
@@ -168,25 +176,25 @@ afterEach(() => {
 });
 
 describe('delete-driver edge function', () => {
-  it('looks up auth_user_id from drivers and never queries profiles', async () => {
+  it('looks up auth_user_id from profiles via driver_id before deleting auth', async () => {
     const handler = await loadDeleteDriverHandler();
 
     const response = await handler(makeRequest({ driver_id: 'drv-1' }));
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ success: true, driver_id: 'drv-1' });
+    expect(mockFrom).toHaveBeenCalledWith('profiles');
     expect(mockFrom).toHaveBeenCalledWith('drivers');
     expect(mockFrom).toHaveBeenCalledWith('transactions');
     expect(mockFrom).toHaveBeenCalledWith('daily_settlements');
-    expect(mockFrom.mock.calls.map(([table]) => table)).not.toContain('profiles');
     expect(mockDeleteUser).toHaveBeenCalledWith('auth-1');
     expect(mockTransactionUpdateEq).toHaveBeenCalledWith('driverId', 'drv-1');
     expect(mockSettlementUpdateEq).toHaveBeenCalledWith('driverId', 'drv-1');
     expect(mockDriverDeleteEq).toHaveBeenCalledWith('id', 'drv-1');
   });
 
-  it('skips auth deletion when the driver row has no linked auth user', async () => {
-    mockDriverMaybeSingle.mockResolvedValueOnce({ data: { auth_user_id: null }, error: null });
+  it('skips auth deletion when the profile row has no linked auth user', async () => {
+    mockProfileMaybeSingle.mockResolvedValueOnce({ data: { auth_user_id: null }, error: null });
     const handler = await loadDeleteDriverHandler();
 
     const response = await handler(makeRequest({ driver_id: 'drv-2' }));

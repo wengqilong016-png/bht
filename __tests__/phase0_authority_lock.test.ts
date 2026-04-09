@@ -53,6 +53,7 @@ describe('Phase 0 — no new .from() calls targeting deprecated tables', () => {
     'services/authService.ts':                  new Set(['profiles']),
     'supabase/functions/_shared/authz.ts':      new Set(['profiles']),
     'supabase/functions/create-driver/index.ts': new Set(['profiles']),
+    'supabase/functions/delete-driver/index.ts': new Set(['profiles']),
   };
 
   // Matches  .from('tableName')  or  .from("tableName")
