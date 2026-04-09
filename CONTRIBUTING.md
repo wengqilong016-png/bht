@@ -46,7 +46,7 @@ npm run test:e2e
 
 ## CI and merge protection
 
-The repository includes CI, CodeQL, and Dependabot config in version control. To fully enforce “all green before merge,” enable GitHub branch protection on `main`:
+The repository includes CI and Dependabot config in version control, and uses GitHub Code Scanning for CodeQL. To fully enforce “all green before merge,” enable GitHub branch protection on `main`:
 
 1. Open **Repository Settings → Branches**.
 2. Add or edit the protection rule for `main`.

@@ -175,7 +175,7 @@ Coverage enforcement now targets the repository's **core unit-testable code surf
 ## CI / merge gate
 
 - `.github/workflows/ci.yml` runs **typecheck, lint, security audit, coverage-tested Jest, Playwright E2E, and production build** on pushes and pull requests to `main`.
-- `.github/workflows/codeql.yml` runs GitHub CodeQL analysis for JavaScript/TypeScript.
+- GitHub Code Scanning default setup runs CodeQL analysis for JavaScript/TypeScript.
 - `.github/dependabot.yml` keeps npm and GitHub Actions dependencies up to date.
 
 To make these checks mandatory before merge, configure **Branch protection** for `main` in GitHub:
