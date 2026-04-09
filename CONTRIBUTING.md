@@ -55,6 +55,12 @@ The repository includes CI and Dependabot config in version control, and uses Gi
 5. Select the CI and CodeQL checks after they have run at least once.
 6. Optionally enable **Require branches to be up to date before merging**.
 
+## Maintenance automation
+
+- Dependabot is configured in `.github/dependabot.yml` for **npm** and **GitHub Actions** updates.
+- GitHub Code Scanning covers CodeQL analysis.
+- SonarCloud remains optional until the repository has a real SonarCloud organization, project key, and `SONAR_TOKEN` secret. Avoid adding a placeholder Sonar workflow that would fail on every push.
+
 ## PR checklist
 
 - Explain the user-visible or operational impact.

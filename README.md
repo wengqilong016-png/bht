@@ -177,6 +177,7 @@ Coverage enforcement now targets the repository's **core unit-testable code surf
 - `.github/workflows/ci.yml` runs **typecheck, lint, security audit, coverage-tested Jest, Playwright E2E, and production build** on pushes and pull requests to `main`.
 - GitHub Code Scanning default setup runs CodeQL analysis for JavaScript/TypeScript.
 - `.github/dependabot.yml` keeps npm and GitHub Actions dependencies up to date.
+- SonarCloud is an optional next-step for technical-debt tracking. Enable it only after provisioning a real SonarCloud organization, project key, and `SONAR_TOKEN` secret so CI does not gain a permanently failing placeholder workflow.
 
 To make these checks mandatory before merge, configure **Branch protection** for `main` in GitHub:
 
