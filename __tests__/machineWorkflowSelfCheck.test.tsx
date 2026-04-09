@@ -142,6 +142,9 @@ describe('machine workflow self-check', () => {
         }),
       ),
     );
+    // After successful submit, the form must show its built-in success screen
+    // (regression guard for the bug where the parent closed the form prematurely).
+    await waitFor(() => expect(screen.getByText('入网成功！')).toBeTruthy());
   });
 
   it('blocks deleting a machine with active workflow links, then allows delete once blockers are cleared', async () => {

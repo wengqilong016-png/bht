@@ -56,6 +56,7 @@ const ResetRequest: React.FC<ResetRequestProps> = ({
       setIsSubmitting(true);
       await onSubmit(tx);
       showToast(lang === 'zh' ? '重置申请已提交，等待老板审批' : 'Reset request submitted, awaiting approval', 'success');
+      setTimeout(onCancel, 1500);
     } catch (error) {
       console.error('Reset request submission failed', error);
       showToast(lang === 'zh' ? '重置申请提交失败，请重试' : 'Reset request submission failed, please retry', 'error');

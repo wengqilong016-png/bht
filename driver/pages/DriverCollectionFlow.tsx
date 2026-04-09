@@ -317,7 +317,9 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       <MachineRegistrationForm
         onSubmit={async (loc) => {
           await onRegisterMachine(loc);
-          setIsRegistering(false);
+          // Do NOT close the form here — let it render its built-in success screen.
+          // The user will close it via the "返回管理概览" / "Rudi Dashibodi" button,
+          // which calls onCancel below.
         }}
         onCancel={() => setIsRegistering(false)}
         currentDriver={currentDriver}
