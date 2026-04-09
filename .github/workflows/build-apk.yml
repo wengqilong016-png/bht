@@ -12,10 +12,13 @@ on:
           - debug
           - release
   push:
-    tags:
-      - 'v*'
     branches:
       - main
+
+# Only one Android build at a time; cancel older builds for the same ref.
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -28,6 +31,7 @@ jobs:
   build-apk:
     name: Build APK
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
 
@@ -46,10 +50,9 @@ jobs:
           echo "Resolved build type: ${BUILD_TYPE}"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: ./.github/actions/setup-node-deps
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -68,9 +71,6 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
-
-      - name: Install dependencies
-        run: npm ci
 
       - name: Build web assets
         run: npm run build
@@ -172,12 +172,8 @@ jobs:
           "$APKSIGNER_PATH" verify --print-certs "$APK_PATH"
         shell: bash
 
-      - name: Get version
-        id: version
-        run: echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
-
       - name: Bump patch version & update version.json (release builds only)
-        if: github.event.inputs.build_type == 'release' || startsWith(github.ref, 'refs/tags/')
+        if: github.event_name == 'workflow_dispatch' && steps.resolve_build_type.outputs.build_type == 'release'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -198,6 +194,10 @@ jobs:
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get version
+        id: version
+        run: echo "version=$(node -p 'require(\"./package.json\").version')" >> "$GITHUB_OUTPUT"
 
       - name: Rename APK
         run: |

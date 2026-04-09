@@ -17,6 +17,7 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout ref
@@ -24,14 +25,7 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
+      - uses: ./.github/actions/setup-node-deps
 
       - name: Type check
         run: npm run typecheck
