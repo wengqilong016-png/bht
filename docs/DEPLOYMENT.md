@@ -251,6 +251,13 @@ All schema objects are created by `supabase/schema.sql`. To verify they exist:
 - [ ] Confirm the app transitions into the authenticated shell instead of staying on the login form.
 - [ ] For driver accounts, confirm the driver workspace loads; for admin accounts, confirm the admin console loads.
 
+**Realtime cross-session consistency**
+- [ ] Open the same admin or driver view in two browser sessions.
+- [ ] In session A, create or update a transaction / driver / settlement record that should be visible in session B.
+- [ ] Confirm session B refreshes automatically without a manual reload.
+- [ ] Confirm the affected list/card updates once without obvious flicker or repeated loading-state flashes.
+- [ ] Confirm both sessions converge to the same final values after the realtime refresh settles.
+
 **Fleet-wide diagnostics (Stage 6)**
 - [ ] Open Admin → Fleet-Wide Diagnostics.
 - [ ] Confirm the active driver list is visible and no snapshots are stale.
