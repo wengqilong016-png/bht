@@ -238,6 +238,7 @@ To make these checks mandatory before merge, configure **Branch protection** for
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Environment variables, Vercel setup, Supabase migration deployment |
 | [`docs/RUNBOOK.md`](docs/RUNBOOK.md) | Operator & support procedures (daily ops, offline replay, fleet diagnostics) |
 | [`docs/MOBILE_BUILD_GUIDE.md`](docs/MOBILE_BUILD_GUIDE.md) | Android APK and iOS build steps via Capacitor |
+| [`docs/CODEX_PROMPT_TEMPLATES.md`](docs/CODEX_PROMPT_TEMPLATES.md) | Ready-to-use Codex prompt templates (BUG / FEATURE / CI / ANDROID) |
 | [`docs/SECURITY_OPERATIONS.md`](docs/SECURITY_OPERATIONS.md) | Credential rotation, secret management, RLS notes |
 | [`docs/DATA_MODEL_AUDIT.md`](docs/DATA_MODEL_AUDIT.md) | Database schema and table reference |
 | [`driver/README.md`](driver/README.md) | Driver sub-module architecture and performance notes |
