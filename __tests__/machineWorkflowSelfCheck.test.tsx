@@ -164,6 +164,7 @@ describe('machine workflow self-check', () => {
         allAreas={['Kariakoo']}
         siteSearch=""
         setSiteSearch={() => {}}
+        isAdmin={true}
         siteFilterArea="all"
         setSiteFilterArea={() => {}}
         driverMap={new Map([[driver.id, driver]])}
@@ -196,6 +197,7 @@ describe('machine workflow self-check', () => {
         allAreas={['Kariakoo']}
         siteSearch=""
         setSiteSearch={() => {}}
+        isAdmin={true}
         siteFilterArea="all"
         setSiteFilterArea={() => {}}
         driverMap={new Map([[driver.id, driver]])}
@@ -217,6 +219,9 @@ describe('machine workflow self-check', () => {
 
     fireEvent.click(enabledDeleteButton);
 
+    expect(await screen.findByText(/历史交易：1 条/)).toBeTruthy();
+    expect(screen.getByText(/系统会自动解除地点关联/)).toBeTruthy();
+
     const confirmButton = await screen.findByRole('button', { name: '确认删除' });
     fireEvent.click(confirmButton);
     await waitFor(() => expect(onDeleteLocations).toHaveBeenCalledWith(['loc-b1-clean']));
@@ -234,6 +239,7 @@ describe('machine workflow self-check', () => {
         allAreas={['Kariakoo']}
         siteSearch=""
         setSiteSearch={() => {}}
+        isAdmin={true}
         siteFilterArea="all"
         setSiteFilterArea={() => {}}
         driverMap={new Map([[driver.id, driver]])}
@@ -258,5 +264,42 @@ describe('machine workflow self-check', () => {
     await waitFor(() =>
       expect(screen.getByText(/删除失败，系统拒绝了本次操作/)).toBeTruthy(),
     );
+  });
+
+  it('rejects delete attempts from non-admin users', async () => {
+    const driver = makeDriver();
+    const location = makeLocation({ id: 'loc-non-admin' });
+    const onDeleteLocations = jest.fn<(ids: string[]) => Promise<void>>().mockResolvedValue(undefined);
+
+    render(
+      withProviders(
+      <SitesTab
+        managedLocations={[location]}
+        allAreas={['Kariakoo']}
+        siteSearch=""
+        setSiteSearch={() => {}}
+        isAdmin={false}
+        siteFilterArea="all"
+        setSiteFilterArea={() => {}}
+        driverMap={new Map([[driver.id, driver]])}
+        drivers={[driver]}
+        locations={[location]}
+        onUpdateLocations={async () => {}}
+        onDeleteLocations={onDeleteLocations}
+        transactions={[]}
+        pendingResetRequests={[]}
+        pendingPayoutRequests={[]}
+        isOnline={true}
+        lang="zh"
+      />
+      ),
+    );
+
+    fireEvent.click(screen.getByTitle('删除点位'));
+
+    await waitFor(() =>
+      expect(screen.getByText('只有管理员可以删除机器点位。')).toBeTruthy(),
+    );
+    expect(onDeleteLocations).not.toHaveBeenCalled();
   });
 });

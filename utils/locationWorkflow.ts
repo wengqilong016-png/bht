@@ -3,6 +3,14 @@ import type { Location, Transaction } from '../types/models';
 export interface LocationDeletionDiagnostics {
   blockers: string[];
   warnings: string[];
+  related: {
+    assignedDriverId?: string;
+    totalTransactions: number;
+    pendingApprovalTransactions: number;
+    unsettledCollections: number;
+    pendingResetRequests: number;
+    pendingPayoutRequests: number;
+  };
 }
 
 export function normalizeMachineId(value: string): string {
@@ -68,8 +76,19 @@ export function getLocationDeletionDiagnostics(params: {
   }
 
   if (locationTransactions.length > 0) {
-    warnings.push('删除后，历史交易记录仍会保留在报表中。');
+    warnings.push('删除后，历史交易记录仍会保留在报表中，并自动解除与该机器的关联。');
   }
 
-  return { blockers, warnings };
+  return {
+    blockers,
+    warnings,
+    related: {
+      assignedDriverId: location.assignedDriverId,
+      totalTransactions: locationTransactions.length,
+      pendingApprovalTransactions: pendingApprovalTransactions.length,
+      unsettledCollections: unsettledCollections.length,
+      pendingResetRequests: locationPendingResets.length,
+      pendingPayoutRequests: locationPendingPayouts.length,
+    },
+  };
 }

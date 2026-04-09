@@ -344,6 +344,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                   allAreas={allAreas}
                   siteSearch={siteSearch}
                   setSiteSearch={setSiteSearch}
+                  isAdmin={isAdmin}
           siteFilterArea={siteFilterArea}
           setSiteFilterArea={setSiteFilterArea}
           driverMap={driverMap}
