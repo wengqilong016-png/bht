@@ -1,10 +1,10 @@
+import { Capacitor } from '@capacitor/core';
 import { Download, X, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
-import { Capacitor } from '@capacitor/core';
 
+import { useToast } from '../contexts/ToastContext';
 import { useAppUpdateCheck } from '../hooks/useAppUpdateCheck';
 import { ApkUpdate } from '../services/apkUpdate';
-import { useToast } from '../contexts/ToastContext';
 
 interface Props {
   lang: 'zh' | 'sw';

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { useEffect, useState } from 'react';
 
 export interface VersionInfo {
   version: string;
