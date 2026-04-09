@@ -1,4 +1,5 @@
 import { createAIClient, getVisionModel } from './_lib/aiClient.js';
+import { SCAN_METER_ERROR_CODES } from '../types/scanMeter';
 
 const stripJsonFence = (value: string) =>
   value
@@ -7,26 +8,37 @@ const stripJsonFence = (value: string) =>
     .replace(/\s*```$/, '')
     .trim();
 
+const jsonError = (status: number, code: string, error: string) =>
+  Response.json(
+    { error, code },
+    {
+      status,
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    },
+  );
+
 export default {
   async fetch(request: Request) {
     if (request.method !== 'POST') {
-      return new Response('Method Not Allowed', { status: 405 });
+      return jsonError(405, SCAN_METER_ERROR_CODES.METHOD_NOT_ALLOWED, 'Method Not Allowed');
     }
 
     const aiConfig = createAIClient();
     if (!aiConfig) {
-      return new Response(null, { status: 204 });
+      return jsonError(503, SCAN_METER_ERROR_CODES.AI_NOT_CONFIGURED, 'AI scan service is not configured');
     }
 
     let body: { imageBase64?: string };
     try {
       body = await request.json();
     } catch {
-      return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+      return jsonError(400, SCAN_METER_ERROR_CODES.INVALID_JSON_BODY, 'Invalid JSON body');
     }
 
     if (!body.imageBase64) {
-      return Response.json({ error: 'Missing imageBase64' }, { status: 400 });
+      return jsonError(400, SCAN_METER_ERROR_CODES.MISSING_IMAGE_BASE64, 'Missing imageBase64');
     }
 
     try {
@@ -55,10 +67,16 @@ export default {
 
       const rawText = response.choices[0]?.message?.content?.trim();
       if (!rawText) {
-        return Response.json({ error: 'Empty AI response' }, { status: 502 });
+        return jsonError(502, SCAN_METER_ERROR_CODES.EMPTY_AI_RESPONSE, 'Empty AI response');
       }
 
-      const parsed = JSON.parse(stripJsonFence(rawText));
+      let parsed: { score?: unknown; condition?: unknown; notes?: unknown };
+      try {
+        parsed = JSON.parse(stripJsonFence(rawText));
+      } catch {
+        return jsonError(502, SCAN_METER_ERROR_CODES.INVALID_AI_RESPONSE, 'Invalid AI JSON response');
+      }
+
       return Response.json(
         {
           score: typeof parsed.score === 'string' ? parsed.score.replace(/\D/g, '') : '',
@@ -73,7 +91,7 @@ export default {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown AI error';
-      return Response.json({ error: message }, { status: 502 });
+      return jsonError(502, SCAN_METER_ERROR_CODES.AI_UPSTREAM_ERROR, message);
     }
   },
 };

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Calculator, CheckCircle2, Banknote, ThumbsUp, AlertTriangle, ShieldAlert, RefreshCw, Wallet, ChevronDown, ChevronUp, ScanEye, Loader2 } from 'lucide-react';
 import { Transaction, Driver, Location, DailySettlement, User as UserType, TRANSLATIONS } from '../../types';
+import { getScanMeterErrorMessage, scanMeterFromBase64 } from '../../services/scanMeterService';
 import { getOptimizedImageUrl } from '../../utils/imageUtils';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -94,31 +95,31 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
         reader.onerror = reject;
         reader.readAsDataURL(blob);
       });
-      const apiResp = await fetch('/api/scan-meter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64 }),
-      });
-      if (!apiResp.ok || apiResp.status === 204) {
-        setScanResults(prev => new Map(prev).set(tx.id, { status: 'error', notes: 'API unavailable' }));
+
+      const result = await scanMeterFromBase64(base64);
+      if (result.success) {
+        const detectedScore = result.data.score ?? '';
+        const submittedScore = String(tx.currentScore ?? '');
+        const diff = Math.abs(parseInt(detectedScore || '0') - parseInt(submittedScore || '0'));
+        const status = detectedScore === '' || result.data.condition === 'Unclear'
+          ? 'unclear'
+          : diff <= 5 ? 'matched' : 'mismatch';
+        setScanResults(prev => new Map(prev).set(tx.id, { status, detectedScore, notes: result.data.notes }));
         return;
       }
-      const data: { score?: string; condition?: string; notes?: string; error?: string } = await apiResp.json();
-      if (data.error) {
-        setScanResults(prev => new Map(prev).set(tx.id, { status: 'error', notes: data.error }));
-        return;
-      }
-      const detectedScore = data.score ?? '';
-      const submittedScore = String(tx.currentScore ?? '');
-      const diff = Math.abs(parseInt(detectedScore || '0') - parseInt(submittedScore || '0'));
-      const status = detectedScore === '' || data.condition === 'Unclear'
-        ? 'unclear'
-        : diff <= 5 ? 'matched' : 'mismatch';
-      setScanResults(prev => new Map(prev).set(tx.id, { status, detectedScore, notes: data.notes }));
+
+      const failure = result as Extract<Awaited<ReturnType<typeof scanMeterFromBase64>>, { success: false }>;
+      setScanResults(prev => new Map(prev).set(tx.id, {
+        status: 'error',
+        notes: getScanMeterErrorMessage(failure.code, lang),
+      }));
     } catch {
-      setScanResults(prev => new Map(prev).set(tx.id, { status: 'error', notes: 'Fetch error' }));
+      setScanResults(prev => new Map(prev).set(tx.id, {
+        status: 'error',
+        notes: getScanMeterErrorMessage('NETWORK_ERROR', lang),
+      }));
     }
-  }, [scanResults]);
+  }, [lang, scanResults]);
 
   // Auto-trigger scan for anomaly transactions with photos when admin views
   useEffect(() => {
@@ -411,6 +412,11 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                                   {scan.status === 'unclear' && (lang === 'zh' ? 'AI 无法识别图像' : 'AI could not read image')}
                                   {scan.status === 'error' && (lang === 'zh' ? 'AI 扫描不可用' : 'AI scan unavailable')}
                                 </div>
+                              )}
+                              {scan?.notes && (
+                                <p className="text-caption font-bold text-slate-500 leading-relaxed">
+                                  {scan.notes}
+                                </p>
                               )}
                               {tx.photoUrl && (
                                 showThumbnail
