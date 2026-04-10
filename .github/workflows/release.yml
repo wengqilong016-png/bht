@@ -1,9 +1,8 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v[0-9]*.[0-9]*.[0-9]*'
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -168,8 +167,8 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           VERSION_CODE="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
           GIT_SHA="${{ github.sha }}"
-          TAG="${{ github.ref_name }}"
-          RELEASED_AT="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+          TAG="${{ github.event.release.tag_name }}"
+          RELEASED_AT="${{ github.event.release.published_at }}"
           APK_URL="https://github.com/${REPO}/releases/download/${TAG}/bahati-latest-release.apk"
           node -e "
             const fs = require('fs');
@@ -190,16 +189,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload APK to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-          files: android/app/build/outputs/apk/bahati-*.apk
-          fail_on_unmatched_files: true
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            android/app/build/outputs/apk/bahati-*.apk \
+            --clobber
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
