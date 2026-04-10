@@ -97,9 +97,9 @@ DO $$
 BEGIN
     IF to_regclass('public.queue_health_reports') IS NOT NULL THEN
         EXECUTE 'ALTER TABLE public.queue_health_reports ADD COLUMN IF NOT EXISTS sync_state TEXT';
-        EXECUTE $$UPDATE public.queue_health_reports SET sync_state = 'idle' WHERE sync_state IS NULL$$;
-        EXECUTE $$ALTER TABLE public.queue_health_reports ALTER COLUMN sync_state SET DEFAULT 'idle'$$;
-        EXECUTE $$ALTER TABLE public.queue_health_reports ALTER COLUMN sync_state SET NOT NULL$$;
+        EXECUTE 'UPDATE public.queue_health_reports SET sync_state = ''idle'' WHERE sync_state IS NULL';
+        EXECUTE 'ALTER TABLE public.queue_health_reports ALTER COLUMN sync_state SET DEFAULT ''idle''';
+        EXECUTE 'ALTER TABLE public.queue_health_reports ALTER COLUMN sync_state SET NOT NULL';
     END IF;
 END;
 $$;
