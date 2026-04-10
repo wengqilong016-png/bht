@@ -9,6 +9,7 @@ import { Driver, Location, Transaction, TRANSLATIONS } from '../types';
 import { MapErrorBoundary, MapLoadingFallback } from './MapErrorBoundary';
 
 const RouteAuditMap = lazy(() => import('./RouteAuditMap'));
+const DEFAULT_CENTER: [number, number] = [-6.7924, 39.2083];
 
 // Use plain SVG strings to avoid react-dom/server renderToString at module level
 const truckSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg>`;
@@ -56,7 +57,6 @@ const LiveMap: React.FC<LiveMapProps> = ({ drivers, locations, transactions, lan
   const [auditDate, setAuditDate] = useState(new Date().toISOString().split('T')[0]);
   const t = TRANSLATIONS[lang];
 
-  const defaultCenter: [number, number] = [-6.7924, 39.2083];
   const activeDrivers = useMemo(() => drivers.filter(d => d.currentGps), [drivers]);
   const mappedLocations = useMemo(() => locations.filter(l => l.coords), [locations]);
   const isUsingDefaultCenter = activeDrivers.length === 0;
@@ -82,7 +82,7 @@ const LiveMap: React.FC<LiveMapProps> = ({ drivers, locations, transactions, lan
   }, [transactions, activeDrivers]);
 
   const dynamicCenter = useMemo((): [number, number] => {
-    if (activeDrivers.length === 0) return defaultCenter;
+    if (activeDrivers.length === 0) return DEFAULT_CENTER;
     const avgLat = activeDrivers.reduce((sum, d) => sum + (d.currentGps?.lat || 0), 0) / activeDrivers.length;
     const avgLng = activeDrivers.reduce((sum, d) => sum + (d.currentGps?.lng || 0), 0) / activeDrivers.length;
     return [avgLat, avgLng];

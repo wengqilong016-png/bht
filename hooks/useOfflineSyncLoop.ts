@@ -64,10 +64,12 @@ export function useOfflineSyncLoop({
   activeDriverId,
   syncOfflineData,
 }: UseOfflineSyncLoopOptions) {
+  const { mutate: triggerSync, isPending } = syncOfflineData;
+
   // Mirror isPending in a ref so interval callbacks always see the current value
   // without needing it in their dependency arrays.
-  const isSyncingRef = useRef(syncOfflineData.isPending);
-  isSyncingRef.current = syncOfflineData.isPending;
+  const isSyncingRef = useRef(isPending);
+  isSyncingRef.current = isPending;
 
   // Track whether the previous render was offline to detect the transition.
   const prevOnlineRef = useRef(isOnline);
@@ -111,9 +113,9 @@ export function useOfflineSyncLoop({
     // isSyncingRef is intentionally omitted from deps – it is a ref whose
     // .current is always up-to-date and never needs to trigger a re-run.
     if (isOnline && wasOffline && hasPendingWork && !isSyncingRef.current) {
-      syncOfflineData.mutate();
+      triggerSync();
     }
-  }, [isOnline, hasPendingWork, syncOfflineData.mutate]);
+  }, [isOnline, hasPendingWork, triggerSync]);
 
   // ─── Auto-sync: retry every 60 s while online with pending records ────────
   useEffect(() => {
@@ -124,18 +126,18 @@ export function useOfflineSyncLoop({
     // is no stale-closure risk.
     const id = setInterval(() => {
       if (!isSyncingRef.current) {
-        syncOfflineData.mutate();
+        triggerSync();
       }
     }, AUTO_SYNC_INTERVAL_MS);
 
     return () => clearInterval(id);
-  }, [isOnline, hasPendingWork, syncOfflineData.mutate]);
+  }, [isOnline, hasPendingWork, triggerSync]);
 
   // ─── Service Worker offline queue flush ──────────────────────────────────
   useEffect(() => {
     const handleSwMessage = (event: MessageEvent) => {
       if (event.data?.type === 'FLUSH_OFFLINE_QUEUE') {
-        syncOfflineData.mutate();
+        triggerSync();
       }
     };
 
@@ -152,7 +154,7 @@ export function useOfflineSyncLoop({
     }
 
     return () => navigator.serviceWorker?.removeEventListener('message', handleSwMessage);
-  }, [syncOfflineData.mutate]);
+  }, [triggerSync]);
 
   // ─── GPS heartbeat for driver users ──────────────────────────────────────
   useEffect(() => {

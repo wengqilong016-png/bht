@@ -120,7 +120,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         action: 'tracking' as const,
       },
     ];
-  }, [bossStats.stagnantMachines, dailySettlements, lang, locations, monthlyPayrolls, t, transactions, unsyncedCount]);
+  }, [bossStats.stagnantMachines, bossStats.riskyDrivers.length, dailySettlements, lang, locations, monthlyPayrolls, t, transactions, unsyncedCount]);
   const actionableItems = React.useMemo(
     () => todayActionItems.filter((item) => item.count > 0).sort((a, b) => b.severity - a.severity),
     [todayActionItems]
