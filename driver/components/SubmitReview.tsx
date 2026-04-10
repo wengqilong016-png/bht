@@ -45,7 +45,7 @@ interface SubmitReviewProps {
     remainingCoins: number;
     isCoinStockNegative: boolean;
   };
-  onSubmit: (tx: Transaction) => void;
+  onSubmit: (result: CompletionResult) => void;
   onBack: () => void;
   onSwitchMachine?: () => void;
   onReset: () => void;
@@ -58,7 +58,7 @@ interface SubmitReviewProps {
   todayStr: string;
 }
 
-type CompletionResult = {
+export type CompletionResult = {
   source: 'server' | 'offline';
   transaction: Transaction;
 };
@@ -109,8 +109,9 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   useEffect(() => {
     if (submissionState.status === 'success') {
       const { source, transaction } = submissionState;
-      onSubmit(transaction);
-      setCompletionResult({ source, transaction });
+      const completion = { source, transaction };
+      onSubmit(completion);
+      setCompletionResult(completion);
       if (source === 'server') {
         showToast(lang === 'zh' ? '已提交到云端' : 'Imetumwa kwenye seva', 'success');
       } else {
@@ -137,7 +138,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       : (lang === 'zh' ? '待同步' : 'Pending sync');
 
     return (
-      <div className="max-w-md mx-auto py-3 px-3 pb-24 animate-in fade-in space-y-3">
+      <div data-testid="driver-submit-complete" className="max-w-md mx-auto py-3 px-3 pb-24 animate-in fade-in space-y-3">
         <div className="rounded-[28px] border border-emerald-200 bg-gradient-to-b from-emerald-50 to-white px-4 py-5 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-md shadow-emerald-200">
@@ -176,6 +177,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         <button
           type="button"
           onClick={handleReturnHome}
+          data-testid="driver-return-home"
           className="w-full rounded-2xl bg-amber-600 px-4 py-4 text-sm font-black uppercase text-white shadow-lg shadow-amber-200/40 transition-all active:scale-95"
         >
           {returnLabel}
@@ -446,6 +448,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           <button
             onClick={handleSubmit}
             disabled={isProcessing || !currentScore || isScoreBelowLastReading}
+            data-testid="driver-submit-button"
             className="py-4 bg-amber-600 text-white rounded-2xl font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-200/40"
           >
             {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}

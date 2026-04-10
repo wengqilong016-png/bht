@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface AppShellProps {
+interface AppShellProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
@@ -8,8 +8,8 @@ interface AppShellProps {
  * Root layout container for both admin and driver shells.
  * Provides the flex h-screen base structure.
  */
-const AppShell: React.FC<AppShellProps> = ({ children }) => (
-  <div className="flex h-screen overflow-hidden bg-slate-100">
+const AppShell: React.FC<AppShellProps> = ({ children, className, ...rest }) => (
+  <div className={['flex h-screen overflow-hidden bg-slate-100', className].filter(Boolean).join(' ')} {...rest}>
     {children}
   </div>
 );

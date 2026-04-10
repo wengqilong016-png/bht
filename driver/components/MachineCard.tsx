@@ -88,6 +88,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
       <button
         onClick={() => { if (!isLocked) onSelect(loc.id); }}
         disabled={isLocked}
+        data-testid={`driver-machine-select-${loc.id}`}
         className={`w-full text-left transition-colors ${isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:bg-slate-50 active:bg-slate-100'}`}
       >
         <div className="flex items-center gap-3 px-4 py-3">

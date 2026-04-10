@@ -126,7 +126,7 @@ describe('driver submission completion', () => {
     fireEvent.click(screen.getByRole('button', { name: '返回收款首页' }));
     expect(onReturnHome).toHaveBeenCalledTimes(1);
     expect(onReset).not.toHaveBeenCalled();
-    expect(onSubmit).toHaveBeenCalledWith(baseTransaction);
+    expect(onSubmit).toHaveBeenCalledWith({ source: 'server', transaction: baseTransaction });
   });
 
   it('shows offline completion state when submission falls back locally', async () => {

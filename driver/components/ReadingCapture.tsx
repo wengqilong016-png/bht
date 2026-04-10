@@ -112,6 +112,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
             type="number"
             value={currentScore}
             onChange={e => onUpdateScore(e.target.value)}
+            data-testid="driver-current-score-input"
             className="w-1/2 text-[30px] font-black bg-transparent outline-none text-slate-900 placeholder:text-slate-200"
             placeholder="0000"
             inputMode="numeric"
@@ -119,6 +120,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
           />
           <button
             onClick={handlePickPhoto}
+            data-testid="driver-photo-picker-button"
             className={`flex-1 py-3 rounded-2xl border flex items-center justify-center gap-2 transition-all active:scale-95 ${photoData ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-900 border-slate-900 text-white'}`}
           >
             {photoData ? <CheckCircle2 size={16} /> : <Camera size={16} />}
@@ -132,6 +134,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
             accept="image/*"
             capture="environment"
             className="hidden"
+            data-testid="driver-photo-input"
             onChange={handlePhotoSelected}
           />
         </div>
@@ -252,6 +255,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
         <button
           onClick={onNext}
           disabled={!currentScore || isScoreBelowLastReading}
+          data-testid="driver-capture-next"
           className="w-full py-4 bg-amber-600 text-white rounded-2xl font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-3 shadow-lg shadow-amber-200/40"
         >
           <ChevronRight size={18} />

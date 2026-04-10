@@ -338,6 +338,7 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
           <button
             onClick={onNext}
             disabled={isScoreBelowLastReading}
+            data-testid="driver-finance-next"
             className="py-4 bg-amber-600 text-white rounded-btn font-black uppercase text-xs shadow-field-md active:scale-95 transition-all flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:cursor-not-allowed"
           >
             {lang === 'zh' ? '复核并提交' : 'Review & Submit'}

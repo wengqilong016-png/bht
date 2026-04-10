@@ -152,7 +152,7 @@ jest.mock('../driver/components/SubmitReview', () => ({
     onSubmit,
     onReturnHome,
   }: {
-    onSubmit: (tx: Transaction) => Promise<void>;
+    onSubmit: (result: { source: 'server' | 'offline'; transaction: Transaction }) => Promise<void>;
     onReturnHome?: () => void;
   }) {
     const React = require('react');
@@ -165,16 +165,19 @@ jest.mock('../driver/components/SubmitReview', () => ({
             type="button"
             onClick={async () => {
               await onSubmit({
-                id: 'tx-key-path',
-                timestamp: '2026-04-10T10:00:00.000Z',
-                locationId: 'loc-1',
-                locationName: 'Bahati Shop',
-                driverId: 'drv-1',
-                currentScore: 1200,
-                netPayable: 34000,
-                type: 'collection',
-                isSynced: true,
-              } as Transaction);
+                source: 'server',
+                transaction: {
+                  id: 'tx-key-path',
+                  timestamp: '2026-04-10T10:00:00.000Z',
+                  locationId: 'loc-1',
+                  locationName: 'Bahati Shop',
+                  driverId: 'drv-1',
+                  currentScore: 1200,
+                  netPayable: 34000,
+                  type: 'collection',
+                  isSynced: true,
+                } as Transaction,
+              });
               setDone(true);
             }}
           >

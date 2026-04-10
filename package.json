@@ -21,6 +21,7 @@
     "test:coverage:ci": "jest --coverage",
     "test:watch": "jest --watch --passWithNoTests",
     "test:e2e": "npx playwright test",
+    "test:e2e:local-supabase": "npx playwright test e2e/driver-collection-flow.local-supabase.spec.ts",
     "test:e2e:ui": "npx playwright test --ui",
     "cap:sync": "npx cap sync",
     "cap:sync:android": "npx cap sync android",

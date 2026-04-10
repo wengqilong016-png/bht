@@ -112,10 +112,81 @@ export function useOfflineSyncLoop({
 
     // isSyncingRef is intentionally omitted from deps – it is a ref whose
     // .current is always up-to-date and never needs to trigger a re-run.
-    if (isOnline && wasOffline && hasPendingWork && !isSyncingRef.current) {
-      triggerSync();
-    }
-  }, [isOnline, hasPendingWork, triggerSync]);
+    if (!isOnline || !wasOffline || isSyncingRef.current) return;
+
+    void (async () => {
+      try {
+        const { pending, retryWaiting } = await getQueueHealthSummary();
+        const freshPendingCount = pending + retryWaiting;
+        setIdbPendingCount(freshPendingCount);
+
+        if (unsyncedCount > 0 || freshPendingCount > 0) {
+          triggerSync();
+        }
+      } catch {
+        if (unsyncedCount > 0) {
+          triggerSync();
+        }
+      }
+    })();
+  }, [isOnline, triggerSync, unsyncedCount]);
+
+  // Browser-level recovery can arrive before the dbHealth query has propagated
+  // through React state. Listen to the native event as a direct recovery trigger
+  // so queued driver work is flushed promptly after connectivity returns.
+  useEffect(() => {
+    const handleOnline = () => {
+      window.setTimeout(() => {
+        if (isSyncingRef.current) return;
+        void (async () => {
+          try {
+            const { pending, retryWaiting } = await getQueueHealthSummary();
+            const freshPendingCount = pending + retryWaiting;
+            setIdbPendingCount(freshPendingCount);
+
+            if (unsyncedCount > 0 || freshPendingCount > 0) {
+              triggerSync();
+            }
+          } catch {
+            if (unsyncedCount > 0) {
+              triggerSync();
+            }
+          }
+        })();
+      }, 1000);
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [triggerSync, unsyncedCount]);
+
+  // Fallback for mobile browsers where the native online event or dbHealth
+  // state propagation can be missed. This only attempts sync when the browser
+  // reports online and IndexedDB confirms queued work exists.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (isSyncingRef.current) return;
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+
+      void (async () => {
+        try {
+          const { pending, retryWaiting } = await getQueueHealthSummary();
+          const freshPendingCount = pending + retryWaiting;
+          setIdbPendingCount(freshPendingCount);
+
+          if (unsyncedCount > 0 || freshPendingCount > 0) {
+            triggerSync();
+          }
+        } catch {
+          if (unsyncedCount > 0) {
+            triggerSync();
+          }
+        }
+      })();
+    }, 5_000);
+
+    return () => window.clearInterval(id);
+  }, [triggerSync, unsyncedCount]);
 
   // ─── Auto-sync: retry every 60 s while online with pending records ────────
   useEffect(() => {

@@ -54,8 +54,8 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     env: {
       VITE_DISABLE_AUTH: 'false',
-      VITE_SUPABASE_URL: 'http://localhost:54321',
-      VITE_SUPABASE_ANON_KEY: 'test-anon-key',
+      VITE_SUPABASE_URL: process.env.PW_SUPABASE_URL ?? 'http://localhost:54321',
+      VITE_SUPABASE_ANON_KEY: process.env.PW_SUPABASE_ANON_KEY ?? 'test-anon-key',
     },
   },
 });

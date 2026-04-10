@@ -52,7 +52,10 @@ export function useSupabaseMutations(
 
   const syncOfflineData = useMutation({
     mutationFn: async () => {
-      if (!isOnline || !supabase) return;
+      const browserOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
+      if ((!isOnline && !browserOnline) || !supabase) {
+        return;
+      }
 
       // Proactively refresh the Supabase session so a stale JWT does not cause
       // every queued item to fail with "Authentication required" (which was

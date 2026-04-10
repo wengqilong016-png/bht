@@ -73,12 +73,19 @@ export function useSupabaseData(
   });
 
   // Re-check connectivity immediately when the browser regains network access.
-  // navigator.onLine / window: online can be faster than the 15-second poll.
+  // navigator.onLine / window events can be faster than the 15-second poll.
   useEffect(() => {
+    const handleOffline = () => {
+      queryClient.setQueryData(['dbHealth'], false);
+    };
     const handleOnline = () => { void refetchHealth(); };
+    window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
-    return () => window.removeEventListener('online', handleOnline);
-  }, [refetchHealth]);
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [queryClient, refetchHealth]);
 
   // 2. Core Data: Locations & Drivers - Critical for first paint
   const { data: locations = [], isLoading: isLoadingLocs } = useQuery({

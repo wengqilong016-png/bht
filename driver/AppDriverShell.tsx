@@ -92,7 +92,7 @@ const AppDriverShell: React.FC = () => {
   };
 
   return (
-    <AppShell>
+    <AppShell data-testid="driver-app-shell">
       <ShellSidebar
         brandTitle="Bahati Ops"
         brandSubtitle={currentUser.name}

@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import MachineRegistrationForm from '../../components/MachineRegistrationForm';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,6 +24,8 @@ import { resolveCurrentDriver } from '../driverShellViewState';
 import { useCollectionDraft } from '../hooks/useCollectionDraft';
 import { useGpsCapture } from '../hooks/useGpsCapture';
 
+import type { CompletionResult } from '../components/SubmitReview';
+
 interface DriverCollectionFlowProps {
   onRegisterMachine?: (location: Location) => Promise<void>;
   registrationDoneLabel?: string;
@@ -39,8 +41,11 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
   const { filteredLocations, filteredTransactions, isOnline, drivers } = useAppData();
   const { logAI, submitTransaction, syncOfflineData, updateLocations } = useMutations();
   const queryClient = useQueryClient();
-  const transactionQueryKey = ['transactions', `driver:${activeDriverId}`] as const;
-  const transactionStorageKey = `${CONSTANTS.STORAGE_TRANSACTIONS_KEY}:driver:${activeDriverId}`;
+  const transactionQueryKey = useMemo(() => ['transactions', `driver:${activeDriverId}`] as const, [activeDriverId]);
+  const transactionStorageKey = useMemo(
+    () => `${CONSTANTS.STORAGE_TRANSACTIONS_KEY}:driver:${activeDriverId}`,
+    [activeDriverId],
+  );
 
   const locations = filteredLocations;
   const allTransactions = filteredTransactions;
@@ -48,7 +53,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
   const currentDriverId = currentDriver?.id ?? null;
 
   const onLogAI = (log: Parameters<typeof logAI.mutate>[0]) => logAI.mutate(log);
-  const onSubmit = async (tx: Transaction) => {
+  const onSubmit = useCallback(async ({ source, transaction: tx }: CompletionResult) => {
     if (tx.type === 'reset_request' || tx.type === 'payout_request') {
       if (tx.type === 'reset_request') {
         await submitTransaction.mutateAsync(tx);
@@ -89,7 +94,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     // Only persist lastScore to localStorage when online — the server is the
     // source of truth. When offline the transaction may fail on next sync, and
     // writing an incorrect lastScore here would corrupt the next finance calc.
-    if (isOnline) {
+    if (isOnline && source === 'server') {
       try {
         localStorage.setItem(
           CONSTANTS.STORAGE_LOCATIONS_KEY,
@@ -111,7 +116,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       console.warn('Failed to persist submitted transaction locally.', error);
     });
 
-    if (isOnline) {
+    if (isOnline && source === 'server') {
       try {
         const queueHealth = await getQueueHealthSummary();
         if (queueHealth.pending > 0 || queueHealth.retryWaiting > 0 || queueHealth.deadLetter > 0) {
@@ -121,7 +126,16 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         console.warn('Failed to inspect queue health after submission.', error);
       }
     }
-  };
+  }, [
+    allTransactions,
+    isOnline,
+    locations,
+    queryClient,
+    submitTransaction,
+    syncOfflineData,
+    transactionQueryKey,
+    transactionStorageKey,
+  ]);
 
   const [step, setStep] = useState<FlowStep>('selection');
   const { draft, updateDraft, resetDraft } = useCollectionDraft();
@@ -342,7 +356,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
           isOnline={isOnline}
           gpsCoords={draft.gpsCoords}
           onSubmit={async (tx) => {
-            await onSubmit(tx);
+            await onSubmit({ source: isOnline ? 'server' : 'offline', transaction: tx });
             setResetRequestLocId(null);
           }}
           onCancel={() => setResetRequestLocId(null)}
@@ -363,7 +377,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
           isOnline={isOnline}
           gpsCoords={draft.gpsCoords}
           onSubmit={async (tx) => {
-            await onSubmit(tx);
+            await onSubmit({ source: isOnline ? 'server' : 'offline', transaction: tx });
             setPayoutRequestLocId(null);
           }}
           onCancel={() => setPayoutRequestLocId(null)}
@@ -375,23 +389,25 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
   // Step 1: Machine Selection
   if (step === 'selection') {
     return (
-      <MachineSelector
-        locations={locations}
-        currentDriver={currentDriver}
-        allTransactions={allTransactions}
-        lang={lang}
-        isOnline={isOnline}
-        gpsCoords={draft.gpsCoords}
-        currentDraftLocation={selectedLocation ?? null}
-        hasDraftInProgress={hasDraftInProgress}
-        onSelectMachine={handleSelectMachine}
-        onResumeDraft={handleResumeDraft}
-        onStartRegister={() => setIsRegistering(true)}
-        onRequestReset={(locId) => { requestGps(); setResetRequestLocId(locId); }}
-        onRequestPayout={(locId) => { requestGps(); setPayoutRequestLocId(locId); }}
-        onRegisterMachine={onRegisterMachine}
-        onUpdateLocation={handleUpdateLocation}
-      />
+      <div data-testid="driver-flow-step-selection">
+        <MachineSelector
+          locations={locations}
+          currentDriver={currentDriver}
+          allTransactions={allTransactions}
+          lang={lang}
+          isOnline={isOnline}
+          gpsCoords={draft.gpsCoords}
+          currentDraftLocation={selectedLocation ?? null}
+          hasDraftInProgress={hasDraftInProgress}
+          onSelectMachine={handleSelectMachine}
+          onResumeDraft={handleResumeDraft}
+          onStartRegister={() => setIsRegistering(true)}
+          onRequestReset={(locId) => { requestGps(); setResetRequestLocId(locId); }}
+          onRequestPayout={(locId) => { requestGps(); setPayoutRequestLocId(locId); }}
+          onRegisterMachine={onRegisterMachine}
+          onUpdateLocation={handleUpdateLocation}
+        />
+      </div>
     );
   }
 
@@ -403,102 +419,108 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
   // Step 2: Reading Capture
   if (step === 'capture') {
     return (
-      <ReadingCapture
-        selectedLocation={selectedLocation}
-        currentDriver={currentDriver}
-        lang={lang}
-        currentScore={draft.currentScore}
-        photoData={draft.photoData}
-        aiReviewData={draft.aiReviewData}
-        gpsCoords={draft.gpsCoords}
-        gpsPermission={draft.gpsPermission}
-        draftTxId={draft.draftTxId}
-        onLogAI={onLogAI}
-        onUpdateScore={(score) => updateDraft({ currentScore: score })}
-        onUpdatePhoto={(photo) => updateDraft({ photoData: photo })}
-        onUpdateAiReview={(data) => updateDraft({ aiReviewData: data })}
-        onUpdateGps={(coords) => updateDraft({ gpsCoords: coords })}
-        onUpdateGpsPermission={(perm) => updateDraft({ gpsPermission: perm })}
-        onNext={() => setStep('amounts')}
-        onBack={handleBackToSelection}
-        onSwitchMachine={handleSwitchMachine}
-        nextMachine={nextQueuedMachine}
-        pendingCount={remainingPendingStops}
-        revenue={financeResult.revenue}
-        diff={financeResult.diff}
-      />
+      <div data-testid="driver-flow-step-capture">
+        <ReadingCapture
+          selectedLocation={selectedLocation}
+          currentDriver={currentDriver}
+          lang={lang}
+          currentScore={draft.currentScore}
+          photoData={draft.photoData}
+          aiReviewData={draft.aiReviewData}
+          gpsCoords={draft.gpsCoords}
+          gpsPermission={draft.gpsPermission}
+          draftTxId={draft.draftTxId}
+          onLogAI={onLogAI}
+          onUpdateScore={(score) => updateDraft({ currentScore: score })}
+          onUpdatePhoto={(photo) => updateDraft({ photoData: photo })}
+          onUpdateAiReview={(data) => updateDraft({ aiReviewData: data })}
+          onUpdateGps={(coords) => updateDraft({ gpsCoords: coords })}
+          onUpdateGpsPermission={(perm) => updateDraft({ gpsPermission: perm })}
+          onNext={() => setStep('amounts')}
+          onBack={handleBackToSelection}
+          onSwitchMachine={handleSwitchMachine}
+          nextMachine={nextQueuedMachine}
+          pendingCount={remainingPendingStops}
+          revenue={financeResult.revenue}
+          diff={financeResult.diff}
+        />
+      </div>
     );
   }
 
   // Step 3: Finance Summary
   if (step === 'amounts') {
     return (
-      <FinanceSummary
-        selectedLocation={selectedLocation}
-        lang={lang}
-        currentScore={draft.currentScore}
-        expenses={draft.expenses}
-        expenseCategory={draft.expenseCategory}
-        expenseDescription={draft.expenseDescription}
-        coinExchange={draft.coinExchange}
-        ownerRetention={draft.ownerRetention}
-        isOwnerRetaining={draft.isOwnerRetaining}
-        tip={draft.tip}
-        startupDebtDeduction={draft.startupDebtDeduction}
-        calculations={financeResult}
-        previewSource={financeResult.source}
-        onUpdateExpenses={(v) => updateDraft({ expenses: v })}
-        onUpdateExpenseCategory={(v) => updateDraft({ expenseCategory: v })}
-        onUpdateExpenseDescription={(v) => updateDraft({ expenseDescription: v })}
-        onUpdateCoinExchange={(v) => updateDraft({ coinExchange: v })}
-        onUpdateOwnerRetention={(v) => updateDraft({ ownerRetention: v })}
-        onUpdateIsOwnerRetaining={(v) => updateDraft({ isOwnerRetaining: v })}
-        onUpdateTip={(v) => updateDraft({ tip: v })}
-        onUpdateStartupDebtDeduction={(v) => updateDraft({ startupDebtDeduction: v })}
-        onNext={() => setStep('confirm')}
-        onBack={() => setStep('capture')}
-        onSwitchMachine={handleSwitchMachine}
-        nextMachine={nextQueuedMachine}
-        pendingCount={remainingPendingStops}
-      />
+      <div data-testid="driver-flow-step-amounts">
+        <FinanceSummary
+          selectedLocation={selectedLocation}
+          lang={lang}
+          currentScore={draft.currentScore}
+          expenses={draft.expenses}
+          expenseCategory={draft.expenseCategory}
+          expenseDescription={draft.expenseDescription}
+          coinExchange={draft.coinExchange}
+          ownerRetention={draft.ownerRetention}
+          isOwnerRetaining={draft.isOwnerRetaining}
+          tip={draft.tip}
+          startupDebtDeduction={draft.startupDebtDeduction}
+          calculations={financeResult}
+          previewSource={financeResult.source}
+          onUpdateExpenses={(v) => updateDraft({ expenses: v })}
+          onUpdateExpenseCategory={(v) => updateDraft({ expenseCategory: v })}
+          onUpdateExpenseDescription={(v) => updateDraft({ expenseDescription: v })}
+          onUpdateCoinExchange={(v) => updateDraft({ coinExchange: v })}
+          onUpdateOwnerRetention={(v) => updateDraft({ ownerRetention: v })}
+          onUpdateIsOwnerRetaining={(v) => updateDraft({ isOwnerRetaining: v })}
+          onUpdateTip={(v) => updateDraft({ tip: v })}
+          onUpdateStartupDebtDeduction={(v) => updateDraft({ startupDebtDeduction: v })}
+          onNext={() => setStep('confirm')}
+          onBack={() => setStep('capture')}
+          onSwitchMachine={handleSwitchMachine}
+          nextMachine={nextQueuedMachine}
+          pendingCount={remainingPendingStops}
+        />
+      </div>
     );
   }
 
   // Step 4: Submit Review
   return (
-    <SubmitReview
-      selectedLocation={selectedLocation}
-      currentDriver={currentDriver}
-      lang={lang}
-      isOnline={isOnline}
-      currentScore={draft.currentScore}
-      photoData={draft.photoData}
-      aiReviewData={draft.aiReviewData}
-      expenses={draft.expenses}
-      expenseType={draft.expenseType}
-      expenseCategory={draft.expenseCategory}
-      expenseDescription={draft.expenseDescription}
-      coinExchange={draft.coinExchange}
-      tip={draft.tip}
-      startupDebtDeduction={draft.startupDebtDeduction}
-      draftTxId={draft.draftTxId}
-      gpsCoords={draft.gpsCoords}
-      gpsPermission={draft.gpsPermission}
-      isOwnerRetaining={draft.isOwnerRetaining}
-      ownerRetention={draft.ownerRetention}
-      calculations={financeResult}
-      onSubmit={onSubmit}
-      onBack={() => setStep('amounts')}
-      onSwitchMachine={handleSwitchMachine}
-      onReset={handleFullReset}
-      onReturnHome={handleFullReset}
-      onUpdateGps={(coords) => updateDraft({ gpsCoords: coords })}
-      onUpdateGpsPermission={(perm) => updateDraft({ gpsPermission: perm })}
-      nextMachine={nextQueuedMachine}
-      pendingCount={remainingPendingStops}
-      allTransactions={allTransactions}
-      todayStr={todayStr}
-    />
+    <div data-testid="driver-flow-step-confirm">
+      <SubmitReview
+        selectedLocation={selectedLocation}
+        currentDriver={currentDriver}
+        lang={lang}
+        isOnline={isOnline}
+        currentScore={draft.currentScore}
+        photoData={draft.photoData}
+        aiReviewData={draft.aiReviewData}
+        expenses={draft.expenses}
+        expenseType={draft.expenseType}
+        expenseCategory={draft.expenseCategory}
+        expenseDescription={draft.expenseDescription}
+        coinExchange={draft.coinExchange}
+        tip={draft.tip}
+        startupDebtDeduction={draft.startupDebtDeduction}
+        draftTxId={draft.draftTxId}
+        gpsCoords={draft.gpsCoords}
+        gpsPermission={draft.gpsPermission}
+        isOwnerRetaining={draft.isOwnerRetaining}
+        ownerRetention={draft.ownerRetention}
+        calculations={financeResult}
+        onSubmit={onSubmit}
+        onBack={() => setStep('amounts')}
+        onSwitchMachine={handleSwitchMachine}
+        onReset={handleFullReset}
+        onReturnHome={handleFullReset}
+        onUpdateGps={(coords) => updateDraft({ gpsCoords: coords })}
+        onUpdateGpsPermission={(perm) => updateDraft({ gpsPermission: perm })}
+        nextMachine={nextQueuedMachine}
+        pendingCount={remainingPendingStops}
+        allTransactions={allTransactions}
+        todayStr={todayStr}
+      />
+    </div>
   );
 };
 

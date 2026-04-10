@@ -202,9 +202,13 @@ export async function getPendingTransactions(): Promise<Transaction[]> {
     const db = await openDB();
     return new Promise<Transaction[]>((resolve, reject) => {
       const store = db.transaction(STORE_TX, 'readonly').objectStore(STORE_TX);
-      const idx   = store.index('isSynced');
-      const req   = idx.getAll(IDBKeyRange.only(false));
-      req.onsuccess = () => { db.close(); resolve(req.result as Transaction[]); };
+      // IndexedDB keys cannot be booleans, so IDBKeyRange.only(false) throws
+      // DataError in Chromium. Read all rows and filter in memory instead.
+      const req = store.getAll();
+      req.onsuccess = () => {
+        db.close();
+        resolve((req.result as Transaction[]).filter((tx) => !tx.isSynced));
+      };
       req.onerror   = () => { db.close(); reject(req.error); };
     });
   } catch {
