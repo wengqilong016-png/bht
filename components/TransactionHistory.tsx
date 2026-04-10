@@ -194,7 +194,13 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
                     ) : tx.type === 'reset_request' ? (
                       <>
                         <p className="text-xs font-black text-slate-400 uppercase mb-0.5">重置申请</p>
-                        <p className="text-sm font-black text-amber-600">{t.pendingApproval}</p>
+                        <p className="text-sm font-black text-amber-600">
+                          {tx.approvalStatus === 'approved'
+                            ? (lang === 'zh' ? '已批准' : 'Imeidhinishwa')
+                            : tx.approvalStatus === 'rejected'
+                              ? (lang === 'zh' ? '已拒绝' : 'Imekataliwa')
+                              : t.pendingApproval}
+                        </p>
                       </>
                     ) : (
                       <>
