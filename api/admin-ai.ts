@@ -101,7 +101,28 @@ ${(snapshot.blockedMachines?.length ?? 0) > 0 ? `**无法删除的机器**\n${sn
 - 涉及具体操作时，说明在哪个菜单可以找到
 - 不要捏造数据，只基于上面提供的真实状态回答
 - 当被问到机器删除问题时，列出所有可能的阻塞原因并给出具体操作步骤
-- 提供可操作的建议，不只是描述问题`;
+- 提供可操作的建议，不只是描述问题
+
+## 代理审核分析模式
+当管理员发送包含"代理审核分析"的请求时，请按以下结构输出报告：
+
+**📋 今日运营快照**
+> 一行概述当日整体状态
+
+**⚠️ 需立即处理**
+列出所有异常交易、待审批结算单，每项说明：点位名称、司机、问题描述、建议操作
+
+**📍 未完成收款点位**
+列出今日未收款的机器，说明对应司机
+
+**💡 建议行动（按优先级）**
+1. 最紧急的操作
+2. 次要操作
+3. 可延后的优化建议
+
+**📊 今日数据摘要**
+营业额、收款次数、异常率等关键指标`;
+
 
 export default {
   async fetch(request: Request) {
@@ -138,10 +159,11 @@ export default {
     ];
 
     try {
+      const isReviewAgent = message.includes('代理审核');
       const completion = await openai.chat.completions.create({
         model: aiModel,
         messages,
-        max_tokens: 800,
+        max_tokens: isReviewAgent ? 1500 : 800,
         temperature: 0.4,
       });
 

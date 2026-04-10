@@ -23,6 +23,10 @@
 | Perf 1 | Perf | `driver/pages/DriverCollectionFlow.tsx` | Finance 预览 RPC 增加 400ms 防抖，避免每次按键触发服务端请求 |
 | Perf 2 | Perf | `components/dashboard/{OverviewTab,SettlementTab,SitesTab,TrackingTab}.tsx` | 添加 `React.memo` 防止管理端 Realtime 更新引起不相关标签页重渲染 |
 | Icon | Branding | `public/icons/`, `manifest.json` | 替换 Flaticon 外链图标为本地品牌 SVG/PNG（192+512 maskable）；manifest theme_color 改为品牌琥珀色 `#d97706` |
+| Contact Panel | Feature | `admin/components/AdminContactSummaryPanel.tsx` | 联系人汇总浮动面板：按司机分组展示店主电话、一键复制、导出 txt、内嵌 SMS 群发 UI |
+| AI Review | Feature | `admin/components/AdminAIAssistant.tsx`、`api/admin-ai.ts` | 新增"代理审核分析"快捷 prompt；系统 prompt 增加结构化审核报告模板；max_tokens 自动扩容至 1500 |
+| SMS API | Feature | `api/send-sms.ts` | Africa's Talking SMS Vercel Edge Function；支持批量发送、去重、错误上报 |
+| Env vars | Docs | `.env.example` | 新增 `AT_API_KEY`、`AT_USERNAME`、`AT_SENDER_ID` 注释说明 |
 
 ### 明确取消的功能
 
@@ -34,74 +38,44 @@
 
 ## 待实现功能（下个 Agent 接手）
 
-### 1. 管理端 AI 代理审核分析面板
+### 1. 电话回访自动化（Phase 4，优先级最低）
 
-**需求描述：** 在管理端新增一个"AI 代理审核"功能，允许管理员一键对当前区域（或指定司机/点位）进行智能汇总分析，并支持下一步行动。
-
-**建议实现方式：**
-
-```
-admin/components/AdminReviewAgent.tsx   ← 新组件（抽屉面板）
-api/admin-review-agent.ts               ← Vercel Edge Function（调用 Gemini/OpenAI）
-```
-
-核心功能：
-- **区域电话号码汇总**：从 `locations.shopOwnerPhone` / `drivers.phone` 提取，按区域/司机分组，一键复制
-- **AI 异常分析摘要**：基于当日 transactions + anomalies，生成自然语言摘要（已有 `useAdminAI` hook 可复用）
-- 将来可接 SMS 网关，但 **先实现无网关版本**（复制号码列表 + 手动发送）
-
-**入口位置：** 管理端 `SettlementTab` 右上角或 `OverviewTab` 的 Action Items 区域，增加"AI 代理审核"按钮
-
----
-
-### 2. SMS 群发 / 电话回访集成
-
-**现状：** 尚未实现，需要外部 API。
-
-**推荐网关（非洲市场）：**
-
-| 服务 | 优点 | 适合场景 |
-|------|------|---------|
-| [Africa's Talking](https://africastalking.com) | 覆盖坦桑尼亚，价格低 | SMS 群发 |
-| [Twilio](https://twilio.com) | API 成熟，文档好 | SMS + 语音回访 |
-| [Vonage](https://vonage.com) | 有中文支持 | 企业级 |
+**需求：** 语音外呼任务队列，结合 AI TTS 或人工跟进。
 
 **实现步骤（未开始）：**
-1. 在 `.env.local` / Vercel 环境变量中添加 `SMS_API_KEY`、`SMS_SENDER_ID`
-2. 创建 `api/send-sms.ts` Edge Function（Vercel）
-3. 在管理端 UI 中添加"批量发送"按钮，传入电话号码数组 + 消息模板
-4. 发送结果写入 `ai_logs` 表做审计
+1. Africa's Talking Voice API 或 Twilio Voice
+2. 新建 `api/initiate-call.ts` Vercel Edge Function
+3. 管理端"外呼任务"面板（可在 AdminContactSummaryPanel 中扩展）
+4. 外呼状态记录写入 `ai_logs`
 
-> ⚠️ **重要：** SMS 功能需要真实 API Key，本地开发无法测试。建议先在 Staging 环境配置。
-
----
-
-### 3. App 图标进一步优化（可选）
-
-**现状：** `public/icons/` 目录已有 SVG 源文件和生成的 PNG。
-当前图标是代码生成的槽机主题图案（深色背景 + 金色符号 + "Bahati"字样）。
-
-**如需进一步优化：**
-- 编辑 `public/icons/icon.svg`（源文件）
-- 重新用 cairosvg 生成：`python3 -c "import cairosvg; cairosvg.svg2png(url='public/icons/icon.svg', write_to='public/icons/icon-512.png', output_width=512, output_height=512)"`
-- iOS 图标需要额外的 `apple-touch-icon.png`（180×180），在 `index.html` 添加 `<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">`
+> 建议在 SMS 功能真实配置并投产后再推进此阶段。
 
 ---
 
-### 4. 地图稳定性
+### 2. 地图稳定性优化（中优先级）
 
-**现状：** 地图使用 **OpenStreetMap + Leaflet（免费，无需 API Key）**，不是 Google Maps。
-- `components/LiveMap.tsx` → `TileLayer` 使用 `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`
-- **不需要** Google Maps API Key
+**现状：** 地图使用 OpenStreetMap + Leaflet（免费，无需 Google API Key）。
+地图瓦片 URL：`https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`
 
-**已知问题：** 地图稳定性问题通常来自以下原因：
-1. Leaflet CSS 未正确加载（`import 'leaflet/dist/leaflet.css'` 已在 LiveMap.tsx 中）
-2. 地图容器高度为 0（父容器需要明确高度）
-3. Realtime 更新触发父组件重渲染，导致 `MapContainer` key 变化重新挂载
+**可选改进：**
+- 切换到 CartoDB Voyager（更美观，更稳定）：
+  `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png`
+- 为 `MapContainer` 添加固定 key（防止 Realtime 更新触发卸载重挂载）
+- 文件：`components/LiveMap.tsx`
 
-**建议下一步修复：**
-- 为 `MapContainer` 添加稳定的 key（避免不必要的卸载重挂载）
-- 可选：切换到 CartoDB Voyager tile（更美观）：`https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png`
+---
+
+### 3. SMS 功能配置上线
+
+所有代码已完成。需要管理员在 Vercel Dashboard 配置：
+
+```
+AT_API_KEY     = [Africa's Talking API Key]
+AT_USERNAME    = [AT account username]
+AT_SENDER_ID   = [可选，已注册的短信发件人ID]
+```
+
+注册地址：https://africastalking.com
 
 ---
 
