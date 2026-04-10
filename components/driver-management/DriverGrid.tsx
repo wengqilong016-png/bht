@@ -27,10 +27,10 @@ const DriverGrid: React.FC<DriverGridProps> = ({
       {paginatedDrivers.map(driver => {
         const revProgress = Math.min(100, (driver.stats.totalRevenue / revenueMax) * 100);
         return (
-          <div key={driver.id} className="bg-white rounded-card border border-slate-200 shadow-sm hover:shadow-lg transition-all overflow-hidden">
+          <div key={driver.id} className="bg-white/95 rounded-card border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden">
             <div className="flex items-center justify-between px-5 pt-5 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-[14px] bg-slate-800 text-white flex items-center justify-center font-black text-base shadow-md">
+                <div className="w-11 h-11 rounded-[14px] bg-gradient-to-br from-slate-900 to-amber-700 text-white flex items-center justify-center font-black text-base shadow-md">
                   {driver.name.charAt(0)}
                 </div>
                 <div>
@@ -45,7 +45,7 @@ const DriverGrid: React.FC<DriverGridProps> = ({
               </div>
               <button
                 onClick={() => onToggleStatus(driver.id)}
-                className="p-1.5 bg-slate-50 rounded-xl border border-slate-100 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all"
+                className="p-1.5 bg-slate-50 rounded-xl border border-slate-100 text-slate-400 hover:text-amber-600 hover:border-amber-200 hover:bg-amber-50 transition-all"
               >
                 <ShieldCheck size={14} />
               </button>
@@ -54,15 +54,15 @@ const DriverGrid: React.FC<DriverGridProps> = ({
             <div className="grid grid-cols-2 gap-2.5 px-5 pb-4">
               <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
                 <p className="text-caption font-black text-slate-400 uppercase flex items-center gap-1 mb-1">
-                  <span className="text-indigo-400">$</span> {t.baseSalaryShort}
+                  <span className="text-amber-500">$</span> {t.baseSalaryShort}
                 </p>
                 <p className="text-xs font-black text-slate-900">TZS {(driver.baseSalary || 300000).toLocaleString()}</p>
               </div>
-              <div className="bg-indigo-50 rounded-2xl p-3 border border-indigo-100">
-                <p className="text-caption font-black text-indigo-400 uppercase flex items-center gap-1 mb-1">
+              <div className="bg-amber-50 rounded-2xl p-3 border border-amber-100">
+                <p className="text-caption font-black text-amber-500 uppercase flex items-center gap-1 mb-1">
                   <Percent size={8} /> {t.commissionShort}
                 </p>
-                <p className="text-xs font-black text-indigo-700">{((driver.commissionRate ?? 0.05) * 100).toFixed(0)}%</p>
+                <p className="text-xs font-black text-amber-700">{((driver.commissionRate ?? 0.05) * 100).toFixed(0)}%</p>
               </div>
             </div>
 
@@ -72,7 +72,7 @@ const DriverGrid: React.FC<DriverGridProps> = ({
                 <p className="text-caption font-black text-slate-900">TZS {driver.stats.totalRevenue.toLocaleString()}</p>
               </div>
               <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${revProgress}%` }} />
+                <div className="h-full bg-amber-500 rounded-full transition-all" style={{ width: `${revProgress}%` }} />
               </div>
             </div>
 
@@ -85,10 +85,10 @@ const DriverGrid: React.FC<DriverGridProps> = ({
                 <button onClick={() => onDelete(driver.id)} className="p-1.5 bg-rose-50 border border-rose-100 text-rose-400 rounded-xl text-caption font-black uppercase hover:bg-rose-100 transition-all">
                   <Trash2 size={10} />
                 </button>
-                <button onClick={() => onShowSalary(driver.id)} className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl text-caption font-black uppercase hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition-all flex items-center gap-1">
+                <button onClick={() => onShowSalary(driver.id)} className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl text-caption font-black uppercase hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 transition-all flex items-center gap-1">
                   <Calculator size={10} /> {t.payrollTitle}
                 </button>
-                <button onClick={() => onEdit(driver)} className="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-caption font-black uppercase hover:bg-indigo-700 transition-all">
+                <button onClick={() => onEdit(driver)} className="px-3 py-1.5 bg-amber-600 text-white rounded-xl text-caption font-black uppercase hover:bg-amber-700 transition-all">
                   {t.settings}
                 </button>
               </div>

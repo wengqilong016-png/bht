@@ -95,17 +95,17 @@ const SmartInsights: React.FC<SmartInsightsProps> = ({ transactions, locations, 
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="rounded-card bg-gradient-to-br from-slate-950 to-indigo-900 p-5 text-white shadow-xl relative overflow-hidden">
+      <div className="rounded-card bg-gradient-to-br from-slate-950 to-amber-900 p-5 text-white shadow-xl relative overflow-hidden">
         <div className="absolute right-4 top-4 opacity-10"><BrainCircuit size={72} /></div>
         <div className="relative z-10 flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="rounded-2xl border border-white/10 bg-white/10 p-2.5">
-                <BrainCircuit className="text-indigo-200" size={18} />
+                <BrainCircuit className="text-amber-200" size={18} />
               </div>
               <div>
                 <h2 className="text-sm font-black uppercase tracking-wide">{t.aiBusinessInsights}</h2>
-                <p className="text-[10px] font-bold text-indigo-200 uppercase tracking-[0.18em]">{t.aiBusinessInsightsSubtitle}</p>
+                <p className="text-[10px] font-bold text-amber-200 uppercase tracking-[0.18em]">{t.aiBusinessInsightsSubtitle}</p>
               </div>
             </div>
             {insights.length > 3 && (
@@ -121,7 +121,7 @@ const SmartInsights: React.FC<SmartInsightsProps> = ({ transactions, locations, 
 
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3">
-              <p className="text-caption font-black uppercase text-indigo-200">{t.highRiskAssets}</p>
+              <p className="text-caption font-black uppercase text-amber-200">{t.highRiskAssets}</p>
               <div className="mt-1 flex items-baseline gap-2">
                 <p className="text-3xl font-black">{totalRiskCount}</p>
                 <span className="text-[10px] font-bold text-rose-300">{t.affectedMachines}</span>
@@ -159,7 +159,7 @@ const SmartInsights: React.FC<SmartInsightsProps> = ({ transactions, locations, 
                  key={insight.loc.id}
                  type="button"
                  onClick={() => onNavigate?.('locations')}
-                 className={`rounded-card border bg-white p-4 shadow-sm transition-all text-left w-full ${onNavigate ? 'cursor-pointer hover:shadow-md hover:border-indigo-300' : 'cursor-default'} ${insight.riskLevel === 'high' ? 'border-rose-200' : 'border-amber-200'}`}
+                 className={`rounded-card border bg-white p-4 shadow-sm transition-all text-left w-full ${onNavigate ? 'cursor-pointer hover:shadow-md hover:border-amber-300' : 'cursor-default'} ${insight.riskLevel === 'high' ? 'border-rose-200' : 'border-amber-200'}`}
                >
                  <div className="flex justify-between items-start mb-4">
                     <div>
@@ -181,9 +181,9 @@ const SmartInsights: React.FC<SmartInsightsProps> = ({ transactions, locations, 
                     </div>
                     
                     <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 flex items-start gap-3">
-                       <Zap className="text-indigo-500 mt-0.5" size={16}/>
+                       <Zap className="text-amber-500 mt-0.5" size={16}/>
                        <div>
-                          <p className="text-[10px] font-black text-indigo-700 uppercase mb-1">{t.aiDecisionSuggestion}</p>
+                          <p className="text-[10px] font-black text-amber-700 uppercase mb-1">{t.aiDecisionSuggestion}</p>
                           <p className="text-xs font-bold text-slate-600 leading-relaxed">{insight.actionSuggestion}</p>
                        </div>
                     </div>
@@ -194,7 +194,7 @@ const SmartInsights: React.FC<SmartInsightsProps> = ({ transactions, locations, 
                     <span className="text-slate-700 flex items-center gap-1"><DollarSign size={10}/> {insight.totalRevenue.toLocaleString()} TZS</span>
                  </div>
                   {onNavigate && (
-                    <div className="mt-3 text-right text-caption font-black text-indigo-500 uppercase tracking-widest">→ 查看点位</div>
+                    <div className="mt-3 text-right text-caption font-black text-amber-500 uppercase tracking-widest">→ 查看点位</div>
                   )}
                </button>
              ))}

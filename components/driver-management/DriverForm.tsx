@@ -51,7 +51,7 @@ const DriverForm: React.FC<DriverFormProps> = ({
       <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95">
         <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-600 rounded-xl text-white"><User size={20} /></div>
+            <div className="p-2 bg-amber-600 rounded-xl text-white"><User size={20} /></div>
             <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">{editingId ? 'Edit Driver' : 'New Driver'}</h3>
           </div>
           <button onClick={onClose} className="p-2 bg-white rounded-full text-slate-400 shadow-sm hover:text-rose-500 transition-colors"><X size={18} /></button>
@@ -130,35 +130,45 @@ const DriverForm: React.FC<DriverFormProps> = ({
                 <input type="text" value={form.plate} onChange={e => onChange({ plate: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold uppercase" placeholder="T 000 XXX" />
               </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-caption font-black text-slate-400 uppercase ml-1">Daily Coin Float</label>
-              <input type="number" value={form.dailyFloatingCoins} onChange={e => onChange({ dailyFloatingCoins: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold" />
+            <div className="space-y-1 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-4">
+              <label className="text-caption font-black text-amber-700 uppercase ml-1">流动硬币 Floating Coins (TZS)</label>
+              <input
+                type="number"
+                min="0"
+                value={form.dailyFloatingCoins}
+                onChange={e => onChange({ dailyFloatingCoins: e.target.value })}
+                className="w-full bg-white border border-amber-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:border-amber-400"
+                placeholder="例如 / e.g. 10000"
+              />
+              <p className="text-[10px] font-bold text-slate-400 ml-1">
+                创建司机时可直接录入，司机资料设置和财务页也可后续修改
+              </p>
             </div>
           </div>
 
-          <div className="p-5 bg-indigo-50/50 rounded-card border border-indigo-100 space-y-4">
-            <p className="text-caption font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+          <div className="p-5 bg-amber-50/50 rounded-card border border-amber-100 space-y-4">
+            <p className="text-caption font-black text-amber-400 uppercase tracking-widest flex items-center gap-2">
               <Receipt size={14} /> 薪资与提成方案
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-caption font-black text-indigo-400 uppercase ml-1">Monthly Base Salary (TZS)</label>
+                <label className="text-caption font-black text-amber-400 uppercase ml-1">Monthly Base Salary (TZS)</label>
                 <div className="relative">
-                  <Banknote size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-300" />
-                  <input type="number" value={form.baseSalary} onChange={e => onChange({ baseSalary: e.target.value })} className="w-full bg-white border border-indigo-100 rounded-xl pl-9 pr-4 py-3 text-sm font-black text-indigo-600 outline-none" placeholder="300000" />
+                  <Banknote size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-300" />
+                  <input type="number" value={form.baseSalary} onChange={e => onChange({ baseSalary: e.target.value })} className="w-full bg-white border border-amber-100 rounded-xl pl-9 pr-4 py-3 text-sm font-black text-amber-600 outline-none" placeholder="300000" />
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-caption font-black text-indigo-400 uppercase ml-1">提成比例 (%)</label>
+                <label className="text-caption font-black text-amber-400 uppercase ml-1">提成比例 (%)</label>
                 <div className="relative">
-                  <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-300" />
-                  <input type="number" value={form.commissionRate} onChange={e => onChange({ commissionRate: e.target.value })} className="w-full bg-white border border-indigo-100 rounded-xl pl-9 pr-4 py-3 text-sm font-black text-indigo-600 outline-none" placeholder="5" />
+                  <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-300" />
+                  <input type="number" value={form.commissionRate} onChange={e => onChange({ commissionRate: e.target.value })} className="w-full bg-white border border-amber-100 rounded-xl pl-9 pr-4 py-3 text-sm font-black text-amber-600 outline-none" placeholder="5" />
                 </div>
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-caption font-black text-indigo-400 uppercase ml-1">初始欠款 Initial Debt</label>
-              <input type="number" value={form.initialDebt} onChange={e => onChange({ initialDebt: e.target.value })} className="w-full bg-white border border-indigo-100 rounded-xl px-4 py-2.5 text-xs font-bold" />
+              <label className="text-caption font-black text-amber-400 uppercase ml-1">初始欠款 Initial Debt</label>
+              <input type="number" value={form.initialDebt} onChange={e => onChange({ initialDebt: e.target.value })} className="w-full bg-white border border-amber-100 rounded-xl px-4 py-2.5 text-xs font-bold" />
             </div>
             {editingId && (
               <div className="space-y-1">
@@ -213,7 +223,7 @@ const DriverForm: React.FC<DriverFormProps> = ({
           <button
             onClick={onSave}
             disabled={isSaving}
-            className="w-full bg-indigo-600 text-white rounded-2xl font-black py-4 uppercase shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 disabled:bg-slate-300 transition-all active:scale-95"
+            className="w-full bg-amber-600 text-white rounded-2xl font-black py-4 uppercase shadow-xl shadow-amber-100 flex items-center justify-center gap-2 disabled:bg-slate-300 transition-all active:scale-95"
           >
             {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             {isSaving ? 'Saving...' : 'Save Driver Profile'}

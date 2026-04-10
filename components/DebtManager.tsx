@@ -210,13 +210,13 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-slate-900 rounded-card p-5 text-white">
            <div className="flex items-center gap-2 mb-2">
-              <PieChart size={14} className="text-indigo-400"/>
-              <span className="text-caption font-black uppercase tracking-widest text-indigo-300">Total Outstanding</span>
+              <PieChart size={14} className="text-amber-400"/>
+              <span className="text-caption font-black uppercase tracking-widest text-amber-300">Total Outstanding</span>
            </div>
            <p className="text-xl font-black">TZS {totals.combined.toLocaleString()}</p>
            <div className="mt-3 flex items-center gap-2">
               <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                 <div className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-1000" style={{ width: `${totals.startupProgress}%` }}></div>
+                 <div className="h-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-1000" style={{ width: `${totals.startupProgress}%` }}></div>
               </div>
               <span className="text-caption font-black text-emerald-400">{totals.startupProgress.toFixed(0)}%</span>
            </div>
@@ -233,7 +233,7 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
 
         <div className="bg-white rounded-card p-5 border border-slate-200 shadow-sm">
            <div className="flex items-center gap-2 mb-2">
-             <div className="p-1.5 bg-indigo-50 rounded-lg text-indigo-500"><User size={14} /></div>
+             <div className="p-1.5 bg-amber-50 rounded-lg text-amber-500"><User size={14} /></div>
              <span className="text-caption font-black text-slate-400 uppercase">Personal Loans</span>
            </div>
            <p className="text-xl font-black text-slate-900">TZS {totals.driver.toLocaleString()}</p>
@@ -242,16 +242,16 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
       </div>
 
       {currentUser.role !== 'admin' && (
-        <div className="rounded-card border border-indigo-100 bg-indigo-50 px-4 py-4">
+        <div className="rounded-card border border-amber-100 bg-amber-50 px-4 py-4">
           <div className="flex items-start gap-3">
-            <div className="rounded-xl bg-indigo-500 p-2 text-white flex-shrink-0">
+            <div className="rounded-xl bg-amber-500 p-2 text-white flex-shrink-0">
               <CreditCard size={16} />
             </div>
             <div className="min-w-0">
-              <p className="text-caption font-black uppercase tracking-widest text-indigo-600">
+              <p className="text-caption font-black uppercase tracking-widest text-amber-600">
                 {lang === 'zh' ? '司机预支窗口' : 'Driver Advance Window'}
               </p>
-              <p className="mt-1 text-[11px] font-black text-indigo-900">
+              <p className="mt-1 text-[11px] font-black text-amber-900">
                 {lang === 'zh'
                   ? '司机预支已从收款流程移出，请在这里查看个人借款与预支状态。'
                   : 'Driver advances are no longer part of collection. Review personal loans and advances here.'}
@@ -301,7 +301,7 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="text-caption text-slate-400 font-bold uppercase">{loc.area}</span>
                       <span className="text-slate-200">•</span>
-                      <span className="text-caption font-black text-indigo-500 uppercase">{loc.machineId}</span>
+                      <span className="text-caption font-black text-amber-500 uppercase">{loc.machineId}</span>
                     </div>
                   </div>
                 </div>
@@ -339,7 +339,7 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
                         {recoveringLocId === loc.id ? (
                           <div className="animate-in slide-in-from-top-2 duration-200 space-y-2 bg-slate-900 p-4 rounded-2xl">
                              <div className="flex justify-between items-center">
-                                <p className="text-caption font-black text-indigo-400 uppercase">Payment Amount (TZS)</p>
+                                <p className="text-caption font-black text-amber-400 uppercase">Payment Amount (TZS)</p>
                                 <button onClick={() => setRecoveringLocId(null)} className="p-1 text-slate-500 hover:text-white">
                                   <X size={14}/>
                                 </button>
@@ -349,19 +349,19 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
                                  type="number" 
                                  value={recoveryAmount} 
                                  onChange={e => setRecoveryAmount(e.target.value)} 
-                                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-base font-black text-white outline-none focus:border-indigo-500 transition-all placeholder:text-slate-700" 
+                                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-base font-black text-white outline-none focus:border-amber-500 transition-all placeholder:text-slate-700" 
                                  placeholder="0" 
                                  autoFocus
                                />
                                <button 
                                  onClick={() => handleRecoverSubmit(loc.id)} 
                                  disabled={isActionLoading || !recoveryAmount}
-                                 className="bg-indigo-600 text-white px-4 rounded-xl active:scale-90 transition-all disabled:opacity-30"
+                                 className="bg-amber-600 text-white px-4 rounded-xl active:scale-90 transition-all disabled:opacity-30"
                                >
                                  {isActionLoading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                                </button>
                              </div>
-                             {isActionLoading && <p className="text-caption font-black text-indigo-400 uppercase animate-pulse">Syncing...</p>}
+                             {isActionLoading && <p className="text-caption font-black text-amber-400 uppercase animate-pulse">Syncing...</p>}
                           </div>
                         ) : (
                           <button 
@@ -391,7 +391,7 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
       {/* 2. Driver Loan Management */}
       <section className="border-t border-slate-100 pt-6">
         <div className="flex items-center gap-2 mb-4">
-          <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><Wallet size={18} /></div>
+          <div className="p-2 bg-amber-50 text-amber-600 rounded-xl"><Wallet size={18} /></div>
           <div>
             <h2 className="text-sm font-black text-slate-900">{t.driverLoan}</h2>
             <p className="text-caption text-slate-400 font-bold uppercase">Personal Liabilities & Advance Payments</p>
@@ -415,7 +415,7 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
                   <div className="flex-1">
                     <h3 className="font-black text-slate-900 text-sm">{driver.name}</h3>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                       <span className={`px-1.5 py-0.5 rounded text-caption font-black uppercase ${isDebtFree ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                       <span className={`px-1.5 py-0.5 rounded text-caption font-black uppercase ${isDebtFree ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                          {isDebtFree ? '已结清' : 'Owing'}
                        </span>
                        <span className="text-caption text-slate-400">{driver.phone}</span>
@@ -423,7 +423,7 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
                   </div>
                   {isDebtFree && <ShieldCheck size={16} className="text-emerald-400 shrink-0" />}
                    {currentUser.role === 'admin' && (
-                     <button onClick={() => isEditingThis ? setEditingDriverId(null) : openDriverEdit(driver)} className="p-1.5 bg-slate-50 border border-slate-100 rounded-xl text-slate-400 hover:text-indigo-600 transition-colors shrink-0">
+                     <button onClick={() => isEditingThis ? setEditingDriverId(null) : openDriverEdit(driver)} className="p-1.5 bg-slate-50 border border-slate-100 rounded-xl text-slate-400 hover:text-amber-600 transition-colors shrink-0">
                        {isEditingThis ? <X size={14}/> : <Pencil size={14}/>}
                      </button>
                    )}
@@ -432,7 +432,7 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
                 <div className="space-y-3">
                    {isEditingThis ? (
                      <div className="space-y-3 bg-slate-900 p-4 rounded-2xl animate-in slide-in-from-top-2">
-                       <p className="text-caption font-black text-indigo-400 uppercase">修改财务数据 Edit Financial Data</p>
+                       <p className="text-caption font-black text-amber-400 uppercase">修改财务数据 Edit Financial Data</p>
                        <div className="space-y-2">
                          <div>
                            <label className="text-caption font-black text-slate-400 uppercase mb-1 block">当前欠款 Current Debt (TZS)</label>
@@ -440,23 +440,23 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
                              type="number"
                              value={driverEditForm.remainingDebt}
                              onChange={e => setDriverEditForm(f => ({...f, remainingDebt: e.target.value}))}
-                             className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-sm font-black text-white outline-none focus:border-indigo-500"
+                             className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-sm font-black text-white outline-none focus:border-amber-500"
                            />
                          </div>
                          <div>
-                           <label className="text-caption font-black text-slate-400 uppercase mb-1 block">随身硬币 Coin Float (TZS)</label>
+                           <label className="text-caption font-black text-amber-500 uppercase mb-1 block">流动硬币 Floating Coins (TZS)</label>
                            <input
                              type="number"
                              value={driverEditForm.dailyFloatingCoins}
                              onChange={e => setDriverEditForm(f => ({...f, dailyFloatingCoins: e.target.value}))}
-                             className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-sm font-black text-white outline-none focus:border-indigo-500"
+                             className="w-full bg-white/10 border border-amber-300/30 rounded-xl px-3 py-2.5 text-sm font-black text-white outline-none focus:border-amber-400"
                            />
                          </div>
                        </div>
                        <button
                          onClick={() => handleDriverDebtSave(driver)}
                          disabled={isActionLoading}
-                         className="w-full py-2.5 bg-indigo-600 text-white rounded-xl text-caption font-black uppercase flex items-center justify-center gap-2"
+                         className="w-full py-2.5 bg-amber-600 text-white rounded-xl text-caption font-black uppercase flex items-center justify-center gap-2"
                        >
                          {isActionLoading ? <Loader2 size={14} className="animate-spin"/> : <Save size={14}/>}
                          Save Changes
@@ -479,7 +479,7 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
                           </div>
                           <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                             <div 
-                              className={`h-full rounded-full transition-all duration-1000 ${isDebtFree ? 'bg-emerald-500' : 'bg-indigo-500'}`} 
+                              className={`h-full rounded-full transition-all duration-1000 ${isDebtFree ? 'bg-emerald-500' : 'bg-amber-500'}`} 
                               style={{ width: `${progress}%` }} 
                             />
                           </div>
@@ -494,9 +494,9 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
                              <p className="text-caption font-black text-slate-400 uppercase mb-0.5">Commission</p>
                              <p className="text-[10px] font-bold text-slate-700">{((driver.commissionRate ?? 0.05) * 100).toFixed(0)}%</p>
                           </div>
-                          <div className="p-2.5 bg-emerald-50 rounded-xl border border-emerald-100">
-                             <p className="text-caption font-black text-emerald-400 uppercase mb-0.5">Coins</p>
-                             <p className="text-[10px] font-bold text-emerald-700">{(driver.dailyFloatingCoins ?? 0).toLocaleString()}</p>
+                          <div className="p-2.5 bg-gradient-to-br from-amber-50 to-white rounded-xl border border-amber-100">
+                             <p className="text-caption font-black text-amber-500 uppercase mb-0.5">Floating Coins</p>
+                             <p className="text-[10px] font-bold text-amber-700">{(driver.dailyFloatingCoins ?? 0).toLocaleString()}</p>
                           </div>
                        </div>
                      </>
@@ -514,7 +514,7 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
 
       {/* Footer Info */}
       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-start gap-3 max-w-2xl mx-auto">
-         <AlertCircle size={16} className="text-indigo-500 shrink-0 mt-0.5" />
+         <AlertCircle size={16} className="text-amber-500 shrink-0 mt-0.5" />
          <p className="text-caption text-slate-500 font-bold leading-relaxed">Startup capital is auto-deducted from each collection. Manual repayment for large lump sum settlements only. All records sync to daily settlement.</p>
       </div>
 

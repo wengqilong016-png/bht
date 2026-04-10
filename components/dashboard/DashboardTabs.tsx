@@ -21,7 +21,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, setActiveTab, 
         <button
           onClick={() => setActiveTab('overview')}
           className={`px-3 py-2 min-h-10 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${
-            activeTab === 'overview' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
+            activeTab === 'overview' ? 'bg-silicone-gradient text-amber-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
           }`}
         >
           {t.overviewLabel}
@@ -31,7 +31,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, setActiveTab, 
         <button
           onClick={() => setActiveTab('locations')}
           className={`px-3 py-2 min-h-10 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${
-            activeTab === 'locations' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
+            activeTab === 'locations' ? 'bg-silicone-gradient text-amber-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
           }`}
         >
           {t.sitesLabel}
@@ -40,7 +40,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, setActiveTab, 
       <button
         onClick={() => setActiveTab('settlement')}
         className={`px-3 py-2 min-h-10 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${
-          activeTab === 'settlement' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
+          activeTab === 'settlement' ? 'bg-silicone-gradient text-amber-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
         }`}
       >
         {isAdmin ? t.approvalsLabel : t.dailySettlement}
@@ -49,7 +49,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, setActiveTab, 
         <button
           onClick={() => setActiveTab('team')}
           className={`px-3 py-2 min-h-10 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${
-            activeTab === 'team' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
+            activeTab === 'team' ? 'bg-silicone-gradient text-amber-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
           }`}
         >
           {t.fleetLabel}
@@ -59,7 +59,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, setActiveTab, 
         <button
           onClick={() => setActiveTab('tracking')}
           className={`px-3 py-2 min-h-10 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${
-            activeTab === 'tracking' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
+            activeTab === 'tracking' ? 'bg-silicone-gradient text-amber-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
           }`}
         >
           {t.trackingLabel}
@@ -69,7 +69,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, setActiveTab, 
         <button
           onClick={() => setActiveTab('ai-logs')}
           className={`px-3 py-2 min-h-10 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${
-            activeTab === 'ai-logs' ? 'bg-silicone-gradient text-indigo-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
+            activeTab === 'ai-logs' ? 'bg-silicone-gradient text-amber-600 shadow-silicone border border-white/60' : 'text-slate-400 hover:text-slate-600'
           }`}
         >
           AI LOGS

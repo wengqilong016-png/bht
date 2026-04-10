@@ -84,7 +84,7 @@ function runChecks(props: Props): Check[] {
 const LEVEL_ICON = {
   ok: <CheckCircle2 size={13} className="text-emerald-500 shrink-0 mt-0.5" />,
   warn: <AlertTriangle size={13} className="text-amber-500 shrink-0 mt-0.5" />,
-  info: <Info size={13} className="text-indigo-400 shrink-0 mt-0.5" />,
+  info: <Info size={13} className="text-amber-400 shrink-0 mt-0.5" />,
 };
 
 const DriverAIAssistPanel: React.FC<Props> = (props) => {
@@ -105,7 +105,7 @@ const DriverAIAssistPanel: React.FC<Props> = (props) => {
         className={`fixed bottom-24 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-full shadow-lg transition-all lg:bottom-6 ${
           warnCount > 0
             ? 'bg-amber-500 text-white shadow-amber-300/50'
-            : 'bg-indigo-600 text-white shadow-indigo-300/50'
+            : 'bg-amber-600 text-white shadow-amber-300/50'
         }`}
         aria-label="AI 助手"
       >
@@ -123,14 +123,14 @@ const DriverAIAssistPanel: React.FC<Props> = (props) => {
       {/* Panel */}
       {open && (
         <div className="fixed bottom-36 right-4 z-50 w-72 rounded-2xl border border-slate-200 bg-white shadow-xl lg:bottom-20">
-          <div className="flex items-center justify-between rounded-t-2xl bg-indigo-600 px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-t-2xl bg-amber-600 px-3 py-2.5">
             <div className="flex items-center gap-2">
               <BotMessageSquare size={15} className="text-white" />
               <p className="text-[11px] font-black uppercase tracking-wide text-white">
                 {props.lang === 'zh' ? 'AI 状态助手' : 'Msaidizi wa AI'}
               </p>
             </div>
-            <button onClick={() => setOpen(false)} className="text-indigo-200 hover:text-white">
+            <button onClick={() => setOpen(false)} className="text-amber-200 hover:text-white">
               <X size={14} />
             </button>
           </div>

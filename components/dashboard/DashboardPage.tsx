@@ -369,7 +369,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
           {/* Payroll section merged into fleet tab */}
           <div className="space-y-3 border-t border-slate-100 pt-5">
               <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><Receipt size={18} /></div>
+                <div className="p-2 bg-amber-50 text-amber-600 rounded-xl"><Receipt size={18} /></div>
                 <div>
                   <h2 className="text-base font-black text-slate-900 uppercase">{t.payrollTitle}</h2>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t.payrollSubtitle}</p>
@@ -422,7 +422,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                               </p>
                             </div>
                             <div className="flex flex-col items-end gap-1">
-                              <span className="text-xs font-black text-indigo-600">TZS {summary.netPayable.toLocaleString()}</span>
+                              <span className="text-xs font-black text-amber-700">TZS {summary.netPayable.toLocaleString()}</span>
                               {record && (
                                 <span className={`px-2 py-0.5 rounded text-caption font-black uppercase ${
                                   record.status === 'paid'
@@ -481,7 +481,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                                   summary,
                                   record: record || null,
                                 })}
-                                className="w-full py-2 bg-indigo-600 text-white rounded-lg text-caption font-black uppercase disabled:opacity-50"
+                                className="w-full py-2 bg-amber-600 text-white rounded-lg text-caption font-black uppercase disabled:opacity-50"
                               >
                                 {record?.status === 'cancelled' ? t.reopenPayroll : t.generatePayroll}
                               </button>
@@ -501,7 +501,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                                     summary,
                                     record,
                                   })}
-                                  className="flex-1 py-2 bg-amber-500 text-white rounded-lg text-caption font-black uppercase disabled:opacity-50"
+                                  className="flex-1 py-2 bg-amber-600 text-white rounded-lg text-caption font-black uppercase disabled:opacity-50"
                                 >
                                   {t.markPaid}
                                 </button>

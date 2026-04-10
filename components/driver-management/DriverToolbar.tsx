@@ -29,20 +29,20 @@ const DriverToolbar: React.FC<DriverToolbarProps> = ({
         <div className="flex bg-slate-100 p-1 rounded-2xl">
           <button
             onClick={() => setViewMode('grid')}
-            className={`px-3 py-2 rounded-xl text-caption font-black uppercase transition-all flex items-center gap-1.5 whitespace-nowrap ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
+            className={`px-3 py-2 rounded-xl text-caption font-black uppercase transition-all flex items-center gap-1.5 whitespace-nowrap ${viewMode === 'grid' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400'}`}
           >
             <LayoutGrid size={12} /> Cards
           </button>
           <button
             onClick={() => setViewMode('analytics')}
-            className={`px-3 py-2 rounded-xl text-caption font-black uppercase transition-all flex items-center gap-1.5 whitespace-nowrap ${viewMode === 'analytics' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
+            className={`px-3 py-2 rounded-xl text-caption font-black uppercase transition-all flex items-center gap-1.5 whitespace-nowrap ${viewMode === 'analytics' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400'}`}
           >
             <BarChart3 size={12} /> Analytics
           </button>
         </div>
         <button
           onClick={onAddNew}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-2xl text-caption font-black uppercase flex items-center gap-2 shadow-lg active:scale-95 transition-all whitespace-nowrap hover:bg-indigo-700"
+          className="px-4 py-2 bg-amber-600 text-white rounded-2xl text-caption font-black uppercase flex items-center gap-2 shadow-lg active:scale-95 transition-all whitespace-nowrap hover:bg-amber-700"
         >
           <Plus size={13} /> Add New Driver
         </button>
@@ -57,7 +57,7 @@ const DriverToolbar: React.FC<DriverToolbarProps> = ({
           placeholder="Search Name / Phone..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          className="w-full bg-white border border-slate-200 rounded-[20px] py-3 pl-11 pr-4 text-xs font-bold text-slate-900 outline-none focus:border-indigo-500 transition-all shadow-sm"
+          className="w-full bg-white border border-slate-200 rounded-[20px] py-3 pl-11 pr-4 text-xs font-bold text-slate-900 outline-none focus:border-amber-500 transition-all shadow-sm"
         />
       </div>
       <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-[20px] px-4 py-2 shadow-sm min-w-[200px]">
@@ -75,7 +75,7 @@ const DriverToolbar: React.FC<DriverToolbarProps> = ({
         </select>
         <button
           onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
-          className="p-1 rounded hover:bg-slate-100 text-indigo-600"
+          className="p-1 rounded hover:bg-slate-100 text-amber-600"
         >
           {sortDir === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
         </button>

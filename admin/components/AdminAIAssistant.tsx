@@ -20,12 +20,12 @@ function AlertCard({ alert }: { alert: AdminAIAlert }) {
   const colors = {
     urgent: 'bg-rose-50 border-rose-200 text-rose-700',
     warning: 'bg-amber-50 border-amber-200 text-amber-700',
-    info: 'bg-blue-50 border-blue-200 text-blue-600',
+    info: 'bg-amber-50 border-amber-200 text-amber-600',
   };
   const icons = {
     urgent: <AlertCircle size={14} className="flex-shrink-0 text-rose-500 mt-0.5" />,
     warning: <AlertTriangle size={14} className="flex-shrink-0 text-amber-500 mt-0.5" />,
-    info: <Info size={14} className="flex-shrink-0 text-blue-400 mt-0.5" />,
+    info: <Info size={14} className="flex-shrink-0 text-amber-400 mt-0.5" />,
   };
   return (
     <div className={`rounded-xl border px-3 py-2.5 ${colors[alert.level]}`}>
@@ -51,13 +51,13 @@ function MessageBubble({ role, content }: { role: 'user' | 'assistant'; content:
   return (
     <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} gap-2`}>
       {isAI && (
-        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center mt-0.5">
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center mt-0.5">
           <Bot size={12} className="text-white" />
         </div>
       )}
       <div className={`max-w-[85%] rounded-2xl px-3 py-2.5 text-xs leading-relaxed whitespace-pre-wrap ${
         isAI ? 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm shadow-sm'
-              : 'bg-indigo-600 text-white rounded-tr-sm'
+              : 'bg-amber-600 text-white rounded-tr-sm'
       }`}>
         {parts.map((part, i) =>
           part.startsWith('**') && part.endsWith('**')
@@ -113,7 +113,7 @@ const AdminAIAssistant: React.FC<AdminAIAssistantProps> = ({ lang }) => {
       <button
         onClick={() => setIsOpen(v => !v)}
         aria-label={lang === 'zh' ? 'AI助手' : 'AI Assistant'}
-        className="fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-200 flex items-center justify-center hover:bg-indigo-700 active:scale-95 transition-all md:bottom-6"
+        className="fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full bg-amber-600 text-white shadow-lg shadow-amber-200 flex items-center justify-center hover:bg-amber-700 active:scale-95 transition-all md:bottom-6"
       >
         {isOpen ? <X size={18} /> : <Bot size={20} />}
         {!isOpen && alertCount > 0 && (
@@ -130,7 +130,7 @@ const AdminAIAssistant: React.FC<AdminAIAssistantProps> = ({ lang }) => {
             className="relative pointer-events-auto w-full md:w-[390px] md:mr-5 md:mb-8 flex flex-col bg-white rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden"
             style={{ maxHeight: 'min(90vh, 680px)' }}
           >
-            <div className="flex-shrink-0 bg-gradient-to-r from-indigo-600 to-indigo-700 px-4 pt-4 pb-3">
+            <div className="flex-shrink-0 bg-gradient-to-r from-amber-600 to-amber-700 px-4 pt-4 pb-3">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
@@ -138,7 +138,7 @@ const AdminAIAssistant: React.FC<AdminAIAssistantProps> = ({ lang }) => {
                   </div>
                   <div>
                     <p className="text-sm font-black text-white">AI 运营助手</p>
-                    <p className="text-caption text-indigo-200 font-bold">Bahati Intelligence · {snapshot.today}</p>
+                    <p className="text-caption text-amber-200 font-bold">Bahati Intelligence · {snapshot.today}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -153,10 +153,10 @@ const AdminAIAssistant: React.FC<AdminAIAssistantProps> = ({ lang }) => {
                 </div>
               </div>
               <div className="flex gap-1.5 bg-white/10 rounded-xl p-1">
-                <button onClick={() => setTab('alerts')} className={`flex-1 py-1.5 rounded-lg text-[11px] font-black uppercase transition-colors ${tab === 'alerts' ? 'bg-white text-indigo-600 shadow-sm' : 'text-white/80 hover:bg-white/10'}`}>
+                <button onClick={() => setTab('alerts')} className={`flex-1 py-1.5 rounded-lg text-[11px] font-black uppercase transition-colors ${tab === 'alerts' ? 'bg-white text-amber-600 shadow-sm' : 'text-white/80 hover:bg-white/10'}`}>
                   {alertCount > 0 ? `⚠️ 提醒 (${alertCount})` : '✓ 状态监控'}
                 </button>
-                <button onClick={() => setTab('chat')} className={`flex-1 py-1.5 rounded-lg text-[11px] font-black uppercase transition-colors ${tab === 'chat' ? 'bg-white text-indigo-600 shadow-sm' : 'text-white/80 hover:bg-white/10'}`}>
+                <button onClick={() => setTab('chat')} className={`flex-1 py-1.5 rounded-lg text-[11px] font-black uppercase transition-colors ${tab === 'chat' ? 'bg-white text-amber-600 shadow-sm' : 'text-white/80 hover:bg-white/10'}`}>
                   💬 {messages.length > 0 ? `对话 (${messages.filter(m => m.role === 'assistant').length})` : 'AI 提问'}
                 </button>
               </div>
@@ -171,7 +171,7 @@ const AdminAIAssistant: React.FC<AdminAIAssistantProps> = ({ lang }) => {
                   </div>
                   <div className="bg-white rounded-xl p-2.5 border border-slate-200 text-center">
                     <p className="text-caption font-black text-slate-400 uppercase mb-0.5">今日营业额</p>
-                    <p className="text-sm font-black text-indigo-600 leading-none truncate">
+                    <p className="text-sm font-black text-amber-600 leading-none truncate">
                       {snapshot.todayRevenue >= 1000000 ? `${(snapshot.todayRevenue / 1000000).toFixed(1)}M` : `${(snapshot.todayRevenue / 1000).toFixed(0)}K`}
                     </p>
                   </div>
@@ -192,7 +192,7 @@ const AdminAIAssistant: React.FC<AdminAIAssistantProps> = ({ lang }) => {
 
                 {snapshot.recentTrend && (
                   <div className="bg-white border border-slate-200 rounded-xl px-3 py-2.5 flex items-start gap-2">
-                    <RefreshCw size={12} className="text-indigo-400 flex-shrink-0 mt-0.5" />
+                    <RefreshCw size={12} className="text-amber-400 flex-shrink-0 mt-0.5" />
                     <p className="text-[10px] text-slate-600 leading-snug">{snapshot.recentTrend}</p>
                   </div>
                 )}
@@ -202,7 +202,7 @@ const AdminAIAssistant: React.FC<AdminAIAssistantProps> = ({ lang }) => {
                   <div className="grid grid-cols-2 gap-1.5">
                     {QUICK_PROMPTS.map(q => (
                       <button key={q} onClick={() => handleQuickPrompt(q)}
-                        className="bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[10px] font-bold text-slate-600 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-colors text-left leading-snug">
+                        className="bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[10px] font-bold text-slate-600 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50 transition-colors text-left leading-snug">
                         {q}
                       </button>
                     ))}
@@ -216,8 +216,8 @@ const AdminAIAssistant: React.FC<AdminAIAssistantProps> = ({ lang }) => {
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50 min-h-[200px]">
                   {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full py-6 gap-3">
-                      <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
-                        <Bot size={22} className="text-indigo-500" />
+                      <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                        <Bot size={22} className="text-amber-500" />
                       </div>
                       <p className="text-xs text-slate-500 text-center leading-relaxed">
                         你好！我是Bahati AI助手。<br />可以问我任何关于今日运营的问题。
@@ -225,7 +225,7 @@ const AdminAIAssistant: React.FC<AdminAIAssistantProps> = ({ lang }) => {
                       <div className="w-full space-y-1.5">
                         {QUICK_PROMPTS.map(q => (
                           <button key={q} onClick={() => void sendMessage(q)}
-                            className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition-colors text-left">
+                            className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold text-slate-600 hover:border-amber-300 hover:text-amber-600 transition-colors text-left">
                             {q} →
                           </button>
                         ))}
@@ -236,11 +236,11 @@ const AdminAIAssistant: React.FC<AdminAIAssistantProps> = ({ lang }) => {
                   )}
                   {isLoading && (
                     <div className="flex justify-start gap-2">
-                      <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center flex-shrink-0">
                         <Bot size={12} className="text-white" />
                       </div>
                       <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-3 py-2.5 shadow-sm flex items-center gap-2">
-                        <Loader2 size={13} className="animate-spin text-indigo-400" />
+                        <Loader2 size={13} className="animate-spin text-amber-400" />
                         <span className="text-[10px] text-slate-400">思考中…</span>
                       </div>
                     </div>
@@ -257,12 +257,12 @@ const AdminAIAssistant: React.FC<AdminAIAssistantProps> = ({ lang }) => {
                       onKeyDown={handleKey}
                       placeholder="输入问题…"
                       disabled={isLoading}
-                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all disabled:opacity-60"
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-100 transition-all disabled:opacity-60"
                     />
                     <button
                       onClick={() => void handleSend()}
                       disabled={!input.trim() || isLoading}
-                      className="flex-shrink-0 w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center disabled:opacity-40 hover:bg-indigo-700 active:scale-95 transition-all"
+                      className="flex-shrink-0 w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center disabled:opacity-40 hover:bg-amber-700 active:scale-95 transition-all"
                     >
                       {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                     </button>

@@ -220,7 +220,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
     return (
       <div className="max-w-md mx-auto py-12 px-6 animate-in zoom-in-95 duration-500">
         <div className="bg-white rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden relative">
-           <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-400 to-indigo-500"></div>
+           <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-400 to-amber-500"></div>
            
            <div className="p-8 flex flex-col items-center text-center space-y-6">
               <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mb-2 shadow-inner">
@@ -237,7 +237,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
               <div className="w-full bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-3">
                  <div className="flex justify-between items-center border-b border-slate-200 pb-2">
                     <span className="text-caption font-black text-slate-400 uppercase">ID</span>
-                    <span className="text-base font-black text-indigo-600">{lastRegisteredMachine.machineId}</span>
+                    <span className="text-base font-black text-amber-600">{lastRegisteredMachine.machineId}</span>
                  </div>
                  <div className="flex justify-between items-center border-b border-slate-200 pb-2">
                     <span className="text-caption font-black text-slate-400 uppercase">Shop</span>
@@ -250,7 +250,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
               </div>
 
               <div className="w-full space-y-3 pt-4">
-                 <button onClick={handleReset} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-sm shadow-xl shadow-indigo-100 active:scale-95 transition-all flex items-center justify-center gap-2">
+                 <button onClick={handleReset} className="w-full py-4 bg-amber-600 text-white rounded-2xl font-black uppercase text-sm shadow-xl shadow-amber-100 active:scale-95 transition-all flex items-center justify-center gap-2">
                    <PlusButtonIcon />
                    {lang === 'zh' ? '继续注册下一台' : 'Sajili Mashine Nyingine'}
                  </button>
@@ -269,7 +269,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
       <div className="bg-white rounded-[40px] p-8 shadow-2xl border border-slate-200 space-y-6 relative">
         {/* Header */}
         <div className="border-b border-slate-100 pb-4 mb-2 flex items-center justify-between">
-           <button onClick={onCancel} className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-indigo-600 transition-colors">
+           <button onClick={onCancel} className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-amber-600 transition-colors">
               <ArrowLeft size={20} />
            </button>
            <div className="text-center">
@@ -286,7 +286,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
           <label className="text-caption font-black text-slate-400 uppercase tracking-widest ml-1">{lang === 'zh' ? '现场存证 (机器 + 老板合影) *' : 'Picha ya Eneo *'}</label>
           <div 
             onClick={() => fileInputRef.current?.click()}
-            className={`relative h-48 rounded-[30px] border-2 border-dashed flex flex-col items-center justify-center overflow-hidden cursor-pointer transition-all active:scale-98 ${machinePhoto ? 'border-emerald-400 bg-emerald-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-indigo-300'}`}
+            className={`relative h-48 rounded-[30px] border-2 border-dashed flex flex-col items-center justify-center overflow-hidden cursor-pointer transition-all active:scale-98 ${machinePhoto ? 'border-emerald-400 bg-emerald-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-amber-300'}`}
           >
              <input type="file" accept="image/*" ref={fileInputRef} onChange={handlePhotoCapture} className="hidden" />
              {machinePhoto ? (
@@ -309,18 +309,18 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
         <div className="grid grid-cols-2 gap-4">
            <div className="space-y-1">
              <label className="text-caption font-black text-slate-400 uppercase ml-1">{lang === 'zh' ? '机器编号 *' : 'ID ya Mashine *'}</label>
-             <input type="text" value={machineId} onChange={e => setMachineId(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black text-slate-900 uppercase outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all placeholder:text-slate-300" placeholder="M-00X" />
+             <input type="text" value={machineId} onChange={e => setMachineId(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black text-slate-900 uppercase outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-slate-300" placeholder="M-00X" />
            </div>
            <div className="space-y-1">
              <label className="text-caption font-black text-slate-400 uppercase ml-1">{lang === 'zh' ? '初始读数' : 'Namba ya Mwanzo'}</label>
-             <input type="number" value={initialScore} onChange={e => setInitialScore(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all placeholder:text-slate-300" placeholder="0" />
+             <input type="number" value={initialScore} onChange={e => setInitialScore(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-slate-300" placeholder="0" />
            </div>
         </div>
 
         {/* Shop Name */}
         <div className="space-y-1">
           <label className="text-caption font-black text-slate-400 uppercase ml-1">{lang === 'zh' ? '店铺/点位名称 *' : 'Jina la Duka *'}</label>
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center gap-3 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-50 transition-all">
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center gap-3 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-50 transition-all">
              <Building2 size={16} className="text-slate-400" />
              <input type="text" value={shopName} onChange={e => setShopName(e.target.value)} className="w-full bg-transparent font-black text-slate-900 outline-none placeholder:text-slate-300" placeholder="Shop Name" />
           </div>
@@ -330,13 +330,13 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
         <div className="grid grid-cols-2 gap-4">
            <div className="space-y-1">
              <label className="text-caption font-black text-slate-400 uppercase ml-1">{lang === 'zh' ? '店主姓名 *' : 'Jina la Tajiri *'}</label>
-             <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all placeholder:text-slate-300" placeholder="Owner Name" />
+             <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-slate-300" placeholder="Owner Name" />
            </div>
            <div className="space-y-1">
              <label className="text-caption font-black text-slate-400 uppercase ml-1">{lang === 'zh' ? '分红比例 (%) *' : 'Komisheni % *'}</label>
-             <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex items-center gap-2 focus-within:border-indigo-400 transition-all">
-                <Percent size={14} className="text-indigo-400" />
-                <input type="number" value={commissionRate} onChange={e => setCommissionRate(e.target.value)} className="w-full bg-transparent font-black text-indigo-600 outline-none placeholder:text-indigo-300" placeholder="15" />
+             <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex items-center gap-2 focus-within:border-amber-400 transition-all">
+                <Percent size={14} className="text-amber-400" />
+                <input type="number" value={commissionRate} onChange={e => setCommissionRate(e.target.value)} className="w-full bg-transparent font-black text-amber-600 outline-none placeholder:text-amber-300" placeholder="15" />
              </div>
            </div>
         </div>
@@ -345,7 +345,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
         <div className="grid grid-cols-2 gap-4 items-end">
            <div className="space-y-1">
              <label className="text-caption font-black text-slate-400 uppercase ml-1">{lang === 'zh' ? '区域 Area *' : 'Eneo *'}</label>
-             <input type="text" value={area} onChange={e => setArea(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all placeholder:text-slate-300" placeholder="Kariakoo" />
+             <input type="text" value={area} onChange={e => setArea(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-slate-300" placeholder="Kariakoo" />
            </div>
            <button 
              onClick={fetchGps} 
@@ -381,7 +381,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
                 step="0.000001"
                 value={manualLat}
                 onChange={e => setManualLat(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all placeholder:text-slate-300"
+                className="w-full bg-white border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-slate-300"
                 placeholder="-6.823490"
               />
             </div>
@@ -393,7 +393,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
                 step="0.000001"
                 value={manualLng}
                 onChange={e => setManualLng(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all placeholder:text-slate-300"
+                className="w-full bg-white border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-slate-300"
                 placeholder="39.269510"
               />
             </div>
@@ -420,7 +420,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
         <button 
           onClick={handleSubmit} 
           disabled={isSubmitting}
-          className="w-full py-5 bg-indigo-600 text-white rounded-card font-black uppercase text-sm shadow-xl shadow-indigo-200 hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full py-5 bg-amber-600 text-white rounded-card font-black uppercase text-sm shadow-xl shadow-amber-200 hover:bg-amber-700 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />} 
           {isSubmitting ? (lang === 'zh' ? '正在注册...' : 'Inasajili...') : (lang === 'zh' ? '完成注册' : 'Hifadhi Sasa')}

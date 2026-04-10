@@ -1,6 +1,6 @@
 import {
   User, Truck, Banknote, Percent, Clock,
-  CheckCircle, XCircle, TrendingUp, AlertCircle, MapPin
+  CheckCircle, XCircle, TrendingUp, AlertCircle, MapPin, Coins
 } from 'lucide-react';
 import React from 'react';
 
@@ -81,8 +81,8 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
         </div>
       </div>
 
-      {/* Debt & salary row */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Salary, commission, and floating coins */}
+      <div className="grid grid-cols-3 gap-4">
         <div className="bg-white rounded-card border border-slate-200 shadow-sm p-4">
           <p className="text-caption font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
             <Banknote size={11} /> {t.baseSalary}
@@ -91,12 +91,20 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
             TZS {(driver.baseSalary ?? 300000).toLocaleString()}
           </p>
         </div>
-        <div className="bg-indigo-50 rounded-card border border-indigo-100 shadow-sm p-4">
-          <p className="text-caption font-black text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+        <div className="bg-amber-50 rounded-card border border-amber-100 shadow-sm p-4">
+          <p className="text-caption font-black text-amber-400 uppercase tracking-widest mb-2 flex items-center gap-1">
             <Percent size={11} /> {t.commissionRate}
           </p>
-          <p className="text-base font-black text-indigo-700">
+          <p className="text-base font-black text-amber-700">
             {((driver.commissionRate ?? 0.05) * 100).toFixed(0)}%
+          </p>
+        </div>
+        <div className="bg-gradient-to-br from-amber-50 to-white rounded-card border border-amber-200 shadow-sm p-4">
+          <p className="text-caption font-black text-amber-600 uppercase tracking-widest mb-2 flex items-center gap-1">
+            <Coins size={11} /> {lang === 'zh' ? '流动硬币' : 'Floating Coins'}
+          </p>
+          <p className="text-base font-black text-amber-700">
+            TZS {(driver.dailyFloatingCoins ?? 0).toLocaleString()}
           </p>
         </div>
       </div>
@@ -113,7 +121,7 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
           </div>
           <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
             <div
-              className="h-full bg-indigo-500 rounded-full transition-all"
+              className="h-full bg-amber-500 rounded-full transition-all"
               style={{ width: `${debtPct}%` }}
             />
           </div>
@@ -144,7 +152,7 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {assignedMachines.map(loc => (
               <div key={loc.id} className="flex items-center gap-3 p-2.5 bg-slate-50 rounded-subcard border border-slate-100">
-                <div className="w-8 h-8 rounded-btn bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-btn bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
                   <MapPin size={14} />
                 </div>
                 <div className="min-w-0 flex-1">

@@ -65,7 +65,7 @@ const ForcePasswordChange: React.FC<ForcePasswordChangeProps> = ({ currentUser, 
               type="password"
               value={newPwd}
               onChange={e => { setNewPwd(e.target.value); setError(''); }}
-              className="w-full bg-slate-100 rounded-xl py-3 px-4 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-300 placeholder:text-slate-400"
+              className="w-full bg-slate-100 rounded-xl py-3 px-4 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-slate-400"
               placeholder="••••••••"
               minLength={8}
               required
@@ -79,7 +79,7 @@ const ForcePasswordChange: React.FC<ForcePasswordChangeProps> = ({ currentUser, 
               type="password"
               value={confirmPwd}
               onChange={e => { setConfirmPwd(e.target.value); setError(''); }}
-              className="w-full bg-slate-100 rounded-xl py-3 px-4 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-300 placeholder:text-slate-400"
+              className="w-full bg-slate-100 rounded-xl py-3 px-4 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-slate-400"
               placeholder="••••••••"
               minLength={8}
               required
@@ -93,7 +93,7 @@ const ForcePasswordChange: React.FC<ForcePasswordChangeProps> = ({ currentUser, 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-indigo-600 text-white font-black py-3 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+            className="w-full bg-amber-600 text-white font-black py-3 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-amber-700 disabled:opacity-60 transition-colors"
           >
             {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Lock size={14} />}
             {t.saveChanges}

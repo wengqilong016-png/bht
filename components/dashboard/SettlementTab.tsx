@@ -312,7 +312,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
   const TYPE_CONFIG: Record<ApprovalTaskType, { label: string; labelEn: string; pillClass: string; iconBg: string; icon: React.ReactNode }> = {
     settlement: { label: '日结', labelEn: 'Settlement', pillClass: 'bg-amber-100 text-amber-700', iconBg: 'bg-amber-100 text-amber-700', icon: <Calculator size={14} /> },
     anomaly:    { label: '异常', labelEn: 'Anomaly',    pillClass: 'bg-amber-50 text-amber-600',  iconBg: 'bg-amber-100 text-amber-700', icon: <ShieldAlert size={14} /> },
-    reset:      { label: '重置', labelEn: 'Reset',      pillClass: 'bg-purple-50 text-purple-600', iconBg: 'bg-purple-100 text-purple-700', icon: <RefreshCw size={14} /> },
+    reset:      { label: '重置', labelEn: 'Reset',      pillClass: 'bg-amber-50 text-amber-700', iconBg: 'bg-amber-100 text-amber-700', icon: <RefreshCw size={14} /> },
     expense:    { label: '费用', labelEn: 'Expense',    pillClass: 'bg-rose-50 text-rose-600',    iconBg: 'bg-rose-100 text-rose-700',  icon: <AlertTriangle size={14} /> },
     payout:     { label: '提现', labelEn: 'Payout',     pillClass: 'bg-emerald-50 text-emerald-700', iconBg: 'bg-emerald-100 text-emerald-700', icon: <Wallet size={14} /> },
   };
@@ -393,7 +393,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                                 </div>
                                 <div className="bg-slate-50 p-3 rounded-xl">
                                   <p className="text-caption font-black text-slate-400 uppercase">{t.actualSubmittedLabel}</p>
-                                  <p className="text-xs font-black text-indigo-600">TZS {(s.actualCash + s.actualCoins).toLocaleString()}</p>
+                                  <p className="text-xs font-black text-amber-700">TZS {(s.actualCash + s.actualCoins).toLocaleString()}</p>
                                 </div>
                               </div>
                               {s.shortage !== 0 && (
@@ -423,7 +423,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                                   <p className="text-caption font-bold text-slate-500">{categoryLabel}</p>
                                   <p className="text-xs font-black text-slate-900">TZS {tx.expenses.toLocaleString()}</p>
                                 </div>
-                                <div className={`${pill} ${tx.expenseType === 'private' ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-50 text-rose-600'}`}>
+                                <div className={`${pill} ${tx.expenseType === 'private' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-600'}`}>
                                   {tx.expenseType === 'private' ? t.loanLabel : t.companyLabel}
                                 </div>
                               </div>
@@ -497,7 +497,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                             <>
                               <div className="bg-slate-50 p-3 rounded-xl">
                                 <p className="text-caption font-black text-slate-400 uppercase">{lang === 'zh' ? '重置前当前分数' : 'Current Score (Before Reset)'}</p>
-                                <p className="text-lg font-black text-purple-700">{tx.currentScore}</p>
+                                <p className="text-lg font-black text-amber-700">{tx.currentScore}</p>
                                 {loc?.machineId && <p className="text-caption font-bold text-slate-400 mt-0.5">{loc.machineId}</p>}
                               </div>
                               {tx.photoUrl && (
@@ -595,11 +595,11 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                           <p className="text-caption font-black uppercase text-slate-400">{t.expectedTotalLabel}</p>
                           <p className="text-caption font-black text-slate-900">TZS {settlement.expectedTotal.toLocaleString()}</p>
                         </div>
-                        <div className="rounded-xl bg-indigo-50 p-2">
-                          <p className="text-caption font-black uppercase text-indigo-400">
+                        <div className="rounded-xl bg-amber-50 p-2">
+                          <p className="text-caption font-black uppercase text-amber-400">
                             {lang === 'zh' ? '已提交' : 'Submitted'}
                           </p>
-                          <p className="text-caption font-black text-indigo-700">TZS {submittedTotal.toLocaleString()}</p>
+                          <p className="text-caption font-black text-amber-700">TZS {submittedTotal.toLocaleString()}</p>
                         </div>
                         <div className={`rounded-xl p-2 ${variance === 0 ? 'bg-emerald-50' : 'bg-rose-50'}`}>
                           <p className={`text-caption font-black uppercase ${variance === 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
@@ -633,7 +633,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
             ) : (
             <>
             <div className="text-center">
-            <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mx-auto mb-4 border border-indigo-100">
+            <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 mx-auto mb-4 border border-amber-100">
               <Banknote size={40} />
             </div>
             <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">{t.dailySettlement}</h2>
@@ -645,9 +645,9 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                 <p className="text-caption font-black text-slate-400 uppercase mb-1 tracking-widest">{t.revenue}</p>
                 <p className="text-xl font-black text-slate-800">TZS {todayDriverTxs.reduce((sum, tx) => sum + tx.revenue, 0).toLocaleString()}</p>
               </div>
-              <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
-                <p className="text-caption font-black text-indigo-400 uppercase mb-1 tracking-widest">{t.cashInHand}</p>
-                <p className="text-xl font-black text-indigo-600">TZS {todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0).toLocaleString()}</p>
+              <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
+                <p className="text-caption font-black text-amber-400 uppercase mb-1 tracking-widest">{t.cashInHand}</p>
+                <p className="text-xl font-black text-amber-700">TZS {todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0).toLocaleString()}</p>
               </div>
             </div>
 
@@ -723,7 +723,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                   setPendingActionKey(current => (current === 'driver:settlement-submit' ? null : current));
                 }
               }}
-              className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-sm transition-all disabled:opacity-30"
+              className="w-full py-4 bg-amber-600 text-white rounded-2xl font-black uppercase text-sm transition-all disabled:opacity-30"
             >
               ✓ {t.settlementSubmitCta}
             </button>

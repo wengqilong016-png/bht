@@ -45,7 +45,7 @@ const AiLogsTab: React.FC<AiLogsTabProps> = ({
             <button
               key={f}
               onClick={() => setAiLogTypeFilter(f)}
-              className={`flex items-center gap-1 px-3 py-2 rounded-lg text-caption font-black uppercase transition-all ${aiLogTypeFilter === f ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
+              className={`flex items-center gap-1 px-3 py-2 rounded-lg text-caption font-black uppercase transition-all ${aiLogTypeFilter === f ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400'}`}
             >
               {f === 'all' && <LayoutList size={11} />}
               {f === 'image' && <ImageIcon size={11} />}
@@ -56,8 +56,8 @@ const AiLogsTab: React.FC<AiLogsTabProps> = ({
         </div>
         {/* View mode */}
         <div className="flex bg-slate-100 p-1 rounded-xl">
-          <button onClick={() => setAiLogViewMode('list')} className={`px-4 py-2 rounded-lg text-caption font-black uppercase ${aiLogViewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>LIST</button>
-          <button onClick={() => setAiLogViewMode('grid')} className={`px-4 py-2 rounded-lg text-caption font-black uppercase ${aiLogViewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>GRID</button>
+          <button onClick={() => setAiLogViewMode('list')} className={`px-4 py-2 rounded-lg text-caption font-black uppercase ${aiLogViewMode === 'list' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400'}`}>LIST</button>
+          <button onClick={() => setAiLogViewMode('grid')} className={`px-4 py-2 rounded-lg text-caption font-black uppercase ${aiLogViewMode === 'grid' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400'}`}>GRID</button>
         </div>
       </div>
 

@@ -141,8 +141,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
     <div className="min-h-screen bg-[#f5f7fa] flex flex-col items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 p-6 pt-12 flex justify-between items-start z-30">
          <div className="flex gap-4">
-            <button onClick={() => onSetLang('zh')} disabled={isLoading} className={`px-4 py-2 rounded-xl text-caption font-black uppercase flex items-center gap-1.5 transition-all shadow-silicone border border-white/60 ${lang === 'zh' ? 'bg-indigo-600 text-white shadow-silicone-pressed' : 'bg-white text-slate-400'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}><Languages size={12}/> 中文</button>
-            <button onClick={() => onSetLang('sw')} disabled={isLoading} className={`px-4 py-2 rounded-xl text-caption font-black uppercase flex items-center gap-1.5 transition-all shadow-silicone border border-white/60 ${lang === 'sw' ? 'bg-indigo-600 text-white shadow-silicone-pressed' : 'bg-white text-slate-400'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}><Languages size={12}/> EN</button>
+            <button onClick={() => onSetLang('zh')} disabled={isLoading} className={`px-4 py-2 rounded-xl text-caption font-black uppercase flex items-center gap-1.5 transition-all shadow-silicone border border-white/60 ${lang === 'zh' ? 'bg-amber-600 text-white shadow-silicone-pressed' : 'bg-white text-slate-400'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}><Languages size={12}/> 中文</button>
+            <button onClick={() => onSetLang('sw')} disabled={isLoading} className={`px-4 py-2 rounded-xl text-caption font-black uppercase flex items-center gap-1.5 transition-all shadow-silicone border border-white/60 ${lang === 'sw' ? 'bg-amber-600 text-white shadow-silicone-pressed' : 'bg-white text-slate-400'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}><Languages size={12}/> EN</button>
          </div>
          <div className="flex items-center gap-2">
             <div
@@ -162,7 +162,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
             </div>
             <button
               onClick={() => setShowSettings(v => !v)}
-              className={`p-2 rounded-xl text-[10px] font-black transition-all shadow-silicone border border-white/60 ${showSettings ? 'bg-indigo-600 text-white shadow-silicone-pressed' : 'bg-white text-slate-400'}`}
+              className={`p-2 rounded-xl text-[10px] font-black transition-all shadow-silicone border border-white/60 ${showSettings ? 'bg-amber-600 text-white shadow-silicone-pressed' : 'bg-white text-slate-400'}`}
               title={lang === 'zh' ? '连接设置' : 'Connection Settings'}
             >
               <Settings size={14} />
@@ -181,7 +181,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
         </div>
 
         <div className="text-center mb-4 space-y-1">
-          <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">BAHATI <span className="text-indigo-600">JACKPOTS</span></h1>
+        <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">BAHATI <span className="text-amber-600">JACKPOTS</span></h1>
           <p className="text-caption font-bold text-slate-400 uppercase tracking-[0.3em]">Field Operations System</p>
         </div>
 
@@ -189,13 +189,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="email-input" className="text-caption font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-1">
-                 <User size={12} className="text-indigo-500" /> {t.username}
+                 <User size={12} className="text-amber-500" /> {t.username}
               </label>
               <input id="email-input" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} className={`w-full bg-[#f0f2f5] border-none rounded-2xl py-3 px-4 font-bold text-slate-700 shadow-silicone-pressed outline-none transition-all placeholder:text-slate-400 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`} placeholder="email@example.com" required />
             </div>
             <div className="space-y-2">
               <label htmlFor="password-input" className="text-caption font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-1">
-                 <Lock size={12} className="text-indigo-500" /> {t.password}
+                 <Lock size={12} className="text-amber-500" /> {t.password}
               </label>
               <input id="password-input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} className={`w-full bg-[#f0f2f5] border-none rounded-2xl py-3 px-4 font-black text-slate-700 shadow-silicone-pressed outline-none transition-all placeholder:text-slate-400 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`} placeholder="••••••••" required />
             </div>
@@ -216,10 +216,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
               </div>
             )}
 
-            <button type="submit" disabled={isLoading} className="w-full bg-silicone-gradient text-indigo-600 font-black py-3 rounded-2xl shadow-silicone hover:shadow-silicone-sm active:shadow-silicone-pressed border border-white/80 flex items-center justify-center gap-2 transition-all">
+            <button type="submit" disabled={isLoading} className="w-full bg-silicone-gradient text-amber-600 font-black py-3 rounded-2xl shadow-silicone hover:shadow-silicone-sm active:shadow-silicone-pressed border border-white/80 flex items-center justify-center gap-2 transition-all">
               {isLoading ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 size={20} className="animate-spin text-indigo-600" />
+                  <Loader2 size={20} className="animate-spin text-amber-600" />
                   {t.loginBtnLoading}
                 </span>
               ) : (
@@ -247,7 +247,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
           <div className="w-full mt-4 bg-[#f5f7fa] rounded-[32px] shadow-silicone border border-white/60 p-7 space-y-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Settings size={14} className="text-indigo-500" />
+                <Settings size={14} className="text-amber-500" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">
                   {lang === 'zh' ? '连接设置' : 'Connection Settings'}
                 </span>
@@ -271,7 +271,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
 
             <div className="space-y-3">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-1">
-                <Wifi size={11} className="text-indigo-400" />
+                <Wifi size={11} className="text-amber-400" />
                 Supabase URL
               </label>
               <input
@@ -285,7 +285,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
 
             <div className="space-y-3">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-1">
-                <Lock size={11} className="text-indigo-400" />
+                <Lock size={11} className="text-amber-400" />
                 {lang === 'zh' ? 'Anon Key（公开密钥）' : 'Anon Key (public key)'}
               </label>
               <input
@@ -312,7 +312,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
               <button
                 onClick={handleSaveSettings}
                 disabled={settingsSaved}
-                className="flex-1 bg-indigo-600 text-white font-black py-3 rounded-2xl text-[11px] uppercase tracking-wide flex items-center justify-center gap-2 shadow-silicone active:shadow-silicone-pressed transition-all disabled:opacity-60"
+                className="flex-1 bg-amber-600 text-white font-black py-3 rounded-2xl text-[11px] uppercase tracking-wide flex items-center justify-center gap-2 shadow-silicone active:shadow-silicone-pressed transition-all disabled:opacity-60"
               >
                 {settingsSaved
                   ? <><CheckCircle2 size={14} /> {lang === 'zh' ? '已保存，重新加载中…' : 'Saved — Reloading…'}</>

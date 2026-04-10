@@ -63,7 +63,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
           <div>
             <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">{t.trackingTitle}</h2>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 mt-1">
-              <Radio size={12} className="text-indigo-600 animate-pulse" /> {t.trackingSubtitle}
+              <Radio size={12} className="text-amber-600 animate-pulse" /> {t.trackingSubtitle}
             </p>
           </div>
           <div className="relative w-full lg:w-80">
@@ -73,7 +73,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
               value={trackingSearch}
               onChange={(e) => setTrackingSearch(e.target.value)}
               placeholder={t.trackingSearch}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:border-indigo-200"
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:border-amber-200"
             />
           </div>
         </div>
@@ -87,9 +87,9 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
             <p className="text-caption font-black text-amber-500 uppercase">{t.staleGps}</p>
             <p className="text-xl font-black text-amber-700 mt-0.5">{trackingOverview.staleDrivers}</p>
           </div>
-          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-2.5">
-            <p className="text-caption font-black text-indigo-500 uppercase">{t.todaysCollections}</p>
-            <p className="text-xl font-black text-indigo-700 mt-0.5">{trackingOverview.todayCollections}</p>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5">
+            <p className="text-caption font-black text-amber-500 uppercase">{t.todaysCollections}</p>
+            <p className="text-xl font-black text-amber-700 mt-0.5">{trackingOverview.todayCollections}</p>
           </div>
           <div className="bg-rose-50 border border-rose-200 rounded-xl p-2.5">
             <p className="text-caption font-black text-rose-500 uppercase">{t.attentionSites}</p>
@@ -111,7 +111,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
               className={`px-3 py-2 rounded-2xl text-caption font-black uppercase border transition-all ${
                 trackingStatusFilter === key
                   ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-white text-slate-500 border-slate-200 hover:text-indigo-600 hover:border-indigo-200'
+                  : 'bg-white text-slate-500 border-slate-200 hover:text-amber-600 hover:border-amber-200'
               }`}
             >
               {label}
@@ -138,7 +138,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
                 onClick={() => { setExpandedDriverTracking(isExpanded ? null : driver.id); setTrackingEditLocId(null); }}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-white font-black text-base shadow-md ${driver.status === 'active' ? 'bg-indigo-600' : 'bg-slate-400'}`}>
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-white font-black text-base shadow-md ${driver.status === 'active' ? 'bg-amber-600' : 'bg-slate-400'}`}>
                     {driver.name.charAt(0)}
                   </div>
                   <div className="text-left">
@@ -156,9 +156,9 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
                       <p className="text-caption font-black text-slate-400 uppercase">{t.todaysCollections}</p>
                       <p className="text-caption font-black text-slate-900 mt-1">{driverTxsToday.length}</p>
                     </div>
-                    <div className="bg-indigo-50 rounded-xl px-3 py-2 min-w-[86px]">
-                      <p className="text-caption font-black text-indigo-400 uppercase">{t.todaysCash}</p>
-                      <p className="text-caption font-black text-indigo-700 mt-1">TZS {todayRevenue.toLocaleString()}</p>
+                    <div className="bg-amber-50 rounded-xl px-3 py-2 min-w-[86px] border border-amber-100">
+                      <p className="text-caption font-black text-amber-400 uppercase">{t.todaysCash}</p>
+                      <p className="text-caption font-black text-amber-700 mt-1">TZS {todayRevenue.toLocaleString()}</p>
                     </div>
                     <div className={`rounded-xl px-3 py-2 min-w-[86px] ${attentionLocations.length > 0 || hasStaleGps ? 'bg-rose-50' : 'bg-emerald-50'}`}>
                       <p className={`text-caption font-black uppercase ${attentionLocations.length > 0 || hasStaleGps ? 'text-rose-400' : 'text-emerald-400'}`}>{t.attentionSites}</p>
@@ -179,9 +179,9 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
                       <p className="text-caption font-black text-slate-400 uppercase">{t.todaysCollections}</p>
                       <p className="text-sm font-black text-slate-900 mt-1">{driverTxsToday.length}</p>
                     </div>
-                    <div className="bg-indigo-50 rounded-2xl px-4 py-3 border border-indigo-100">
-                      <p className="text-caption font-black text-indigo-400 uppercase">{t.todaysCash}</p>
-                      <p className="text-sm font-black text-indigo-700 mt-1">TZS {todayRevenue.toLocaleString()}</p>
+                    <div className="bg-amber-50 rounded-2xl px-4 py-3 border border-amber-100">
+                      <p className="text-caption font-black text-amber-400 uppercase">{t.todaysCash}</p>
+                      <p className="text-sm font-black text-amber-700 mt-1">TZS {todayRevenue.toLocaleString()}</p>
                     </div>
                     <div className="bg-amber-50 rounded-2xl px-4 py-3 border border-amber-100">
                       <p className="text-caption font-black text-amber-400 uppercase">{t.staleGps}</p>
@@ -213,7 +213,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
                                   setTrackingLocForm({ commissionRate: (loc.commissionRate * 100).toFixed(0), status: loc.status });
                                 }
                               }}
-                              className="p-1.5 text-slate-400 hover:text-indigo-600 transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-amber-600 transition-colors"
                             >
                               <Pencil size={12} />
                             </button>
@@ -221,7 +221,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
                           <div className="grid grid-cols-3 gap-2 text-caption">
                             <div><span className="text-slate-400 font-bold uppercase block">{t.machineIdLabel}</span><span className="font-black text-slate-700">{loc.machineId}</span></div>
                             <div><span className="text-slate-400 font-bold uppercase block">{t.lastScore}</span><span className="font-black text-slate-700">{loc.lastScore.toLocaleString()}</span></div>
-                            <div><span className="text-slate-400 font-bold uppercase block">{t.commissionLabel}</span><span className="font-black text-indigo-600">{(loc.commissionRate * 100).toFixed(0)}%</span></div>
+                            <div><span className="text-slate-400 font-bold uppercase block">{t.commissionLabel}</span><span className="font-black text-amber-600">{(loc.commissionRate * 100).toFixed(0)}%</span></div>
                           </div>
                           <div className="flex flex-wrap gap-1.5 mt-3">
                             {loc.status !== 'active' && (
@@ -280,7 +280,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
                                     setTrackingEditLocId(null);
                                   }
                                 }}
-                                className="w-full py-2.5 bg-indigo-600 text-white rounded-xl text-caption font-black uppercase"
+                                className="w-full py-2.5 bg-amber-600 text-white rounded-xl text-caption font-black uppercase"
                               >
                                 {t.saveChanges}
                               </button>
@@ -292,7 +292,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
                   )}
                   {driver.currentGps && (
                     <div className="flex items-center gap-2 text-caption font-bold text-slate-400 uppercase pt-1">
-                      <Navigation size={10} className="text-indigo-500 animate-pulse" />
+                      <Navigation size={10} className="text-amber-500 animate-pulse" />
                       GPS: {driver.currentGps.lat.toFixed(4)}, {driver.currentGps.lng.toFixed(4)}
                     </div>
                   )}
@@ -306,7 +306,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
       <details className="group">
         <summary className="cursor-pointer list-none flex items-center justify-between bg-white p-3 rounded-2xl border border-slate-200 shadow-sm select-none">
           <div className="flex items-center gap-3">
-            <MapPin size={18} className="text-indigo-500" />
+            <MapPin size={18} className="text-amber-500" />
             <span className="text-sm font-black text-slate-900 uppercase">{t.liveMapTitle}</span>
           </div>
           <span className="text-caption font-black text-slate-400 uppercase group-open:hidden">{t.mapExpand} ▼</span>

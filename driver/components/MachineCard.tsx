@@ -134,7 +134,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
             </div>
 
             <div className="mt-2 flex flex-wrap gap-1.5">
-              <span className={`rounded-full px-2 py-1 text-caption font-black uppercase ${isPending ? 'bg-indigo-50 text-indigo-600' : 'bg-emerald-50 text-emerald-600'}`}>
+              <span className={`rounded-full px-2 py-1 text-caption font-black uppercase ${isPending ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>
                   {isPending ? t.pendingToday : t.visitedToday}
               </span>
               <span className={`rounded-full px-2 py-1 text-caption font-black uppercase ${isNear9999 ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500'}`}>
@@ -191,7 +191,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
                 e.stopPropagation();
                 window.open(`https://www.google.com/maps/dir/?api=1&destination=${loc.coords!.lat},${loc.coords!.lng}`, '_blank');
               }}
-              className="flex-1 px-3 py-2 min-h-11 text-[10px] font-black uppercase text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center justify-center gap-1.5 border-l border-slate-100"
+              className="flex-1 px-3 py-2 min-h-11 text-[10px] font-black uppercase text-amber-600 hover:bg-amber-50 transition-colors flex items-center justify-center gap-1.5 border-l border-slate-100"
             >
               <Navigation size={11} /> {t.navigateTo}
             </button>
@@ -199,7 +199,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
           {onUpdateLocation && (
             <button
               onClick={(e) => { e.stopPropagation(); setShowSiteInfoForm(v => !v); }}
-              className="flex-1 px-3 py-2 min-h-11 text-caption font-black uppercase text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center justify-center gap-1.5 border-l border-slate-100"
+              className="flex-1 px-3 py-2 min-h-11 text-caption font-black uppercase text-amber-600 hover:bg-amber-50 transition-colors flex items-center justify-center gap-1.5 border-l border-slate-100"
             >
               <UserPen size={11} /> {lang === 'zh' ? '补充信息' : 'Site Info'}
             </button>
@@ -223,7 +223,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
             value={siteOwnerName}
             onChange={e => setSiteOwnerName(e.target.value)}
             placeholder={lang === 'zh' ? '店主姓名' : 'Owner name'}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-800 placeholder-slate-300 outline-none focus:border-indigo-400"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-800 placeholder-slate-300 outline-none focus:border-amber-400"
           />
 
           <input
@@ -231,7 +231,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
             value={sitePhone}
             onChange={e => setSitePhone(e.target.value)}
             placeholder={lang === 'zh' ? '店主电话' : 'Owner phone'}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-800 placeholder-slate-300 outline-none focus:border-indigo-400"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-800 placeholder-slate-300 outline-none focus:border-amber-400"
           />
 
           <div>
@@ -246,7 +246,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
             <button
               type="button"
               onClick={() => photoInputRef.current?.click()}
-              className={`w-full rounded-xl border-2 border-dashed py-3 flex items-center justify-center gap-2 text-caption font-black uppercase transition-colors ${sitePhotoPreview ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-400 hover:border-indigo-300 hover:text-indigo-500'}`}
+              className={`w-full rounded-xl border-2 border-dashed py-3 flex items-center justify-center gap-2 text-caption font-black uppercase transition-colors ${sitePhotoPreview ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-400 hover:border-amber-300 hover:text-amber-500'}`}
             >
               {sitePhotoPreview ? (
                 <>
@@ -265,7 +265,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
           <button
             onClick={handleSaveSiteInfo}
             disabled={isSavingSiteInfo}
-            className="w-full rounded-xl bg-indigo-600 py-2.5 text-[11px] font-black uppercase text-white flex items-center justify-center gap-1.5 hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+            className="w-full rounded-xl bg-amber-600 py-2.5 text-[11px] font-black uppercase text-white flex items-center justify-center gap-1.5 hover:bg-amber-700 disabled:opacity-60 transition-colors"
           >
             {isSavingSiteInfo ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
             {lang === 'zh' ? '保存' : 'Save'}

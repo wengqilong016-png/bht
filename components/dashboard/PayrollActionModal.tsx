@@ -193,7 +193,7 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
             <X size={18} />
           </button>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-indigo-500 rounded-xl">{copy.icon}</div>
+            <div className="p-2 bg-amber-500 rounded-xl">{copy.icon}</div>
             <h3 className="text-xl font-black uppercase">{title}</h3>
           </div>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
@@ -215,9 +215,9 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
               <p className="text-slate-400 mb-1">{t.loansAndShortage}</p>
               <p className="text-sm font-black text-rose-600">TZS {(summary.loans + summary.shortage).toLocaleString()}</p>
             </div>
-            <div className="bg-indigo-50 rounded-2xl p-4 border border-indigo-100">
-              <p className="text-indigo-400 mb-1">{t.netPayroll}</p>
-              <p className="text-sm font-black text-indigo-700">TZS {summary.netPayable.toLocaleString()}</p>
+            <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100">
+              <p className="text-amber-400 mb-1">{t.netPayroll}</p>
+              <p className="text-sm font-black text-amber-700">TZS {summary.netPayable.toLocaleString()}</p>
             </div>
           </div>
 
@@ -239,7 +239,7 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
                 <select
                   value={paymentMethod || 'bank_transfer'}
                   onChange={event => setPaymentMethod(event.target.value as MonthlyPayroll['paymentMethod'])}
-                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-indigo-500"
+              className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-amber-500"
                 >
                   <option value="bank_transfer">Bank Transfer</option>
                   <option value="cash">Cash</option>
@@ -279,7 +279,7 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
               onChange={event => setNote(event.target.value)}
               rows={4}
               placeholder={t.notesPlaceholder}
-              className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-indigo-500 resize-none"
+              className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-amber-500 resize-none"
             />
           </div>
 
@@ -294,7 +294,7 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
             <button
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs disabled:opacity-50"
+              className="flex-1 py-3 bg-amber-600 text-white rounded-2xl font-black uppercase text-xs disabled:opacity-50"
             >
               {getPayrollSubmitLabel(mode, isSubmitting || isUploading, t)}
             </button>

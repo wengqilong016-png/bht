@@ -141,7 +141,7 @@ const RouteAuditMap: React.FC<RouteAuditMapProps> = ({ driver, locations, transa
         <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-md p-3 rounded-2xl border border-slate-200 shadow-lg z-[1000] space-y-2">
            <p className="text-caption font-bold text-slate-400 uppercase leading-tight">{t.mapLegend}</p>
            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-indigo-600 border border-white"></div>
+              <div className="w-3 h-3 rounded-full bg-amber-600 border border-white"></div>
               <span className="text-caption font-black text-slate-600 uppercase">{t.normalCollectionPoint}</span>
            </div>
            <div className="flex items-center gap-2">

@@ -16,8 +16,8 @@ interface SortIndicatorProps {
 const SortIndicator: React.FC<SortIndicatorProps> = ({ column, sortBy, sortDir }) => {
   if (sortBy !== column) return <ArrowUpDown size={12} className="opacity-20 ml-1 inline" />;
   return sortDir === 'asc'
-    ? <ArrowUp size={12} className="text-indigo-600 ml-1 inline" />
-    : <ArrowDown size={12} className="text-indigo-600 ml-1 inline" />;
+    ? <ArrowUp size={12} className="text-amber-600 ml-1 inline" />
+    : <ArrowDown size={12} className="text-amber-600 ml-1 inline" />;
 };
 
 interface DriverAnalyticsProps {
@@ -38,16 +38,16 @@ const DriverAnalytics: React.FC<DriverAnalyticsProps> = ({
   return (
     <div className="space-y-6 animate-in slide-in-from-right-2">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-slate-900 text-white p-6 rounded-card relative overflow-hidden">
-          <p className="text-caption font-black text-slate-400 uppercase tracking-widest mb-1">{t.totalRevenueAllTime}</p>
+        <div className="bg-gradient-to-br from-slate-950 to-amber-950 text-white p-6 rounded-card relative overflow-hidden">
+          <p className="text-caption font-black text-amber-100/70 uppercase tracking-widest mb-1">{t.totalRevenueAllTime}</p>
           <p className="text-2xl font-black text-white">TZS {fleetStats.totalRev.toLocaleString()}</p>
-          <div className="absolute right-4 top-4 p-3 bg-white/10 rounded-full"><TrendingUp size={20} /></div>
+          <div className="absolute right-4 top-4 p-3 bg-white/10 rounded-full text-amber-200"><TrendingUp size={20} /></div>
         </div>
         <div className="bg-white p-6 rounded-card border border-slate-200 relative overflow-hidden">
           <p className="text-caption font-black text-slate-400 uppercase tracking-widest mb-1">{t.avgCollectionEfficiency}</p>
-          <p className="text-2xl font-black text-indigo-600">{fleetStats.avgCollection.toFixed(1)}%</p>
+          <p className="text-2xl font-black text-amber-700">{fleetStats.avgCollection.toFixed(1)}%</p>
           <div className="mt-2 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-            <div className="bg-indigo-500 h-full rounded-full" style={{ width: `${fleetStats.avgCollection}%` }}></div>
+            <div className="bg-amber-500 h-full rounded-full" style={{ width: `${fleetStats.avgCollection}%` }}></div>
           </div>
         </div>
         <div className="bg-white p-6 rounded-card border border-slate-200 relative overflow-hidden">
@@ -62,16 +62,16 @@ const DriverAnalytics: React.FC<DriverAnalyticsProps> = ({
           <table className="w-full text-left">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th onClick={() => onToggleSort('name')} className="px-6 py-4 text-caption font-black text-slate-400 uppercase cursor-pointer hover:text-indigo-600 transition-colors">
+                <th onClick={() => onToggleSort('name')} className="px-6 py-4 text-caption font-black text-slate-400 uppercase cursor-pointer hover:text-amber-600 transition-colors">
                   {t.driverLabel} <SortIndicator column="name" sortBy={sortBy} sortDir={sortDir} />
                 </th>
-                <th onClick={() => onToggleSort('revenue')} className="px-6 py-4 text-caption font-black text-slate-400 uppercase cursor-pointer hover:text-indigo-600 transition-colors text-right">
+                <th onClick={() => onToggleSort('revenue')} className="px-6 py-4 text-caption font-black text-slate-400 uppercase cursor-pointer hover:text-amber-600 transition-colors text-right">
                   {t.revenue} <SortIndicator column="revenue" sortBy={sortBy} sortDir={sortDir} />
                 </th>
-                <th onClick={() => onToggleSort('status')} className="px-6 py-4 text-caption font-black text-slate-400 uppercase cursor-pointer hover:text-indigo-600 transition-colors text-right">
+                <th onClick={() => onToggleSort('status')} className="px-6 py-4 text-caption font-black text-slate-400 uppercase cursor-pointer hover:text-amber-600 transition-colors text-right">
                   {t.efficiency}
                 </th>
-                <th onClick={() => onToggleSort('debt')} className="px-6 py-4 text-caption font-black text-slate-400 uppercase cursor-pointer hover:text-indigo-600 transition-colors text-right">
+                <th onClick={() => onToggleSort('debt')} className="px-6 py-4 text-caption font-black text-slate-400 uppercase cursor-pointer hover:text-amber-600 transition-colors text-right">
                   {t.debtStatus} <SortIndicator column="debt" sortBy={sortBy} sortDir={sortDir} />
                 </th>
                 <th className="px-6 py-4 text-caption font-black text-slate-400 uppercase text-center">{t.statusLabel}</th>
@@ -83,7 +83,7 @@ const DriverAnalytics: React.FC<DriverAnalyticsProps> = ({
                 <tr key={d.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-caption font-black text-slate-500">{d.name.charAt(0)}</div>
+                      <div className="w-8 h-8 bg-gradient-to-br from-slate-900 to-amber-700 rounded-full flex items-center justify-center text-caption font-black text-white">{d.name.charAt(0)}</div>
                       <div>
                         <p className="text-xs font-black text-slate-900">{d.name}</p>
                         <p className="text-caption text-slate-400">{d.stats.txCount} {t.collectionsShort}</p>
@@ -93,7 +93,7 @@ const DriverAnalytics: React.FC<DriverAnalyticsProps> = ({
                   <td className="px-6 py-4 text-right font-bold text-xs text-slate-700">{d.stats.totalRevenue.toLocaleString()}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex flex-col items-end gap-1">
-                      <span className={`text-xs font-black ${d.stats.collectionRate > 80 ? 'text-emerald-600' : d.stats.collectionRate > 50 ? 'text-amber-500' : 'text-rose-500'}`}>
+                      <span className={`text-xs font-black ${d.stats.collectionRate > 80 ? 'text-emerald-600' : d.stats.collectionRate > 50 ? 'text-amber-600' : 'text-rose-500'}`}>
                         {d.stats.collectionRate.toFixed(1)}%
                       </span>
                       <div className="w-16 h-1 bg-slate-100 rounded-full overflow-hidden">
@@ -109,7 +109,7 @@ const DriverAnalytics: React.FC<DriverAnalyticsProps> = ({
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <button onClick={() => onEdit(d)} className="p-1.5 bg-indigo-50 rounded-lg text-indigo-600 hover:bg-indigo-100 transition-colors"><Pencil size={12} /></button>
+                      <button onClick={() => onEdit(d)} className="p-1.5 bg-amber-50 rounded-lg text-amber-700 hover:bg-amber-100 transition-colors"><Pencil size={12} /></button>
                       <button onClick={() => onDelete(d.id)} className="p-1.5 bg-rose-50 rounded-lg text-rose-500 hover:bg-rose-100 transition-colors"><Trash2 size={12} /></button>
                     </div>
                   </td>

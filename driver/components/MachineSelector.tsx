@@ -174,10 +174,10 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
 
       {/* Online with pending queue */}
       {isOnline && offlineQueueCount > 0 && (
-        <div className="flex items-center gap-3 px-3 py-2.5 bg-indigo-50 border border-indigo-200 rounded-2xl">
-          <DatabaseBackup size={16} className="text-indigo-500 flex-shrink-0" />
+        <div className="flex items-center gap-3 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-2xl">
+          <DatabaseBackup size={16} className="text-amber-500 flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-caption font-black text-indigo-700 uppercase">
+            <p className="text-caption font-black text-amber-700 uppercase">
               {lang === 'zh' ? `${offlineQueueCount} 条离线记录正在同步...` : `Syncing ${offlineQueueCount} offline records...`}
             </p>
           </div>
@@ -187,16 +187,23 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
       <div className="flex items-start justify-between gap-3 rounded-3xl bg-white border border-slate-200 px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
         <div>
           <h2 className="text-lg font-black text-slate-900 flex items-center gap-2 uppercase">
-            <ScanLine className="text-indigo-600" size={18} />
+            <ScanLine className="text-amber-600" size={18} />
             {t.selectMachine}
           </h2>
           <p className="text-caption font-black text-slate-400 uppercase tracking-widest mt-1">
             {todayDriverTransactions.length} {t.todaysCollections}
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-slate-900 px-3 py-2 rounded-2xl shadow-[0_10px_24px_rgba(15,23,42,0.18)]">
-          <Coins size={13} className="text-emerald-400" />
-          <span className="text-xs font-black text-white">{(currentDriver?.dailyFloatingCoins ?? 0).toLocaleString()}</span>
+        <div className="rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 px-3 py-2 text-white shadow-[0_10px_24px_rgba(245,158,11,0.32)] ring-1 ring-amber-300/40">
+          <div className="flex items-center gap-2">
+            <Coins size={13} className="text-white" />
+            <span className="text-[10px] font-black uppercase tracking-widest">
+              {lang === 'zh' ? '流动硬币' : 'Floating Coins'}
+            </span>
+          </div>
+          <span className="mt-1 block text-right text-sm font-black">
+            {(currentDriver?.dailyFloatingCoins ?? 0).toLocaleString()}
+          </span>
         </div>
       </div>
 
@@ -204,10 +211,10 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
         <button
           type="button"
           onClick={() => (onResumeDraft ?? onSelectMachine)(currentDraftLocation.id)}
-          className="flex w-full items-center justify-between gap-3 rounded-card border border-indigo-200 bg-indigo-50 px-4 py-3 text-left shadow-[0_10px_24px_rgba(79,70,229,0.08)] transition-colors hover:bg-indigo-100"
+          className="flex w-full items-center justify-between gap-3 rounded-card border border-amber-200 bg-amber-50 px-4 py-3 text-left shadow-[0_10px_24px_rgba(245,158,11,0.08)] transition-colors hover:bg-amber-100"
         >
           <div className="min-w-0">
-            <p className="text-caption font-black uppercase tracking-[0.22em] text-indigo-500">
+            <p className="text-caption font-black uppercase tracking-[0.22em] text-amber-500">
               {t.resumeCurrentTask}
             </p>
             <p className="mt-1 truncate text-[11px] font-black uppercase text-slate-900">
@@ -218,7 +225,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
               {currentDraftLocation.area || '—'} · {t.score} {(currentDraftLocation.lastScore ?? 0).toLocaleString()}
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2 rounded-2xl bg-white px-3 py-2 text-caption font-black uppercase tracking-wide text-indigo-600">
+          <div className="flex shrink-0 items-center gap-2 rounded-2xl bg-white px-3 py-2 text-caption font-black uppercase tracking-wide text-amber-600">
             <ScanLine size={13} />
             {t.resumeEntry}
           </div>

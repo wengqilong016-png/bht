@@ -102,7 +102,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
             <span className="rounded-full bg-slate-100 px-2 py-1 text-caption font-black uppercase text-slate-500">
               {t.diff} {diff}
             </span>
-            <span className="rounded-full bg-indigo-50 px-2 py-1 text-caption font-black uppercase text-indigo-600">
+            <span className="rounded-full bg-amber-50 px-2 py-1 text-caption font-black uppercase text-amber-600">
               TZS {revenue.toLocaleString()}
             </span>
           </div>
@@ -148,7 +148,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
 
         {/* Revenue preview */}
         {currentScore && (
-          <div className={`mt-3 p-3 rounded-2xl text-white flex justify-between items-center ${revenue > 50000 ? 'bg-indigo-600' : 'bg-slate-800'}`}>
+          <div className={`mt-3 p-3 rounded-2xl text-white flex justify-between items-center ${revenue > 50000 ? 'bg-amber-600' : 'bg-slate-800'}`}>
             <div>
               <p className="text-caption font-black uppercase opacity-60">{t.diff} {diff}</p>
               <p className="text-caption font-black uppercase opacity-60">{diff} × 200 TZS</p>
@@ -214,7 +214,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
               <p className={`text-caption font-black uppercase ${textCls}`}>{label}</p>
             </div>
             {!isGranted && (
-              <button onClick={requestGps} className="p-1.5 bg-white rounded-xl border border-slate-200 text-indigo-600 flex-shrink-0">
+              <button onClick={requestGps} className="p-1.5 bg-white rounded-xl border border-slate-200 text-amber-600 flex-shrink-0">
                 <RotateCcw size={12} />
               </button>
             )}
@@ -252,7 +252,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
         <button
           onClick={onNext}
           disabled={!currentScore || isScoreBelowLastReading}
-          className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-200/40"
+          className="w-full py-4 bg-amber-600 text-white rounded-2xl font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-3 shadow-lg shadow-amber-200/40"
         >
           <ChevronRight size={18} />
           {t.nextFinancialStep}

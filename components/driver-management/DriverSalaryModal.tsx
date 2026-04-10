@@ -31,20 +31,20 @@ const DriverSalaryModal: React.FC<DriverSalaryModalProps> = ({ salaryData, onClo
       <div className="bg-slate-900 p-6 text-white relative">
         <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-white/10 rounded-full hover:bg-white/20"><X size={18} /></button>
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-indigo-500 rounded-xl"><Calculator size={20} /></div>
+          <div className="p-2 bg-amber-500 rounded-xl"><Calculator size={20} /></div>
           <h3 className="text-xl font-black uppercase">{t.monthlyPayrollTitle}</h3>
         </div>
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{salaryData.driver.name} • {salaryData.month} {t.monthlyCycle}</p>
       </div>
 
       <div className="p-6 space-y-6">
-        <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex justify-between items-center">
+        <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex justify-between items-center">
           <div>
-            <p className="text-caption font-black text-indigo-400 uppercase mb-1">{t.monthlyRevenueStats}</p>
+            <p className="text-caption font-black text-amber-400 uppercase mb-1">{t.monthlyRevenueStats}</p>
             <p className="text-xl font-black text-slate-900">TZS {salaryData.revenue.toLocaleString()}</p>
           </div>
           <div className="text-right">
-            <p className="text-caption font-black text-indigo-400 uppercase mb-1">{t.collectionsVisits}</p>
+            <p className="text-caption font-black text-amber-400 uppercase mb-1">{t.collectionsVisits}</p>
             <p className="text-base font-black text-slate-700">{salaryData.txCount}</p>
           </div>
         </div>
@@ -69,7 +69,7 @@ const DriverSalaryModal: React.FC<DriverSalaryModalProps> = ({ salaryData, onClo
           <div className="h-px bg-slate-100 my-2"></div>
           <div className="flex justify-between items-center">
             <span className="text-sm font-black text-slate-900 uppercase tracking-widest">{t.netSalaryLabel}</span>
-            <span className="text-xl font-black text-indigo-600">TZS {salaryData.total.toLocaleString()}</span>
+            <span className="text-xl font-black text-amber-700">TZS {salaryData.total.toLocaleString()}</span>
           </div>
         </div>
 

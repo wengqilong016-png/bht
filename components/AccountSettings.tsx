@@ -1,10 +1,10 @@
 
-import { X, Lock, Mail, Phone, CheckCircle, AlertCircle, Loader2, KeyRound, Clock, WifiOff } from 'lucide-react';
+import { X, Lock, Mail, Phone, AlertCircle, Loader2, KeyRound, Clock, WifiOff, Coins } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { useFormStatus } from '../hooks/useFormStatus';
 import { updatePassword } from '../repositories/authRepository';
-import { updateDriverPhone } from '../repositories/driverRepository';
+import { updateDriverCoins, updateDriverPhone } from '../repositories/driverRepository';
 import { updateUserEmail } from '../services/authService';
 import { User as UserType, TRANSLATIONS, isLikelyEmail } from '../types';
 
@@ -18,12 +18,15 @@ interface AccountSettingsProps {
   currentUser: UserType;
   lang: 'zh' | 'sw';
   isOnline?: boolean;
+  currentFloatingCoins?: number;
   onClose: () => void;
   /** Called when the driver's phone is updated so parent can reflect it */
   onPhoneUpdated?: (driverId: string, phone: string) => Promise<void> | void;
+  /** Called when the driver's floating coins are updated so parent can reflect it */
+  onCoinsUpdated?: (driverId: string, coins: number) => Promise<void> | void;
 }
 
-const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, isOnline = true, onClose, onPhoneUpdated }) => {
+const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, isOnline = true, currentFloatingCoins, onClose, onPhoneUpdated, onCoinsUpdated }) => {
   const t = TRANSLATIONS[lang];
   const currentEmail = isLikelyEmail(currentUser.username)
     ? currentUser.username.trim()
@@ -42,6 +45,14 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
   // Phone section (stored in drivers table)
   const [newPhone, setNewPhone] = useState('');
   const phoneForm = useFormStatus();
+  const [floatingCoins, setFloatingCoins] = useState('');
+  const coinsForm = useFormStatus();
+
+  React.useEffect(() => {
+    if (typeof currentFloatingCoins === 'number') {
+      setFloatingCoins(String(currentFloatingCoins));
+    }
+  }, [currentFloatingCoins]);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,6 +118,31 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
     }
   };
 
+  const handleUpdateCoins = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isOnline) { coinsForm.setError(t.offlineWarning); return; }
+    if (!currentUser.driverId) {
+      coinsForm.setError(t.updateError);
+      return;
+    }
+
+    const parsedCoins = parseInt(floatingCoins.replace(/,/g, '').trim(), 10);
+    if (Number.isNaN(parsedCoins) || parsedCoins < 0) {
+      coinsForm.setError(lang === 'zh' ? '请输入有效的流动硬币金额' : 'Enter a valid floating coin amount');
+      return;
+    }
+
+    coinsForm.setLoading();
+    try {
+      await updateDriverCoins(currentUser.driverId, parsedCoins);
+      await onCoinsUpdated?.(currentUser.driverId, parsedCoins);
+      coinsForm.setSuccess(t.updateSuccess);
+      setFloatingCoins('');
+    } catch (err) {
+      coinsForm.setError((err as Error).message || t.updateError);
+    }
+  };
+
   const StatusIcon = StatusIconComponent;
 
   const inputClass = "w-full bg-[#f0f2f5] border-none rounded-xl py-3 px-4 text-sm font-bold text-slate-700 shadow-silicone-pressed outline-none transition-all placeholder:text-slate-400 disabled:opacity-50";
@@ -121,7 +157,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-200 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-silicone-gradient shadow-silicone text-indigo-600 flex items-center justify-center font-black text-sm border border-white/60">
+            <div className="w-10 h-10 rounded-xl bg-silicone-gradient shadow-silicone text-amber-600 flex items-center justify-center font-black text-sm border border-white/60">
               {currentUser.name.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -129,7 +165,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
               <p className="text-caption font-bold text-slate-400 uppercase">{currentUser.username} • {t.accountSettings}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 bg-white/50 shadow-silicone-sm rounded-xl text-slate-400 hover:text-indigo-600 transition-all border border-white/80">
+          <button onClick={onClose} className="p-2 bg-white/50 shadow-silicone-sm rounded-xl text-slate-400 hover:text-amber-600 transition-all border border-white/80">
             <X size={16} />
           </button>
         </div>
@@ -193,7 +229,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
           {/* ── Change Email ── */}
           <div className={sectionClass}>
             <div className="flex items-center gap-2 mb-3">
-              <Mail size={14} className="text-indigo-400" />
+              <Mail size={14} className="text-amber-400" />
               <p className="text-xs font-black text-white uppercase tracking-widest">{t.changeEmail}</p>
             </div>
 
@@ -218,7 +254,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
                 <p className="text-[11px] font-bold text-slate-600 leading-relaxed">
                   {t.emailCheckNewInboxNote}
                   {submittedEmail ? (
-                    <span className="block mt-1 text-indigo-600 break-all">{submittedEmail}</span>
+                    <span className="block mt-1 text-amber-600 break-all">{submittedEmail}</span>
                   ) : null}
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
@@ -227,7 +263,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
                 <button
                   type="button"
                   onClick={() => { emailForm.reset(); setSubmittedEmail(''); setNewEmail(''); }}
-                  className="text-[10px] text-indigo-500 font-black underline underline-offset-2 hover:text-indigo-700 transition-colors"
+                  className="text-[10px] text-amber-500 font-black underline underline-offset-2 hover:text-amber-700 transition-colors"
                 >
                   {t.emailSubmitAnotherRequest} →
                 </button>
@@ -235,7 +271,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
             ) : (
               <form onSubmit={handleChangeEmail} className="space-y-3">
                 <div>
-                  <label className={labelClass}><Mail size={10} className="text-indigo-400" />{t.newEmail}</label>
+                  <label className={labelClass}><Mail size={10} className="text-amber-400" />{t.newEmail}</label>
                   <input
                     type="email"
                     value={newEmail}
@@ -287,6 +323,49 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
                 )}
                 <button type="submit" disabled={phoneForm.isLoading || !isOnline} className={submitClass}>
                   {phoneForm.isLoading ? <Loader2 size={16} className="animate-spin" /> : <><Phone size={14} /> {t.saveChanges}</>}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {currentUser.role === 'driver' && currentUser.driverId && (
+            <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white shadow-silicone p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <Coins size={14} className="text-amber-500" />
+                <p className="text-xs font-black text-amber-700 uppercase tracking-widest">
+                  {lang === 'zh' ? '流动硬币设置' : 'Floating Coins'}
+                </p>
+              </div>
+              <form onSubmit={handleUpdateCoins} className="space-y-3">
+                <div>
+                  <label className={labelClass}>
+                    <Coins size={10} className="text-amber-500" />
+                    {lang === 'zh' ? '当前可用流动硬币 (TZS)' : 'Available Floating Coins (TZS)'}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={floatingCoins}
+                    onChange={e => { setFloatingCoins(e.target.value); coinsForm.reset(); }}
+                    className="w-full bg-white border border-amber-200 rounded-xl py-3 px-4 text-sm font-bold text-slate-700 shadow-silicone-pressed outline-none transition-all placeholder:text-slate-400 disabled:opacity-50 focus:border-amber-400"
+                    placeholder={lang === 'zh' ? '例如 10000' : 'e.g. 10000'}
+                    required
+                    disabled={!isOnline}
+                  />
+                  <p className="mt-1 text-[10px] font-bold text-slate-400">
+                    {lang === 'zh'
+                      ? '这里填写司机当前随身携带、用于换币的流动硬币金额。'
+                      : 'Set the driver coin float used for machine coin exchange.'}
+                  </p>
+                </div>
+                {!coinsForm.isIdle && (
+                  <div className={`flex items-center gap-2 text-xs font-bold ${coinsForm.isSuccess ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <StatusIcon status={coinsForm.status} />
+                    <span>{coinsForm.message}</span>
+                  </div>
+                )}
+                <button type="submit" disabled={coinsForm.isLoading || !isOnline} className="w-full bg-amber-500 text-white font-black py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-200 hover:shadow-amber-300 active:shadow-amber-200 transition-all disabled:opacity-50 border border-amber-400/20">
+                  {coinsForm.isLoading ? <Loader2 size={16} className="animate-spin" /> : <><Coins size={14} /> {t.saveChanges}</>}
                 </button>
               </form>
             </div>

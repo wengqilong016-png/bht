@@ -86,7 +86,7 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
       />
 
       {/* Revenue summary */}
-      <div className={`px-3 py-2.5 rounded-2xl text-white flex justify-between items-center ${calculations.revenue > 50000 ? 'bg-indigo-600' : 'bg-slate-800'}`}>
+      <div className={`px-3 py-2.5 rounded-2xl text-white flex justify-between items-center ${calculations.revenue > 50000 ? 'bg-amber-600' : 'bg-slate-800'}`}>
         <div>
           <p className="text-caption font-black uppercase opacity-60">{t.formula}</p>
           <p className="text-caption font-bold opacity-50">({currentScore} − {selectedLocation?.lastScore}) × 200</p>
@@ -275,30 +275,30 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
         </div>
       </div>
 
-      <div className="bg-indigo-50 p-3 rounded-2xl border border-indigo-100">
+      <div className="bg-amber-50 p-3 rounded-2xl border border-amber-100">
         <div className="flex items-center justify-between mb-2">
-          <label className="text-caption font-black text-indigo-600 uppercase flex items-center gap-2 tracking-widest">
+          <label className="text-caption font-black text-amber-600 uppercase flex items-center gap-2 tracking-widest">
             <ShieldAlert size={13} /> {lang === 'zh' ? '商家欠款手动扣减' : 'Manual Merchant Debt Deduction'}
           </label>
-          <span className="text-caption font-black text-indigo-400 uppercase">
+          <span className="text-caption font-black text-amber-400 uppercase">
             {lang === 'zh'
               ? `剩余 ${selectedLocation.remainingStartupDebt.toLocaleString()}`
               : `Balance ${selectedLocation.remainingStartupDebt.toLocaleString()}`}
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-baseline gap-1 border-b border-indigo-200 px-1 flex-1">
-            <span className="text-xs font-black text-indigo-300">TZS</span>
+          <div className="flex items-baseline gap-1 border-b border-amber-200 px-1 flex-1">
+            <span className="text-xs font-black text-amber-300">TZS</span>
             <input
               type="number"
               value={startupDebtDeduction}
               onChange={e => onUpdateStartupDebtDeduction(e.target.value)}
-              className="w-full text-2xl font-black bg-transparent outline-none text-indigo-900 placeholder:text-indigo-200"
+              className="w-full text-2xl font-black bg-transparent outline-none text-amber-900 placeholder:text-amber-200"
               placeholder="0"
             />
           </div>
         </div>
-        <p className="text-caption font-black text-indigo-400 uppercase mt-2">
+        <p className="text-caption font-black text-amber-400 uppercase mt-2">
           {lang === 'zh'
             ? '手动填写，本次只会按可扣上限和剩余商家欠款计入。'
             : 'Manual entry. This run is capped by available cash and remaining merchant debt.'}
@@ -318,8 +318,8 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
         </div>
       )}
       {calculations.startupDebtDeduction > 0 && (
-        <div className="p-3 rounded-subcard border border-indigo-200 bg-indigo-50">
-          <p className="text-caption font-black uppercase text-indigo-700">
+        <div className="p-3 rounded-subcard border border-amber-200 bg-amber-50">
+          <p className="text-caption font-black uppercase text-amber-700">
             {lang === 'zh'
               ? `本次将代商家回收欠款 TZS ${calculations.startupDebtDeduction.toLocaleString()}。`
               : `This collection will recover TZS ${calculations.startupDebtDeduction.toLocaleString()} of merchant debt.`}
@@ -330,7 +330,7 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={onBack}
-            className="py-4 bg-white border border-slate-200 text-slate-500 rounded-btn font-black uppercase text-xs shadow-field hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
+            className="py-4 bg-white border border-slate-200 text-slate-500 rounded-btn font-black uppercase text-xs shadow-field hover:text-amber-600 transition-colors flex items-center justify-center gap-2"
           >
             <ArrowRight size={15} className="rotate-180" />
             {lang === 'zh' ? '返回' : 'Back'}
@@ -338,7 +338,7 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
           <button
             onClick={onNext}
             disabled={isScoreBelowLastReading}
-            className="py-4 bg-indigo-600 text-white rounded-btn font-black uppercase text-xs shadow-field-md active:scale-95 transition-all flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:cursor-not-allowed"
+            className="py-4 bg-amber-600 text-white rounded-btn font-black uppercase text-xs shadow-field-md active:scale-95 transition-all flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:cursor-not-allowed"
           >
             {lang === 'zh' ? '复核并提交' : 'Review & Submit'}
             <ChevronRight size={15} />

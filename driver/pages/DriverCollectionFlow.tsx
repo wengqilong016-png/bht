@@ -276,11 +276,6 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     }
     setStep('capture');
   };
-  const handleContinueToNextMachine = (locId: string) => {
-    // "Continue to next" is called after a successful submission — draft is already
-    // cleared at this point, so no confirmation needed.
-    handleSelectMachine(locId);
-  };
   const handleSwitchMachine = () => {
     if (hasDraftInProgress) {
       const ok = window.confirm(
@@ -490,7 +485,6 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       onBack={() => setStep('amounts')}
       onSwitchMachine={handleSwitchMachine}
       onReset={handleFullReset}
-      onContinueNext={handleContinueToNextMachine}
       onUpdateGps={(coords) => updateDraft({ gpsCoords: coords })}
       onUpdateGpsPermission={(perm) => updateDraft({ gpsPermission: perm })}
       nextMachine={nextQueuedMachine}

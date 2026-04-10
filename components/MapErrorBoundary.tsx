@@ -42,7 +42,7 @@ export class MapErrorBoundary extends React.Component<Props, State> {
           </div>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
-            className="text-xs text-indigo-500 underline hover:text-indigo-700"
+            className="text-xs text-amber-500 underline hover:text-amber-700"
           >
             重试 / Retry
           </button>

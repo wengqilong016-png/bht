@@ -43,8 +43,12 @@ const AppDriverShell: React.FC = () => {
   const [view, setView] = useState<DriverView>('collect');
   const [showAccountSettings, setShowAccountSettings] = useState(false);
 
+  const isDriverView = (candidate: string): candidate is DriverView =>
+    DRIVER_NAV_ITEMS.some((item) => item.id === candidate);
+
   const syncStatus = useSyncStatus({ syncMutation: syncOfflineData, isOnline, unsyncedCount, userId: currentUser.id });
   const todayStr = getTodayLocalDate();
+  const currentDriver = drivers.find(d => d.id === activeDriverId);
   const assignedMachineCount = filteredLocations.length;
   const todayCollectionCount = filteredTransactions.filter((tx) => tx.driverId === activeDriverId && tx.timestamp.startsWith(todayStr) && (tx.type === undefined || tx.type === 'collection')).length;
   const pendingSettlementCount = filteredSettlements.filter((settlement) => settlement.driverId === activeDriverId && settlement.status === 'pending').length;
@@ -79,7 +83,11 @@ const AppDriverShell: React.FC = () => {
     [lang, t, navStatByView]
   );
 
-  const handleSetView = (id: string) => setView(id as DriverView);
+  const handleSetView = (id: string) => {
+    if (isDriverView(id)) {
+      setView(id);
+    }
+  };
 
   return (
     <AppShell>
@@ -148,9 +156,14 @@ const AppDriverShell: React.FC = () => {
           currentUser={currentUser}
           lang={lang}
           isOnline={isOnline}
+          currentFloatingCoins={currentDriver?.dailyFloatingCoins}
           onClose={() => setShowAccountSettings(false)}
           onPhoneUpdated={async (driverId, phone) => {
             const updated = drivers.map(d => d.id === driverId ? { ...d, phone } : d);
+            await updateDrivers.mutateAsync(updated);
+          }}
+          onCoinsUpdated={async (driverId, coins) => {
+            const updated = drivers.map(d => d.id === driverId ? { ...d, dailyFloatingCoins: coins } : d);
             await updateDrivers.mutateAsync(updated);
           }}
         />

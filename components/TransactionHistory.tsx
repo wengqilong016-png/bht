@@ -76,7 +76,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze = () 
       : syncStatus.state === 'failed'
       ? 'border-rose-200 bg-rose-50 text-rose-700'
       : syncStatus.state === 'syncing'
-      ? 'border-indigo-200 bg-indigo-50 text-indigo-700'
+      ? 'border-amber-200 bg-amber-50 text-amber-700'
       : 'border-amber-200 bg-amber-50 text-amber-700',
     title: lang === 'zh'
       ? syncStatus.state === 'offline'
@@ -147,7 +147,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze = () 
             <select 
               value={selectedLocation} 
               onChange={(e) => setSelectedLocation(e.target.value)} 
-              className="bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-caption font-black text-slate-700 outline-none uppercase appearance-none min-w-[150px] shadow-sm focus:ring-2 focus:ring-indigo-500/20 transition-all"
+              className="bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-caption font-black text-slate-700 outline-none uppercase appearance-none min-w-[150px] shadow-sm focus:ring-2 focus:ring-amber-500/20 transition-all"
             >
               <option value="all">{lang === 'zh' ? '所有点位汇总' : 'All Sites'}</option>
               {locationNames.map(loc => <option key={loc} value={loc}>{loc}</option>)}
@@ -158,7 +158,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze = () 
 
       <div className="space-y-3">
           {filteredTransactions.map(tx => (
-            <div key={tx.id} className="bg-white rounded-3xl border border-slate-200 overflow-hidden hover:border-indigo-300 transition-all group shadow-sm hover:shadow-md">
+            <div key={tx.id} className="bg-white rounded-3xl border border-slate-200 overflow-hidden hover:border-amber-300 transition-all group shadow-sm hover:shadow-md">
               <div className="p-5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 ${tx.isSynced ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-amber-50 border-amber-100 text-amber-600 shadow-inner animate-pulse'}`}>
@@ -169,14 +169,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze = () 
                     <div className="flex items-center gap-3 text-caption font-black text-slate-400 uppercase tracking-widest mt-1">
                       <div className="flex items-center gap-1"><Clock size={10} /> {new Date(tx.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
                       <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
-                      <div className="flex items-center gap-1 text-indigo-500"><Globe size={10} /> {tx.dataUsageKB} KB</div>
+                      <div className="flex items-center gap-1 text-amber-500"><Globe size={10} /> {tx.dataUsageKB} KB</div>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <p className="text-xs font-black text-slate-400 uppercase mb-0.5">净营收</p>
-                    <p className="text-sm font-black text-indigo-600">TZS {tx.netPayable.toLocaleString()}</p>
+                    <p className="text-sm font-black text-amber-600">TZS {tx.netPayable.toLocaleString()}</p>
                   </div>
                   <button onClick={() => setExpandedId(expandedId === tx.id ? null : tx.id)} className={`p-2 rounded-xl transition-all ${expandedId === tx.id ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
                     <ChevronDown size={18} className={`transition-transform duration-300 ${expandedId === tx.id ? 'rotate-180' : ''}`} />
@@ -189,22 +189,22 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze = () 
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Calculator size={16} className="text-indigo-600" />
+                          <Calculator size={16} className="text-amber-600" />
                           <h4 className="text-caption font-black text-slate-900 uppercase tracking-widest">收益清算明细</h4>
                         </div>
                         {tx.aiScore && (
-                           <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 animate-in zoom-in-95">
-                              <Sparkles size={12} className="text-indigo-600" />
-                              <span className="text-caption font-black text-indigo-700 uppercase">AI 审计已确认</span>
+                           <div className="flex items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 animate-in zoom-in-95">
+                              <Sparkles size={12} className="text-amber-600" />
+                              <span className="text-caption font-black text-amber-700 uppercase">AI 审计已确认</span>
                            </div>
                         )}
                       </div>
                       
                       {tx.aiScore && (
-                        <div className="p-4 bg-white border-2 border-indigo-100 rounded-2xl space-y-3 shadow-lg shadow-indigo-50">
-                           <div className="flex justify-between items-center border-b border-indigo-50 pb-2">
+                        <div className="p-4 bg-white border-2 border-amber-100 rounded-2xl space-y-3 shadow-lg shadow-amber-50">
+                           <div className="flex justify-between items-center border-b border-amber-50 pb-2">
                               <span className="text-caption font-black text-slate-400 uppercase">AI 识别读数</span>
-                              <span className="text-base font-black text-indigo-600">{tx.aiScore}</span>
+                              <span className="text-base font-black text-amber-600">{tx.aiScore}</span>
                            </div>
                            <div className="flex justify-between items-center">
                               <span className="text-caption font-black text-slate-400 uppercase">数据吻合度</span>
@@ -228,7 +228,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze = () 
                                       btn.innerHTML = '翻译失败';
                                     }
                                   }}
-                                  className="absolute top-2 right-2 p-1.5 bg-indigo-100 text-indigo-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-caption font-black"
+                                  className="absolute top-2 right-2 p-1.5 bg-amber-100 text-amber-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-caption font-black"
                                 >
                                   <Globe size={10} /> 翻译
                                 </button>
@@ -262,7 +262,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze = () 
                                    {isFar && <ShieldAlert size={12} className="text-rose-500 animate-pulse" />}
                                 </div>
                                 <div className="flex items-baseline gap-1 mt-1">
-                                   <p className={`text-xs font-black ${isFar ? 'text-rose-600' : isMedium ? 'text-amber-600' : 'text-indigo-600'}`}>
+                                   <p className={`text-xs font-black ${isFar ? 'text-rose-600' : isMedium ? 'text-amber-600' : 'text-amber-700'}`}>
                                       {dist !== null ? `${Math.round(dist)} 米` : '无坐标数据'}
                                    </p>
                                    <p className="text-caption font-bold text-slate-400 uppercase">Offset</p>

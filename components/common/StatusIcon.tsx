@@ -18,7 +18,7 @@ interface StatusIconProps {
  */
 export const StatusIcon: React.FC<StatusIconProps> = ({ status, size = 14, className = '' }) => {
   if (status === 'loading') {
-    return <Loader2 size={size} className={`animate-spin text-indigo-400 ${className}`} />;
+    return <Loader2 size={size} className={`animate-spin text-amber-400 ${className}`} />;
   }
   if (status === 'ok') {
     return <CheckCircle size={size} className={`text-emerald-400 ${className}`} />;

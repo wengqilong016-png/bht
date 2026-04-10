@@ -49,7 +49,6 @@ interface SubmitReviewProps {
   onBack: () => void;
   onSwitchMachine?: () => void;
   onReset: () => void;
-  onContinueNext?: (locId: string) => void;
   onUpdateGps: (coords: { lat: number; lng: number }) => void;
   onUpdateGpsPermission: (perm: 'prompt' | 'granted' | 'denied') => void;
   nextMachine?: Location | null;
@@ -58,11 +57,16 @@ interface SubmitReviewProps {
   todayStr: string;
 }
 
+type CompletionResult = {
+  source: 'server' | 'offline';
+  transaction: Transaction;
+};
+
 const SubmitReview: React.FC<SubmitReviewProps> = ({
   selectedLocation, currentDriver, lang, isOnline, currentScore, photoData,
   aiReviewData, expenses, expenseType, expenseCategory, expenseDescription, coinExchange, tip, startupDebtDeduction, draftTxId,
   gpsCoords, gpsPermission, isOwnerRetaining, ownerRetention, calculations,
-  onSubmit, onBack, onSwitchMachine, onReset, onContinueNext, onUpdateGps, onUpdateGpsPermission, nextMachine, pendingCount,
+  onSubmit, onBack, onSwitchMachine, onReset, onUpdateGps, onUpdateGpsPermission, nextMachine, pendingCount,
   allTransactions, todayStr,
 }) => {
   const t = TRANSLATIONS[lang];
@@ -74,6 +78,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   // GPS-acquisition local state (distinct from the submission state machine)
   const [gpsResolving, setGpsResolving] = useState(false);
   const { state: submissionState, submit: submitCollection, reset: resetSubmissionState } = useCollectionSubmission();
+  const [completionResult, setCompletionResult] = useState<CompletionResult | null>(null);
 
   // Idempotency lock — prevents a second submission while the success/error
   // useEffect is pending (e.g. user taps Submit again while alert() is open).
@@ -82,29 +87,97 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   // Reset the idempotency lock whenever the draftTxId changes (new collection).
   React.useEffect(() => {
     submittedRef.current = false;
+    setCompletionResult(null);
   }, [draftTxId]);
 
   // Derived boolean used to disable the submit button and spinner gating
   const isProcessing = gpsResolving || submissionState.status === 'submitting';
+
+  const handleReturnHome = () => {
+    setCompletionResult(null);
+    submittedRef.current = false;
+    resetSubmissionState();
+    onReset();
+  };
 
   // Consume success / error transitions and run UI side effects
   useEffect(() => {
     if (submissionState.status === 'success') {
       const { source, transaction } = submissionState;
       onSubmit(transaction);
-      resetSubmissionState();
+      setCompletionResult({ source, transaction });
       if (source === 'server') {
         showToast(lang === 'zh' ? '已提交到云端' : 'Imetumwa kwenye seva', 'success');
       } else {
         showToast(lang === 'zh' ? '已加入待同步队列' : 'Imeongezwa kwenye foleni', 'success');
       }
-      onReset();
+      resetSubmissionState();
     } else if (submissionState.status === 'error') {
       submittedRef.current = false;
+      setCompletionResult(null);
       resetSubmissionState();
       showToast(lang === 'zh' ? '提交失败，请重试' : 'Imeshindwa, jaribu tena', 'error');
     }
-  }, [submissionState, lang, onSubmit, onReset, resetSubmissionState, showToast]);
+  }, [submissionState, lang, onSubmit, resetSubmissionState, showToast]);
+
+  if (completionResult) {
+    const { source, transaction } = completionResult;
+    const returnLabel = lang === 'zh' ? '返回主页' : 'Back to home';
+    const completionTitle = lang === 'zh' ? '任务完成' : 'Task completed';
+    const completionSubtitle = source === 'server'
+      ? (lang === 'zh' ? '已成功提交到云端。' : 'Successfully saved to the cloud.')
+      : (lang === 'zh' ? '已加入待同步队列。' : 'Added to the offline sync queue.');
+    const sourceLabel = source === 'server'
+      ? (lang === 'zh' ? '云端已保存' : 'Saved online')
+      : (lang === 'zh' ? '待同步' : 'Pending sync');
+
+    return (
+      <div className="max-w-md mx-auto py-3 px-3 pb-24 animate-in fade-in space-y-3">
+        <div className="rounded-[28px] border border-emerald-200 bg-gradient-to-b from-emerald-50 to-white px-4 py-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-md shadow-emerald-200">
+              <CheckCircle2 size={22} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-caption font-black uppercase tracking-[0.18em] text-emerald-700">{completionTitle}</p>
+              <h2 className="truncate text-base font-black text-slate-900">{transaction.locationName}</h2>
+              <p className="text-caption font-black uppercase tracking-[0.15em] text-slate-500">
+                {selectedLocation.machineId} · {sourceLabel}
+              </p>
+            </div>
+          </div>
+          <p className="mt-3 text-sm font-medium text-slate-600">{completionSubtitle}</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+            <p className="text-caption font-black uppercase tracking-wide text-slate-400">{lang === 'zh' ? '机器读数' : 'Reading'}</p>
+            <p className="mt-1 text-sm font-black text-slate-900">{transaction.currentScore.toLocaleString()}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+            <p className="text-caption font-black uppercase tracking-wide text-slate-400">{t.net}</p>
+            <p className="mt-1 text-sm font-black text-slate-900">TZS {transaction.netPayable.toLocaleString()}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+            <p className="text-caption font-black uppercase tracking-wide text-slate-400">{lang === 'zh' ? '提交状态' : 'Status'}</p>
+            <p className="mt-1 text-sm font-black text-slate-900">{sourceLabel}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+            <p className="text-caption font-black uppercase tracking-wide text-slate-400">{lang === 'zh' ? '网点' : 'Site'}</p>
+            <p className="mt-1 text-sm font-black text-slate-900">{selectedLocation.area || transaction.locationName}</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleReturnHome}
+          className="w-full rounded-2xl bg-amber-600 px-4 py-4 text-sm font-black uppercase text-white shadow-lg shadow-amber-200/40 transition-all active:scale-95"
+        >
+          {returnLabel}
+        </button>
+      </div>
+    );
+  }
 
   const requestGps = () => {
     if (!navigator.geolocation) return;
@@ -273,7 +346,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           { label: t.retention, value: `− TZS ${calculations.finalRetention.toLocaleString()}`, color: 'text-amber-600' },
           { label: t.expenses, value: `− TZS ${((parseInt(expenses) || 0) + (parseInt(tip) || 0)).toLocaleString()}`, color: 'text-rose-500' },
           ...(calculations.startupDebtDeduction > 0 || parseInt(startupDebtDeduction) > 0
-            ? [{ label: lang === 'zh' ? '商家欠款扣减' : 'Merchant Debt Deduction', value: `− TZS ${calculations.startupDebtDeduction.toLocaleString()}`, color: 'text-indigo-600' }]
+            ? [{ label: lang === 'zh' ? '商家欠款扣减' : 'Merchant Debt Deduction', value: `− TZS ${calculations.startupDebtDeduction.toLocaleString()}`, color: 'text-amber-600' }]
             : []),
           { label: t.exchange, value: `TZS ${(parseInt(coinExchange) || 0).toLocaleString()}`, color: 'text-emerald-600' },
           { label: t.coinStock, value: `${calculations.remainingCoins.toLocaleString()} ${t.coinUnit}`, color: calculations.isCoinStockNegative ? 'text-rose-600 font-black' : 'text-slate-500' },
@@ -330,7 +403,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           </p>
         </div>
         {!gpsCoords && gpsPermission !== 'denied' && (
-          <button onClick={requestGps} className="p-1.5 bg-white rounded-xl border border-slate-200 text-indigo-600 flex-shrink-0">
+          <button onClick={requestGps} className="p-1.5 bg-white rounded-xl border border-slate-200 text-amber-600 flex-shrink-0">
             <RotateCcw size={12} />
           </button>
         )}
@@ -360,7 +433,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={onBack}
-            className="py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl font-black uppercase text-xs hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
+            className="py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl font-black uppercase text-xs hover:text-amber-600 transition-colors flex items-center justify-center gap-2"
           >
             <ArrowRight size={15} className="rotate-180" />
             {lang === 'zh' ? '返回上一步' : 'Back'}
@@ -368,7 +441,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           <button
             onClick={handleSubmit}
             disabled={isProcessing || !currentScore || isScoreBelowLastReading}
-            className="py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200/40"
+            className="py-4 bg-amber-600 text-white rounded-2xl font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-200/40"
           >
             {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             {submissionState.status === 'submitting' ? t.saving :

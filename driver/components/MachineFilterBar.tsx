@@ -31,13 +31,13 @@ const MachineFilterBar: React.FC<MachineFilterBarProps> = ({
   <div className="sticky top-2 z-20 space-y-2 rounded-[22px] border border-slate-200 bg-white/92 p-2.5 shadow-[0_12px_28px_rgba(15,23,42,0.06)] backdrop-blur">
     {/* Search */}
     <div className="relative group">
-      <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+      <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
       <input
         type="text"
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={t.enterId}
-        className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-[13px] font-bold shadow-field outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
+        className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-[13px] font-bold shadow-field outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-100 transition-all"
       />
     </div>
 
@@ -57,7 +57,7 @@ const MachineFilterBar: React.FC<MachineFilterBarProps> = ({
             className={`shrink-0 px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase transition-all border ${
               locationFilter === key
                 ? 'bg-slate-900 text-white border-slate-900 shadow-field'
-                : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-200 hover:text-indigo-600'
+                : 'bg-white text-slate-500 border-slate-200 hover:border-amber-200 hover:text-amber-600'
             }`}
           >
             {label} <span className="ml-1 opacity-60">{count}</span>
@@ -80,7 +80,7 @@ const MachineFilterBar: React.FC<MachineFilterBarProps> = ({
     {showRegisterButton && (
       <button
         onClick={onStartRegister}
-        className="w-full py-3 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-2xl font-black uppercase text-[11px] hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2"
+        className="w-full py-3 bg-amber-50 border border-amber-100 text-amber-600 rounded-2xl font-black uppercase text-[11px] hover:bg-amber-100 transition-colors flex items-center justify-center gap-2"
       >
         <Plus size={15} />
         {t.registerNewMachine}

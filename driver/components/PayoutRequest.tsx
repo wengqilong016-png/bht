@@ -69,7 +69,7 @@ const PayoutRequest: React.FC<PayoutRequestProps> = ({
         <div className="flex justify-between items-center border-b border-slate-100 pb-4">
           <button
             onClick={onCancel}
-            className="p-2.5 bg-slate-100 rounded-subcard text-slate-500 hover:text-indigo-600 transition-colors"
+            className="p-2.5 bg-slate-100 rounded-subcard text-slate-500 hover:text-amber-600 transition-colors"
           >
             <ArrowRight size={18} className="rotate-180" />
           </button>
