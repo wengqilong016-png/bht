@@ -168,16 +168,17 @@ const ContactGroupCard: React.FC<ContactGroupCardProps> = ({ group, lang }) => {
   const [showSMS, setShowSMS] = useState(false);
   const { showToast } = useToast();
 
-  const allPhones = useMemo(() => {
+  const locationPhones = useMemo(() => {
     const phones = new Set<string>();
-    if (group.driverPhone) phones.add(group.driverPhone);
-    group.locations.forEach(l => { if (l.phone) phones.add(l.phone); });
+    group.locations.forEach(l => {
+      if (l.phone) phones.add(l.phone);
+    });
     return Array.from(phones);
-  }, [group]);
+  }, [group.locations]);
 
-  const locationPhones = useMemo(
-    () => group.locations.map(l => l.phone).filter(Boolean),
-    [group.locations],
+  const allPhones = useMemo(
+    () => locationPhones,
+    [locationPhones],
   );
 
   const handleCopyPhones = useCallback(() => {
