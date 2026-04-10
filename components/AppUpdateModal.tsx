@@ -18,15 +18,22 @@ const AppUpdateModal: React.FC<Props> = ({ lang }) => {
 
   // Persist dismissal keyed by the latest version so re-mounting the component
   // (e.g. after a parent re-render) doesn't re-show a modal the user already dismissed.
-  const dismissedVersion = typeof sessionStorage !== 'undefined'
-    ? sessionStorage.getItem('update-dismissed-version')
-    : null;
+  // Wrapped in try-catch: sessionStorage can throw SecurityError in private-browsing
+  // modes or when storage is explicitly disabled by the browser.
+  let dismissedVersion: string | null = null;
+  try {
+    dismissedVersion = typeof sessionStorage !== 'undefined'
+      ? sessionStorage.getItem('update-dismissed-version')
+      : null;
+  } catch {}
   const isDismissed = update?.hasUpdate && dismissedVersion === update.latestVersion;
 
   const handleDismiss = () => {
-    if (update?.latestVersion && typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem('update-dismissed-version', update.latestVersion);
-    }
+    try {
+      if (update?.latestVersion && typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('update-dismissed-version', update.latestVersion);
+      }
+    } catch {}
   };
 
   if (!update?.hasUpdate || isDismissed) return null;

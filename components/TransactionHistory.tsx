@@ -305,14 +305,18 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
 
                       <div className="space-y-2">
                         <div className="flex justify-between text-[11px] font-bold text-slate-500"><span>总收入 (Coins Value)</span><span>TZS {tx.revenue.toLocaleString()}</span></div>
-                        <div className="flex justify-between text-[11px] font-bold text-amber-600"><span>{lang === 'zh' ? '店主分红 (−)' : 'Owner Dividend (−)'}</span><span>− {tx.ownerRetention.toLocaleString()}</span></div>
+                        <div className="flex justify-between text-[11px] font-bold text-amber-600"><span>{lang === 'zh' ? '店主分红 (-)' : 'Owner Dividend (-)'}</span><span>- {tx.ownerRetention.toLocaleString()}</span></div>
                         <div className="flex justify-between text-[11px] font-bold text-rose-500"><span>日常支出 (-)</span><span>- {tx.expenses.toLocaleString()}</span></div>
                         <div className="flex justify-between text-[11px] font-bold text-amber-600"><span>欠款回收 (-)</span><span>- {(tx.debtDeduction + tx.startupDebtDeduction).toLocaleString()}</span></div>
                         <div className="h-px bg-slate-200 my-2"></div>
                         <div className="flex justify-between text-sm font-black text-slate-900"><span>应缴库现金</span><span>TZS {tx.netPayable.toLocaleString()}</span></div>
+                        {/* Show calculated commission when it differs from the actual deducted amount.
+                            This happens when the driver manually overrode the owner retention or
+                            when the owner chose to accumulate their share in the dividend balance
+                            (isOwnerRetaining=true with a custom entry) vs the rate-based amount. */}
                         {tx.commission > 0 && tx.commission !== tx.ownerRetention && (
                           <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                            <span>{lang === 'zh' ? '系统计提分红' : 'Calc. Commission'}</span>
+                            <span>{lang === 'zh' ? '系统计提分红（参考）' : 'Rate-based Commission (ref)'}</span>
                             <span>TZS {tx.commission.toLocaleString()}</span>
                           </div>
                         )}
