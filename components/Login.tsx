@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
 import { User, Lock, ArrowRight, AlertCircle, Loader2, Languages, Crown, Settings, CheckCircle2, Wifi, WifiOff, RefreshCw } from 'lucide-react';
-import { User as UserType, TRANSLATIONS } from '../types';
-import { checkDbHealth, supabase, SUPABASE_URL, envVarsMissing, usingRuntimeCredentials, saveRuntimeCredentials, clearRuntimeCredentials } from '../supabaseClient';
+import React, { useState, useEffect } from 'react';
+
 import { fetchCurrentUserProfile, signInWithEmailPassword, signOutCurrentUser } from '../services/authService';
+import { checkDbHealth, supabase, SUPABASE_URL, envVarsMissing, usingRuntimeCredentials, saveRuntimeCredentials, clearRuntimeCredentials } from '../supabaseClient';
+import { User as UserType, TRANSLATIONS } from '../types';
 
 import EnvMissingErrorPage from './EnvMissingErrorPage';
 
