@@ -1,9 +1,9 @@
 {
   "version": "1.0.6",
   "versionCode": 1,
-  "gitSha": "70f6417b22358cd8973e10825785123ecfe52998",
-  "tag": "v1.0.5",
-  "releasedAt": "2026-04-10T02:46:14Z",
+  "gitSha": "5740c72ec9cc9de42b4864eb15ed00c21cd3c464",
+  "tag": "v1.0.6",
+  "releasedAt": "2026-04-10T02:57:29Z",
   "apkUrl": "https://github.com/wengqilong016-png/B-ht/releases/download/v1.0.6/bahati-latest-release.apk",
   "releaseNotes": "v1.0.6 — 正式发布"
 }
