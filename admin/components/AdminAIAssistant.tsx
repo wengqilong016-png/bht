@@ -8,6 +8,7 @@ import { useAppData } from '../../contexts/DataContext';
 import { useAdminAI, type AdminAIAlert } from '../../hooks/useAdminAI';
 
 const QUICK_PROMPTS = [
+  '🔍 代理审核分析：今日所有未结算点位 + 异常交易汇总，并建议下一步行动',
   '今日运营状况总结',
   '哪些机器需要关注？',
   '本周营业额趋势如何？',

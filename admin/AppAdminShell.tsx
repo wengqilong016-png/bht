@@ -27,6 +27,7 @@ import {
 } from './adminShellConfig';
 import { calculateAdminApprovalBadge } from './adminShellViewState';
 import AdminAIAssistant from './components/AdminAIAssistant';
+import AdminContactSummaryPanel from './components/AdminContactSummaryPanel';
 import AdminShellViewRenderer from './renderAdminShellView';
 
 const AccountSettings = lazy(() => import('../components/AccountSettings'));
@@ -213,6 +214,9 @@ const AppAdminShell: React.FC = () => {
 
       {/* Admin AI Assistant — floating panel */}
       <AdminAIAssistant lang={lang} />
+
+      {/* Contact Summary Panel — floating panel, sits left of AI assistant */}
+      <AdminContactSummaryPanel locations={locations} drivers={drivers} lang={lang} />
     </AppShell>
   );
 };
