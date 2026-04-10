@@ -53,8 +53,11 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
   }, []);
 
   const driverSpecificLocations = useMemo(() => locations.filter(l => l.assignedDriverId === currentDriver.id), [locations, currentDriver.id]);
-  const isShowingAllLocations = driverSpecificLocations.length === 0 && locations.length > 0;
-  const assignedLocations = isShowingAllLocations ? locations : driverSpecificLocations;
+  const hasAssignedLocations = driverSpecificLocations.length > 0;
+  const assignedLocations = useMemo(
+    () => (hasAssignedLocations ? driverSpecificLocations : []),
+    [driverSpecificLocations, hasAssignedLocations]
+  );
   const availableAreas = useMemo(() => Array.from(new Set(assignedLocations.map(l => l.area).filter(Boolean))).sort(), [assignedLocations]);
 
   const todayStr = getTodayLocalDate();
@@ -249,11 +252,11 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
       />
 
       <div className="space-y-2">
-        {isShowingAllLocations && (
+        {!hasAssignedLocations && locations.length > 0 && (
           <div className="px-3 py-2.5 bg-amber-50 border border-amber-100 rounded-2xl flex items-center gap-2">
             <AlertTriangle size={13} className="text-amber-500 flex-shrink-0" />
             <p className="text-caption font-black text-amber-700 uppercase tracking-widest">
-              {lang === 'zh' ? 'Showing all machines (none assigned)' : 'Showing all machines (none assigned)'}
+              {lang === 'zh' ? '当前没有分配给你的机器，请联系管理员。' : 'No machines are assigned to you. Please contact admin.'}
             </p>
           </div>
         )}

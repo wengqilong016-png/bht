@@ -28,6 +28,7 @@ const DriverShellViewRenderer: React.FC<DriverShellViewRendererProps> = ({
     case 'collect':
       return (
         <DriverCollectionFlow
+          registrationDoneLabel="返回机器列表"
           onRegisterMachine={async (location) => {
             const newLocation: Location = { ...location, isSynced: false, assignedDriverId: activeDriverId };
             await registerLocation.mutateAsync(newLocation);

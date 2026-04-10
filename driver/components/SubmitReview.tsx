@@ -49,6 +49,7 @@ interface SubmitReviewProps {
   onBack: () => void;
   onSwitchMachine?: () => void;
   onReset: () => void;
+  onReturnHome?: () => void;
   onUpdateGps: (coords: { lat: number; lng: number }) => void;
   onUpdateGpsPermission: (perm: 'prompt' | 'granted' | 'denied') => void;
   nextMachine?: Location | null;
@@ -66,7 +67,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   selectedLocation, currentDriver, lang, isOnline, currentScore, photoData,
   aiReviewData, expenses, expenseType, expenseCategory, expenseDescription, coinExchange, tip, startupDebtDeduction, draftTxId,
   gpsCoords, gpsPermission, isOwnerRetaining, ownerRetention, calculations,
-  onSubmit, onBack, onSwitchMachine, onReset, onUpdateGps, onUpdateGpsPermission, nextMachine, pendingCount,
+  onSubmit, onBack, onSwitchMachine, onReset, onReturnHome, onUpdateGps, onUpdateGpsPermission, nextMachine, pendingCount,
   allTransactions, todayStr,
 }) => {
   const t = TRANSLATIONS[lang];
@@ -97,6 +98,10 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
     setCompletionResult(null);
     submittedRef.current = false;
     resetSubmissionState();
+    if (onReturnHome) {
+      onReturnHome();
+      return;
+    }
     onReset();
   };
 
@@ -122,7 +127,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
 
   if (completionResult) {
     const { source, transaction } = completionResult;
-    const returnLabel = lang === 'zh' ? '返回主页' : 'Back to home';
+    const returnLabel = lang === 'zh' ? '返回收款首页' : 'Back to collection home';
     const completionTitle = lang === 'zh' ? '任务完成' : 'Task completed';
     const completionSubtitle = source === 'server'
       ? (lang === 'zh' ? '已成功提交到云端。' : 'Successfully saved to the cloud.')

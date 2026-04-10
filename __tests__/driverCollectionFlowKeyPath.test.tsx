@@ -150,10 +150,10 @@ jest.mock('../driver/components/SubmitReview', () => ({
   __esModule: true,
   default: function MockSubmitReview({
     onSubmit,
-    onReset,
+    onReturnHome,
   }: {
     onSubmit: (tx: Transaction) => Promise<void>;
-    onReset: () => void;
+    onReturnHome?: () => void;
   }) {
     const React = require('react');
     const [done, setDone] = React.useState(false);
@@ -183,7 +183,7 @@ jest.mock('../driver/components/SubmitReview', () => ({
         ) : (
           <div>
             <p>TASK_COMPLETED</p>
-            <button type="button" onClick={onReset}>
+            <button type="button" onClick={onReturnHome}>
               Back Home
             </button>
           </div>

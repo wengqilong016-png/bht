@@ -26,12 +26,14 @@ import { useGpsCapture } from '../hooks/useGpsCapture';
 
 interface DriverCollectionFlowProps {
   onRegisterMachine?: (location: Location) => Promise<void>;
+  registrationDoneLabel?: string;
 }
 
 type FlowStep = 'selection' | 'capture' | 'amounts' | 'confirm';
 
 const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
   onRegisterMachine,
+  registrationDoneLabel,
 }) => {
   const { lang, activeDriverId } = useAuth();
   const { filteredLocations, filteredTransactions, isOnline, drivers } = useAppData();
@@ -306,20 +308,24 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     resetDraft();
   };
 
+  const handleRegistrationDone = () => {
+    setIsRegistering(false);
+    handleFullReset();
+  };
+
   // Machine Registration sub-view
   if (isRegistering && onRegisterMachine) {
     return (
       <MachineRegistrationForm
         onSubmit={async (loc) => {
           await onRegisterMachine(loc);
-          // Do NOT close the form here — let it render its built-in success screen.
-          // The user will close it via the "返回管理概览" / "Rudi Dashibodi" button,
-          // which calls onCancel below.
         }}
         onCancel={() => setIsRegistering(false)}
+        onSuccessDone={handleRegistrationDone}
         currentDriver={currentDriver}
         lang={lang}
         existingMachineIds={locations.map((location) => location.machineId)}
+        successDoneLabel={registrationDoneLabel}
       />
     );
   }
@@ -485,6 +491,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       onBack={() => setStep('amounts')}
       onSwitchMachine={handleSwitchMachine}
       onReset={handleFullReset}
+      onReturnHome={handleFullReset}
       onUpdateGps={(coords) => updateDraft({ gpsCoords: coords })}
       onUpdateGpsPermission={(perm) => updateDraft({ gpsPermission: perm })}
       nextMachine={nextQueuedMachine}

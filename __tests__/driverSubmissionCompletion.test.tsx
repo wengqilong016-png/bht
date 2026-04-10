@@ -75,6 +75,7 @@ describe('driver submission completion', () => {
 
     const onSubmit = jest.fn();
     const onReset = jest.fn();
+    const onReturnHome = jest.fn();
 
     render(
       withProviders(
@@ -103,6 +104,7 @@ describe('driver submission completion', () => {
           onBack={jest.fn()}
           onSwitchMachine={jest.fn()}
           onReset={onReset}
+          onReturnHome={onReturnHome}
           onUpdateGps={jest.fn()}
           onUpdateGpsPermission={jest.fn()}
           nextMachine={null}
@@ -121,8 +123,9 @@ describe('driver submission completion', () => {
     expect(screen.getByText('TZS 140')).toBeTruthy();
     expect(screen.getByText('云端已保存')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: '返回主页' }));
-    expect(onReset).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: '返回收款首页' }));
+    expect(onReturnHome).toHaveBeenCalledTimes(1);
+    expect(onReset).not.toHaveBeenCalled();
     expect(onSubmit).toHaveBeenCalledWith(baseTransaction);
   });
 

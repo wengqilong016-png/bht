@@ -13,9 +13,19 @@ interface MachineRegistrationFormProps {
   currentDriver: Driver;
   lang: 'zh' | 'sw';
   existingMachineIds?: string[];
+  onSuccessDone?: () => void;
+  successDoneLabel?: string;
 }
 
-const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSubmit, onCancel, currentDriver, lang, existingMachineIds = [] }) => {
+const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
+  onSubmit,
+  onCancel,
+  currentDriver,
+  lang,
+  existingMachineIds = [],
+  onSuccessDone,
+  successDoneLabel,
+}) => {
   const { showToast } = useToast();
   const [machineId, setMachineId] = useState('');
   const [shopName, setShopName] = useState('');
@@ -217,6 +227,9 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
   };
 
   if (isSuccess && lastRegisteredMachine) {
+    const doneLabel = successDoneLabel || (lang === 'zh' ? '返回管理概览' : 'Rudi Dashibodi');
+    const handleDone = onSuccessDone ?? onCancel;
+
     return (
       <div className="max-w-md mx-auto py-12 px-6 animate-in zoom-in-95 duration-500">
         <div className="bg-white rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden relative">
@@ -254,8 +267,8 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({ onSub
                    <PlusButtonIcon />
                    {lang === 'zh' ? '继续注册下一台' : 'Sajili Mashine Nyingine'}
                  </button>
-                 <button onClick={onCancel} className="w-full py-4 bg-white text-slate-500 border border-slate-200 rounded-2xl font-black uppercase text-sm hover:bg-slate-50 active:scale-95 transition-all">
-                   {lang === 'zh' ? '返回管理概览' : 'Rudi Dashibodi'}
+                 <button onClick={handleDone} className="w-full py-4 bg-white text-slate-500 border border-slate-200 rounded-2xl font-black uppercase text-sm hover:bg-slate-50 active:scale-95 transition-all">
+                   {doneLabel}
                  </button>
               </div>
            </div>
