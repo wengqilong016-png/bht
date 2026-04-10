@@ -96,7 +96,43 @@ describe('locationWorkflow', () => {
 
     expect(diagnostics.blockers).toEqual([]);
     expect(diagnostics.warnings).toEqual([
-      '删除后，历史交易记录仍会保留在报表中。',
+      '删除后，历史交易记录仍会保留在报表中，并自动解除与该机器的关联。',
     ]);
+    expect(diagnostics.related).toEqual({
+      assignedDriverId: undefined,
+      totalTransactions: 1,
+      pendingApprovalTransactions: 0,
+      unsettledCollections: 0,
+      pendingResetRequests: 0,
+      pendingPayoutRequests: 0,
+    });
+  });
+
+  it('includes related counts for admin delete confirmation', () => {
+    const diagnostics = getLocationDeletionDiagnostics({
+      location: makeLocation({ assignedDriverId: 'drv-1' }),
+      transactions: [
+        makeTransaction(),
+        makeTransaction({ id: 'tx-2', approvalStatus: 'pending', paymentStatus: 'pending' }),
+      ],
+      pendingResetRequests: [makeTransaction({ id: 'reset-1', type: 'reset_request', approvalStatus: 'pending' })],
+      pendingPayoutRequests: [makeTransaction({ id: 'payout-1', type: 'payout_request', approvalStatus: 'pending' })],
+      isAdminOverride: true,
+    });
+
+    expect(diagnostics.warnings).toEqual(
+      expect.arrayContaining([
+        '该机器仍绑定司机，删除将自动解绑。',
+        '删除后，历史交易记录仍会保留在报表中，并自动解除与该机器的关联。',
+      ]),
+    );
+    expect(diagnostics.related).toEqual({
+      assignedDriverId: 'drv-1',
+      totalTransactions: 2,
+      pendingApprovalTransactions: 1,
+      unsettledCollections: 1,
+      pendingResetRequests: 1,
+      pendingPayoutRequests: 1,
+    });
   });
 });

@@ -214,7 +214,8 @@ export type FinanceAuditEventType =
   | 'commission_rate_change'
   | 'startup_debt_edit'
   | 'floating_coins_change'
-  | 'force_clear_blockers';
+  | 'force_clear_blockers'
+  | 'location_delete';
 
 export interface FinanceAuditLog {
   id: string;

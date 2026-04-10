@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useConfirm } from '../../contexts/ConfirmContext';
 import { useToast } from '../../contexts/ToastContext';
 import { logFinanceAuditBatch } from '../../services/financeAuditService';
-import { Location, Driver, Transaction, TRANSLATIONS } from '../../types';
+import { Location, Driver, Transaction } from '../../types';
 import { getOptimizedImageUrl } from '../../utils/imageUtils';
 import { getLocationDeletionDiagnostics, normalizeMachineId } from '../../utils/locationWorkflow';
 
@@ -13,6 +13,7 @@ interface SitesTabProps {
   allAreas: string[];
   siteSearch: string;
   setSiteSearch: (v: string) => void;
+  isAdmin: boolean;
   siteFilterArea: string;
   setSiteFilterArea: (v: string) => void;
   driverMap: Map<string, Driver>;
@@ -33,6 +34,7 @@ const SitesTab: React.FC<SitesTabProps> = ({
   allAreas,
   siteSearch,
   setSiteSearch,
+  isAdmin,
   siteFilterArea,
   setSiteFilterArea,
   driverMap,
@@ -198,6 +200,15 @@ const SitesTab: React.FC<SitesTabProps> = ({
   };
 
   const handleDeleteLocation = async (locId: string) => {
+    if (!isAdmin) {
+      showToast(
+        lang === 'zh'
+          ? '只有管理员可以删除机器点位。'
+          : 'Only administrators can delete locations.',
+        'error',
+      );
+      return;
+    }
     if (!isOnline) {
       showToast(
         lang === 'zh'
@@ -215,28 +226,101 @@ const SitesTab: React.FC<SitesTabProps> = ({
       return;
     }
 
+    const loc = managedLocations.find((l) => l.id === locId);
+    if (!loc) return;
+
+    const relatedDetails: string[] = [];
+    if (diagnostics.related.assignedDriverId) {
+      const assignedDriverName = driverMap.get(diagnostics.related.assignedDriverId)?.name ?? diagnostics.related.assignedDriverId;
+      relatedDetails.push(
+        lang === 'zh'
+          ? `绑定司机：${assignedDriverName}（删除时会先解绑）`
+          : `Assigned driver: ${assignedDriverName} (will be unassigned before deletion)`,
+      );
+    }
+    if (diagnostics.related.totalTransactions > 0) {
+      relatedDetails.push(
+        lang === 'zh'
+          ? `历史交易：${diagnostics.related.totalTransactions} 条（保留历史，不删除；系统会自动解除地点关联）`
+          : `Historical transactions: ${diagnostics.related.totalTransactions} (kept for reporting; the location link will be removed automatically)`,
+      );
+    }
+    if (diagnostics.related.pendingApprovalTransactions > 0) {
+      relatedDetails.push(
+        lang === 'zh'
+          ? `待审批交易：${diagnostics.related.pendingApprovalTransactions} 条`
+          : `Pending approval transactions: ${diagnostics.related.pendingApprovalTransactions}`,
+      );
+    }
+    if (diagnostics.related.unsettledCollections > 0) {
+      relatedDetails.push(
+        lang === 'zh'
+          ? `未结算收款：${diagnostics.related.unsettledCollections} 条`
+          : `Unsettled collections: ${diagnostics.related.unsettledCollections}`,
+      );
+    }
+    if (diagnostics.related.pendingResetRequests > 0) {
+      relatedDetails.push(
+        lang === 'zh'
+          ? `待处理重置申请：${diagnostics.related.pendingResetRequests} 条`
+          : `Pending reset requests: ${diagnostics.related.pendingResetRequests}`,
+      );
+    }
+    if (diagnostics.related.pendingPayoutRequests > 0) {
+      relatedDetails.push(
+        lang === 'zh'
+          ? `待处理提现申请：${diagnostics.related.pendingPayoutRequests} 条`
+          : `Pending payout requests: ${diagnostics.related.pendingPayoutRequests}`,
+      );
+    }
+
+    const relatedText =
+      relatedDetails.length > 0
+        ? `\n\n${lang === 'zh' ? '关联明细' : 'Related records'}:\n- ${relatedDetails.join('\n- ')}`
+        : '';
     const warningText =
       diagnostics.warnings.length > 0
-        ? `\n\n删除提醒：\n- ${diagnostics.warnings.join('\n- ')}`
+        ? `\n\n${lang === 'zh' ? '删除提醒' : 'Deletion notes'}:\n- ${diagnostics.warnings.join('\n- ')}`
         : '';
 
     const ok = await confirm({
       title: lang === 'zh' ? '确认删除机器点位' : 'Confirm Delete Location',
-      message: `此操作不可撤销。${warningText}`,
+      message:
+        lang === 'zh'
+          ? `机器「${loc.name}」删除后将从点位列表移除，且不可恢复。${relatedText}${warningText}`
+          : `Location "${loc.name}" will be removed from the active site list and cannot be restored.${relatedText}${warningText}`,
       confirmLabel: lang === 'zh' ? '确认删除' : 'Delete',
       cancelLabel: lang === 'zh' ? '取消' : 'Cancel',
       destructive: true,
     });
     if (!ok || !onDeleteLocations) return;
 
-    const loc = managedLocations.find((l) => l.id === locId);
-    if (loc?.assignedDriverId) {
-      const unassigned: Location = { ...loc, assignedDriverId: undefined, isSynced: false };
-      await onUpdateLocations(locations.map((l) => (l.id === locId ? unassigned : l)));
-    }
-
     try {
+      if (loc.assignedDriverId) {
+        const unassigned: Location = { ...loc, assignedDriverId: undefined, isSynced: false };
+        await onUpdateLocations(locations.map((location) => (location.id === locId ? unassigned : location)));
+      }
+
       await onDeleteLocations([locId]);
+      await logFinanceAuditBatch([{
+        event_type: 'location_delete',
+        entity_type: 'location',
+        entity_id: locId,
+        entity_name: loc.name,
+        actor_id: actorId ?? 'admin',
+        old_value: 1,
+        new_value: 0,
+        payload: {
+          action: 'location_delete',
+          unassignedDriverId: diagnostics.related.assignedDriverId ?? null,
+          historicalTransactionsRetained: diagnostics.related.totalTransactions,
+          pendingApprovalTransactions: diagnostics.related.pendingApprovalTransactions,
+          unsettledCollections: diagnostics.related.unsettledCollections,
+          pendingResetRequests: diagnostics.related.pendingResetRequests,
+          pendingPayoutRequests: diagnostics.related.pendingPayoutRequests,
+          unlinkMode: 'transactions.locationId -> NULL on delete',
+        },
+      }]);
       setEditingLoc(null);
       showToast(lang === 'zh' ? '机器已删除' : 'Location deleted', 'success');
     } catch (error) {
