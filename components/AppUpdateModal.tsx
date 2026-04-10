@@ -13,11 +13,32 @@ interface Props {
 const AppUpdateModal: React.FC<Props> = ({ lang }) => {
   const { showToast } = useToast();
   const update = useAppUpdateCheck();
-  const [dismissed, setDismissed] = useState(false);
+  const [localDismissed, setLocalDismissed] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const currentVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '—';
 
-  if (!update?.hasUpdate || dismissed) return null;
+  // Persist dismissal keyed by the latest version so re-mounting the component
+  // (e.g. after a parent re-render) doesn't re-show a modal the user already dismissed.
+  // Wrapped in try-catch: sessionStorage can throw SecurityError in private-browsing
+  // modes or when storage is explicitly disabled by the browser.
+  let dismissedVersion: string | null = null;
+  try {
+    dismissedVersion = typeof sessionStorage !== 'undefined'
+      ? sessionStorage.getItem('update-dismissed-version')
+      : null;
+  } catch {}
+  const isSessionDismissed = update?.hasUpdate && dismissedVersion === update.latestVersion;
+
+  const handleDismiss = () => {
+    setLocalDismissed(true);
+    try {
+      if (update?.latestVersion && typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('update-dismissed-version', update.latestVersion);
+      }
+    } catch {}
+  };
+
+  if (!update?.hasUpdate || localDismissed || isSessionDismissed) return null;
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -54,7 +75,7 @@ const AppUpdateModal: React.FC<Props> = ({ lang }) => {
         {/* Header */}
         <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 px-5 pt-6 pb-5">
           <button
-            onClick={() => setDismissed(true)}
+            onClick={handleDismiss}
             className="absolute right-4 top-4 text-slate-500 hover:text-white"
           >
             <X size={16} />
@@ -107,7 +128,7 @@ const AppUpdateModal: React.FC<Props> = ({ lang }) => {
           </button>
 
           <button
-            onClick={() => setDismissed(true)}
+            onClick={handleDismiss}
             className="w-full py-2.5 text-xs font-bold text-slate-400 hover:text-slate-600"
           >
             {lang === 'zh' ? '稍后提醒' : 'Remind me later'}
