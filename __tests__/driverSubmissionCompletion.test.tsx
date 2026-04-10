@@ -175,4 +175,71 @@ describe('driver submission completion', () => {
     await waitFor(() => expect(screen.getByText('待同步')).toBeTruthy());
     expect(screen.getByText('已加入待同步队列。')).toBeTruthy();
   });
+
+  it('blocks duplicate same-day submission when user cancels at confirm modal', async () => {
+    mockedOrchestrateCollectionSubmission.mockResolvedValue({
+      source: 'server',
+      transaction: baseTransaction,
+      fallbackReason: null,
+    });
+
+    const onSubmit = jest.fn();
+
+    render(
+      withProviders(
+        <SubmitReview
+          selectedLocation={baseLocation as any}
+          currentDriver={baseDriver as any}
+          lang="zh"
+          isOnline={true}
+          currentScore="1200"
+          photoData={null}
+          aiReviewData={null}
+          expenses="0"
+          expenseType="public"
+          expenseCategory="tip"
+          expenseDescription=""
+          coinExchange="0"
+          tip="0"
+          startupDebtDeduction="0"
+          draftTxId="draft-dup-1"
+          gpsCoords={{ lat: -6.8, lng: 39.2 }}
+          gpsPermission="granted"
+          isOwnerRetaining={true}
+          ownerRetention=""
+          calculations={baseCalculations}
+          onSubmit={onSubmit}
+          onBack={jest.fn()}
+          onSwitchMachine={jest.fn()}
+          onReset={jest.fn()}
+          onUpdateGps={jest.fn()}
+          onUpdateGpsPermission={jest.fn()}
+          nextMachine={null}
+          pendingCount={0}
+          allTransactions={[
+            {
+              ...baseTransaction,
+              id: 'tx-existing-same-day',
+              locationId: 'loc-1',
+              type: 'collection',
+              timestamp: '2026-04-10T08:00:00.000Z',
+            } as Transaction,
+          ]}
+          todayStr="2026-04-10"
+        />,
+      ),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '提交报告' }));
+
+    await waitFor(() => expect(screen.getByText(/未附加照片/)).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: '继续提交' }));
+
+    await waitFor(() => expect(screen.getByText(/已对此机器提交过一次收款记录/)).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: '取消 / Cancel' }));
+
+    await waitFor(() => expect(screen.queryByText('任务完成')).toBeNull());
+    expect(mockedOrchestrateCollectionSubmission).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });
