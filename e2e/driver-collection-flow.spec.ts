@@ -1,8 +1,16 @@
 import path from 'node:path';
 
-import { expect, test } from '@playwright/test';
+import { type Page, expect, test } from '@playwright/test';
 
 const proofImagePath = path.join(process.cwd(), 'public', 'icons', 'icon-512.png');
+
+async function acceptEstimatedGpsPromptIfPresent(page: Page) {
+  const dialog = page.getByRole('dialog');
+  if (await dialog.isVisible({ timeout: 15000 }).catch(() => false)) {
+    const continueButton = dialog.getByRole('button', { name: /Continue|继续/ });
+    await continueButton.evaluate((button: HTMLButtonElement) => button.click());
+  }
+}
 
 test.describe('Driver collection flow', () => {
   test('driver completes the mobile collection happy path with proof upload', async ({ page }, testInfo) => {
@@ -398,9 +406,10 @@ test.describe('Driver collection flow', () => {
 
     await expect(page.getByTestId('driver-flow-step-confirm')).toBeVisible();
     await page.getByTestId('driver-submit-button').click();
+    await acceptEstimatedGpsPromptIfPresent(page);
 
     const completion = page.getByTestId('driver-submit-complete');
-    await expect(completion).toBeVisible();
+    await expect(completion).toBeVisible({ timeout: 15000 });
     await expect(completion.getByText('Bahati Shop', { exact: true })).toBeVisible();
     await expect(completion.getByText('Saved online', { exact: true })).toBeVisible();
 

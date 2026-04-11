@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import { createClient } from '@supabase/supabase-js';
-import { expect, test } from '@playwright/test';
+import { type Page, expect, test } from '@playwright/test';
 
 const requiredEnv = {
   supabaseUrl: process.env.PW_SUPABASE_URL,
@@ -15,6 +15,14 @@ const driverId = process.env.PW_LOCAL_DRIVER_ID ?? 'pw-driver-1';
 const locationId = process.env.PW_LOCAL_LOCATION_ID ?? '11111111-1111-4111-8111-111111111111';
 const proofImagePath = path.join(process.cwd(), 'public', 'icons', 'icon-512.png');
 const profilesTable = 'profiles';
+
+async function acceptEstimatedGpsPromptIfPresent(page: Page) {
+  const dialog = page.getByRole('dialog');
+  if (await dialog.isVisible({ timeout: 15000 }).catch(() => false)) {
+    const continueButton = dialog.getByRole('button', { name: /Continue|继续/ });
+    await continueButton.evaluate((button: HTMLButtonElement) => button.click());
+  }
+}
 
 function hasRequiredEnv() {
   return Object.values(requiredEnv).every(Boolean);
@@ -315,6 +323,7 @@ test.describe('Driver collection flow with local Supabase', () => {
 
     await expect(page.getByTestId('driver-flow-step-confirm')).toBeVisible({ timeout: 15000 });
     await page.getByTestId('driver-submit-button').click();
+    await acceptEstimatedGpsPromptIfPresent(page);
 
     const completion = page.getByTestId('driver-submit-complete');
     await expect(completion).toBeVisible({ timeout: 15000 });
@@ -419,6 +428,7 @@ test.describe('Driver collection flow with local Supabase', () => {
 
     await expect(page.getByTestId('driver-flow-step-confirm')).toBeVisible({ timeout: 15000 });
     await page.getByTestId('driver-submit-button').click();
+    await acceptEstimatedGpsPromptIfPresent(page);
 
     const completion = page.getByTestId('driver-submit-complete');
     await expect(completion).toBeVisible({ timeout: 15000 });
@@ -542,6 +552,7 @@ test.describe('Driver collection flow with local Supabase', () => {
 
     const weakNetworkSession = await emulateWeakBrowserNetwork(page);
     await page.getByTestId('driver-submit-button').click();
+    await acceptEstimatedGpsPromptIfPresent(page);
     await page.waitForTimeout(250);
     await context.setOffline(true);
     await page.evaluate(() => window.dispatchEvent(new Event('offline')));
