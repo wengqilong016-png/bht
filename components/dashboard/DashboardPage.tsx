@@ -537,6 +537,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
           unsyncedCollectionsCount={unsyncedCount}
           transactions={transactions}
           pendingSettlements={pendingSettlements}
+          settlementsForSubmissionGuard={dailySettlements}
           pendingExpenses={pendingExpenses}
           anomalyTransactions={anomalyTransactions}
           pendingResetRequests={pendingResetRequests}

@@ -1,14 +1,37 @@
 import { describe, it, expect, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import SettlementTab from '../components/dashboard/SettlementTab';
 import { ToastProvider } from '../contexts/ToastContext';
+import { scanMeterFromBase64 } from '../services/scanMeterService';
 
 import type { DailySettlement, Driver, Location, Transaction, User } from '../types';
 
+jest.mock('../services/scanMeterService', () => ({
+  scanMeterFromBase64: jest.fn(),
+  getScanMeterErrorMessage: jest.fn(() => 'AI scan failed'),
+}));
+
 function renderWithProviders(ui: React.ReactElement) {
   return render(<ToastProvider>{ui}</ToastProvider>);
+}
+
+function mockPhotoFetchAndReader(dataUrl = 'data:image/jpeg;base64,cGhvdG8=') {
+  global.fetch = jest.fn(async () => ({
+    ok: true,
+    blob: async () => new Blob(['photo'], { type: 'image/jpeg' }),
+  } as Response)) as unknown as typeof fetch;
+
+  (global as unknown as { FileReader: typeof FileReader }).FileReader = class {
+    result = dataUrl;
+    onload: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+
+    readAsDataURL() {
+      Promise.resolve().then(() => this.onload?.());
+    }
+  } as unknown as typeof FileReader;
 }
 
 function makeSettlement(overrides: Partial<DailySettlement> = {}): DailySettlement {
@@ -108,6 +131,7 @@ function renderSettlementTab(
       unsyncedCollectionsCount={0}
       transactions={[]}
       pendingSettlements={[]}
+      settlementsForSubmissionGuard={[]}
       pendingExpenses={[]}
       anomalyTransactions={[]}
       pendingResetRequests={[]}
@@ -134,6 +158,13 @@ function renderSettlementTab(
 }
 
 describe('SettlementTab', () => {
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    jest.clearAllMocks();
+  });
+
   it('shows cash and coin breakdown in admin settlement approval details', () => {
     renderSettlementTab({
       isAdmin: true,
@@ -169,5 +200,92 @@ describe('SettlementTab', () => {
     expect(screen.getByText('逾期笔数')).toBeTruthy();
     expect(screen.getByText('逾期待确认金额')).toBeTruthy();
     expect(screen.getAllByText('TZS 18,000').length).toBeGreaterThan(0);
+  });
+
+  it('blocks duplicate driver settlement submission when today settlement is already confirmed', () => {
+    renderSettlementTab({
+      todayStr: '2026-04-11',
+      pendingSettlements: [],
+      settlementsForSubmissionGuard: [
+        makeSettlement({
+          id: 'STL-confirmed-today',
+          date: '2026-04-11',
+          timestamp: '2026-04-11T18:00:00.000Z',
+          status: 'confirmed',
+        }),
+      ],
+      todayDriverTxs: [makeTransaction({ timestamp: '2026-04-11T09:00:00.000Z' })],
+    });
+
+    expect(screen.getByText('今日已提交结算')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /提交日结|submit/i })).toBeNull();
+  });
+
+  it('auto scans anomaly proof photos once in admin approval view', async () => {
+    mockPhotoFetchAndReader();
+    const scanMeterMock = scanMeterFromBase64 as jest.MockedFunction<typeof scanMeterFromBase64>;
+    scanMeterMock.mockResolvedValue({
+      success: true,
+      data: {
+        score: '120',
+        condition: 'Normal',
+        notes: 'Digits are clear',
+      },
+    });
+
+    const anomaly = makeTransaction({
+      id: 'TX-anomaly-photo',
+      isAnomaly: true,
+      approvalStatus: 'pending',
+      photoUrl: 'https://example.com/meter.jpg',
+      currentScore: 120,
+    });
+
+    const { rerender } = renderSettlementTab({
+      isAdmin: true,
+      currentUser: makeUser('admin'),
+      anomalyTransactions: [anomaly],
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Driver One/i }));
+
+    await waitFor(() => {
+      expect(scanMeterMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByText(/AI 已验证/)).toBeTruthy();
+    });
+
+    rerender(
+      <ToastProvider>
+        <SettlementTab
+          isAdmin={true}
+          unsyncedCollectionsCount={0}
+          transactions={[]}
+          pendingSettlements={[]}
+          settlementsForSubmissionGuard={[]}
+          pendingExpenses={[]}
+          anomalyTransactions={[{ ...anomaly }]}
+          pendingResetRequests={[]}
+          pendingPayoutRequests={[]}
+          payrollStats={[]}
+          driverMap={new Map<string, Driver>()}
+          locationMap={new Map<string, Location>()}
+          todayDriverTxs={[]}
+          myProfile={makeDriver()}
+          currentUser={makeUser('admin')}
+          activeDriverId="drv-1"
+          todayStr="2026-04-11"
+          onCreateSettlement={jest.fn<() => Promise<void>>().mockResolvedValue(undefined)}
+          onReviewSettlement={jest.fn<() => Promise<void>>().mockResolvedValue(undefined)}
+          onApproveExpenseRequest={jest.fn<() => Promise<void>>().mockResolvedValue(undefined)}
+          onReviewAnomalyTransaction={jest.fn<() => Promise<void>>().mockResolvedValue(undefined)}
+          onApproveResetRequest={jest.fn<() => Promise<void>>().mockResolvedValue(undefined)}
+          onApprovePayoutRequest={jest.fn<() => Promise<void>>().mockResolvedValue(undefined)}
+          isOnline={true}
+          lang="zh"
+        />
+      </ToastProvider>,
+    );
+
+    await waitFor(() => expect(scanMeterMock).toHaveBeenCalledTimes(1));
   });
 });
