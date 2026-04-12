@@ -56,7 +56,7 @@ const DriverGrid: React.FC<DriverGridProps> = ({
                 <p className="text-caption font-black text-slate-400 uppercase flex items-center gap-1 mb-1">
                   <span className="text-amber-500">$</span> {t.baseSalaryShort}
                 </p>
-                <p className="text-xs font-black text-slate-900">TZS {(driver.baseSalary || 300000).toLocaleString()}</p>
+                <p className="text-xs font-black text-slate-900">TZS {(driver.baseSalary ?? 300000).toLocaleString()}</p>
               </div>
               <div className="bg-amber-50 rounded-2xl p-3 border border-amber-100">
                 <p className="text-caption font-black text-amber-500 uppercase flex items-center gap-1 mb-1">

@@ -95,13 +95,10 @@ describe('calculateCollectionFinanceLocal', () => {
     expect(result.source).toBe('local');
   });
 
-  it('uses DEFAULT_PROFIT_SHARE when commissionRate is 0', () => {
+  it('treats commissionRate 0 as a valid zero percent rate', () => {
     const loc = makeLocation({ commissionRate: 0 });
     const result = calculateCollectionFinanceLocal(makeInput({ selectedLocation: loc }));
-    const expectedCommission = Math.floor(
-      200 * CONSTANTS.COIN_VALUE_TZS * CONSTANTS.DEFAULT_PROFIT_SHARE,
-    );
-    expect(result.commission).toBe(expectedCommission);
+    expect(result.commission).toBe(0);
   });
 
   it('clamps diff to 0 when currentScore <= lastScore', () => {

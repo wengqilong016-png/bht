@@ -252,7 +252,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       const score = parseInt(draft.currentScore) || 0;
       const diff = Math.max(0, score - selectedLocation.lastScore);
       const revenue = diff * CONSTANTS.COIN_VALUE_TZS;
-      const rate = selectedLocation.commissionRate || CONSTANTS.DEFAULT_PROFIT_SHARE;
+      const rate = selectedLocation.commissionRate ?? CONSTANTS.DEFAULT_PROFIT_SHARE;
       updateDraft({ ownerRetention: Math.floor(revenue * rate).toString() });
     }
   }, [selectedLocation, draft.currentScore, draft.isOwnerRetaining, draft.ownerRetention, financeResult.commission, updateDraft]);

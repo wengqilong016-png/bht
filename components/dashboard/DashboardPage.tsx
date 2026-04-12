@@ -395,7 +395,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                             totalRevenue: record.totalRevenue,
                           }
                         : {
-                            baseSalary: driver.baseSalary || 0,
+                            baseSalary: driver.baseSalary ?? 0,
                             commission: m.commission,
                             loans: m.loans,
                             shortage: m.shortage,

@@ -160,7 +160,8 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
     await new Promise(resolve => setTimeout(resolve, 800));
 
     const debtValue = parseInt(startupDebt) || 0;
-    const commValue = (parseFloat(commissionRate) || 15) / 100;
+    const parsedCommissionRate = parseFloat(commissionRate);
+    const commValue = (isNaN(parsedCommissionRate) ? 15 : parsedCommissionRate) / 100;
 
     const newLocation: Location = {
         id: safeRandomUUID(),

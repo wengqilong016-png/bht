@@ -105,7 +105,7 @@ export function calculateCollectionFinanceLocal(input: CollectionFinanceInput): 
 
   const diff = Math.max(0, normalized.currentScore - selectedLocation.lastScore);
   const revenue = diff * CONSTANTS.COIN_VALUE_TZS;
-  const commissionRate = selectedLocation.commissionRate || CONSTANTS.DEFAULT_PROFIT_SHARE;
+  const commissionRate = selectedLocation.commissionRate ?? CONSTANTS.DEFAULT_PROFIT_SHARE;
   const commission = Math.floor(revenue * commissionRate);
 
   const finalRetention = input.isOwnerRetaining
@@ -153,7 +153,7 @@ export async function calculateCollectionFinancePreview(
     const { data, error } = await supabase.rpc('calculate_finance_v2', {
       p_current_score: normalized.currentScore,
       p_previous_score: selectedLocation.lastScore,
-      p_commission_rate: selectedLocation.commissionRate || CONSTANTS.DEFAULT_PROFIT_SHARE,
+      p_commission_rate: selectedLocation.commissionRate ?? CONSTANTS.DEFAULT_PROFIT_SHARE,
       p_expenses: normalized.expenses,
       p_tip: normalized.tip,
       p_is_owner_retaining: input.isOwnerRetaining,
