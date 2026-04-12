@@ -14,6 +14,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - public/version.json
 
 # Only one Android build at a time; cancel older builds for the same ref.
 concurrency:
@@ -72,11 +74,20 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
 
+      - name: Compute build metadata
+        id: build_meta
+        run: |
+          echo "version_code=$(git rev-list --count HEAD 2>/dev/null || echo 1)" >> "$GITHUB_OUTPUT"
+          echo "git_sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
       - name: Build web assets
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          APP_VERSION_CODE: ${{ steps.build_meta.outputs.version_code }}
+          APP_GIT_SHA: ${{ steps.build_meta.outputs.git_sha }}
 
       - name: Sync Capacitor
         run: npx cap sync android
@@ -205,6 +216,7 @@ jobs:
           if [[ "$BUILD_TYPE" == "release" ]]; then
             APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
             DEST="android/app/build/outputs/apk/bahati-v${{ steps.version.outputs.version }}-release.apk"
+            cp "$APK_PATH" "android/app/build/outputs/apk/bahati-latest-release.apk"
           else
             APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
             DEST="android/app/build/outputs/apk/bahati-v${{ steps.version.outputs.version }}-debug.apk"
@@ -212,6 +224,55 @@ jobs:
           if [ -f "$APK_PATH" ]; then
             cp "$APK_PATH" "$DEST"
           fi
+
+      - name: Publish rolling main release
+        if: github.ref == 'refs/heads/main' && steps.resolve_build_type.outputs.build_type == 'release'
+        run: |
+          gh release create main-latest \
+            --target "${GITHUB_SHA}" \
+            --title "main-latest" \
+            --notes "Main channel build ${{ steps.version.outputs.version }} (${{ steps.build_meta.outputs.short_sha }})" \
+            --prerelease \
+            android/app/build/outputs/apk/bahati-latest-release.apk \
+            android/app/build/outputs/apk/bahati-v${{ steps.version.outputs.version }}-release.apk \
+          || gh release upload main-latest \
+               android/app/build/outputs/apk/bahati-latest-release.apk \
+               android/app/build/outputs/apk/bahati-v${{ steps.version.outputs.version }}-release.apk \
+               --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update remote update manifest
+        if: github.ref == 'refs/heads/main' && steps.resolve_build_type.outputs.build_type == 'release'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          REPO="${{ github.repository }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          VERSION_CODE="${{ steps.build_meta.outputs.version_code }}"
+          GIT_SHA="${{ steps.build_meta.outputs.git_sha }}"
+          SHORT_SHA="${{ steps.build_meta.outputs.short_sha }}"
+          RELEASED_AT="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+          APK_URL="https://github.com/${REPO}/releases/download/main-latest/bahati-latest-release.apk"
+          node -e "
+            const fs = require('fs');
+            fs.writeFileSync('public/version.json', JSON.stringify({
+              version: '${VERSION}',
+              versionCode: Number('${VERSION_CODE}') || undefined,
+              gitSha: '${GIT_SHA}',
+              tag: 'main-latest',
+              releasedAt: '${RELEASED_AT}',
+              apkUrl: '${APK_URL}',
+              releaseNotes: 'main build ${VERSION} (${SHORT_SHA})'
+            }, null, 2) + '\n');
+          "
+          if git diff --quiet -- public/version.json; then
+            echo "version.json already up to date"
+            exit 0
+          fi
+          git add public/version.json
+          git commit -m "chore: refresh update manifest for ${SHORT_SHA}"
+          git push origin HEAD:main
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

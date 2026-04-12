@@ -11,6 +11,8 @@ jest.mock('@capacitor/core', () => ({
 
 type GlobalWithVersion = typeof globalThis & {
   __APP_VERSION__?: string;
+  __APP_VERSION_CODE__?: number;
+  __APP_GIT_SHA__?: string;
   fetch?: typeof fetch;
 };
 
@@ -21,12 +23,16 @@ describe('useAppUpdateCheck', () => {
     jest.useRealTimers();
     mockFetch.mockReset();
     (globalThis as GlobalWithVersion).__APP_VERSION__ = '1.0.0';
+    (globalThis as GlobalWithVersion).__APP_VERSION_CODE__ = 100;
+    (globalThis as GlobalWithVersion).__APP_GIT_SHA__ = 'sha-old';
     (globalThis as GlobalWithVersion).fetch = mockFetch;
   });
 
   afterEach(() => {
     jest.useRealTimers();
     Reflect.deleteProperty(globalThis, '__APP_VERSION__');
+    Reflect.deleteProperty(globalThis, '__APP_VERSION_CODE__');
+    Reflect.deleteProperty(globalThis, '__APP_GIT_SHA__');
     Reflect.deleteProperty(globalThis, 'fetch');
   });
 
@@ -79,6 +85,50 @@ describe('useAppUpdateCheck', () => {
         apkUrl: 'https://example.com/app-1.2.0.apk',
         releaseNotes: 'Bug fixes',
       });
+    });
+  });
+
+  it('returns update metadata when version is unchanged but versionCode is newer', async () => {
+    mockFetch.mockResolvedValue({
+      json: async () => ({
+        version: '1.0.0',
+        versionCode: 101,
+        gitSha: 'sha-new',
+        apkUrl: 'https://example.com/app-1.0.0.apk',
+        releaseNotes: 'Main channel build',
+      }),
+    } as Response);
+
+    const { result } = renderHook(() => useAppUpdateCheck());
+
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        hasUpdate: true,
+        latestVersion: '1.0.0',
+        latestVersionCode: 101,
+        latestGitSha: 'sha-new',
+        latestTag: undefined,
+        latestReleasedAt: undefined,
+        apkUrl: 'https://example.com/app-1.0.0.apk',
+        releaseNotes: 'Main channel build',
+      });
+    });
+  });
+
+  it('does not report an update when version and build metadata match', async () => {
+    mockFetch.mockResolvedValue({
+      json: async () => ({
+        version: '1.0.0',
+        versionCode: 100,
+        gitSha: 'sha-old',
+        apkUrl: 'https://example.com/app-1.0.0.apk',
+      }),
+    } as Response);
+
+    const { result } = renderHook(() => useAppUpdateCheck());
+
+    await waitFor(() => {
+      expect(result.current).toBeNull();
     });
   });
 

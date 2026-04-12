@@ -5,11 +5,15 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8')) as { version: string };
+const appVersionCode = Number(process.env.APP_VERSION_CODE || process.env.VITE_APP_VERSION_CODE || '0') || 0;
+const appGitSha = process.env.APP_GIT_SHA || process.env.VITE_APP_GIT_SHA || '';
 
 export default defineConfig({
     base: './',
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version),
+      __APP_VERSION_CODE__: appVersionCode,
+      __APP_GIT_SHA__: JSON.stringify(appGitSha),
       __UPDATE_MANIFEST_URL__: JSON.stringify(process.env.VITE_UPDATE_MANIFEST_URL || ''),
     },
     server: {

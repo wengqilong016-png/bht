@@ -24,6 +24,10 @@ export interface UpdateStatus {
   releaseNotes: string;
 }
 
+function hasKnownVersionCode(value: number | undefined): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
 function getUpdateManifestUrl(): string {
   // In the Android APK we run at `https://localhost` and `/version.json` points to the bundled asset,
   // which will always match the currently-installed version. For native builds we must read a remote
@@ -46,11 +50,33 @@ function compareVersions(a: string, b: string): number {
   return 0;
 }
 
+function isRemoteBuildNewer(
+  currentVersionCode: number | undefined,
+  currentGitSha: string,
+  remoteVersionCode: number | undefined,
+  remoteGitSha: string | undefined,
+): boolean {
+  if (hasKnownVersionCode(currentVersionCode) && hasKnownVersionCode(remoteVersionCode)) {
+    return remoteVersionCode > currentVersionCode;
+  }
+
+  if (currentGitSha && remoteGitSha) {
+    return remoteGitSha !== currentGitSha;
+  }
+
+  return false;
+}
+
 export function useAppUpdateCheck(): UpdateStatus | null {
   const [status, setStatus] = useState<UpdateStatus | null>(null);
 
   useEffect(() => {
     const currentVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
+    const currentVersionCode =
+      typeof __APP_VERSION_CODE__ !== 'undefined' && Number.isFinite(__APP_VERSION_CODE__) && __APP_VERSION_CODE__ > 0
+        ? __APP_VERSION_CODE__
+        : undefined;
+    const currentGitSha = typeof __APP_GIT_SHA__ !== 'undefined' ? __APP_GIT_SHA__ : '';
     const manifestUrl = getUpdateManifestUrl();
     const isNative = Capacitor.isNativePlatform();
 
@@ -69,7 +95,13 @@ export function useAppUpdateCheck(): UpdateStatus | null {
         .then(data => {
           clearTimeout(timeout);
           if (didCancel) return;
-          if (compareVersions(currentVersion, data.version) > 0) {
+          const versionDiff = compareVersions(currentVersion, data.version);
+          const hasUpdate =
+            versionDiff > 0 ||
+            (versionDiff === 0 &&
+              isRemoteBuildNewer(currentVersionCode, currentGitSha, data.versionCode, data.gitSha));
+
+          if (hasUpdate) {
             setStatus({
               hasUpdate: true,
               latestVersion: data.version,
