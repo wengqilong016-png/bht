@@ -2,8 +2,8 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import MachineSelector from '../driver/components/MachineSelector';
 import { ToastProvider } from '../contexts/ToastContext';
+import MachineSelector from '../driver/components/MachineSelector';
 
 import type { Driver, Location, Transaction } from '../types';
 
