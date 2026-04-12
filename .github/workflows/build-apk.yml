@@ -91,7 +91,9 @@ jobs:
           APP_GIT_SHA: ${{ steps.build_meta.outputs.git_sha }}
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: |
+          node scripts/prune-android-web-assets.cjs
+          npx cap sync android
 
       - name: Validate release signing secrets
         if: steps.resolve_build_type.outputs.build_type == 'release'
@@ -183,6 +185,20 @@ jobs:
 
           "$APKSIGNER_PATH" verify --print-certs "$APK_PATH"
         shell: bash
+
+      - name: Verify APK does not contain update downloads
+        run: |
+          BUILD_TYPE="${{ steps.resolve_build_type.outputs.build_type }}"
+          if [[ "$BUILD_TYPE" == "release" ]]; then
+            APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
+          else
+            APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
+          fi
+
+          if unzip -l "$APK_PATH" | grep -E 'assets/public/downloads/.*\.apk'; then
+            echo "::error::APK contains an embedded update APK. Run scripts/prune-android-web-assets.cjs before Capacitor sync."
+            exit 1
+          fi
 
       - name: Bump patch version & update version.json (release builds only)
         if: github.event_name == 'workflow_dispatch' && steps.resolve_build_type.outputs.build_type == 'release'
