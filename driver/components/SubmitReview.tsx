@@ -45,13 +45,12 @@ interface SubmitReviewProps {
     remainingCoins: number;
     isCoinStockNegative: boolean;
   };
-  onSubmit: (result: CompletionResult) => void;
+  onSubmit: (result: CompletionResult) => void | Promise<void>;
   onBack: () => void;
   onSwitchMachine?: () => void;
   onReset: () => void;
   onReturnHome?: () => void;
-  onUpdateGps: (coords: { lat: number; lng: number }) => void;
-  onUpdateGpsPermission: (perm: 'prompt' | 'granted' | 'denied') => void;
+  onRequestGps: () => void;
   nextMachine?: Location | null;
   pendingCount?: number;
   allTransactions: Transaction[];
@@ -67,7 +66,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   selectedLocation, currentDriver, lang, isOnline, currentScore, photoData,
   aiReviewData, expenses, expenseType, expenseCategory, expenseDescription, coinExchange, tip, startupDebtDeduction, draftTxId,
   gpsCoords, gpsPermission, isOwnerRetaining, ownerRetention, calculations,
-  onSubmit, onBack, onSwitchMachine, onReset, onReturnHome, onUpdateGps, onUpdateGpsPermission, nextMachine, pendingCount,
+  onSubmit, onBack, onSwitchMachine, onReset, onReturnHome, onRequestGps, nextMachine, pendingCount,
   allTransactions, todayStr,
 }) => {
   const t = TRANSLATIONS[lang];
@@ -84,6 +83,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   const [gpsResolving, setGpsResolving] = useState(false);
   const { state: submissionState, submit: submitCollection, reset: resetSubmissionState } = useCollectionSubmission();
   const [completionResult, setCompletionResult] = useState<CompletionResult | null>(null);
+  const [completionPending, setCompletionPending] = useState(false);
 
   // Idempotency lock — prevents a second submission while the success/error
   // useEffect is pending (e.g. user taps Submit again while alert() is open).
@@ -93,10 +93,11 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   React.useEffect(() => {
     submittedRef.current = false;
     setCompletionResult(null);
+    setCompletionPending(false);
   }, [draftTxId]);
 
   // Derived boolean used to disable the submit button and spinner gating
-  const isProcessing = gpsResolving || submissionState.status === 'submitting';
+  const isProcessing = gpsResolving || completionPending || submissionState.status === 'submitting';
 
   const handleReturnHome = () => {
     setCompletionResult(null);
@@ -114,17 +115,40 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
     if (submissionState.status === 'success') {
       const { source, transaction } = submissionState;
       const completion = { source, transaction };
-      onSubmit(completion);
-      setCompletionResult(completion);
-      if (source === 'server') {
-        showToast(lang === 'zh' ? '已提交到云端' : 'Imetumwa kwenye seva', 'success');
-      } else {
-        showToast(lang === 'zh' ? '已加入待同步队列' : 'Imeongezwa kwenye foleni', 'success');
-      }
-      resetSubmissionState();
+      let cancelled = false;
+      setCompletionPending(true);
+
+      void (async () => {
+        try {
+          await onSubmit(completion);
+          if (cancelled) return;
+          setCompletionResult(completion);
+          if (source === 'server') {
+            showToast(lang === 'zh' ? '已提交到云端' : 'Imetumwa kwenye seva', 'success');
+          } else {
+            showToast(lang === 'zh' ? '已加入待同步队列' : 'Imeongezwa kwenye foleni', 'success');
+          }
+        } catch (error) {
+          if (cancelled) return;
+          console.error('Submission completion handler failed', error);
+          submittedRef.current = false;
+          setCompletionResult(null);
+          showToast(lang === 'zh' ? '提交后处理失败，请重试' : 'Post-submit update failed, please retry', 'error');
+        } finally {
+          if (!cancelled) {
+            setCompletionPending(false);
+            resetSubmissionState();
+          }
+        }
+      })();
+
+      return () => {
+        cancelled = true;
+      };
     } else if (submissionState.status === 'error') {
       submittedRef.current = false;
       setCompletionResult(null);
+      setCompletionPending(false);
       resetSubmissionState();
       showToast(lang === 'zh' ? '提交失败，请重试' : 'Imeshindwa, jaribu tena', 'error');
     }
@@ -189,21 +213,6 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       </div>
     );
   }
-
-  const requestGps = () => {
-    if (!navigator.geolocation) return;
-    onUpdateGpsPermission('prompt');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        onUpdateGps({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        onUpdateGpsPermission('granted');
-      },
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) onUpdateGpsPermission('denied');
-      },
-      { timeout: 10000, enableHighAccuracy: true }
-    );
-  };
 
   const processSubmission = async (
     resolvedGps: { lat: number; lng: number },
@@ -312,7 +321,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       confirmLabel: lang === 'zh' ? '仍要保存' : 'Save anyway',
     });
     if (confirmNoGps) { processSubmission({ lat: 0, lng: 0 }, 'none'); }
-    else { requestGps(); }
+    else { onRequestGps(); }
   };
 
   return (
@@ -468,7 +477,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           </p>
         </div>
         {!gpsCoords && gpsPermission !== 'denied' && (
-          <button onClick={requestGps} className="p-1.5 bg-white rounded-xl border border-slate-200 text-amber-600 flex-shrink-0">
+          <button onClick={onRequestGps} className="p-1.5 bg-white rounded-xl border border-slate-200 text-amber-600 flex-shrink-0">
             <RotateCcw size={12} />
           </button>
         )}

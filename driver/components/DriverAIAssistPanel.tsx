@@ -1,6 +1,8 @@
 import { BotMessageSquare, X, CheckCircle2, AlertTriangle, Info, WifiOff, Clock } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 
+import { getTodayLocalDate } from '../../utils/dateUtils';
+
 import type { Transaction, Location, DailySettlement } from '../../types';
 
 interface Check {
@@ -22,7 +24,7 @@ interface Props {
 function runChecks(props: Props): Check[] {
   const { isOnline, unsyncedCount, filteredLocations, filteredTransactions, filteredSettlements, activeDriverId, lang } = props;
   const checks: Check[] = [];
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getTodayLocalDate();
 
   // Offline / sync
   if (!isOnline) {

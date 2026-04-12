@@ -40,6 +40,13 @@ const MachineCard: React.FC<MachineCardProps> = ({
   const [isSavingSiteInfo, setIsSavingSiteInfo] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
+  const openSiteInfoForm = () => {
+    setSitePhone(loc.shopOwnerPhone ?? '');
+    setSiteOwnerName(loc.ownerName ?? '');
+    setSitePhotoPreview(null);
+    setShowSiteInfoForm(true);
+  };
+
   const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -213,7 +220,14 @@ const MachineCard: React.FC<MachineCardProps> = ({
           )}
           {onUpdateLocation && (
             <button
-              onClick={(e) => { e.stopPropagation(); setShowSiteInfoForm(v => !v); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (showSiteInfoForm) {
+                  setShowSiteInfoForm(false);
+                  return;
+                }
+                openSiteInfoForm();
+              }}
               className="flex-1 px-3 py-2 min-h-11 text-caption font-black uppercase text-amber-600 hover:bg-amber-50 transition-colors flex items-center justify-center gap-1.5 border-l border-slate-100"
             >
               <UserPen size={11} /> {lang === 'zh' ? '补充信息' : 'Site Info'}

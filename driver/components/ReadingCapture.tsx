@@ -1,7 +1,7 @@
 import { Camera, CheckCircle2, RotateCcw, Satellite, ChevronRight, WifiOff } from 'lucide-react';
 import React, { useRef } from 'react';
 
-import { Location, Driver, TRANSLATIONS, AILog } from '../../types';
+import { Location, TRANSLATIONS } from '../../types';
 
 import CollectionWorkbenchHeader from './CollectionWorkbenchHeader';
 import WizardStepBar from './WizardStepBar';
@@ -11,22 +11,15 @@ import type { GpsStatus } from '../hooks/useGpsCapture';
 
 interface ReadingCaptureProps {
   selectedLocation: Location;
-  currentDriver: Driver;
   lang: 'zh' | 'sw';
   currentScore: string;
   photoData: string | null;
-  aiReviewData: AIReviewData | null;
   gpsCoords: { lat: number; lng: number } | null;
-  gpsPermission: 'prompt' | 'granted' | 'denied';
   /** Live GPS acquisition status from the parent hook — used to distinguish timeout/error from requesting. */
   gpsStatus: GpsStatus;
-  draftTxId: string;
-  onLogAI: (log: AILog) => void;
   onUpdateScore: (score: string) => void;
   onUpdatePhoto: (photo: string | null) => void;
   onUpdateAiReview: (data: AIReviewData | null) => void;
-  onUpdateGps: (coords: { lat: number; lng: number }) => void;
-  onUpdateGpsPermission: (perm: 'prompt' | 'granted' | 'denied') => void;
   /** Trigger a fresh GPS acquisition via the parent's hook (avoids duplicate requests). */
   onRequestGps: () => void;
   onNext: () => void;
@@ -40,21 +33,14 @@ interface ReadingCaptureProps {
 
 const ReadingCapture: React.FC<ReadingCaptureProps> = ({
   selectedLocation,
-  currentDriver: _currentDriver,
   lang,
   currentScore,
   photoData,
-  aiReviewData: _aiReviewData,
   gpsCoords,
-  gpsPermission: _gpsPermission,
   gpsStatus,
-  draftTxId: _draftTxId,
-  onLogAI: _onLogAI,
   onUpdateScore,
   onUpdatePhoto,
   onUpdateAiReview,
-  onUpdateGps: _onUpdateGps,
-  onUpdateGpsPermission: _onUpdateGpsPermission,
   onRequestGps,
   onNext,
   onBack,

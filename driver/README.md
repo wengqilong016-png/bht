@@ -12,7 +12,7 @@ The driver app is a Progressive Web App (PWA) optimized for Tanzania's field col
 /driver/
 ├── AppDriverShell.tsx           # Main driver UI shell with tab navigation
 ├── components/                   # Driver-specific components
-│   ├── ReadingCapture.tsx       # AI-powered camera scanning (optimized)
+│   ├── ReadingCapture.tsx       # Manual reading entry, proof photo, GPS status
 │   ├── MachineSelector.tsx      # Location selection with smart prioritization
 │   ├── DriverStatusPanel.tsx    # Driver profile and stats
 │   ├── FinanceSummary.tsx       # Financial breakdown
@@ -20,42 +20,18 @@ The driver app is a Progressive Web App (PWA) optimized for Tanzania's field col
 │   └── ...
 ├── hooks/                        # Driver-specific React hooks
 │   ├── useCollectionDraft.ts    # Draft state management
-│   └── usePerformanceMode.ts    # Device performance detection
+│   └── useGpsCapture.ts         # GPS acquisition state
 ├── pages/                        # Driver page views
 │   └── DriverCollectionFlow.tsx # Main collection wizard
-└── utils/                        # Driver-specific utilities
-    └── imageOptimization.ts     # Image compression & performance utils
 ```
 
 ## Performance Optimizations
 
-### 1. Device Performance Detection
+### 1. Reading Capture
 
-The app uses `usePerformanceMode` hook to detect low-end devices based on:
-- CPU cores (≤2 cores = low-end)
-- Device memory (≤1GB = low-end)
-- Network type (2G/slow-2g = low-end)
+`ReadingCapture.tsx` currently handles manual score entry, proof-photo selection, and GPS status display. GPS acquisition is owned by the parent `DriverCollectionFlow` through `useGpsCapture`, so capture and submit steps share one location state.
 
-Located: `/driver/hooks/usePerformanceMode.ts`, `/shared/utils/deviceProfile.ts`
-
-### 2. AI Scanning Optimization
-
-**Problem**: Gemini Vision API calls every 1.5 seconds caused rapid quota exhaustion and memory issues.
-
-**Solutions Implemented**:
-- **Debouncing**: Minimum 2-3 seconds between API calls (3s for low-end devices)
-- **Reduced Resolution**:
-  - Low-end: 640×480 video, 384×384 AI processing
-  - Normal: 1280×720 video, 512×512 AI processing
-- **Aggressive Compression**:
-  - Low-end: 50-60% JPEG quality
-  - Normal: 60-70% JPEG quality
-- **Memory Management**: Canvas cleared after each capture
-- **Scan Interval Adjustment**: 3.5s for low-end, 2.5s for normal devices
-
-Located: `/driver/components/ReadingCapture.tsx`, `/driver/utils/imageOptimization.ts`
-
-### 3. MachineSelector Performance
+### 2. MachineSelector Performance
 
 **Problem**: O(n) priority calculation on every filter change caused lag with 100+ locations.
 
@@ -65,17 +41,6 @@ Located: `/driver/components/ReadingCapture.tsx`, `/driver/utils/imageOptimizati
 - **Optimized Filters**: Separate useMemo for each stage (metadata → cards → overview)
 
 Located: `/driver/components/MachineSelector.tsx` (lines 57-129)
-
-### 4. Image Compression Utilities
-
-Centralized image optimization functions:
-- `compressCanvasImage()`: Device-aware compression
-- `getOptimalVideoConstraints()`: Resolution selection
-- `getOptimalScanInterval()`: API call timing
-- `getOptimalAIImageSize()`: Processing size selection
-- `clearCanvasMemory()`: Memory cleanup
-
-Located: `/driver/utils/imageOptimization.ts`
 
 ## Code Separation from Admin
 
@@ -128,8 +93,7 @@ Located: `/offlineQueue.ts`, `/driver/hooks/useCollectionDraft.ts`
 ### Memory Leak Prevention
 
 - Interval refs properly cleaned up in `useEffect` cleanup functions
-- Video streams stopped and tracks released on scanner close
-- Canvas contexts cleared after image processing
+- GPS requests are centralized in `useGpsCapture` so capture and submit steps do not open competing geolocation requests
 
 ## Bundle Size Optimization
 
@@ -210,7 +174,6 @@ When making changes to driver code:
 ## Contact
 
 For questions about driver app architecture, see:
-- `/driver/hooks/usePerformanceMode.ts` - Device detection
-- `/driver/utils/imageOptimization.ts` - Image utilities
-- `/driver/components/ReadingCapture.tsx` - AI scanning
+- `/driver/hooks/useGpsCapture.ts` - GPS acquisition
+- `/driver/components/ReadingCapture.tsx` - Reading entry, proof photo, GPS status
 - `/driver/components/MachineSelector.tsx` - Location selection

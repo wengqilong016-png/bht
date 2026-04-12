@@ -1,19 +1,11 @@
-import { useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import MachineRegistrationForm from '../../components/MachineRegistrationForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { useConfirm } from '../../contexts/ConfirmContext';
 import { useAppData } from '../../contexts/DataContext';
 import { useMutations } from '../../contexts/MutationContext';
-import { getQueueHealthSummary } from '../../offlineQueue';
-import {
-  calculateCollectionFinanceLocal,
-  calculateCollectionFinancePreview,
-  type FinanceCalculationResult,
-} from '../../services/financeCalculator';
-import { localDB } from '../../services/localDB';
-import { Location, Transaction, CONSTANTS } from '../../types';
+import { Location, CONSTANTS } from '../../types';
 import { getTodayLocalDate } from '../../utils/dateUtils';
 import FinanceSummary from '../components/FinanceSummary';
 import MachineSelector from '../components/MachineSelector';
@@ -23,9 +15,10 @@ import ResetRequest from '../components/ResetRequest';
 import SubmitReview from '../components/SubmitReview';
 import { resolveCurrentDriver } from '../driverShellViewState';
 import { useCollectionDraft } from '../hooks/useCollectionDraft';
+import { useCollectionFinancePreview } from '../hooks/useCollectionFinancePreview';
+import { useDriverSubmissionCompletion } from '../hooks/useDriverSubmissionCompletion';
 import { useGpsCapture } from '../hooks/useGpsCapture';
-
-import type { CompletionResult } from '../components/SubmitReview';
+import { useNextQueuedMachine } from '../hooks/useNextQueuedMachine';
 
 interface DriverCollectionFlowProps {
   onRegisterMachine?: (location: Location) => Promise<void>;
@@ -40,107 +33,24 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
 }) => {
   const { lang, activeDriverId } = useAuth();
   const { filteredLocations, filteredTransactions, isOnline, drivers } = useAppData();
-  const { logAI, submitTransaction, syncOfflineData, updateLocations } = useMutations();
+  const { submitTransaction, syncOfflineData, updateLocations } = useMutations();
   const { confirm } = useConfirm();
-  const queryClient = useQueryClient();
-  const transactionQueryKey = useMemo(() => ['transactions', `driver:${activeDriverId}`] as const, [activeDriverId]);
-  const transactionStorageKey = useMemo(
-    () => `${CONSTANTS.STORAGE_TRANSACTIONS_KEY}:driver:${activeDriverId}`,
-    [activeDriverId],
-  );
 
   const locations = filteredLocations;
   const allTransactions = filteredTransactions;
   const currentDriver = resolveCurrentDriver(drivers, activeDriverId);
   const currentDriverId = currentDriver?.id ?? null;
 
-  const onLogAI = (log: Parameters<typeof logAI.mutate>[0]) => logAI.mutate(log);
-  const onSubmit = useCallback(async ({ source, transaction: tx }: CompletionResult) => {
-    if (tx.type === 'reset_request' || tx.type === 'payout_request') {
-      if (tx.type === 'reset_request') {
-        await submitTransaction.mutateAsync(tx);
-
-        const currentLocations =
-          queryClient.getQueryData<Location[]>(['locations']) ?? locations;
-        const updatedLocations = currentLocations.map(loc =>
-          loc.id === tx.locationId ? { ...loc, resetLocked: true } : loc
-        );
-        queryClient.setQueryData<Location[]>(['locations'], updatedLocations);
-
-        try {
-          localStorage.setItem(
-            CONSTANTS.STORAGE_LOCATIONS_KEY,
-            JSON.stringify(updatedLocations)
-          );
-        } catch (error) {
-          console.warn('Failed to persist reset lock update locally.', error);
-        }
-        return;
-      }
-
-      await submitTransaction.mutateAsync(tx);
-      return;
-    }
-
-    // Optimistically update the location's lastScore in the cache so the
-    // machine card reflects the new reading immediately, before the server
-    // refetch triggered by syncOfflineData completes.
-    const currentLocations =
-      queryClient.getQueryData<Location[]>(['locations']) ?? locations;
-    const updatedLocations = currentLocations.map(loc =>
-      loc.id === tx.locationId ? { ...loc, lastScore: tx.currentScore } : loc
-    );
-
-    queryClient.setQueryData<Location[]>(['locations'], updatedLocations);
-
-    // Only persist lastScore to localStorage when online — the server is the
-    // source of truth. When offline the transaction may fail on next sync, and
-    // writing an incorrect lastScore here would corrupt the next finance calc.
-    if (isOnline && source === 'server') {
-      try {
-        localStorage.setItem(
-          CONSTANTS.STORAGE_LOCATIONS_KEY,
-          JSON.stringify(updatedLocations)
-        );
-      } catch (error) {
-        console.warn('Failed to persist optimistic locations update locally.', error);
-      }
-    }
-
-    queryClient.setQueryData<Transaction[]>(transactionQueryKey, (old: Transaction[] = []) => {
-      const withoutExisting = old.filter(existing => existing.id !== tx.id);
-      return [{ ...tx }, ...withoutExisting];
-    });
-
-    const cachedTransactions =
-      (queryClient.getQueryData<Transaction[]>(transactionQueryKey) ?? [{ ...tx }, ...allTransactions.filter(existing => existing.id !== tx.id)]);
-    localDB.set(transactionStorageKey, cachedTransactions).catch((error) => {
-      console.warn('Failed to persist submitted transaction locally.', error);
-    });
-
-    if (isOnline && source === 'server') {
-      try {
-        const queueHealth = await getQueueHealthSummary();
-        if (queueHealth.pending > 0 || queueHealth.retryWaiting > 0 || queueHealth.deadLetter > 0) {
-          syncOfflineData.mutate();
-        }
-      } catch (error) {
-        console.warn('Failed to inspect queue health after submission.', error);
-      }
-    }
-  }, [
+  const [step, setStep] = useState<FlowStep>('selection');
+  const { draft, updateDraft, resetDraft } = useCollectionDraft();
+  const onSubmit = useDriverSubmissionCompletion({
+    activeDriverId,
     allTransactions,
     isOnline,
     locations,
-    queryClient,
     submitTransaction,
     syncOfflineData,
-    transactionQueryKey,
-    transactionStorageKey,
-  ]);
-
-  const [step, setStep] = useState<FlowStep>('selection');
-  const { draft, updateDraft, resetDraft } = useCollectionDraft();
+  });
 
   // Shared GPS hook — request on mount and when reset/payout sub-views activate
   const { coords: gpsCoords, status: gpsStatus, request: requestGps } = useGpsCapture(draft.gpsCoords);
@@ -164,49 +74,15 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     [draft.selectedLocId, locations]
   );
   const todayStr = useMemo(() => getTodayLocalDate(), []);
-  const assignedLocations = useMemo(() => {
-    const mine = locations.filter((location) => location.assignedDriverId === currentDriverId);
-    return mine.length > 0 ? mine : locations;
-  }, [currentDriverId, locations]);
-  const visitedLocationIds = useMemo(() => {
-    return new Set(
-      allTransactions
-        .filter((tx) => tx.driverId === currentDriverId && tx.timestamp.startsWith(todayStr) && (tx.type === undefined || tx.type === 'collection'))
-        .map((tx) => tx.locationId)
-    );
-  }, [allTransactions, currentDriverId, todayStr]);
-  const nextQueuedMachine = useMemo(() => {
-    return assignedLocations
-      .filter((location) => location.id !== draft.selectedLocId)
-      .map((location) => ({
-        location,
-        isPending: !visitedLocationIds.has(location.id),
-        isUrgent:
-          location.status !== 'active' ||
-          location.resetLocked === true ||
-          (location.lastScore ?? 0) >= 9000,
-      }))
-      .sort((a, b) => {
-        if (Number(b.isPending) !== Number(a.isPending)) return Number(b.isPending) - Number(a.isPending);
-        if (Number(b.isUrgent) !== Number(a.isUrgent)) return Number(b.isUrgent) - Number(a.isUrgent);
-        return a.location.name.localeCompare(b.location.name);
-      })[0]?.location ?? null;
-  }, [assignedLocations, draft.selectedLocId, visitedLocationIds]);
-  const remainingPendingStops = useMemo(() => {
-    return assignedLocations.filter((location) => location.id !== draft.selectedLocId && !visitedLocationIds.has(location.id)).length;
-  }, [assignedLocations, draft.selectedLocId, visitedLocationIds]);
+  const { nextQueuedMachine, remainingPendingStops } = useNextQueuedMachine({
+    locations,
+    transactions: allTransactions,
+    currentDriverId,
+    selectedLocationId: draft.selectedLocId,
+    todayStr,
+  });
 
-  // Finance preview state — starts with local calc, upgrades to server result when available
-  const [financeResult, setFinanceResult] = useState<FinanceCalculationResult>(() =>
-    calculateCollectionFinanceLocal({
-      selectedLocation: null,
-      currentScore: '', expenses: '', coinExchange: '',
-      ownerRetention: '', isOwnerRetaining: false, tip: '', startupDebtDeduction: '',
-      initialFloat: 0,
-    })
-  );
-
-  const financeInput = useMemo(() => ({
+  const financeResult = useCollectionFinancePreview({
     selectedLocation,
     currentScore: draft.currentScore,
     expenses: draft.expenses,
@@ -216,30 +92,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     tip: draft.tip,
     startupDebtDeduction: draft.startupDebtDeduction,
     initialFloat: currentDriver?.dailyFloatingCoins || 0,
-  }), [selectedLocation, draft.currentScore, draft.expenses, draft.coinExchange, draft.ownerRetention, draft.isOwnerRetaining, draft.tip, draft.startupDebtDeduction, currentDriver?.dailyFloatingCoins]);
-
-  const requestIdRef = useRef<number>(0);
-  const rpcDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    // Apply local calc immediately so UI stays responsive on every keystroke
-    setFinanceResult(calculateCollectionFinanceLocal(financeInput));
-
-    // Debounce the server RPC by 400 ms to avoid firing on every keystroke.
-    // The monotonic requestId ensures only the last in-flight response is applied.
-    requestIdRef.current += 1;
-    const requestId = requestIdRef.current;
-    if (rpcDebounceRef.current) clearTimeout(rpcDebounceRef.current);
-    rpcDebounceRef.current = setTimeout(() => {
-      calculateCollectionFinancePreview(financeInput).then(result => {
-        if (requestId === requestIdRef.current) setFinanceResult(result);
-      }).catch(() => {
-        // Server preview failed — local calc already applied above, no action needed
-      });
-    }, 400);
-    return () => {
-      if (rpcDebounceRef.current) clearTimeout(rpcDebounceRef.current);
-    };
-  }, [financeInput]);
+  });
 
   // Auto-fill retention when conditions met
   useEffect(() => {
@@ -439,21 +292,14 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       <div data-testid="driver-flow-step-capture">
         <ReadingCapture
           selectedLocation={selectedLocation}
-          currentDriver={currentDriver}
           lang={lang}
           currentScore={draft.currentScore}
           photoData={draft.photoData}
-          aiReviewData={draft.aiReviewData}
           gpsCoords={draft.gpsCoords}
-          gpsPermission={draft.gpsPermission}
           gpsStatus={gpsStatus}
-          draftTxId={draft.draftTxId}
-          onLogAI={onLogAI}
           onUpdateScore={(score) => updateDraft({ currentScore: score })}
           onUpdatePhoto={(photo) => updateDraft({ photoData: photo })}
           onUpdateAiReview={(data) => updateDraft({ aiReviewData: data })}
-          onUpdateGps={(coords) => updateDraft({ gpsCoords: coords })}
-          onUpdateGpsPermission={(perm) => updateDraft({ gpsPermission: perm })}
           onRequestGps={requestGps}
           onNext={() => setStep('amounts')}
           onBack={handleBackToSelection}
@@ -534,8 +380,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         onSwitchMachine={handleSwitchMachine}
         onReset={handleFullReset}
         onReturnHome={handleFullReset}
-        onUpdateGps={(coords) => updateDraft({ gpsCoords: coords })}
-        onUpdateGpsPermission={(perm) => updateDraft({ gpsPermission: perm })}
+        onRequestGps={requestGps}
         nextMachine={nextQueuedMachine}
         pendingCount={remainingPendingStops}
         allTransactions={allTransactions}

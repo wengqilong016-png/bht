@@ -4,7 +4,7 @@ import React from 'react';
 
 import { ConfirmProvider } from '../contexts/ConfirmContext';
 import { ToastProvider } from '../contexts/ToastContext';
-import SubmitReview from '../driver/components/SubmitReview';
+import SubmitReview, { type CompletionResult } from '../driver/components/SubmitReview';
 import { orchestrateCollectionSubmission } from '../services/collectionSubmissionOrchestrator';
 
 import type { Transaction } from '../types';
@@ -73,7 +73,7 @@ describe('driver submission completion', () => {
       fallbackReason: null,
     });
 
-    const onSubmit = jest.fn();
+    const onSubmit = jest.fn((_result: CompletionResult) => undefined);
     const onReset = jest.fn();
     const onReturnHome = jest.fn();
 
@@ -105,8 +105,7 @@ describe('driver submission completion', () => {
           onSwitchMachine={jest.fn()}
           onReset={onReset}
           onReturnHome={onReturnHome}
-          onUpdateGps={jest.fn()}
-          onUpdateGpsPermission={jest.fn()}
+          onRequestGps={jest.fn()}
           nextMachine={null}
           pendingCount={0}
           allTransactions={[]}
@@ -159,12 +158,11 @@ describe('driver submission completion', () => {
           isOwnerRetaining={true}
           ownerRetention=""
           calculations={baseCalculations}
-          onSubmit={jest.fn()}
+          onSubmit={jest.fn(() => undefined)}
           onBack={jest.fn()}
           onSwitchMachine={jest.fn()}
           onReset={jest.fn()}
-          onUpdateGps={jest.fn()}
-          onUpdateGpsPermission={jest.fn()}
+          onRequestGps={jest.fn()}
           nextMachine={null}
           pendingCount={0}
           allTransactions={[]}
@@ -186,7 +184,7 @@ describe('driver submission completion', () => {
       fallbackReason: null,
     });
 
-    const onSubmit = jest.fn();
+    const onSubmit = jest.fn((_result: CompletionResult) => undefined);
 
     render(
       withProviders(
@@ -215,8 +213,7 @@ describe('driver submission completion', () => {
           onBack={jest.fn()}
           onSwitchMachine={jest.fn()}
           onReset={jest.fn()}
-          onUpdateGps={jest.fn()}
-          onUpdateGpsPermission={jest.fn()}
+          onRequestGps={jest.fn()}
           nextMachine={null}
           pendingCount={0}
           allTransactions={[
