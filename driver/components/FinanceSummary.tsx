@@ -18,6 +18,7 @@ interface FinanceSummaryProps {
   lang: 'zh' | 'sw';
   currentScore: string;
   expenses: string;
+  expenseType: 'public' | 'private';
   expenseCategory: Transaction['expenseCategory'];
   coinExchange: string;
   ownerRetention: string;
@@ -35,6 +36,7 @@ interface FinanceSummaryProps {
     isCoinStockNegative: boolean;
   };
   onUpdateExpenses: (val: string) => void;
+  onUpdateExpenseType: (val: 'public' | 'private') => void;
   onUpdateExpenseCategory: (val: Transaction['expenseCategory']) => void;
   onUpdateExpenseDescription: (val: string) => void;
   expenseDescription: string;
@@ -52,9 +54,9 @@ interface FinanceSummaryProps {
 }
 
 const FinanceSummary: React.FC<FinanceSummaryProps> = ({
-  selectedLocation, lang, currentScore, expenses, expenseCategory,
+  selectedLocation, lang, currentScore, expenses, expenseType, expenseCategory,
   coinExchange, ownerRetention, isOwnerRetaining, tip, startupDebtDeduction, calculations,
-  onUpdateExpenses, onUpdateExpenseCategory, onUpdateExpenseDescription, expenseDescription,
+  onUpdateExpenses, onUpdateExpenseType, onUpdateExpenseCategory, onUpdateExpenseDescription, expenseDescription,
   onUpdateCoinExchange, onUpdateOwnerRetention, onUpdateIsOwnerRetaining, onUpdateTip, onUpdateStartupDebtDeduction,
   onNext, onBack, onSwitchMachine, previewSource, nextMachine, pendingCount,
 }) => {
@@ -71,6 +73,8 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
   const parsedCurrentScore = parseInt(currentScore, 10);
   const hasNumericScore = !isNaN(parsedCurrentScore);
   const isScoreBelowLastReading = hasNumericScore && parsedCurrentScore < (selectedLocation?.lastScore ?? 0);
+  const expenseAmount = parseInt(displayedExpenseValue, 10) || 0;
+  const nextDividendBalance = isOwnerRetaining ? projectedDividendBalance : currentDividendBalance;
 
   return (
     <div className="max-w-md mx-auto py-2.5 px-3 pb-24 animate-in fade-in space-y-2.5">
@@ -127,6 +131,46 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-3">
+        <p className="text-caption font-black uppercase tracking-widest text-slate-400">
+          {lang === 'zh' ? '本次账目如何流转' : 'How this money moves'}
+        </p>
+        <div className="mt-2 space-y-2 text-caption font-bold leading-relaxed text-slate-600">
+          <p>
+            {lang === 'zh'
+              ? `1. 机器营收 TZS ${calculations.revenue.toLocaleString()} 先算出。`
+              : `1. Revenue starts at TZS ${calculations.revenue.toLocaleString()}.`}
+          </p>
+          <p>
+            {isOwnerRetaining
+              ? (lang === 'zh'
+                  ? `2. 商家留存 TZS ${calculations.finalRetention.toLocaleString()} 先记入当前点位分红余额，不会在本次直接支付。`
+                  : `2. Owner share TZS ${calculations.finalRetention.toLocaleString()} is added to this location's dividend balance, not paid out immediately.`)
+              : (lang === 'zh'
+                  ? `2. 商家分红 TZS ${calculations.finalRetention.toLocaleString()} 视为本次直接支付，不累加到分红余额。`
+                  : `2. Owner share TZS ${calculations.finalRetention.toLocaleString()} is treated as a direct payout this run, not added to dividend balance.`)}
+          </p>
+          <p>
+            {expenseAmount > 0
+              ? (expenseType === 'public'
+                  ? (lang === 'zh'
+                      ? `3. 本次费用 TZS ${expenseAmount.toLocaleString()} 记为公司支出，需管理员审批。`
+                      : `3. Expense TZS ${expenseAmount.toLocaleString()} is recorded as a company cost and requires admin approval.`)
+                  : (lang === 'zh'
+                      ? `3. 本次费用 TZS ${expenseAmount.toLocaleString()} 记为司机借支/私账，审批后会进入后续工资扣减口径。`
+                      : `3. Expense TZS ${expenseAmount.toLocaleString()} is recorded as a driver loan/private item and will flow into later payroll deductions after approval.`))
+              : (lang === 'zh'
+                  ? '3. 本次没有额外费用申报。'
+                  : '3. No extra expense is being requested on this run.')}
+          </p>
+          <p>
+            {lang === 'zh'
+              ? `4. 最终应缴现金为 TZS ${calculations.netPayable.toLocaleString()}，管理员确认日结后，这笔收款才会记为已结清。`
+              : `4. Final cash to hand in is TZS ${calculations.netPayable.toLocaleString()}, and it becomes settled only after admin confirms the daily settlement.`}
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-3">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div>
             <p className="text-caption font-black uppercase tracking-widest text-slate-400">
@@ -178,20 +222,29 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
           </p>
           <div className={`grid grid-cols-2 gap-2 rounded-2xl border px-3 py-2 ${isOwnerRetaining ? 'border-amber-200 bg-white/70' : 'border-emerald-200 bg-white/70'}`}>
             <div>
-              <p className="text-caption font-black uppercase text-slate-400">{lang === 'zh' ? '当前分红余额' : 'Current Balance'}</p>
+              <p className="text-caption font-black uppercase text-slate-400">{lang === 'zh' ? '当前点位分红余额' : 'Current Location Balance'}</p>
               <p className="mt-1 text-[11px] font-black text-slate-900">
                 TZS {currentDividendBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <div>
               <p className="text-caption font-black uppercase text-slate-400">
-                {isOwnerRetaining ? (lang === 'zh' ? '留存后余额' : 'Projected Balance') : (lang === 'zh' ? '本次支付' : 'Paid This Run')}
+                {isOwnerRetaining ? (lang === 'zh' ? '留存后余额' : 'Projected Balance') : (lang === 'zh' ? '本次直接支付' : 'Paid This Run')}
               </p>
               <p className={`mt-1 text-[11px] font-black ${isOwnerRetaining ? 'text-amber-700' : 'text-emerald-700'}`}>
-                TZS {(isOwnerRetaining ? projectedDividendBalance : calculations.finalRetention).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                TZS {(isOwnerRetaining ? nextDividendBalance : calculations.finalRetention).toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
           </div>
+          <p className={`text-caption font-bold leading-relaxed ${isOwnerRetaining ? 'text-amber-700' : 'text-emerald-700'}`}>
+            {isOwnerRetaining
+              ? (lang === 'zh'
+                  ? '留存模式：金额累计到当前点位的分红余额，店主后续通过“分红提现申请”发起支付，由管理员审批后扣减。'
+                  : 'Retention mode: this amount stays on the current location as dividend balance. The owner must request payout later, and admin approval deducts the balance.')
+              : (lang === 'zh'
+                  ? '直付模式：本次就视为已支付给店主，不进入分红余额。'
+                  : 'Direct-pay mode: this amount is treated as paid to the owner now and does not enter the dividend balance.')}
+          </p>
         </div>
       </div>
 
@@ -200,11 +253,36 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
       <div className="bg-rose-50 p-3 rounded-2xl border border-rose-100">
         <div className="flex items-center justify-between mb-3">
           <label className="text-caption font-black text-rose-500 uppercase flex items-center gap-2">
-            <Banknote size={13} /> {lang === 'zh' ? '公账支出' : 'Company Expense'}
+            <Banknote size={13} /> {lang === 'zh' ? '费用 / 借支' : 'Expense / Loan'}
           </label>
-          {(parseInt(displayedExpenseValue) || 0) > 0 && (
+          {expenseAmount > 0 && (
             <span className="px-2 py-0.5 bg-rose-200 text-rose-800 rounded-tag text-caption font-black uppercase">{t.pendingApproval}</span>
           )}
+        </div>
+
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => onUpdateExpenseType('public')}
+            className={`rounded-btn border px-3 py-2 text-caption font-black uppercase transition-colors ${
+              expenseType === 'public'
+                ? 'border-rose-300 bg-white text-rose-700'
+                : 'border-rose-100 bg-rose-50 text-rose-300'
+            }`}
+          >
+            {t.companyLabel}
+          </button>
+          <button
+            type="button"
+            onClick={() => onUpdateExpenseType('private')}
+            className={`rounded-btn border px-3 py-2 text-caption font-black uppercase transition-colors ${
+              expenseType === 'private'
+                ? 'border-amber-300 bg-white text-amber-700'
+                : 'border-amber-100 bg-amber-50 text-amber-300'
+            }`}
+          >
+            {t.loanLabel}
+          </button>
         </div>
 
         <div className="flex items-center gap-2">
@@ -212,13 +290,16 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
             value={expenseCategory}
             onChange={e => onUpdateExpenseCategory(e.target.value as any)}
             className="bg-white border border-rose-100 rounded-btn px-2 py-2 text-caption font-black text-rose-600 outline-none uppercase w-28 flex-shrink-0"
-          >
-            <option value="tip">{lang === 'zh' ? '小费支出' : 'Tip / Gratuity'}</option>
-            <option value="fuel">{t.fuelLabel}</option>
-            <option value="repair">{t.repairLabel}</option>
-            <option value="fine">{t.fineLabel}</option>
-            <option value="other">{t.otherLabel}</option>
-          </select>
+            >
+              <option value="tip">{lang === 'zh' ? '小费支出' : 'Tip / Gratuity'}</option>
+              <option value="fuel">{t.fuelLabel}</option>
+              <option value="repair">{t.repairLabel}</option>
+              <option value="fine">{t.fineLabel}</option>
+              <option value="transport">{t.transportLabel}</option>
+              <option value="allowance">{t.allowanceLabel}</option>
+              <option value="salary_advance">{t.salaryAdvanceLabel}</option>
+              <option value="other">{t.otherLabel}</option>
+            </select>
           <div className="flex-1 flex items-baseline gap-1 border-b border-rose-200 px-1">
             <span className="text-xs font-black text-rose-300">TZS</span>
             <input
@@ -238,10 +319,14 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
             />
           </div>
         </div>
-        <p className="mt-2 text-caption font-black uppercase text-rose-400">
-          {lang === 'zh'
-            ? '司机预支已移到债务窗口处理。'
-            : 'Driver advances now live in the debt window.'}
+        <p className={`mt-2 text-caption font-black uppercase ${expenseType === 'public' ? 'text-rose-400' : 'text-amber-500'}`}>
+          {expenseType === 'public'
+            ? (lang === 'zh'
+                ? '公账：管理员审批后计为公司成本。'
+                : 'Company: admin approval records this as a company cost.')
+            : (lang === 'zh'
+                ? '借支：管理员审批后计入司机私账，并进入后续工资扣减口径。'
+                : 'Loan: admin approval records this as a driver/private advance for later payroll deduction.')}
         </p>
         {!isTipExpense && (
           <input

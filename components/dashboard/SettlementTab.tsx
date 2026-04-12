@@ -453,6 +453,11 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                                 <button disabled={isPending || !isOnline} onClick={() => runApprovalAction(task.key, () => onReviewSettlement(task.id, 'confirmed'))} className="flex-1 py-3 bg-emerald-500 text-white rounded-xl text-caption font-black uppercase shadow-lg shadow-emerald-100 disabled:opacity-50">✓ {t.approveBtn}</button>
                                 <button disabled={isPending || !isOnline} onClick={() => runApprovalAction(task.key, () => onReviewSettlement(task.id, 'rejected'))} className="flex-1 py-3 bg-slate-100 text-slate-400 rounded-xl text-caption font-black uppercase disabled:opacity-50">✗ {t.rejectBtn}</button>
                               </div>
+                              <p className="text-caption font-bold leading-relaxed text-slate-500">
+                                {lang === 'zh'
+                                  ? '确认后：当日普通收款会记为已结清，司机次日流动硬币将更新为本次实收硬币；短款/长款仅作为日结结果保留。'
+                                  : 'On approval: today’s normal collections become settled, the driver’s next-day floating coins are updated to the submitted coin amount, and shortage/surplus stays as the recorded settlement result.'}
+                              </p>
                             </>
                           );
                         })()}
@@ -475,6 +480,15 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                                 <button disabled={isPending || !isOnline} onClick={() => runApprovalAction(task.key, () => onApproveExpenseRequest(task.id, true))} className="flex-1 py-2.5 bg-emerald-500 text-white rounded-xl text-caption font-black uppercase disabled:opacity-50">✓ {t.approveBtn}</button>
                                 <button disabled={isPending || !isOnline} onClick={() => runApprovalAction(task.key, () => onApproveExpenseRequest(task.id, false))} className="flex-1 py-2.5 bg-slate-100 text-slate-400 rounded-xl text-caption font-black uppercase disabled:opacity-50">✗ {t.rejectBtn}</button>
                               </div>
+                              <p className="text-caption font-bold leading-relaxed text-slate-500">
+                                {tx.expenseType === 'private'
+                                  ? (lang === 'zh'
+                                      ? '借支/私账：批准后进入司机后续工资扣减口径，不应当作公司成本报销。'
+                                      : 'Loan/private item: after approval it flows into later driver payroll deductions, not company reimbursement.')
+                                  : (lang === 'zh'
+                                      ? '公账：批准后记为公司成本，不应回收至司机私账。'
+                                      : 'Company item: after approval it is treated as a company cost, not a driver payroll deduction.')}
+                              </p>
                             </>
                           );
                         })()}
@@ -566,6 +580,27 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                                 <p className="text-caption font-bold text-slate-400 mt-1">{t.availableBalance}: TZS {(loc?.dividendBalance || 0).toLocaleString()}</p>
                                 {loc?.ownerName && <p className="text-caption font-bold text-slate-400">{t.ownerLabel}: {loc.ownerName}</p>}
                               </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="rounded-xl bg-slate-50 p-3">
+                                  <p className="text-caption font-black uppercase text-slate-400">
+                                    {lang === 'zh' ? '当前点位余额' : 'Current location balance'}
+                                  </p>
+                                  <p className="text-xs font-black text-slate-900">TZS {(loc?.dividendBalance || 0).toLocaleString()}</p>
+                                </div>
+                                <div className="rounded-xl bg-emerald-50 p-3">
+                                  <p className="text-caption font-black uppercase text-emerald-500">
+                                    {lang === 'zh' ? '批准后余额' : 'Balance after approval'}
+                                  </p>
+                                  <p className="text-xs font-black text-emerald-700">
+                                    TZS {Math.max(0, (loc?.dividendBalance || 0) - (tx.payoutAmount || 0)).toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+                              <p className="text-caption font-bold leading-relaxed text-slate-500">
+                                {lang === 'zh'
+                                  ? '当前分红余额按点位保存；批准提现会从该点位余额扣减，驳回则余额不变。'
+                                  : 'Dividend balance is stored per location; approving payout deducts this location balance, while rejecting leaves it unchanged.'}
+                              </p>
                               <div className="flex gap-2">
                                 <button disabled={isPending || !isOnline} onClick={() => runApprovalAction(task.key, () => onApprovePayoutRequest(task.id, true))} className="flex-1 py-2.5 bg-emerald-500 text-white rounded-xl text-caption font-black uppercase disabled:opacity-50">✓ {t.approveBtn}</button>
                                 <button disabled={isPending || !isOnline} onClick={() => runApprovalAction(task.key, () => onApprovePayoutRequest(task.id, false))} className="flex-1 py-2.5 bg-slate-100 text-slate-400 rounded-xl text-caption font-black uppercase disabled:opacity-50">✗ {t.rejectBtn}</button>
@@ -725,6 +760,29 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
                 <p className="text-caption font-black text-amber-400 uppercase mb-1 tracking-widest">{t.cashInHand}</p>
                 <p className="text-xl font-black text-amber-700">TZS {todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0).toLocaleString()}</p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-caption font-black uppercase tracking-[0.18em] text-slate-500">
+                {lang === 'zh' ? '日结提交后会发生什么' : 'What happens after settlement submit'}
+              </p>
+              <div className="mt-2 space-y-1.5 text-caption font-bold leading-relaxed text-slate-600">
+                <p>
+                  {lang === 'zh'
+                    ? '1. 今日普通收款仍先保持“待结清”。'
+                    : '1. Today’s normal collections stay pending first.'}
+                </p>
+                <p>
+                  {lang === 'zh'
+                    ? '2. 管理员确认后，今日收款才会更新为已结清。'
+                    : '2. They become settled only after admin confirms the settlement.'}
+                </p>
+                <p>
+                  {lang === 'zh'
+                    ? '3. 实收硬币会变成司机次日流动硬币；短款/长款会保留在本次日结结果里。'
+                    : '3. Submitted coins become the driver’s next-day float, while shortage/surplus stays recorded on this settlement.'}
+                </p>
               </div>
             </div>
 

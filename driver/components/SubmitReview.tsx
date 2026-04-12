@@ -73,6 +73,10 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   const t = TRANSLATIONS[lang];
   const { showToast } = useToast();
   const { confirm } = useConfirm();
+  const expenseAmount = (parseInt(expenses, 10) || 0) + (parseInt(tip, 10) || 0);
+  const settlementStatusHint = lang === 'zh'
+    ? '提交后收款单会先保存；管理员确认今日日结后，这笔收款才会记为已结清，并把次日流动硬币更新为实收硬币。'
+    : 'After submit, the collection is saved first. It becomes settled only after admin confirms the daily settlement, which also updates the next-day float to the actual coins submitted.';
   const parsedCurrentScore = parseInt(currentScore, 10);
   const hasNumericScore = !isNaN(parsedCurrentScore);
   const isScoreBelowLastReading = hasNumericScore && parsedCurrentScore < (selectedLocation?.lastScore ?? 0);
@@ -332,6 +336,15 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         <p className="text-4xl font-black">TZS {calculations.netPayable.toLocaleString()}</p>
       </div>
 
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+        <p className="text-caption font-black uppercase tracking-[0.18em] text-amber-700">
+          {lang === 'zh' ? '提交后的账务状态' : 'What happens after submit'}
+        </p>
+        <p className="mt-1 text-caption font-bold leading-relaxed text-amber-800">
+          {settlementStatusHint}
+        </p>
+      </div>
+
       <div className="grid grid-cols-3 gap-2">
         <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
           <p className="text-caption font-black uppercase tracking-wide text-slate-400">{t.score}</p>
@@ -350,8 +363,20 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100">
         {[
           { label: t.revenue, value: `TZS ${calculations.revenue.toLocaleString()}`, color: 'text-slate-900' },
-          { label: t.retention, value: `− TZS ${calculations.finalRetention.toLocaleString()}`, color: 'text-amber-600' },
-          { label: t.expenses, value: `− TZS ${((parseInt(expenses) || 0) + (parseInt(tip) || 0)).toLocaleString()}`, color: 'text-rose-500' },
+          {
+            label: isOwnerRetaining
+              ? (lang === 'zh' ? '商家留存（入分红余额）' : 'Owner Share (to dividend balance)')
+              : (lang === 'zh' ? '商家分红（本次直付）' : 'Owner Share (paid now)'),
+            value: `− TZS ${calculations.finalRetention.toLocaleString()}`,
+            color: 'text-amber-600',
+          },
+          {
+            label: expenseAmount > 0
+              ? `${t.expenses} · ${expenseType === 'public' ? t.companyLabel : t.loanLabel}`
+              : t.expenses,
+            value: `− TZS ${expenseAmount.toLocaleString()}`,
+            color: expenseType === 'public' ? 'text-rose-500' : 'text-amber-700',
+          },
           ...(calculations.startupDebtDeduction > 0 || parseInt(startupDebtDeduction) > 0
             ? [{ label: lang === 'zh' ? '商家欠款扣减' : 'Merchant Debt Deduction', value: `− TZS ${calculations.startupDebtDeduction.toLocaleString()}`, color: 'text-amber-600' }]
             : []),
@@ -363,6 +388,39 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
             <span className={`text-[11px] font-black ${row.color}`}>{row.value}</span>
           </div>
         ))}
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+        <p className="text-caption font-black uppercase tracking-[0.18em] text-slate-400">
+          {lang === 'zh' ? '本次审批/记账提示' : 'Approval and ledger notes'}
+        </p>
+        <div className="mt-2 space-y-2 text-caption font-bold leading-relaxed text-slate-600">
+          <p>
+            {isOwnerRetaining
+              ? (lang === 'zh'
+                  ? `商家留存 TZS ${calculations.finalRetention.toLocaleString()} 会累加到当前点位分红余额，店主后续提现仍需管理员审批。`
+                  : `Owner share TZS ${calculations.finalRetention.toLocaleString()} will be added to this location's dividend balance, and owner payout still requires admin approval later.`)
+              : (lang === 'zh'
+                  ? `商家分红 TZS ${calculations.finalRetention.toLocaleString()} 视为本次直接支付，不进入分红余额。`
+                  : `Owner share TZS ${calculations.finalRetention.toLocaleString()} is treated as a direct payout this run and will not enter dividend balance.`)}
+          </p>
+          {expenseAmount > 0 && (
+            <p>
+              {expenseType === 'public'
+                ? (lang === 'zh'
+                    ? `费用 TZS ${expenseAmount.toLocaleString()} 将进入公司费用审批。`
+                    : `Expense TZS ${expenseAmount.toLocaleString()} will go through company-expense approval.`)
+                : (lang === 'zh'
+                    ? `费用 TZS ${expenseAmount.toLocaleString()} 将作为司机借支/私账记录，并进入后续工资扣减口径。`
+                    : `Expense TZS ${expenseAmount.toLocaleString()} will be recorded as a driver/private loan and flow into later payroll deductions.`)}
+            </p>
+          )}
+          <p>
+            {lang === 'zh'
+              ? `当前点位分红余额：TZS ${(selectedLocation.dividendBalance || 0).toLocaleString()}。`
+              : `Current location dividend balance: TZS ${(selectedLocation.dividendBalance || 0).toLocaleString()}.`}
+          </p>
+        </div>
       </div>
 
       {photoData && (

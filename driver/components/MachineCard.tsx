@@ -128,6 +128,12 @@ const MachineCard: React.FC<MachineCardProps> = ({
                 <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-wide text-slate-400">
                   {loc.area || '—'} · {t.score} {(loc.lastScore ?? 0).toLocaleString()}
                 </p>
+                {(loc.ownerName || loc.shopOwnerPhone) && (
+                  <p className="mt-1 truncate text-caption font-bold text-slate-500">
+                    {loc.ownerName || (lang === 'zh' ? '商家未填写' : 'Merchant not set')}
+                    {loc.shopOwnerPhone ? ` · ${loc.shopOwnerPhone}` : ''}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className={`rounded-full px-2 py-1 text-caption font-black uppercase ${statusTone}`}>

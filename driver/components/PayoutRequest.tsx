@@ -96,6 +96,11 @@ const PayoutRequest: React.FC<PayoutRequestProps> = ({
             </p>
             <p className="text-2xl font-black text-emerald-700">TZS {availableDividend.toLocaleString()}</p>
           </div>
+          <p className="mt-3 text-caption font-bold leading-relaxed text-emerald-800">
+            {lang === 'zh'
+              ? '这笔余额当前保存在本机台/点位的分红余额里。提交后只会创建提现申请；管理员批准后，系统才真正扣减余额并视为完成支付。'
+              : 'This balance is currently stored on this machine/location dividend ledger. Submitting here only creates a payout request; the balance is deducted and considered paid only after admin approval.'}
+          </p>
         </div>
 
         {!isOnline && (

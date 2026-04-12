@@ -119,9 +119,11 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
         const meta = locationMetadata.get(loc.id)!;
         return { loc, ...meta };
       })
-      .filter(({ loc, isPending, isUrgent, isNearby }) => {
-        const matchSearch = !deferredSearchQuery ||
+        .filter(({ loc, isPending, isUrgent, isNearby }) => {
+          const matchSearch = !deferredSearchQuery ||
           loc.name.toLowerCase().includes(lowerSearch) ||
+          (loc.ownerName ?? '').toLowerCase().includes(lowerSearch) ||
+          (loc.shopOwnerPhone ?? '').toLowerCase().includes(lowerSearch) ||
           loc.machineId.toLowerCase().includes(lowerSearch) ||
           loc.area.toLowerCase().includes(lowerSearch);
         const matchArea = selectedArea === 'all' || loc.area === selectedArea;
@@ -137,7 +139,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
         const distanceB = b.distanceMeters ?? Number.MAX_SAFE_INTEGER;
         if (b.priorityScore !== a.priorityScore) return b.priorityScore - a.priorityScore;
         if (distanceA !== distanceB) return distanceA - distanceB;
-        return a.loc.name.localeCompare(b.loc.name);
+        return a.loc.machineId.localeCompare(b.loc.machineId);
       });
   }, [assignedLocations, locationMetadata, deferredSearchQuery, selectedArea, locationFilter]);
 
@@ -194,7 +196,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
             {t.selectMachine}
           </h2>
           <p className="text-caption font-black text-slate-400 uppercase tracking-widest mt-1">
-            {todayDriverTransactions.length} {t.todaysCollections}
+            {collectionOverview.totalMachines} {lang === 'zh' ? '台机器' : 'machines'} · {todayDriverTransactions.length} {t.todaysCollections}
           </p>
         </div>
         <div className="rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 px-3 py-2 text-white shadow-[0_10px_24px_rgba(245,158,11,0.32)] ring-1 ring-amber-300/40">

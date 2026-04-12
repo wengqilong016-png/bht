@@ -476,6 +476,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
           lang={lang}
           currentScore={draft.currentScore}
           expenses={draft.expenses}
+          expenseType={draft.expenseType}
           expenseCategory={draft.expenseCategory}
           expenseDescription={draft.expenseDescription}
           coinExchange={draft.coinExchange}
@@ -486,6 +487,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
           calculations={financeResult}
           previewSource={financeResult.source}
           onUpdateExpenses={(v) => updateDraft({ expenses: v })}
+          onUpdateExpenseType={(v) => updateDraft({ expenseType: v })}
           onUpdateExpenseCategory={(v) => updateDraft({ expenseCategory: v })}
           onUpdateExpenseDescription={(v) => updateDraft({ expenseDescription: v })}
           onUpdateCoinExchange={(v) => updateDraft({ coinExchange: v })}
