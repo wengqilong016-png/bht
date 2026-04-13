@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { Loader2 } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
@@ -69,6 +70,7 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
   handleLogout,
 }) => {
   const { showToast } = useToast();
+  const showNativeApkUpdate = Capacitor.isNativePlatform();
   const handleMutationError = useCallback(
     (error: unknown) => {
       const msg = error instanceof Error ? error.message : String(error);
@@ -204,7 +206,7 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
         <DataProvider value={dataValue}>
           <MutationProvider value={mutationValue}>
             <UpdatePrompt lang={lang} />
-            <AppUpdateModal lang={lang} />
+            {showNativeApkUpdate && <AppUpdateModal lang={lang} />}
             <AppRouterShell />
           </MutationProvider>
         </DataProvider>

@@ -35,7 +35,7 @@ function getUpdateManifestUrl(): string {
   if (Capacitor.isNativePlatform()) {
     const configured =
       typeof __UPDATE_MANIFEST_URL__ !== 'undefined' ? (__UPDATE_MANIFEST_URL__ || '') : '';
-    return configured || 'https://b-ht.vercel.app/version.json';
+    return configured || 'https://bahatiwin.space/version.json';
   }
   return '/version.json';
 }

@@ -182,8 +182,8 @@ const AppUpdateModal: React.FC<Props> = ({ lang }) => {
               <ShieldCheck size={14} className="text-emerald-600 shrink-0" />
               <span>
                 {lang === 'zh'
-                  ? `来源：b-ht.vercel.app${releasedAt ? ` · 发布：${releasedAt}` : ''}`
-                  : `Source: b-ht.vercel.app${releasedAt ? ` · Released: ${releasedAt}` : ''}`}
+                  ? `来源：bahatiwin.space${releasedAt ? ` · 发布：${releasedAt}` : ''}`
+                  : `Source: bahatiwin.space${releasedAt ? ` · Released: ${releasedAt}` : ''}`}
               </span>
             </div>
           </div>
