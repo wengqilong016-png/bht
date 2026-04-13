@@ -67,7 +67,7 @@ describe('AppUpdateModal', () => {
     expect(screen.getByText('线上构建')).not.toBeNull();
     expect(screen.getByText('#41 · abc1234')).not.toBeNull();
     expect(screen.getByText('#42 · def9876')).not.toBeNull();
-    expect(screen.getByText(/来源：b-ht\.vercel\.app/)).not.toBeNull();
+    expect(screen.getByText(/来源：bahatiwin\.space/)).not.toBeNull();
     expect(screen.getByText('安装完成后重新打开 App；不再提示更新就是成功。')).not.toBeNull();
   });
 
