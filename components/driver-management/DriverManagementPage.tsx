@@ -48,28 +48,35 @@ function parseSeedMachines(input: string): { machines: Array<{ machineId: string
 
   if (!cleaned) return { machines: [], invalid: [] };
 
-  const tokens = cleaned.split(' ').filter(Boolean);
-  const invalid: string[] = [];
   const seen = new Set<string>();
   const machines: Array<{ machineId: string; lastScore: number }> = [];
 
-  for (const t of tokens) {
-    const token = t.replace(/\s+/g, '');
-    const m = token.match(/^([A-Z0-9()_-]+)-([0-9]+)$/i);
-    if (!m) {
-      invalid.push(t);
-      continue;
-    }
-    const id = normalizeMachineId(m[1].replace(/_/g, '-'));
-    const score = Number.parseInt(m[2], 10);
-    if (!id || !Number.isFinite(score)) {
-      invalid.push(t);
-      continue;
-    }
+  const re = /([A-Z0-9()]+)\s*-\s*([0-9]+)/gi;
+  const matchedSpans: Array<{ start: number; end: number }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(cleaned))) {
+    const rawId = m[1];
+    const rawScore = m[2];
+    const id = normalizeMachineId(rawId.replace(/_/g, '-'));
+    const score = Number.parseInt(rawScore, 10);
+    matchedSpans.push({ start: m.index, end: m.index + m[0].length });
+    if (!id || !Number.isFinite(score)) continue;
     if (seen.has(id)) continue;
     seen.add(id);
     machines.push({ machineId: id, lastScore: score });
   }
+
+  // Best-effort invalid token detection: extract remaining non-empty chunks after removing matches.
+  let remainder = cleaned;
+  for (const span of matchedSpans.sort((a, b) => b.start - a.start)) {
+    remainder = remainder.slice(0, span.start) + ' ' + remainder.slice(span.end);
+  }
+  const invalid = remainder
+    .split(' ')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    // ignore bare punctuation/dashes
+    .filter((s) => !/^[\-_.]+$/.test(s));
 
   return { machines, invalid };
 }
@@ -262,7 +269,8 @@ const DriverManagementPage: React.FC<DriverManagementProps> = () => {
         resetForm();
       } catch (error) {
         console.error('Failed to save driver assignment changes.', error);
-        showToast('保存司机资料失败，请重试。\nFailed to save driver changes. Please retry.', 'error');
+        const msg = error instanceof Error ? error.message : String(error);
+        showToast(`保存失败：${msg}`, 'error');
       } finally {
         setIsSaving(false);
       }
@@ -321,28 +329,33 @@ const DriverManagementPage: React.FC<DriverManagementProps> = () => {
         await onUpdateDrivers([...drivers, newDriver]);
 
         if (seedMachines.length > 0) {
-          const existingMachineIds = new Set(locations.map((l) => normalizeMachineId(l.machineId)));
-          const seedLocations: Location[] = seedMachines
-            .filter((m) => !existingMachineIds.has(m.machineId))
-            .map((m) => ({
-              id: safeRandomUUID(),
-              name: m.machineId,
-              machineId: m.machineId,
-              lastScore: m.lastScore,
-              area: 'TBD',
-              assignedDriverId: createdDriverId,
-              initialStartupDebt: 0,
-              remainingStartupDebt: 0,
-              status: 'active',
-              commissionRate: CONSTANTS.DEFAULT_PROFIT_SHARE,
-              isSynced: false,
-            }));
+          try {
+            const existingMachineIds = new Set(locations.map((l) => normalizeMachineId(l.machineId)));
+            const seedLocations: Location[] = seedMachines
+              .filter((m) => !existingMachineIds.has(m.machineId))
+              .map((m) => ({
+                id: safeRandomUUID(),
+                name: m.machineId,
+                machineId: m.machineId,
+                lastScore: m.lastScore,
+                area: 'TBD',
+                assignedDriverId: createdDriverId,
+                initialStartupDebt: 0,
+                remainingStartupDebt: 0,
+                status: 'active',
+                commissionRate: CONSTANTS.DEFAULT_PROFIT_SHARE,
+                isSynced: false,
+              }));
 
-          if (seedLocations.length > 0) {
-            await onUpdateLocations([...locations, ...seedLocations]);
-            showToast(`已批量新增并分配 ${seedLocations.length} 台机器`, 'success');
-          } else {
-            showToast('批量机器已存在（未新增）', 'info');
+            if (seedLocations.length > 0) {
+              await onUpdateLocations([...locations, ...seedLocations]);
+              showToast(`已批量新增并分配 ${seedLocations.length} 台机器`, 'success');
+            } else {
+              showToast('批量机器已存在（未新增）', 'info');
+            }
+          } catch (seedErr) {
+            const msg = seedErr instanceof Error ? seedErr.message : String(seedErr);
+            showToast(`司机已创建，但批量机器保存失败：${msg}`, 'warning');
           }
         }
 
