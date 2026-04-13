@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Location, TRANSLATIONS, Transaction } from '../../types';
+import { Location, TRANSLATIONS } from '../../types';
 
 import CollectionWorkbenchHeader from './CollectionWorkbenchHeader';
 import {
@@ -23,24 +23,14 @@ interface FinanceSummaryProps {
   selectedLocation: Location;
   lang: 'zh' | 'sw';
   currentScore: string;
-  expenses: string;
-  expenseType: 'public' | 'private';
-  expenseCategory: Transaction['expenseCategory'];
   coinExchange: string;
   ownerRetention: string;
   isOwnerRetaining: boolean;
-  tip: string;
   startupDebtDeduction: string;
   calculations: FinanceSummaryCalculations;
-  onUpdateExpenses: (val: string) => void;
-  onUpdateExpenseType: (val: 'public' | 'private') => void;
-  onUpdateExpenseCategory: (val: Transaction['expenseCategory']) => void;
-  onUpdateExpenseDescription: (val: string) => void;
-  expenseDescription: string;
   onUpdateCoinExchange: (val: string) => void;
   onUpdateOwnerRetention: (val: string) => void;
   onUpdateIsOwnerRetaining: (val: boolean) => void;
-  onUpdateTip: (val: string) => void;
   onUpdateStartupDebtDeduction: (val: string) => void;
   onNext: () => void;
   onBack: () => void;
@@ -54,24 +44,14 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
   selectedLocation,
   lang,
   currentScore,
-  expenses,
-  expenseType,
-  expenseCategory,
   coinExchange,
   ownerRetention,
   isOwnerRetaining,
-  tip,
   startupDebtDeduction,
   calculations,
-  onUpdateExpenses,
-  onUpdateExpenseType,
-  onUpdateExpenseCategory,
-  onUpdateExpenseDescription,
-  expenseDescription,
   onUpdateCoinExchange,
   onUpdateOwnerRetention,
   onUpdateIsOwnerRetaining,
-  onUpdateTip,
   onUpdateStartupDebtDeduction,
   onNext,
   onBack,
@@ -81,8 +61,6 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
   pendingCount,
 }) => {
   const t = TRANSLATIONS[lang];
-  const isTipExpense = expenseCategory === 'tip';
-  const displayedExpenseValue = isTipExpense ? tip : expenses;
   const currentDividendBalance = Number(selectedLocation.dividendBalance || 0);
   const projectedDividendBalance = currentDividendBalance + calculations.finalRetention;
   const shouldShowComputedOwnerAmount =
@@ -93,7 +71,6 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
   const parsedCurrentScore = parseInt(currentScore, 10);
   const hasNumericScore = !isNaN(parsedCurrentScore);
   const isScoreBelowLastReading = hasNumericScore && parsedCurrentScore < (selectedLocation?.lastScore ?? 0);
-  const expenseAmount = parseInt(displayedExpenseValue, 10) || 0;
   const nextDividendBalance = isOwnerRetaining ? projectedDividendBalance : currentDividendBalance;
   const shared = { lang, t, calculations };
 
@@ -117,15 +94,10 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
         previewSource={previewSource}
       />
 
-      <FinanceMetricGrid
-        {...shared}
-        displayedExpenseValue={displayedExpenseValue}
-      />
+      <FinanceMetricGrid {...shared} />
 
       <FinanceFlowExplanation
         {...shared}
-        expenseAmount={expenseAmount}
-        expenseType={expenseType}
         isOwnerRetaining={isOwnerRetaining}
       />
 

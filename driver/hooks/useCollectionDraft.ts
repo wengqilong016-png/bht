@@ -3,6 +3,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Transaction } from '../../types';
 
 const DRAFT_STORAGE_KEY = 'bahati_collection_draft';
+const CURRENT_DRAFT_SCHEMA_VERSION = 3;
 
 export interface CollectionDraft {
   selectedLocId: string;
@@ -51,14 +52,44 @@ const EMPTY_DRAFT: CollectionDraft = {
   gpsSource: null,
 };
 
+type StoredCollectionDraft = Partial<CollectionDraft> & {
+  draftSchemaVersion?: number;
+};
+
+function withoutRuntimeState(draft: CollectionDraft): CollectionDraft {
+  return {
+    ...draft,
+    photoData: null,
+    aiReviewData: null,
+    gpsCoords: null,
+    gpsPermission: 'prompt',
+    gpsSource: null,
+  };
+}
+
+function sanitizeStoredDraft(stored: StoredCollectionDraft): CollectionDraft {
+  const { draftSchemaVersion: _draftSchemaVersion, ...storedDraft } = stored;
+  const migrated =
+    stored.draftSchemaVersion === CURRENT_DRAFT_SCHEMA_VERSION
+      ? storedDraft
+      : {
+          ...storedDraft,
+          expenses: '',
+          expenseType: 'public' as const,
+          expenseCategory: 'tip' as const,
+          expenseDescription: '',
+          tip: '',
+        };
+
+  return withoutRuntimeState({ ...EMPTY_DRAFT, ...migrated });
+}
+
 export function useCollectionDraft() {
   const [draft, setDraftState] = useState<CollectionDraft>(() => {
     try {
       const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        // Restore everything except gps runtime state
-        return { ...EMPTY_DRAFT, ...parsed, gpsCoords: null, gpsPermission: 'prompt', gpsSource: null };
+        return sanitizeStoredDraft(JSON.parse(saved));
       }
     } catch { /* ignore */ }
     return { ...EMPTY_DRAFT };
@@ -71,12 +102,15 @@ export function useCollectionDraft() {
     try {
       // Exclude photoData and aiReviewData from localStorage persistence
       // to avoid hitting the ~5MB quota (photos can be several MB each).
-      const toSave = { ...d, photoData: null, aiReviewData: null };
+      const toSave = withoutRuntimeState(d);
       if (JSON.stringify(toSave) === JSON.stringify(EMPTY_DRAFT)) {
         localStorage.removeItem(DRAFT_STORAGE_KEY);
         return;
       }
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(toSave));
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
+        ...toSave,
+        draftSchemaVersion: CURRENT_DRAFT_SCHEMA_VERSION,
+      }));
     } catch { /* ignore quota errors */ }
   }, []);
 
@@ -96,7 +130,7 @@ export function useCollectionDraft() {
     try {
       const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
       if (saved) {
-        return { ...EMPTY_DRAFT, ...JSON.parse(saved) };
+        return sanitizeStoredDraft(JSON.parse(saved));
       }
     } catch { /* ignore */ }
     return null;

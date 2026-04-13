@@ -5,13 +5,14 @@ import { useConfirm } from '../../contexts/ConfirmContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useCollectionSubmission } from '../../hooks/useCollectionSubmission';
 import { extractGpsFromExif, estimateLocationFromContext } from '../../offlineQueue';
-import { Location, Driver, Transaction, TRANSLATIONS } from '../../types';
+import { Location, Driver, TRANSLATIONS } from '../../types';
 
 import CollectionWorkbenchHeader from './CollectionWorkbenchHeader';
 import WizardStepBar from './WizardStepBar';
 
 
 import type { AIReviewData } from '../hooks/useCollectionDraft';
+import type { Transaction } from '../../types';
 
 
 interface SubmitReviewProps {
@@ -22,12 +23,7 @@ interface SubmitReviewProps {
   currentScore: string;
   photoData: string | null;
   aiReviewData: AIReviewData | null;
-  expenses: string;
-  expenseType: 'public' | 'private';
-  expenseCategory: Transaction['expenseCategory'];
-  expenseDescription: string;
   coinExchange: string;
-  tip: string;
   startupDebtDeduction: string;
   draftTxId: string;
   gpsCoords: { lat: number; lng: number } | null;
@@ -64,7 +60,7 @@ export type CompletionResult = {
 
 const SubmitReview: React.FC<SubmitReviewProps> = ({
   selectedLocation, currentDriver, lang, isOnline, currentScore, photoData,
-  aiReviewData, expenses, expenseType, expenseCategory, expenseDescription, coinExchange, tip, startupDebtDeduction, draftTxId,
+  aiReviewData, coinExchange, startupDebtDeduction, draftTxId,
   gpsCoords, gpsPermission, isOwnerRetaining, ownerRetention, calculations,
   onSubmit, onBack, onSwitchMachine, onReset, onReturnHome, onRequestGps, nextMachine, pendingCount,
   allTransactions, todayStr,
@@ -72,7 +68,6 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   const t = TRANSLATIONS[lang];
   const { showToast } = useToast();
   const { confirm } = useConfirm();
-  const expenseAmount = (parseInt(expenses, 10) || 0) + (parseInt(tip, 10) || 0);
   const settlementStatusHint = lang === 'zh'
     ? '提交后收款单会先保存；管理员确认今日日结后，这笔收款才会记为已结清，并把次日流动硬币更新为实收硬币。'
     : 'After submit, the collection is saved first. It becomes settled only after admin confirms the daily settlement, which also updates the next-day float to the actual coins submitted.';
@@ -243,12 +238,12 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       currentScore,
       photoData,
       aiReviewData,
-      expenses,
-      expenseType,
-      expenseCategory,
-      expenseDescription,
+      expenses: '',
+      expenseType: 'public',
+      expenseCategory: undefined,
+      expenseDescription: undefined,
       coinExchange,
-      tip,
+      tip: '',
       draftTxId,
       isOwnerRetaining,
       ownerRetention,
@@ -395,13 +390,6 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
             value: `− TZS ${calculations.finalRetention.toLocaleString()}`,
             color: 'text-amber-600',
           },
-          {
-            label: expenseAmount > 0
-              ? `${t.expenses} · ${expenseType === 'public' ? t.companyLabel : t.loanLabel}`
-              : t.expenses,
-            value: `− TZS ${expenseAmount.toLocaleString()}`,
-            color: expenseType === 'public' ? 'text-rose-500' : 'text-amber-700',
-          },
           ...(calculations.startupDebtDeduction > 0 || parseInt(startupDebtDeduction) > 0
             ? [{ label: lang === 'zh' ? '商家欠款扣减' : 'Merchant Debt Deduction', value: `− TZS ${calculations.startupDebtDeduction.toLocaleString()}`, color: 'text-amber-600' }]
             : []),
@@ -429,17 +417,6 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
                   ? `商家分红 TZS ${calculations.finalRetention.toLocaleString()} 视为本次直接支付，不进入分红余额。`
                   : `Owner share TZS ${calculations.finalRetention.toLocaleString()} is treated as a direct payout this run and will not enter dividend balance.`)}
           </p>
-          {expenseAmount > 0 && (
-            <p>
-              {expenseType === 'public'
-                ? (lang === 'zh'
-                    ? `费用 TZS ${expenseAmount.toLocaleString()} 将进入公司费用审批。`
-                    : `Expense TZS ${expenseAmount.toLocaleString()} will go through company-expense approval.`)
-                : (lang === 'zh'
-                    ? `费用 TZS ${expenseAmount.toLocaleString()} 将作为司机借支/私账记录，并进入后续工资扣减口径。`
-                    : `Expense TZS ${expenseAmount.toLocaleString()} will be recorded as a driver/private loan and flow into later payroll deductions.`)}
-            </p>
-          )}
           <p>
             {lang === 'zh'
               ? `当前点位分红余额：TZS ${(selectedLocation.dividendBalance || 0).toLocaleString()}。`

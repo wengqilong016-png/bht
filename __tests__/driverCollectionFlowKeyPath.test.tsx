@@ -10,8 +10,9 @@ const mockSetQueryData = jest.fn();
 const mockGetQueryData = jest.fn();
 const mockUpdateLocationsMutateAsync = jest.fn<() => Promise<void>>();
 const mockLogAIMutate = jest.fn();
-const mockSubmitTransactionMutateAsync = jest.fn<() => Promise<void>>();
+const mockSubmitTransactionMutateAsync = jest.fn<(transaction: Transaction) => Promise<void>>();
 const mockSyncOfflineDataMutate = jest.fn();
+const mockRequestGps = jest.fn<() => Promise<{ lat: number; lng: number } | null>>();
 
 const mockDriver = {
   id: 'drv-1',
@@ -80,7 +81,7 @@ jest.mock('../driver/hooks/useGpsCapture', () => ({
   useGpsCapture: () => ({
     coords: null,
     status: 'prompt',
-    request: jest.fn(),
+    request: mockRequestGps,
   }),
 }));
 
@@ -112,11 +113,25 @@ jest.mock('../services/financeCalculator', () => ({
 
 jest.mock('../driver/components/MachineSelector', () => ({
   __esModule: true,
-  default: ({ onSelectMachine }: { onSelectMachine: (locId: string) => void }) => (
+  default: ({
+    onSelectMachine,
+    onCreateOfficeLoan,
+  }: {
+    onSelectMachine: (locId: string) => void;
+    onCreateOfficeLoan?: (locId: string, amount: number, note: string) => Promise<void>;
+  }) => (
     <div>
       <p>STEP:selection</p>
       <button type="button" onClick={() => onSelectMachine('loc-1')}>
         Select Machine
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          void onCreateOfficeLoan?.('loc-1', 3500, 'Office float top-up').catch(() => {});
+        }}
+      >
+        Create Office Loan
       </button>
     </div>
   ),
@@ -202,6 +217,7 @@ describe('driver collection flow key path', () => {
     mockGetQueryData.mockReturnValue([]);
     mockUpdateLocationsMutateAsync.mockResolvedValue(undefined);
     mockSubmitTransactionMutateAsync.mockResolvedValue(undefined);
+    mockRequestGps.mockResolvedValue({ lat: -6.81, lng: 39.28 });
   });
 
   it('walks through selection/capture/amounts/confirm and returns to selection after completion', async () => {
@@ -223,5 +239,28 @@ describe('driver collection flow key path', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Back Home' }));
     await waitFor(() => expect(screen.getByText('STEP:selection')).toBeTruthy());
+  });
+
+  it('waits for fresh GPS before creating an office loan transaction', async () => {
+    render(<DriverCollectionFlow />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create Office Loan' }));
+
+    await waitFor(() => expect(mockSubmitTransactionMutateAsync).toHaveBeenCalledTimes(1));
+    const transaction = mockSubmitTransactionMutateAsync.mock.calls[0][0] as Transaction;
+    expect(mockRequestGps).toHaveBeenCalledTimes(1);
+    expect(transaction.gps).toEqual({ lat: -6.81, lng: 39.28 });
+    expect(transaction.expenseCategory).toBe('office_loan');
+  });
+
+  it('does not create an office loan transaction when GPS cannot be resolved', async () => {
+    mockRequestGps.mockResolvedValueOnce(null);
+
+    render(<DriverCollectionFlow />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create Office Loan' }));
+
+    await waitFor(() => expect(mockRequestGps).toHaveBeenCalledTimes(1));
+    expect(mockSubmitTransactionMutateAsync).not.toHaveBeenCalled();
   });
 });

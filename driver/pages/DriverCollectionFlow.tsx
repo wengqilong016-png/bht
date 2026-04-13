@@ -88,11 +88,11 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
   const financeResult = useCollectionFinancePreview({
     selectedLocation,
     currentScore: draft.currentScore,
-    expenses: draft.expenses,
+    expenses: '',
     coinExchange: draft.coinExchange,
     ownerRetention: draft.ownerRetention,
     isOwnerRetaining: draft.isOwnerRetaining,
-    tip: draft.tip,
+    tip: '',
     startupDebtDeduction: draft.startupDebtDeduction,
     initialFloat: currentDriver?.dailyFloatingCoins || 0,
   });
@@ -122,13 +122,9 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       currentScore: '',
       photoData: null,
       aiReviewData: null,
-      expenses: '',
-      expenseType: 'public',
-      expenseCategory: 'tip',
       coinExchange: '',
       ownerRetention: '',
       isOwnerRetaining: true,
-      tip: '',
       startupDebtDeduction: '',
     });
     setStep('capture');
@@ -137,8 +133,6 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     draft.selectedLocId &&
       (draft.currentScore ||
         draft.photoData ||
-        draft.expenses ||
-        draft.tip ||
         draft.coinExchange ||
         draft.startupDebtDeduction)
   );
@@ -195,8 +189,11 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     if (!location) {
       throw new Error(`Location not found: ${locationId}`);
     }
-    requestGps();
-    const transaction = createExpenseTransaction(location, currentDriver, gpsCoords, {
+    const resolvedGps = await requestGps();
+    if (!resolvedGps) {
+      throw new Error('GPS location could not be resolved for office loan submission.');
+    }
+    const transaction = createExpenseTransaction(location, currentDriver, resolvedGps, {
       amount,
       expenseType: 'private',
       expenseCategory: 'office_loan',
@@ -342,25 +339,15 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
           selectedLocation={selectedLocation}
           lang={lang}
           currentScore={draft.currentScore}
-          expenses={draft.expenses}
-          expenseType={draft.expenseType}
-          expenseCategory={draft.expenseCategory}
-          expenseDescription={draft.expenseDescription}
           coinExchange={draft.coinExchange}
           ownerRetention={draft.ownerRetention}
           isOwnerRetaining={draft.isOwnerRetaining}
-          tip={draft.tip}
           startupDebtDeduction={draft.startupDebtDeduction}
           calculations={financeResult}
           previewSource={financeResult.source}
-          onUpdateExpenses={(v) => updateDraft({ expenses: v })}
-          onUpdateExpenseType={(v) => updateDraft({ expenseType: v })}
-          onUpdateExpenseCategory={(v) => updateDraft({ expenseCategory: v })}
-          onUpdateExpenseDescription={(v) => updateDraft({ expenseDescription: v })}
           onUpdateCoinExchange={(v) => updateDraft({ coinExchange: v })}
           onUpdateOwnerRetention={(v) => updateDraft({ ownerRetention: v })}
           onUpdateIsOwnerRetaining={(v) => updateDraft({ isOwnerRetaining: v })}
-          onUpdateTip={(v) => updateDraft({ tip: v })}
           onUpdateStartupDebtDeduction={(v) => updateDraft({ startupDebtDeduction: v })}
           onNext={() => setStep('confirm')}
           onBack={() => setStep('capture')}
@@ -383,12 +370,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         currentScore={draft.currentScore}
         photoData={draft.photoData}
         aiReviewData={draft.aiReviewData}
-        expenses={draft.expenses}
-        expenseType={draft.expenseType}
-        expenseCategory={draft.expenseCategory}
-        expenseDescription={draft.expenseDescription}
         coinExchange={draft.coinExchange}
-        tip={draft.tip}
         startupDebtDeduction={draft.startupDebtDeduction}
         draftTxId={draft.draftTxId}
         gpsCoords={draft.gpsCoords}

@@ -25,6 +25,7 @@ describe('useCollectionDraft', () => {
 
   it('restores a saved draft but resets runtime GPS state', () => {
     localStorage.setItem('bahati_collection_draft', JSON.stringify({
+      draftSchemaVersion: 3,
       selectedLocId: 'loc-1',
       draftTxId: 'tx-1',
       currentScore: '1234',
@@ -42,6 +43,59 @@ describe('useCollectionDraft', () => {
       gpsCoords: null,
       gpsPermission: 'prompt',
       gpsSource: null,
+    });
+  });
+
+  it('migrates legacy drafts by clearing stale collection expense fields', () => {
+    localStorage.setItem('bahati_collection_draft', JSON.stringify({
+      draftSchemaVersion: 2,
+      selectedLocId: 'loc-legacy',
+      draftTxId: 'tx-legacy',
+      currentScore: '4567',
+      expenses: '3000',
+      expenseType: 'private',
+      expenseCategory: 'fuel',
+      expenseDescription: 'old fuel draft',
+      tip: '500',
+    }));
+
+    const { result } = renderHook(() => useCollectionDraft());
+
+    expect(result.current.draft).toMatchObject({
+      selectedLocId: 'loc-legacy',
+      draftTxId: 'tx-legacy',
+      currentScore: '4567',
+      expenses: '',
+      expenseType: 'public',
+      expenseCategory: 'tip',
+      expenseDescription: '',
+      tip: '',
+    });
+  });
+
+  it('migrates unversioned drafts by clearing stale collection expense fields', () => {
+    localStorage.setItem('bahati_collection_draft', JSON.stringify({
+      selectedLocId: 'loc-old',
+      draftTxId: 'tx-old',
+      currentScore: '2345',
+      expenses: '9000',
+      expenseType: 'private',
+      expenseCategory: 'transport',
+      expenseDescription: 'old taxi draft',
+      tip: '200',
+    }));
+
+    const { result } = renderHook(() => useCollectionDraft());
+
+    expect(result.current.loadDraft()).toMatchObject({
+      selectedLocId: 'loc-old',
+      draftTxId: 'tx-old',
+      currentScore: '2345',
+      expenses: '',
+      expenseType: 'public',
+      expenseCategory: 'tip',
+      expenseDescription: '',
+      tip: '',
     });
   });
 

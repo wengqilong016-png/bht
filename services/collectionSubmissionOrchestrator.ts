@@ -175,16 +175,8 @@ async function enqueueOfflineTransaction(
 export function buildCollectionSubmissionInput(
   input: OrchestrateCollectionSubmissionInput,
 ): CollectionSubmissionInput {
-  const rawExpenseValue = parseInteger(input.expenses);
-  const rawTipValue = parseInteger(input.tip);
-  // When the expense category is 'tip', the driver entered the amount in the tip
-  // field rather than the expenses field. We fold the tip into the expenses slot
-  // so that: (a) tx.expenses > 0 and expenseStatus = 'pending' are set correctly,
-  // (b) the server RPC receives the amount under p_expenses (and p_tip = 0) to
-  // avoid double-counting in the finance formula.
-  const isTipCategory = input.expenseCategory === 'tip';
-  const expenseValue = isTipCategory ? rawTipValue : rawExpenseValue;
-  const tipValue     = isTipCategory ? 0 : rawTipValue;
+  const expenseValue = 0;
+  const tipValue = 0;
   const trimmedScore = input.currentScore.trim();
   const parsedScore = Number.parseInt(trimmedScore, 10);
   if (trimmedScore === '' || Number.isNaN(parsedScore)) {
@@ -211,7 +203,6 @@ export function buildCollectionSubmissionInput(
 
   const notes = [
     input.aiReviewData?.notes,
-    rawTipValue > 0 ? `[Tip: TZS ${rawTipValue.toLocaleString()}]` : null,
     input.gpsSourceType !== 'live' ? `[GPS: ${input.gpsSourceType}]` : null,
   ].filter(Boolean).join(' ') || null;
 
@@ -233,9 +224,9 @@ export function buildCollectionSubmissionInput(
     aiScore:         recognizedScore ?? null,
     anomalyFlag:     isAnomaly,
     notes,
-    expenseType:        expenseValue > 0 ? (input.expenseType ?? 'public') : null,
-    expenseCategory:    expenseValue > 0 ? input.expenseCategory : null,
-    expenseDescription: expenseValue > 0 && input.expenseDescription ? input.expenseDescription : undefined,
+    expenseType:        null,
+    expenseCategory:    null,
+    expenseDescription: undefined,
     reportedStatus,
   };
 }

@@ -61,12 +61,7 @@ export function RevenueSummary({
   );
 }
 
-export function FinanceMetricGrid({
-  displayedExpenseValue,
-  ...shared
-}: SharedFinanceSectionProps & {
-  displayedExpenseValue: string;
-}) {
+export function FinanceMetricGrid(shared: SharedFinanceSectionProps) {
   const { t, calculations } = shared;
 
   return (
@@ -77,7 +72,7 @@ export function FinanceMetricGrid({
       </div>
       <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
         <p className="text-caption font-black uppercase tracking-wide text-slate-400">{t.expenses}</p>
-        <p className="mt-1 text-sm font-black text-slate-900">TZS {(parseInt(displayedExpenseValue) || 0).toLocaleString()}</p>
+        <p className="mt-1 text-sm font-black text-slate-900">TZS 0</p>
       </div>
       <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
         <p className="text-caption font-black uppercase tracking-wide text-slate-400">{t.net}</p>
@@ -88,13 +83,9 @@ export function FinanceMetricGrid({
 }
 
 export function FinanceFlowExplanation({
-  expenseAmount,
-  expenseType,
   isOwnerRetaining,
   ...shared
 }: SharedFinanceSectionProps & {
-  expenseAmount: number;
-  expenseType: 'public' | 'private';
   isOwnerRetaining: boolean;
 }) {
   const { lang, calculations } = shared;
@@ -120,17 +111,9 @@ export function FinanceFlowExplanation({
                 : `2. Owner share TZS ${calculations.finalRetention.toLocaleString()} is treated as a direct payout this run, not added to dividend balance.`)}
         </p>
         <p>
-          {expenseAmount > 0
-            ? (expenseType === 'public'
-                ? (lang === 'zh'
-                    ? `3. 本次费用 TZS ${expenseAmount.toLocaleString()} 记为公司支出，需管理员审批。`
-                    : `3. Expense TZS ${expenseAmount.toLocaleString()} is recorded as a company cost and requires admin approval.`)
-                : (lang === 'zh'
-                    ? `3. 本次费用 TZS ${expenseAmount.toLocaleString()} 记为司机借支/私账，审批后会进入后续工资扣减口径。`
-                    : `3. Expense TZS ${expenseAmount.toLocaleString()} is recorded as a driver loan/private item and will flow into later payroll deductions after approval.`))
-            : (lang === 'zh'
-                ? '3. 本次没有额外费用申报。'
-                : '3. No extra expense is being requested on this run.')}
+          {lang === 'zh'
+            ? '3. 本次收款不再申报机器费用；小费、电费、其他日结支出在日结页处理。'
+            : '3. Collection runs no longer submit machine expenses; tips, electricity, and other settlement expenses are handled on the settlement page.'}
         </p>
         <p>
           {lang === 'zh'

@@ -17,7 +17,7 @@ export interface UseGpsCaptureResult {
   coords: GpsCoords | null;
   status: GpsStatus;
   /** Fire a geolocation request. Safe to call multiple times (retry). */
-  request: () => void;
+  request: () => Promise<GpsCoords | null>;
 }
 
 /**
@@ -30,28 +30,33 @@ export function useGpsCapture(initialCoords?: GpsCoords | null): UseGpsCaptureRe
   const [coords, setCoords] = useState<GpsCoords | null>(initialCoords ?? null);
   const [status, setStatus] = useState<GpsStatus>(initialCoords ? 'granted' : 'idle');
 
-  const request = useCallback(() => {
+  const request = useCallback((): Promise<GpsCoords | null> => {
     if (!navigator.geolocation) {
       setStatus('error');
-      return;
+      return Promise.resolve(null);
     }
     setStatus('requesting');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setStatus('granted');
-      },
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
-          setStatus('denied');
-        } else if (err.code === err.TIMEOUT) {
-          setStatus('timeout');
-        } else {
-          setStatus('error');
-        }
-      },
-      { timeout: 10000, enableHighAccuracy: true },
-    );
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const nextCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setCoords(nextCoords);
+          setStatus('granted');
+          resolve(nextCoords);
+        },
+        (err) => {
+          if (err.code === err.PERMISSION_DENIED) {
+            setStatus('denied');
+          } else if (err.code === err.TIMEOUT) {
+            setStatus('timeout');
+          } else {
+            setStatus('error');
+          }
+          resolve(null);
+        },
+        { timeout: 10000, enableHighAccuracy: true },
+      );
+    });
   }, []);
 
   return { coords, status, request };

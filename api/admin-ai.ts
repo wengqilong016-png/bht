@@ -29,7 +29,7 @@ export interface SystemSnapshot {
   locationsNotCollectedToday: string[];
   driversWithNoCollectionToday: string[];
   topAnomalies: Array<{ machine: string; driver: string; revenue: number; note: string }>;
-  pendingApprovals: Array<{ driver: string; date: string; amount: number }>;
+  pendingApprovals: Array<{ driver: string; date: string; amount: number; settlementExpenseAmount: number }>;
   recentTrend: string;
   /** Machines that have deletion blockers */
   blockedMachines?: Array<{ name: string; machineId: string; blockers: string[]; debt: number; dividendBalance: number }>;
@@ -60,7 +60,7 @@ ${snapshot.driversWithNoCollectionToday.length > 0 ? `**今日未出勤司机（
 
 ${snapshot.topAnomalies.length > 0 ? `**需关注的异常交易**\n${snapshot.topAnomalies.map(a => `- ${a.machine}（${a.driver}）：营业额 TZS ${a.revenue.toLocaleString()} ${a.note}`).join('\n')}` : ''}
 
-${snapshot.pendingApprovals.length > 0 ? `**待审批结算单**\n${snapshot.pendingApprovals.map(a => `- ${a.driver} ${a.date} TZS ${a.amount.toLocaleString()}`).join('\n')}` : ''}
+${snapshot.pendingApprovals.length > 0 ? `**待审批结算单**\n${snapshot.pendingApprovals.map(a => `- ${a.driver} ${a.date} TZS ${a.amount.toLocaleString()}${a.settlementExpenseAmount > 0 ? `（含日结支出扣减 TZS ${a.settlementExpenseAmount.toLocaleString()}）` : ''}`).join('\n')}` : ''}
 
 ${snapshot.recentTrend ? `**近期趋势**\n${snapshot.recentTrend}` : ''}
 
