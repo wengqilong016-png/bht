@@ -2,6 +2,7 @@ import React from 'react';
 
 interface EnvMissingErrorPageProps {
   lang: 'zh' | 'sw';
+  compact?: boolean;
 }
 
 const COPY = {
@@ -31,16 +32,18 @@ const COPY = {
   },
 } as const;
 
-const EnvMissingErrorPage: React.FC<EnvMissingErrorPageProps> = ({ lang }) => {
+const EnvMissingErrorPage: React.FC<EnvMissingErrorPageProps> = ({ lang, compact = false }) => {
   const copy = COPY[lang];
 
   return (
     <div
-      className="min-h-screen bg-[#f5f7fa] flex items-center justify-center p-6"
+      className={compact
+        ? 'w-full'
+        : 'min-h-screen bg-[#f5f7fa] flex items-center justify-center p-6'}
       role="alert"
       aria-live="polite"
     >
-      <div className="w-full max-w-lg bg-[#f5f7fa] rounded-card shadow-silicone border border-white/60 p-8 text-center space-y-5">
+      <div className={`w-full max-w-lg bg-[#f5f7fa] rounded-card shadow-silicone border border-white/60 text-center space-y-5 ${compact ? 'p-6' : 'p-8'}`}>
         <div className="mx-auto w-16 h-16 rounded-card bg-amber-50 border border-amber-100 flex items-center justify-center text-2xl text-amber-500 shadow-silicone-sm">
           !
         </div>

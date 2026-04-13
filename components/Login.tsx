@@ -64,10 +64,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
     });
   }, []);
 
-  if (envVarsMissing) {
-    return <EnvMissingErrorPage lang={lang} />;
-  }
-
   const fetchUserProfile = async (authUserId: string, fallbackEmail?: string) => {
     const result = await fetchCurrentUserProfile(authUserId, fallbackEmail || '');
 
@@ -186,6 +182,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
         </div>
 
         <div className="bg-[#f5f7fa] p-7 rounded-card shadow-silicone border border-white/60 w-full space-y-5">
+          {envVarsMissing && <EnvMissingErrorPage lang={lang} compact />}
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="email-input" className="text-caption font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-1">
@@ -216,7 +214,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
               </div>
             )}
 
-            <button type="submit" disabled={isLoading} className="w-full bg-silicone-gradient text-amber-600 font-black py-3 rounded-2xl shadow-silicone hover:shadow-silicone-sm active:shadow-silicone-pressed border border-white/80 flex items-center justify-center gap-2 transition-all">
+            <button type="submit" disabled={isLoading || envVarsMissing} className="w-full bg-silicone-gradient text-amber-600 font-black py-3 rounded-2xl shadow-silicone hover:shadow-silicone-sm active:shadow-silicone-pressed border border-white/80 flex items-center justify-center gap-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <Loader2 size={20} className="animate-spin text-amber-600" />
@@ -229,7 +227,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
 
             <div className="text-center">
               <p className={`text-caption font-bold uppercase tracking-widest ${dbStatus === 'online' ? 'text-emerald-400' : dbStatus === 'offline' ? 'text-rose-400' : 'text-slate-300'}`}>
-                {dbStatus === 'online'
+                {envVarsMissing
+                  ? (lang === 'zh'
+                    ? '● 缺少配置 — 打开设置后填写 Supabase 连接信息'
+                    : '● Configuration required — open Settings and enter Supabase credentials')
+                  : dbStatus === 'online'
                   ? `● Connected${usingRuntimeCredentials ? ' (runtime config)' : ''}`
                   : dbStatus === 'offline'
                   ? '● Cannot connect — open Settings to configure'

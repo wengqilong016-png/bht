@@ -10,7 +10,7 @@
  * The supabaseClient module is mocked so tests run without a live Supabase project.
  */
 
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 
 import {
   calculateCollectionFinanceLocal,
@@ -192,6 +192,11 @@ describe('calculateCollectionFinanceLocal', () => {
 describe('calculateCollectionFinancePreview', () => {
   beforeEach(() => {
     mockRpc.mockReset();
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('returns local fallback when selectedLocation is null', async () => {
@@ -250,6 +255,10 @@ describe('calculateCollectionFinancePreview', () => {
 
     const result = await calculateCollectionFinancePreview(makeInput());
     expect(result.source).toBe('local');
+    expect(console.warn).toHaveBeenCalledWith(
+      'Failed to calculate finance preview from server RPC.',
+      expect.any(Error),
+    );
   });
 
   it('passes correct RPC parameters', async () => {

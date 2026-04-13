@@ -11,7 +11,7 @@
  *   - buildObjectPath: with / without driverId
  *   - storage.from unavailable → returns original data-URL
  */
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 
 // ── Supabase mock ──────────────────────────────────────────────────────────
 const mockUpload = jest.fn<(...args: unknown[]) => Promise<unknown>>();
@@ -41,10 +41,15 @@ const PNG_DATA_URL =
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
   mockUpload.mockResolvedValue({ error: null });
   mockGetPublicUrl.mockImplementation((path: string) => ({
     data: { publicUrl: `https://storage.example.com/evidence/${path}` },
   }));
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
 });
 
 // ══ null / undefined / empty pass-through ════════════════════════════════════
@@ -177,6 +182,10 @@ describe('persistEvidencePhotoUrl() — upload error', () => {
     // Upload failures are non-blocking: the function logs a warning and
     // returns null so a Storage outage cannot freeze the sync pipeline.
     expect(result).toBeNull();
+    expect(console.warn).toHaveBeenCalledWith(
+      '[evidenceStorage] Upload failed for collection/unknown-driver/e-1.jpg after 3 attempts — proceeding without photo URL.',
+      'Storage quota exceeded',
+    );
   });
 });
 

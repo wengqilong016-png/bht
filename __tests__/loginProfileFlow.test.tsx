@@ -14,11 +14,26 @@ const mockFetchCurrentUserProfile = jest.fn<
   (authUserId: string, fallbackEmail?: string) => Promise<{ success: true; user: User } | { success: false; error: string }>
 >();
 const mockSignOutCurrentUser = jest.fn<() => Promise<void>>();
+let mockEnvVarsMissing = false;
+let mockSupabaseUrl = 'https://example.supabase.co';
+let mockUsingRuntimeCredentials = false;
+const mockSaveRuntimeCredentials = jest.fn<(url: string, key: string) => void>();
+const mockClearRuntimeCredentials = jest.fn<() => void>();
 
 jest.mock('../supabaseClient', () => ({
   checkDbHealth: () => mockCheckDbHealth(),
-  envVarsMissing: false,
+  get envVarsMissing() {
+    return mockEnvVarsMissing;
+  },
   supabase: {},
+  get SUPABASE_URL() {
+    return mockSupabaseUrl;
+  },
+  get usingRuntimeCredentials() {
+    return mockUsingRuntimeCredentials;
+  },
+  saveRuntimeCredentials: (url: string, key: string) => mockSaveRuntimeCredentials(url, key),
+  clearRuntimeCredentials: () => mockClearRuntimeCredentials(),
 }));
 
 jest.mock('../services/authService', () => ({
@@ -44,6 +59,9 @@ describe('Login profile fetch flow', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockCheckDbHealth.mockResolvedValue(true);
+    mockEnvVarsMissing = false;
+    mockSupabaseUrl = 'https://example.supabase.co';
+    mockUsingRuntimeCredentials = false;
   });
 
   it('logs in with valid credentials, fetches the profile, and forwards the user into the app shell', async () => {
@@ -86,5 +104,17 @@ describe('Login profile fetch flow', () => {
     expect(mockSignOutCurrentUser).not.toHaveBeenCalled();
     expect(screen.queryByText('账号存在但未配置权限，请联系管理员重新运行 SQL 初始化脚本')).toBeNull();
     expect(screen.queryByText('账号角色配置错误，请联系管理员')).toBeNull();
+  });
+
+  it('keeps the login shell visible and opens connection settings when env config is missing', async () => {
+    mockEnvVarsMissing = true;
+    mockCheckDbHealth.mockResolvedValue(false);
+
+    render(<Login onLogin={() => {}} lang="zh" onSetLang={() => {}} />);
+
+    expect(await screen.findByText('缺少前端配置')).not.toBeNull();
+    expect(screen.getByText('连接设置')).not.toBeNull();
+    expect(screen.getByText('处理方式')).not.toBeNull();
+    expect(screen.getByRole('button', { name: /登录/i }).hasAttribute('disabled')).toBe(true);
   });
 });
