@@ -199,7 +199,8 @@ jobs:
               releaseNotes: 'v${VERSION} — 正式发布'
             }, null, 2) + '\n');
           "
-          git add public/version.json
+          node scripts/sync-pwa-cache-version.cjs
+          git add public/version.json public/sw.js
           git diff --cached --quiet || git commit -m "chore: update version.json to v${VERSION} [skip ci]"
           git push origin HEAD:main
         env:

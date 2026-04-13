@@ -16,6 +16,7 @@ on:
       - main
     paths-ignore:
       - public/version.json
+      - public/sw.js
       - public/downloads/**
 
 # Only one Android build at a time; cancel older builds for the same ref.
@@ -270,12 +271,13 @@ jobs:
               releaseNotes: 'main build ${VERSION} (${SHORT_SHA})'
             }, null, 2) + '\n');
           "
-          if git diff --quiet -- public/version.json public/downloads/bahati-latest-release.apk; then
+          node scripts/sync-pwa-cache-version.cjs
+          if git diff --quiet -- public/version.json public/sw.js public/downloads/bahati-latest-release.apk; then
             echo "manifest and apk already up to date"
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git add public/version.json public/downloads/bahati-latest-release.apk
+          git add public/version.json public/sw.js public/downloads/bahati-latest-release.apk
           git commit -m "chore: refresh update manifest for ${SHORT_SHA}"
           git push origin HEAD:main
           echo "changed=true" >> "$GITHUB_OUTPUT"

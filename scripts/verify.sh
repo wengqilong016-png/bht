@@ -80,6 +80,7 @@ if [[ "$RUN_INSTALL" == "true" ]]; then
   run_step "Install dependencies (npm ci)" npm ci
 fi
 
+run_step "PWA cache version sanity check" node scripts/sync-pwa-cache-version.cjs --check
 run_step "Lint" npm run lint
 run_step "Tests (CI)" npm run test:ci
 run_step "Build" npm run build
