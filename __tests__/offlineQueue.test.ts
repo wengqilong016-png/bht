@@ -87,6 +87,27 @@ describe('offlineQueue — localStorage fallback', () => {
     expect(list[0].revenue).toBe(999);
   });
 
+  it('getAllQueuedTransactions returns [] when localStorage queue JSON is corrupt', async () => {
+    localStorage.setItem('bahati_offline_queue', 'NOT_JSON{{{');
+
+    const { getAllQueuedTransactions } = await import('../offlineQueue');
+
+    await expect(getAllQueuedTransactions()).resolves.toEqual([]);
+  });
+
+  it('enqueueTransaction replaces corrupt localStorage queue JSON with a valid queue', async () => {
+    localStorage.setItem('bahati_offline_queue', 'NOT_JSON{{{');
+
+    const { enqueueTransaction } = await import('../offlineQueue');
+    const tx = makeTx();
+    await enqueueTransaction(tx);
+
+    const list = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
+    expect(list).toHaveLength(1);
+    expect(list[0].id).toBe(tx.id);
+    expect(list[0].isSynced).toBe(false);
+  });
+
   it('getPendingTransactions returns only unsynced items', async () => {
     // Seed localStorage manually with mixed sync states
     const syncedTx  = makeTx({ isSynced: true });

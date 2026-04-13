@@ -25,6 +25,7 @@ import type { CollectionSubmissionInput, CollectionSubmissionResult } from './se
 const DB_NAME    = 'bahati_offline_db';
 const DB_VERSION = 2;
 const STORE_TX   = 'pending_transactions';
+const QUEUE_STORAGE_KEY = 'bahati_offline_queue';
 const MS_PER_DAY = 86_400_000;
 export const MAX_RETRIES = 5;
 const BASE_BACKOFF_MS = 2_000; // 2 s → 4 s → 8 s → 16 s → 32 s
@@ -90,6 +91,33 @@ export interface QueueMeta {
    *   'permanent' — validation / auth / not-found; retry will not help.
    */
   lastErrorCategory?: 'transient' | 'permanent';
+}
+
+function readLocalQueue(): Array<Transaction & Partial<QueueMeta>> {
+  try {
+    const raw = localStorage.getItem(QUEUE_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed as Array<Transaction & Partial<QueueMeta>> : [];
+  } catch {
+    return [];
+  }
+}
+
+function toTransactionUpsertPayload(entry: Transaction & Partial<QueueMeta>): Transaction {
+  const {
+    operationId: _operationId,
+    entityVersion: _entityVersion,
+    _queuedAt,
+    retryCount: _retryCount,
+    lastError: _lastError,
+    nextRetryAt: _nextRetryAt,
+    rawInput: _rawInput,
+    lastErrorCategory: _lastErrorCategory,
+    ...transaction
+  } = entry;
+
+  return { ...transaction, isSynced: true };
 }
 
 /**
@@ -184,11 +212,10 @@ export async function enqueueTransaction(tx: Transaction, rawInput?: CollectionS
   } catch (err) {
     // Fallback: localStorage
     console.warn('[OfflineQueue] IDB unavailable, falling back to localStorage', err);
-    const raw  = localStorage.getItem('bahati_offline_queue') || '[]';
-    const list = JSON.parse(raw) as Transaction[];
+    const list = readLocalQueue();
     const updated = [...list.filter(t => t.id !== tx.id), { ...tx, isSynced: false, ...meta }];
     try {
-      localStorage.setItem('bahati_offline_queue', JSON.stringify(updated));
+      localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(updated));
     } catch (lsErr) {
       console.error('[OfflineQueue] Both IDB and localStorage failed:', lsErr);
       throw new Error('Failed to queue transaction: all storage backends unavailable');
@@ -212,8 +239,7 @@ export async function getPendingTransactions(): Promise<Transaction[]> {
       req.onerror   = () => { db.close(); reject(req.error); };
     });
   } catch {
-    const raw = localStorage.getItem('bahati_offline_queue') || '[]';
-    return (JSON.parse(raw) as Transaction[]).filter(t => !t.isSynced);
+    return readLocalQueue().filter(t => !t.isSynced);
   }
 }
 
@@ -228,8 +254,7 @@ export async function getAllQueuedTransactions(): Promise<Transaction[]> {
       req.onerror   = () => { db.close(); reject(req.error); };
     });
   } catch {
-    const raw = localStorage.getItem('bahati_offline_queue') || '[]';
-    return JSON.parse(raw) as Transaction[];
+    return readLocalQueue();
   }
 }
 
@@ -262,9 +287,8 @@ export async function markSynced(id: string, authoritativeData?: Partial<Transac
     }
     db.close();
   } catch {
-    const raw  = localStorage.getItem('bahati_offline_queue') || '[]';
-    const list = (JSON.parse(raw) as Transaction[]).map(t => t.id === id ? { ...t, ...update } : t);
-    try { localStorage.setItem('bahati_offline_queue', JSON.stringify(list)); } catch (_) {}
+    const list = readLocalQueue().map(t => t.id === id ? { ...t, ...update } : t);
+    try { localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(list)); } catch (_) {}
   }
 }
 
@@ -476,7 +500,7 @@ export async function flushQueue(
       // ── Generic upsert fallback (legacy entries without authoritative callbacks) ──
       const { error } = await supabaseClient
         .from('transactions')
-        .upsert({ ...tx, isSynced: true });
+        .upsert(toTransactionUpsertPayload(entry));
       if (!error) {
         await markSynced(tx.id);
         flushed++;
@@ -569,8 +593,7 @@ async function recordRetryFailure(
   } catch {
     // IDB unavailable — update localStorage fallback with retry/dead-letter metadata
     try {
-      const raw  = localStorage.getItem('bahati_offline_queue') || '[]';
-      const list = JSON.parse(raw) as Array<Transaction & Partial<QueueMeta>>;
+      const list = readLocalQueue();
       const updated = list.map(t => {
         if (t.id !== id) return t;
         const newRetry = category === 'permanent'
@@ -589,7 +612,7 @@ async function recordRetryFailure(
             : undefined,
         };
       });
-      localStorage.setItem('bahati_offline_queue', JSON.stringify(updated));
+      localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(updated));
       const updatedEntry = updated.find(t => t.id === id);
       if ((updatedEntry?.retryCount ?? 0) >= MAX_RETRIES) {
         captureQueueMessage('offline_queue_dead_lettered', {
@@ -632,34 +655,38 @@ export async function resetDeadLetterItems(): Promise<number> {
     const deadItems = await getDeadLetterItems();
     if (deadItems.length === 0) return 0;
 
-    const db = await openDB();
+    let db: IDBDatabase | undefined;
     let count = 0;
 
-    for (const tx of deadItems) {
-      await new Promise<void>((resolve, reject) => {
-        const t = db.transaction(STORE_TX, 'readwrite');
-        const store = t.objectStore(STORE_TX);
-        const req = store.get(tx.id);
-        req.onsuccess = () => {
-          const entry = req.result as (Transaction & Partial<QueueMeta>) | undefined;
-          if (!entry) { resolve(); return; }
-          entry.retryCount = 0;
-          entry.nextRetryAt = undefined;
-          entry.lastError = undefined;
-          entry.lastErrorCategory = undefined;
-          const put = store.put(entry);
-          put.onsuccess = () => { count++; resolve(); };
-          put.onerror = () => reject(put.error);
-        };
-        req.onerror = () => reject(req.error);
-      });
+    try {
+      db = await openDB();
+      for (const tx of deadItems) {
+        await new Promise<void>((resolve, reject) => {
+          const t = db!.transaction(STORE_TX, 'readwrite');
+          const store = t.objectStore(STORE_TX);
+          const req = store.get(tx.id);
+          req.onsuccess = () => {
+            const entry = req.result as (Transaction & Partial<QueueMeta>) | undefined;
+            if (!entry) { resolve(); return; }
+            entry.retryCount = 0;
+            entry.nextRetryAt = undefined;
+            entry.lastError = undefined;
+            entry.lastErrorCategory = undefined;
+            const put = store.put(entry);
+            put.onsuccess = () => { count++; resolve(); };
+            put.onerror = () => reject(put.error);
+          };
+          req.onerror = () => reject(req.error);
+        });
+      }
+    } finally {
+      db?.close();
     }
 
     return count;
   } catch {
     try {
-      const raw = localStorage.getItem('bahati_offline_queue') || '[]';
-      const list = JSON.parse(raw) as Array<Transaction & Partial<QueueMeta>>;
+      const list = readLocalQueue();
       let count = 0;
       const updated = list.map(entry => {
         if (entry.isSynced || (entry.retryCount ?? 0) < MAX_RETRIES) return entry;
@@ -673,7 +700,7 @@ export async function resetDeadLetterItems(): Promise<number> {
         };
       });
       if (count === 0) return 0;
-      localStorage.setItem('bahati_offline_queue', JSON.stringify(updated));
+      localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(updated));
       return count;
     } catch {
       return 0;
@@ -695,37 +722,41 @@ export async function resetRetryBackoff(): Promise<number> {
   try {
     const all = await getAllQueuedTransactions();
     const now = Date.now();
-    const db = await openDB();
+    let db: IDBDatabase | undefined;
     let count = 0;
 
-    for (const tx of all) {
-      const entry = tx as Transaction & Partial<QueueMeta>;
-      if (entry.isSynced) continue;
-      if ((entry.retryCount ?? 0) >= MAX_RETRIES) continue; // dead-letter, skip
-      if (!entry.nextRetryAt) continue; // no backoff set, nothing to clear
-      if (new Date(entry.nextRetryAt).getTime() <= now) continue; // already eligible
+    try {
+      db = await openDB();
+      for (const tx of all) {
+        const entry = tx as Transaction & Partial<QueueMeta>;
+        if (entry.isSynced) continue;
+        if ((entry.retryCount ?? 0) >= MAX_RETRIES) continue; // dead-letter, skip
+        if (!entry.nextRetryAt) continue; // no backoff set, nothing to clear
+        if (new Date(entry.nextRetryAt).getTime() <= now) continue; // already eligible
 
-      await new Promise<void>((resolve, reject) => {
-        const t = db.transaction(STORE_TX, 'readwrite');
-        const store = t.objectStore(STORE_TX);
-        const req = store.get(entry.id);
-        req.onsuccess = () => {
-          const e = req.result as (Transaction & Partial<QueueMeta>) | undefined;
-          if (!e) { resolve(); return; }
-          e.nextRetryAt = undefined;
-          const put = store.put(e);
-          put.onsuccess = () => { count++; resolve(); };
-          put.onerror = () => reject(put.error);
-        };
-        req.onerror = () => reject(req.error);
-      });
+        await new Promise<void>((resolve, reject) => {
+          const t = db!.transaction(STORE_TX, 'readwrite');
+          const store = t.objectStore(STORE_TX);
+          const req = store.get(entry.id);
+          req.onsuccess = () => {
+            const e = req.result as (Transaction & Partial<QueueMeta>) | undefined;
+            if (!e) { resolve(); return; }
+            e.nextRetryAt = undefined;
+            const put = store.put(e);
+            put.onsuccess = () => { count++; resolve(); };
+            put.onerror = () => reject(put.error);
+          };
+          req.onerror = () => reject(req.error);
+        });
+      }
+    } finally {
+      db?.close();
     }
 
     return count;
   } catch {
     try {
-      const raw = localStorage.getItem('bahati_offline_queue') || '[]';
-      const list = JSON.parse(raw) as Array<Transaction & Partial<QueueMeta>>;
+      const list = readLocalQueue();
       const now = Date.now();
       let count = 0;
       const updated = list.map(entry => {
@@ -740,7 +771,7 @@ export async function resetRetryBackoff(): Promise<number> {
         };
       });
       if (count === 0) return 0;
-      localStorage.setItem('bahati_offline_queue', JSON.stringify(updated));
+      localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(updated));
       return count;
     } catch {
       return 0;
@@ -953,7 +984,7 @@ export async function replayDeadLetterItem(
     // ── Direct upsert fallback (legacy entries) ─────────────────────────────
     const { error } = await options.supabaseClient
       .from('transactions')
-      .upsert({ ...entry, isSynced: true });
+      .upsert(toTransactionUpsertPayload(entry));
     if (!error) {
       await markSynced(id);
       return { success: true };
@@ -1009,12 +1040,11 @@ async function _updateDeadLetterError(
     db.close();
   } catch {
     try {
-      const raw  = localStorage.getItem('bahati_offline_queue') || '[]';
-      const list = JSON.parse(raw) as Array<Transaction & Partial<QueueMeta>>;
+      const list = readLocalQueue();
       const updated = list.map(t =>
         t.id === id ? { ...t, lastError: errorMessage, lastErrorCategory: errorCategory } : t,
       );
-      localStorage.setItem('bahati_offline_queue', JSON.stringify(updated));
+      localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(updated));
     } catch (_) {
       // Truly best-effort
     }

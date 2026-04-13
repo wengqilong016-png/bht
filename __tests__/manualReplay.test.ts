@@ -391,13 +391,23 @@ describe('replayDeadLetterItem — request replay and legacy fallback (no rawInp
     await enqueueTransaction(tx);
     deadLetterEntry(tx.id);
 
-    const upsertMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null });
+    const upsertMock = jest.fn<(payload: unknown) => Promise<unknown>>().mockResolvedValue({ error: null });
     const supabase = { from: () => ({ upsert: upsertMock }) } as any;
 
     const result = await replayDeadLetterItem(tx.id, { supabaseClient: supabase });
 
     expect(result.success).toBe(true);
     expect(upsertMock).toHaveBeenCalledTimes(1);
+    expect(upsertMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        operationId: expect.anything(),
+        entityVersion: expect.anything(),
+        _queuedAt: expect.anything(),
+        retryCount: expect.anything(),
+        lastError: expect.anything(),
+        lastErrorCategory: expect.anything(),
+      }),
+    );
 
     const stored = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
     const entry = stored.find((t: any) => t.id === tx.id);

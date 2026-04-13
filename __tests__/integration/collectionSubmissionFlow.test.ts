@@ -160,7 +160,7 @@ describe('Collection Submission Flow (Integration)', () => {
       expect(mockRpc).not.toHaveBeenCalled();
     });
 
-    it('includes expense fields when expenses > 0', async () => {
+    it('zeroes expense fields even when input has expenses (migration: expenses moved to settlement)', async () => {
       const input = makeOrchestratorInput({
         isOnline: false,
         expenses: '5000',
@@ -170,9 +170,10 @@ describe('Collection Submission Flow (Integration)', () => {
       });
       const result = await orchestrateCollectionSubmission(input);
 
-      expect(result.transaction.expenseType).toBe('private');
-      expect(result.transaction.expenseCategory).toBe('fuel');
-      expect(result.transaction.expenseDescription).toBe('Petrol for route');
+      // Orchestrator forces expenses to 0 and clears type/category
+      expect(result.transaction.expenses).toBe(0);
+      expect(result.transaction.expenseType).toBeUndefined();
+      expect(result.transaction.expenseCategory).toBeUndefined();
     });
   });
 

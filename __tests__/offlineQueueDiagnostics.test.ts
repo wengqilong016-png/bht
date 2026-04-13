@@ -40,6 +40,47 @@ function makeTx(overrides: Partial<Record<string, unknown>> = {}): any {
   };
 }
 
+function makeSuccessRequest<T>(result: T): any {
+  const request: any = { result, error: null };
+  setTimeout(() => request.onsuccess?.({ target: request }), 0);
+  return request;
+}
+
+function installMockIndexedDB(entries: any[]): jest.Mock[] {
+  const closeMocks: jest.Mock[] = [];
+
+  const makeDb = () => {
+    const close = jest.fn();
+    closeMocks.push(close);
+    const store = {
+      getAll: () => makeSuccessRequest(entries),
+      get: (id: string) => makeSuccessRequest(entries.find(entry => entry.id === id)),
+      put: (entry: any) => {
+        const index = entries.findIndex(existing => existing.id === entry.id);
+        if (index >= 0) entries[index] = entry;
+        return makeSuccessRequest(entry);
+      },
+    };
+    return {
+      close,
+      objectStoreNames: { contains: () => true },
+      transaction: () => ({
+        objectStore: () => store,
+      }),
+    };
+  };
+
+  Object.defineProperty(globalThis, 'indexedDB', {
+    value: {
+      open: () => makeSuccessRequest(makeDb()),
+    },
+    configurable: true,
+    writable: true,
+  });
+
+  return closeMocks;
+}
+
 // MAX_RETRIES is a stable numeric primitive imported from offlineQueue.ts.
 // It is unaffected by jest.resetModules() which only clears the module registry
 // for subsequent dynamic imports.
@@ -300,5 +341,53 @@ describe('dead-letter recovery helpers', () => {
     expect(updatedPending.retryCount).toBe(2);
     expect(updatedDead.nextRetryAt).toBeDefined();
     expect(updatedDead.retryCount).toBe(MAX_RETRIES);
+  });
+
+  it('resetDeadLetterItems returns 0 instead of throwing when localStorage queue JSON is corrupt', async () => {
+    localStorage.setItem('bahati_offline_queue', 'NOT_JSON{{{');
+
+    const { resetDeadLetterItems } = await import('../offlineQueue');
+
+    await expect(resetDeadLetterItems()).resolves.toBe(0);
+  });
+
+  it('resetRetryBackoff returns 0 instead of throwing when localStorage queue JSON is corrupt', async () => {
+    localStorage.setItem('bahati_offline_queue', 'NOT_JSON{{{');
+
+    const { resetRetryBackoff } = await import('../offlineQueue');
+
+    await expect(resetRetryBackoff()).resolves.toBe(0);
+  });
+
+  it('resetDeadLetterItems closes every IndexedDB connection it opens', async () => {
+    const entry = makeTx({
+      retryCount: MAX_RETRIES,
+      lastError: 'Location not found',
+      lastErrorCategory: 'permanent',
+      nextRetryAt: new Date(Date.now() + 60_000).toISOString(),
+    });
+    const closeMocks = installMockIndexedDB([entry]);
+
+    const { resetDeadLetterItems } = await import('../offlineQueue');
+    const resetCount = await resetDeadLetterItems();
+
+    expect(resetCount).toBe(1);
+    expect(closeMocks).toHaveLength(2);
+    closeMocks.forEach(close => expect(close).toHaveBeenCalledTimes(1));
+  });
+
+  it('resetRetryBackoff closes every IndexedDB connection it opens', async () => {
+    const entry = makeTx({
+      retryCount: 2,
+      nextRetryAt: new Date(Date.now() + 60_000).toISOString(),
+    });
+    const closeMocks = installMockIndexedDB([entry]);
+
+    const { resetRetryBackoff } = await import('../offlineQueue');
+    const resetCount = await resetRetryBackoff();
+
+    expect(resetCount).toBe(1);
+    expect(closeMocks).toHaveLength(2);
+    closeMocks.forEach(close => expect(close).toHaveBeenCalledTimes(1));
   });
 });

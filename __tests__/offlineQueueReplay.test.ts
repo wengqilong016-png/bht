@@ -257,7 +257,7 @@ describe('flushQueue — collection replay via submitCollection callback', () =>
     const tx = makeTx({ type: 'expense' });
     await enqueueTransaction(tx);
 
-    const upsertMock = jest.fn<() => Promise<unknown>>().mockResolvedValue({ error: null });
+    const upsertMock = jest.fn<(payload: unknown) => Promise<unknown>>().mockResolvedValue({ error: null });
     const supabase = { from: () => ({ upsert: upsertMock }) } as any;
     const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>();
 
@@ -265,6 +265,14 @@ describe('flushQueue — collection replay via submitCollection callback', () =>
 
     expect(submitCollection).not.toHaveBeenCalled();
     expect(upsertMock).toHaveBeenCalledTimes(1);
+    expect(upsertMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        operationId: expect.anything(),
+        entityVersion: expect.anything(),
+        _queuedAt: expect.anything(),
+        retryCount: expect.anything(),
+      }),
+    );
     expect(flushed).toBe(1);
   });
 
