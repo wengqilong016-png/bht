@@ -8,6 +8,8 @@ import { getTodayLocalDate } from '../../utils/dateUtils';
 import MachineCard from './MachineCard';
 import MachineFilterBar from './MachineFilterBar';
 
+import type { DriverFlowEventInput } from '../../services/driverFlowTelemetry';
+
 const NEARBY_DISTANCE_METERS = 1500;
 // Large penalty distance assigned when GPS is unavailable, so GPS-less machines sort later.
 const PRIORITY_DISTANCE_FALLBACK = 99999;
@@ -35,11 +37,15 @@ interface MachineSelectorProps {
   onCreateOfficeLoan?: (locId: string, amount: number, note: string) => Promise<void>;
   onRegisterMachine?: (location: Location) => void;
   onUpdateLocation?: (locationId: string, updates: Partial<Location>) => Promise<void>;
+  onTelemetryEvent?: (
+    eventName: DriverFlowEventInput['eventName'],
+    options?: Partial<Omit<DriverFlowEventInput, 'driverId' | 'flowId' | 'eventName' | 'onlineStatus'>>,
+  ) => void;
 }
 
 const MachineSelector: React.FC<MachineSelectorProps> = ({
   locations, currentDriver, allTransactions, lang, isOnline, gpsCoords,
-  currentDraftLocation, hasDraftInProgress = false,
+  currentDraftLocation, hasDraftInProgress = false, onTelemetryEvent,
   onSelectMachine, onResumeDraft, onStartRegister, onRequestReset, onRequestPayout, onCreateOfficeLoan, onRegisterMachine, onUpdateLocation,
 }) => {
   const t = TRANSLATIONS[lang];
@@ -280,6 +286,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
             onRequestPayout={(locId) => onRequestPayout(locId)}
             onCreateOfficeLoan={onCreateOfficeLoan}
             onUpdateLocation={onUpdateLocation}
+            onTelemetryEvent={onTelemetryEvent}
           />
         ))}
       </div>

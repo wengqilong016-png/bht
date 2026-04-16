@@ -298,6 +298,29 @@ CREATE TABLE IF NOT EXISTS public.ai_logs (
     "isSynced"             BOOLEAN DEFAULT TRUE
 );
 
+-- ── driver_flow_events ───────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.driver_flow_events (
+    id              UUID PRIMARY KEY,
+    driver_id       TEXT NOT NULL,
+    flow_id         TEXT NOT NULL,
+    draft_tx_id     TEXT,
+    location_id     TEXT,
+    step            TEXT NOT NULL CHECK (step IN (
+                        'selection', 'capture', 'amounts', 'confirm', 'complete',
+                        'reset_request', 'payout_request', 'office_loan', 'site_info'
+                    )),
+    event_name      TEXT NOT NULL,
+    online_status   BOOLEAN NOT NULL DEFAULT FALSE,
+    gps_permission  TEXT NOT NULL DEFAULT 'unknown'
+                    CHECK (gps_permission IN ('prompt', 'granted', 'denied', 'timeout', 'error', 'unknown')),
+    has_photo       BOOLEAN NOT NULL DEFAULT FALSE,
+    error_category  TEXT,
+    duration_ms     INTEGER,
+    payload         JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- ── notifications ────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS public.notifications (
@@ -493,6 +516,16 @@ CREATE INDEX IF NOT EXISTS idx_audit_log_case_id          ON public.support_audi
 CREATE INDEX IF NOT EXISTS idx_audit_log_created_at       ON public.support_audit_log (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_log_event_type       ON public.support_audit_log (event_type);
 CREATE INDEX IF NOT EXISTS idx_audit_log_case_created     ON public.support_audit_log (case_id, created_at DESC) WHERE case_id IS NOT NULL;
+
+-- driver_flow_events
+CREATE INDEX IF NOT EXISTS idx_driver_flow_events_created
+    ON public.driver_flow_events (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_driver_flow_events_driver_created
+    ON public.driver_flow_events (driver_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_driver_flow_events_flow
+    ON public.driver_flow_events (flow_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_driver_flow_events_step_event
+    ON public.driver_flow_events (step, event_name, created_at DESC);
 
 -- queue_health_reports
 CREATE INDEX IF NOT EXISTS idx_queue_reports_driver       ON public.queue_health_reports (driver_id);
@@ -2143,6 +2176,7 @@ ALTER TABLE public.daily_settlements    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.monthly_payrolls     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.location_change_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ai_logs              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.driver_flow_events   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.support_cases        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.support_audit_log    ENABLE ROW LEVEL SECURITY;
@@ -2357,6 +2391,16 @@ CREATE POLICY support_audit_log_select ON public.support_audit_log FOR SELECT TO
 DROP POLICY IF EXISTS support_audit_log_insert ON public.support_audit_log;
 CREATE POLICY support_audit_log_insert ON public.support_audit_log FOR INSERT TO authenticated
     WITH CHECK (true);
+
+-- ── driver_flow_events ───────────────────────────────────────────────────────
+
+DROP POLICY IF EXISTS driver_flow_events_admin_select ON public.driver_flow_events;
+CREATE POLICY driver_flow_events_admin_select ON public.driver_flow_events FOR SELECT TO authenticated
+    USING (public.is_admin());
+
+DROP POLICY IF EXISTS driver_flow_events_driver_insert ON public.driver_flow_events;
+CREATE POLICY driver_flow_events_driver_insert ON public.driver_flow_events FOR INSERT TO authenticated
+    WITH CHECK (public.is_admin() OR driver_id = public.get_my_driver_id());
 
 -- ── queue_health_reports ─────────────────────────────────────────────────────
 

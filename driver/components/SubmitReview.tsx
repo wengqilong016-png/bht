@@ -11,6 +11,7 @@ import CollectionWorkbenchHeader from './CollectionWorkbenchHeader';
 import WizardStepBar from './WizardStepBar';
 
 
+import type { DriverFlowEventInput } from '../../services/driverFlowTelemetry';
 import type { Transaction } from '../../types';
 import type { AIReviewData } from '../hooks/useCollectionDraft';
 
@@ -51,6 +52,10 @@ interface SubmitReviewProps {
   pendingCount?: number;
   allTransactions: Transaction[];
   todayStr: string;
+  onTelemetryEvent?: (
+    eventName: DriverFlowEventInput['eventName'],
+    options?: Partial<Omit<DriverFlowEventInput, 'driverId' | 'flowId' | 'eventName' | 'onlineStatus'>>,
+  ) => void;
 }
 
 export type CompletionResult = {
@@ -63,7 +68,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   aiReviewData, coinExchange, startupDebtDeduction, draftTxId,
   gpsCoords, gpsPermission, isOwnerRetaining, ownerRetention, calculations,
   onSubmit, onBack, onSwitchMachine, onReset, onReturnHome, onRequestGps, nextMachine, pendingCount,
-  allTransactions, todayStr,
+  allTransactions, todayStr, onTelemetryEvent,
 }) => {
   const t = TRANSLATIONS[lang];
   const { showToast } = useToast();
@@ -148,6 +153,10 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           console.error('Submission completion handler failed', error);
           submittedRef.current = false;
           setCompletionResult(null);
+          onTelemetryEvent?.('submit_failed', {
+            step: 'complete',
+            errorCategory: 'completion_handler_failed',
+          });
           showToastRef.current(lang === 'zh' ? '提交后处理失败，请重试' : 'Post-submit update failed, please retry', 'error');
         } finally {
           if (mountedRef.current) {
@@ -161,9 +170,13 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       setCompletionResult(null);
       setCompletionPending(false);
       resetSubmissionState();
+      onTelemetryEvent?.('submit_failed', {
+        step: 'confirm',
+        errorCategory: submissionState.message || 'submission_error',
+      });
       showToastRef.current(lang === 'zh' ? '提交失败，请重试' : 'Imeshindwa, jaribu tena', 'error');
     }
-  }, [submissionState, lang, resetSubmissionState]);
+  }, [submissionState, lang, resetSubmissionState, onTelemetryEvent]);
 
   if (completionResult) {
     const { source, transaction } = completionResult;
@@ -255,6 +268,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
 
   const handleSubmit = async () => {
     if (!selectedLocation || isProcessing || submittedRef.current) return;
+    onTelemetryEvent?.('submit_clicked', { step: 'confirm' });
     // Validate score is numeric before proceeding (orchestrator also validates,
     // but giving clear feedback here saves the user going through GPS flow first).
     const trimmedScore = currentScore.trim();
@@ -265,6 +279,10 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           : 'Please enter a valid numeric machine score.',
         'error',
       );
+      onTelemetryEvent?.('submit_validation_error', {
+        step: 'confirm',
+        errorCategory: 'invalid_score',
+      });
       return;
     }
     if (isScoreBelowLastReading) {
@@ -274,6 +292,10 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           : `Current reading is below the last recorded score (${selectedLocation.lastScore.toLocaleString()}). Go back to verify the reading or submit a reset request.`,
         'error',
       );
+      onTelemetryEvent?.('submit_validation_error', {
+        step: 'confirm',
+        errorCategory: 'score_below_last_reading',
+      });
       return;
     }
     if (!photoData) {
@@ -284,14 +306,26 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         confirmLabel: lang === 'zh' ? '继续提交' : 'Submit anyway',
         cancelLabel: lang === 'zh' ? '返回添加' : 'Go back',
       });
-      if (!ok) return;
+      if (!ok) {
+        onTelemetryEvent?.('submit_confirmation_cancelled', {
+          step: 'confirm',
+          errorCategory: 'missing_photo_cancelled',
+        });
+        return;
+      }
     }
     if (calculations.isCoinStockNegative) {
       const ok = await confirm({
         message: lang === 'zh' ? '零钱库存不足，是否继续？' : 'Coin stock insufficient, continue?',
         confirmLabel: lang === 'zh' ? '继续' : 'Continue',
       });
-      if (!ok) return;
+      if (!ok) {
+        onTelemetryEvent?.('submit_confirmation_cancelled', {
+          step: 'confirm',
+          errorCategory: 'coin_stock_negative_cancelled',
+        });
+        return;
+      }
     }
 
     const alreadyCollectedToday = allTransactions.some(
@@ -305,7 +339,13 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         confirmLabel: lang === 'zh' ? '确认再次提交' : 'Submit again',
         destructive: true,
       });
-      if (!ok) return;
+      if (!ok) {
+        onTelemetryEvent?.('submit_confirmation_cancelled', {
+          step: 'confirm',
+          errorCategory: 'duplicate_collection_cancelled',
+        });
+        return;
+      }
     }
 
     if (gpsCoords) { processSubmission(gpsCoords, 'live'); return; }
@@ -324,6 +364,10 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         confirmLabel: lang === 'zh' ? '继续' : 'Continue',
       });
       if (confirmEst) { processSubmission(estimated, 'estimated'); return; }
+      onTelemetryEvent?.('submit_confirmation_cancelled', {
+        step: 'confirm',
+        errorCategory: 'estimated_gps_cancelled',
+      });
       return;
     }
 
@@ -332,7 +376,13 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       confirmLabel: lang === 'zh' ? '仍要保存' : 'Save anyway',
     });
     if (confirmNoGps) { processSubmission({ lat: 0, lng: 0 }, 'none'); }
-    else { onRequestGps(); }
+    else {
+      onTelemetryEvent?.('submit_confirmation_cancelled', {
+        step: 'confirm',
+        errorCategory: 'no_gps_cancelled',
+      });
+      onRequestGps();
+    }
   };
 
   return (
