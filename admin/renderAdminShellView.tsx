@@ -14,6 +14,7 @@ const TransactionHistory = lazy(() => import('../components/TransactionHistory')
 const DebtManager = lazy(() => import('../components/DebtManager'));
 const DriverManagement = lazy(() => import('../components/driver-management'));
 const MonthlyReportPage = lazy(() => import('./MonthlyReportPage'));
+const DriverFlowDiagnosticsPage = lazy(() => import('./DriverFlowDiagnosticsPage'));
 
 interface AdminShellViewRendererProps {
   view: AdminView;
@@ -55,6 +56,8 @@ const AdminShellViewRenderer: React.FC<AdminShellViewRendererProps> = ({
       return <DebtManager />;
     case 'monthly':
       return <MonthlyReportPage />;
+    case 'driver-flow':
+      return <DriverFlowDiagnosticsPage />;
     default:
       return null;
   }

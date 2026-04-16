@@ -5,6 +5,8 @@ import { useToast } from '../../contexts/ToastContext';
 import { Location, CONSTANTS } from '../../types';
 import { compressAndResizeImage } from '../../utils/imageUtils';
 
+import type { DriverFlowEventInput } from '../../services/driverFlowTelemetry';
+
 export interface MachineCardMeta {
   loc: Location;
   distanceMeters: number | null;
@@ -24,10 +26,14 @@ interface MachineCardProps {
   onRequestPayout: (locId: string) => void;
   onCreateOfficeLoan?: (locationId: string, amount: number, note: string) => Promise<void>;
   onUpdateLocation?: (locationId: string, updates: Partial<Location>) => Promise<void>;
+  onTelemetryEvent?: (
+    eventName: DriverFlowEventInput['eventName'],
+    options?: Partial<Omit<DriverFlowEventInput, 'driverId' | 'flowId' | 'eventName' | 'onlineStatus'>>,
+  ) => void;
 }
 
 const MachineCard: React.FC<MachineCardProps> = ({
-  item, lang, t, onSelect, onRequestReset, onRequestPayout, onCreateOfficeLoan, onUpdateLocation,
+  item, lang, t, onSelect, onRequestReset, onRequestPayout, onCreateOfficeLoan, onUpdateLocation, onTelemetryEvent,
 }) => {
   const { loc, distanceMeters, daysSinceActive, isLocked, isUrgent, isPending } = item;
   const isNear9999 = (loc.lastScore ?? 0) >= 9000;
@@ -74,6 +80,15 @@ const MachineCard: React.FC<MachineCardProps> = ({
       if (siteOwnerName.trim()) updates.ownerName = siteOwnerName.trim();
       if (sitePhotoPreview) updates.ownerPhotoUrl = sitePhotoPreview;
       await onUpdateLocation(loc.id, updates);
+      onTelemetryEvent?.('site_info_saved', {
+        step: 'site_info',
+        locationId: loc.id,
+        payload: {
+          hasOwnerName: !!updates.ownerName,
+          hasOwnerPhone: !!updates.shopOwnerPhone,
+          hasOwnerPhoto: !!updates.ownerPhotoUrl,
+        },
+      });
       setShowSiteInfoForm(false);
       setSitePhotoPreview(null);
     } catch (err) {
@@ -82,6 +97,11 @@ const MachineCard: React.FC<MachineCardProps> = ({
         lang === 'zh' ? '保存失败，请检查网络后重试' : 'Save failed — please check your connection and try again',
         'error',
       );
+      onTelemetryEvent?.('site_info_failed', {
+        step: 'site_info',
+        locationId: loc.id,
+        errorCategory: 'save_failed',
+      });
     } finally {
       setIsSavingSiteInfo(false);
     }
@@ -243,6 +263,10 @@ const MachineCard: React.FC<MachineCardProps> = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                onTelemetryEvent?.('office_loan_opened', {
+                  step: 'office_loan',
+                  locationId: loc.id,
+                });
                 setShowOfficeLoanForm(current => !current);
               }}
               className="flex-1 px-3 py-2 min-h-11 text-caption font-black uppercase text-amber-700 hover:bg-amber-50 transition-colors flex items-center justify-center gap-1.5 border-l border-slate-100"
@@ -269,6 +293,10 @@ const MachineCard: React.FC<MachineCardProps> = ({
                   setShowSiteInfoForm(false);
                   return;
                 }
+                onTelemetryEvent?.('site_info_opened', {
+                  step: 'site_info',
+                  locationId: loc.id,
+                });
                 openSiteInfoForm();
               }}
               className="flex-1 px-3 py-2 min-h-11 text-caption font-black uppercase text-amber-600 hover:bg-amber-50 transition-colors flex items-center justify-center gap-1.5 border-l border-slate-100"

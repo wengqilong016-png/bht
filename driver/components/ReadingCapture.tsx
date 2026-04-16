@@ -6,6 +6,7 @@ import { Location, TRANSLATIONS } from '../../types';
 import CollectionWorkbenchHeader from './CollectionWorkbenchHeader';
 import WizardStepBar from './WizardStepBar';
 
+import type { DriverFlowEventInput } from '../../services/driverFlowTelemetry';
 import type { AIReviewData } from '../hooks/useCollectionDraft';
 import type { GpsStatus } from '../hooks/useGpsCapture';
 
@@ -29,6 +30,10 @@ interface ReadingCaptureProps {
   diff: number;
   nextMachine?: Location | null;
   pendingCount?: number;
+  onTelemetryEvent?: (
+    eventName: DriverFlowEventInput['eventName'],
+    options?: Partial<Omit<DriverFlowEventInput, 'driverId' | 'flowId' | 'eventName' | 'onlineStatus'>>,
+  ) => void;
 }
 
 const ReadingCapture: React.FC<ReadingCaptureProps> = ({
@@ -49,6 +54,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
   diff,
   nextMachine,
   pendingCount,
+  onTelemetryEvent,
 }) => {
   const t = TRANSLATIONS[lang];
   const parsedCurrentScore = parseInt(currentScore, 10);
@@ -64,6 +70,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const handlePickPhoto = () => {
+    onTelemetryEvent?.('photo_picker_opened');
     photoInputRef.current?.click();
   };
 

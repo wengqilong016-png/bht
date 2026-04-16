@@ -243,3 +243,61 @@ export interface FinanceAuditLog {
   payload: Record<string, unknown>;
   created_at: string;
 }
+
+export type DriverFlowStep =
+  | 'selection'
+  | 'capture'
+  | 'amounts'
+  | 'confirm'
+  | 'complete'
+  | 'reset_request'
+  | 'payout_request'
+  | 'office_loan'
+  | 'site_info';
+
+export type DriverFlowEventName =
+  | 'step_view'
+  | 'machine_selected'
+  | 'draft_resumed'
+  | 'machine_switch_requested'
+  | 'machine_switch_cancelled'
+  | 'machine_switch_confirmed'
+  | 'score_entered'
+  | 'photo_picker_opened'
+  | 'photo_attached'
+  | 'photo_missing_after_refresh'
+  | 'gps_retry_requested'
+  | 'gps_status_changed'
+  | 'amounts_next_clicked'
+  | 'confirm_back_clicked'
+  | 'submit_clicked'
+  | 'submit_validation_error'
+  | 'submit_confirmation_cancelled'
+  | 'submit_success'
+  | 'submit_offline_queued'
+  | 'submit_failed'
+  | 'return_home'
+  | 'reset_request_opened'
+  | 'payout_request_opened'
+  | 'office_loan_opened'
+  | 'office_loan_submitted'
+  | 'site_info_opened'
+  | 'site_info_saved'
+  | 'site_info_failed';
+
+export interface DriverFlowEvent {
+  id: string;
+  driverId: string;
+  flowId: string;
+  draftTxId?: string | null;
+  locationId?: string | null;
+  step: DriverFlowStep;
+  eventName: DriverFlowEventName;
+  onlineStatus: boolean;
+  gpsPermission: 'prompt' | 'granted' | 'denied' | 'timeout' | 'error' | 'unknown';
+  hasPhoto: boolean;
+  errorCategory?: string | null;
+  durationMs?: number | null;
+  payload?: Record<string, unknown>;
+  createdAt: string;
+}

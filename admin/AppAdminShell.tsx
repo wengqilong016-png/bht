@@ -65,6 +65,7 @@ const AppAdminShell: React.FC = () => {
       debt: t.financeManagement,
       history: t.historyLog,
       monthly: '月度报表',
+      'driver-flow': '司机卡点',
     };
     return titles[view];
   }, [t, view]);

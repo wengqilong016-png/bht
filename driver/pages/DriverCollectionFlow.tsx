@@ -6,7 +6,12 @@ import { useConfirm } from '../../contexts/ConfirmContext';
 import { useAppData } from '../../contexts/DataContext';
 import { useMutations } from '../../contexts/MutationContext';
 import { useToast } from '../../contexts/ToastContext';
-import { Location, CONSTANTS } from '../../types';
+import {
+  flushDriverFlowEvents,
+  recordDriverFlowEvent,
+  type DriverFlowEventInput,
+} from '../../services/driverFlowTelemetry';
+import { Location, CONSTANTS, safeRandomUUID } from '../../types';
 import { getTodayLocalDate } from '../../utils/dateUtils';
 import { createExpenseTransaction } from '../../utils/transactionBuilder';
 import FinanceSummary from '../components/FinanceSummary';
@@ -46,6 +51,10 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
 
   const [step, setStep] = useState<FlowStep>('selection');
   const { draft, updateDraft, resetDraft } = useCollectionDraft();
+  const flowIdRef = React.useRef(safeRandomUUID());
+  const stepStartedAtRef = React.useRef(Date.now());
+  const scoreEnteredRef = React.useRef(false);
+  const photoMissingReportedRef = React.useRef<string | null>(null);
   const onSubmit = useDriverSubmissionCompletion({
     activeDriverId,
     allTransactions,
@@ -66,6 +75,10 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     if (gpsStatus === 'granted') updateDraft({ gpsPermission: 'granted' });
     else if (gpsStatus === 'denied') updateDraft({ gpsPermission: 'denied' });
   }, [gpsStatus, updateDraft]);
+
+  useEffect(() => {
+    if (isOnline) void flushDriverFlowEvents();
+  }, [isOnline]);
 
   // Sub-views
   const [isRegistering, setIsRegistering] = useState(false);
@@ -113,9 +126,67 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     }
   }, [selectedLocation, draft.currentScore, draft.isOwnerRetaining, draft.ownerRetention, financeResult.commission, updateDraft]);
 
+  const recordFlowEvent = (
+    eventName: DriverFlowEventInput['eventName'],
+    options: Partial<Omit<DriverFlowEventInput, 'driverId' | 'flowId' | 'step' | 'eventName' | 'onlineStatus'>> & {
+      step?: DriverFlowEventInput['step'];
+    } = {},
+  ) => {
+    if (!currentDriver) return;
+    recordDriverFlowEvent({
+      driverId: currentDriver.id,
+      flowId: flowIdRef.current,
+      draftTxId: draft.draftTxId || null,
+      locationId: draft.selectedLocId || null,
+      step,
+      eventName,
+      onlineStatus: isOnline,
+      gpsPermission: gpsStatus === 'idle' || gpsStatus === 'requesting' ? draft.gpsPermission : gpsStatus,
+      hasPhoto: !!draft.photoData,
+      durationMs: Date.now() - stepStartedAtRef.current,
+      ...options,
+    });
+  };
+
+  useEffect(() => {
+    stepStartedAtRef.current = Date.now();
+    recordFlowEvent('step_view');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, draft.selectedLocId]);
+
+  useEffect(() => {
+    if (gpsStatus === 'idle' || gpsStatus === 'requesting') return;
+    recordFlowEvent('gps_status_changed', {
+      payload: { status: gpsStatus },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gpsStatus]);
+
+  useEffect(() => {
+    if (step !== 'confirm' || draft.photoData || !draft.draftTxId) return;
+    if (photoMissingReportedRef.current === draft.draftTxId) return;
+    photoMissingReportedRef.current = draft.draftTxId;
+    recordFlowEvent('photo_missing_after_refresh', {
+      step: 'confirm',
+      errorCategory: 'photo_missing_after_refresh',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, draft.photoData, draft.draftTxId]);
+
+  const requestGpsWithTelemetry = () => {
+    recordFlowEvent('gps_retry_requested', {
+      payload: { previousStatus: gpsStatus },
+    });
+    return requestGps();
+  };
+
   if (!currentDriver) return null;
 
   const handleSelectMachine = (locId: string) => {
+    flowIdRef.current = safeRandomUUID();
+    stepStartedAtRef.current = Date.now();
+    scoreEnteredRef.current = false;
+    photoMissingReportedRef.current = null;
     updateDraft({
       selectedLocId: locId,
       draftTxId: `TX-${Date.now()}`,
@@ -126,6 +197,18 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       ownerRetention: '',
       isOwnerRetaining: true,
       startupDebtDeduction: '',
+    });
+    recordDriverFlowEvent({
+      driverId: currentDriver.id,
+      flowId: flowIdRef.current,
+      draftTxId: null,
+      locationId: locId,
+      step: 'selection',
+      eventName: 'machine_selected',
+      onlineStatus: isOnline,
+      gpsPermission: gpsStatus === 'idle' || gpsStatus === 'requesting' ? draft.gpsPermission : gpsStatus,
+      hasPhoto: false,
+      durationMs: Date.now() - stepStartedAtRef.current,
     });
     setStep('capture');
   };
@@ -139,6 +222,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
   const handleResumeDraft = async (locId: string) => {
     if (draft.selectedLocId !== locId) {
       if (hasDraftInProgress) {
+        recordFlowEvent('machine_switch_requested', { locationId: locId });
         const ok = await confirm({
           title: lang === 'zh' ? '切换机器' : 'Switch Machine',
           message:
@@ -148,15 +232,21 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
           confirmLabel: lang === 'zh' ? '确认切换' : 'Switch',
           destructive: true,
         });
-        if (!ok) return;
+        if (!ok) {
+          recordFlowEvent('machine_switch_cancelled', { locationId: locId });
+          return;
+        }
+        recordFlowEvent('machine_switch_confirmed', { locationId: locId });
       }
       handleSelectMachine(locId);
       return;
     }
+    recordFlowEvent('draft_resumed', { locationId: locId });
     setStep('capture');
   };
   const handleSwitchMachine = async () => {
     if (hasDraftInProgress) {
+      recordFlowEvent('machine_switch_requested');
       const ok = await confirm({
         title: lang === 'zh' ? '切换机器' : 'Switch Machine',
         message:
@@ -166,7 +256,11 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         confirmLabel: lang === 'zh' ? '确认切换' : 'Switch',
         destructive: true,
       });
-      if (!ok) return;
+      if (!ok) {
+        recordFlowEvent('machine_switch_cancelled');
+        return;
+      }
+      recordFlowEvent('machine_switch_confirmed');
     }
     setStep('selection');
     resetDraft();
@@ -201,10 +295,19 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       notes: note || undefined,
     });
     await submitTransaction.mutateAsync(transaction);
+    recordFlowEvent('office_loan_submitted', {
+      step: 'office_loan',
+      locationId,
+      payload: { amount },
+    });
     showToast(lang === 'zh' ? '办公室借款已提交，等待审批。' : 'Office loan submitted. Waiting for approval.', 'success');
   };
 
   const handleFullReset = () => {
+    flowIdRef.current = safeRandomUUID();
+    stepStartedAtRef.current = Date.now();
+    scoreEnteredRef.current = false;
+    photoMissingReportedRef.current = null;
     setStep('selection');
     resetDraft();
   };
@@ -289,11 +392,20 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
           onSelectMachine={handleSelectMachine}
           onResumeDraft={handleResumeDraft}
           onStartRegister={() => setIsRegistering(true)}
-          onRequestReset={(locId) => { requestGps(); setResetRequestLocId(locId); }}
-          onRequestPayout={(locId) => { requestGps(); setPayoutRequestLocId(locId); }}
+          onRequestReset={(locId) => {
+            recordFlowEvent('reset_request_opened', { step: 'reset_request', locationId: locId });
+            requestGpsWithTelemetry();
+            setResetRequestLocId(locId);
+          }}
+          onRequestPayout={(locId) => {
+            recordFlowEvent('payout_request_opened', { step: 'payout_request', locationId: locId });
+            requestGpsWithTelemetry();
+            setPayoutRequestLocId(locId);
+          }}
           onCreateOfficeLoan={handleCreateOfficeLoan}
           onRegisterMachine={onRegisterMachine}
           onUpdateLocation={handleUpdateLocation}
+          onTelemetryEvent={(eventName, options) => recordFlowEvent(eventName, options)}
         />
       </div>
     );
@@ -315,10 +427,22 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
           photoData={draft.photoData}
           gpsCoords={draft.gpsCoords}
           gpsStatus={gpsStatus}
-          onUpdateScore={(score) => updateDraft({ currentScore: score })}
-          onUpdatePhoto={(photo) => updateDraft({ photoData: photo })}
+          onUpdateScore={(score) => {
+            updateDraft({ currentScore: score });
+            if (!scoreEnteredRef.current && score.trim()) {
+              scoreEnteredRef.current = true;
+              recordFlowEvent('score_entered', {
+                payload: { scoreLength: score.trim().length },
+              });
+            }
+          }}
+          onUpdatePhoto={(photo) => {
+            updateDraft({ photoData: photo });
+            if (photo) recordFlowEvent('photo_attached');
+          }}
           onUpdateAiReview={(data) => updateDraft({ aiReviewData: data })}
-          onRequestGps={requestGps}
+          onRequestGps={requestGpsWithTelemetry}
+          onTelemetryEvent={(eventName, options) => recordFlowEvent(eventName, options)}
           onNext={() => setStep('amounts')}
           onBack={handleBackToSelection}
           onSwitchMachine={handleSwitchMachine}
@@ -349,7 +473,10 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
           onUpdateOwnerRetention={(v) => updateDraft({ ownerRetention: v })}
           onUpdateIsOwnerRetaining={(v) => updateDraft({ isOwnerRetaining: v })}
           onUpdateStartupDebtDeduction={(v) => updateDraft({ startupDebtDeduction: v })}
-          onNext={() => setStep('confirm')}
+          onNext={() => {
+            recordFlowEvent('amounts_next_clicked');
+            setStep('confirm');
+          }}
           onBack={() => setStep('capture')}
           onSwitchMachine={handleSwitchMachine}
           nextMachine={nextQueuedMachine}
@@ -378,12 +505,29 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         isOwnerRetaining={draft.isOwnerRetaining}
         ownerRetention={draft.ownerRetention}
         calculations={financeResult}
-        onSubmit={onSubmit}
-        onBack={() => setStep('amounts')}
+        onSubmit={async (result) => {
+          recordFlowEvent(
+            result.source === 'server' ? 'submit_success' : 'submit_offline_queued',
+            {
+              step: 'complete',
+              locationId: result.transaction.locationId,
+              payload: { source: result.source },
+            },
+          );
+          await onSubmit(result);
+        }}
+        onBack={() => {
+          recordFlowEvent('confirm_back_clicked');
+          setStep('amounts');
+        }}
         onSwitchMachine={handleSwitchMachine}
         onReset={handleFullReset}
-        onReturnHome={handleFullReset}
-        onRequestGps={requestGps}
+        onReturnHome={() => {
+          recordFlowEvent('return_home', { step: 'complete' });
+          handleFullReset();
+        }}
+        onRequestGps={requestGpsWithTelemetry}
+        onTelemetryEvent={(eventName, options) => recordFlowEvent(eventName, options)}
         nextMachine={nextQueuedMachine}
         pendingCount={remainingPendingStops}
         allTransactions={allTransactions}
