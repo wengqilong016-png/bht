@@ -114,6 +114,18 @@ describe('useRealtimeSubscription', () => {
       channelRegistry.get('db:locations')?.emitStatus('SUBSCRIBED');
     });
     expect(result.current.realtimeStatus).toBe('connected');
+
+    act(() => {
+      channelRegistry.get('db:drivers')?.emitStatus('CLOSED');
+    });
+    expect(result.current.realtimeStatus).toBe('connected');
+
+    act(() => {
+      channelRegistry.get('db:transactions')?.emitStatus('CLOSED');
+      channelRegistry.get('db:daily_settlements')?.emitStatus('CLOSED');
+      channelRegistry.get('db:locations')?.emitStatus('CLOSED');
+    });
+    expect(result.current.realtimeStatus).toBe('disconnected');
     });
   });
 
@@ -124,6 +136,25 @@ describe('useRealtimeSubscription', () => {
     renderHook(() => useRealtimeSubscription('driver', true), { wrapper });
 
     expect(Array.from(channelRegistry.keys())).toEqual(['db:transactions']);
+  });
+
+  it('skips subscription setup until the user role is resolved', () => {
+    const queryClient = new QueryClient();
+    const wrapper = makeWrapper(queryClient);
+
+    renderHook(() => useRealtimeSubscription(undefined, true), { wrapper });
+
+    expect(Array.from(channelRegistry.keys())).toEqual([]);
+    expect(mockSetAuth).not.toHaveBeenCalled();
+  });
+
+  it('does not refresh realtime auth while offline', () => {
+    const queryClient = new QueryClient();
+    const wrapper = makeWrapper(queryClient);
+
+    renderHook(() => useRealtimeSubscription('driver', false), { wrapper });
+
+    expect(mockGetSession).not.toHaveBeenCalled();
   });
 
   it('coalesces bursty broadcast events into one invalidation per query key to avoid UI jitter', () => {
