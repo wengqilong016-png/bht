@@ -57,6 +57,11 @@
       ]
     }
   ],
+  "functions": {
+    "api/*.ts": {
+      "regions": ["iad1"]
+    }
+  },
   "rewrites": [
     {
       "source": "/((?!assets/)(?!.*\\.[^/]+$).*)",
