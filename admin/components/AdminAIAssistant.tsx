@@ -6,6 +6,7 @@ import React, { useState, useRef, useEffect } from 'react';
 
 import { useAppData } from '../../contexts/DataContext';
 import { useAdminAI, type AdminAIAlert } from '../../hooks/useAdminAI';
+import { useAriaButton } from '../../src/hooks/useAriaButton';
 
 const QUICK_PROMPTS = [
   '🔍 代理审核分析：今日所有未结算点位 + 异常交易汇总，并建议下一步行动',
@@ -154,10 +155,24 @@ const AdminAIAssistant: React.FC<AdminAIAssistantProps> = ({ lang }) => {
                 </div>
               </div>
               <div className="flex gap-1.5 bg-white/10 rounded-xl p-1">
-                <button onClick={() => setTab('alerts')} className={`flex-1 py-1.5 rounded-lg text-[11px] font-black uppercase transition-colors ${tab === 'alerts' ? 'bg-white text-amber-600 shadow-sm' : 'text-white/80 hover:bg-white/10'}`}>
+                <button
+              {...useAriaButton({
+                onClick: () => setTab('alerts'),
+                pressed: tab === 'alerts',
+                label: 'Alert reminders',
+                className: `flex-1 py-1.5 rounded-lg text-[11px] font-black uppercase transition-colors ${tab === 'alerts' ? 'bg-white text-amber-600 shadow-sm' : 'text-white/80 hover:bg-white/10'}`,
+              })}
+            >
                   {alertCount > 0 ? `⚠️ 提醒 (${alertCount})` : '✓ 状态监控'}
                 </button>
-                <button onClick={() => setTab('chat')} className={`flex-1 py-1.5 rounded-lg text-[11px] font-black uppercase transition-colors ${tab === 'chat' ? 'bg-white text-amber-600 shadow-sm' : 'text-white/80 hover:bg-white/10'}`}>
+                <button
+              {...useAriaButton({
+                onClick: () => setTab('chat'),
+                pressed: tab === 'chat',
+                label: 'Chat with AI',
+                className: `flex-1 py-1.5 rounded-lg text-[11px] font-black uppercase transition-colors ${tab === 'chat' ? 'bg-white text-amber-600 shadow-sm' : 'text-white/80 hover:bg-white/10'}`,
+              })}
+            >
                   💬 {messages.length > 0 ? `对话 (${messages.filter(m => m.role === 'assistant').length})` : 'AI 提问'}
                 </button>
               </div>
@@ -261,10 +276,13 @@ const AdminAIAssistant: React.FC<AdminAIAssistantProps> = ({ lang }) => {
                       className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-100 transition-all disabled:opacity-60"
                     />
                     <button
-                      onClick={() => void handleSend()}
-                      disabled={!input.trim() || isLoading}
-                      className="flex-shrink-0 w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center disabled:opacity-40 hover:bg-amber-700 active:scale-95 transition-all"
-                    >
+              {...useAriaButton({
+                onClick: () => { void handleSend(); },
+                label: 'Send message',
+                disabled: !input.trim() || isLoading,
+                className: 'flex-shrink-0 w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center disabled:opacity-40 hover:bg-amber-700 active:scale-95 transition-all',
+              })}
+            >
                       {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                     </button>
                   </div>

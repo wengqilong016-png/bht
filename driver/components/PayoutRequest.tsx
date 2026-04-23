@@ -2,6 +2,7 @@ import { ArrowRight, Wallet } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { useToast } from '../../contexts/ToastContext';
+import { useAriaButton } from '../../src/hooks/useAriaButton';
 import { Location, Driver, Transaction, TRANSLATIONS } from '../../types';
 import { createPayoutRequestTransaction } from '../../utils/transactionBuilder';
 
@@ -68,8 +69,11 @@ const PayoutRequest: React.FC<PayoutRequestProps> = ({
       <div className="bg-white rounded-card p-6 border border-slate-200 shadow-field-md space-y-5">
         <div className="flex justify-between items-center border-b border-slate-100 pb-4">
           <button
-            onClick={onCancel}
-            className="p-2.5 bg-slate-100 rounded-subcard text-slate-500 hover:text-amber-600 transition-colors"
+            {...useAriaButton({
+              onClick: onCancel,
+              label: 'Back',
+              className: 'p-2.5 bg-slate-100 rounded-subcard text-slate-500 hover:text-amber-600 transition-colors',
+            })}
           >
             <ArrowRight size={18} className="rotate-180" />
           </button>
