@@ -16,9 +16,10 @@ import * as Sentry from '@sentry/react';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 import { appendCollectionSubmissionAudit } from './services/collectionSubmissionAudit';
+import { persistEvidencePhotoUrl } from './services/evidenceStorage';
 import { Transaction, safeRandomUUID } from './types';
 
-import type { CollectionSubmissionInput, CollectionSubmissionResult } from './services/collectionSubmissionService';
+import { isFailure, type CollectionSubmissionInput, type CollectionSubmissionResult } from './services/collectionSubmissionService';
 
 
 
@@ -28,9 +29,11 @@ const STORE_TX   = 'pending_transactions';
 const QUEUE_STORAGE_KEY = 'bahati_offline_queue';
 const MS_PER_DAY = 86_400_000;
 export const MAX_RETRIES = 5;
+const MISSING_COLLECTION_PHOTO_ERROR = 'Missing required collection evidence photoUrl';
+const FAILED_COLLECTION_PHOTO_PERSISTENCE_ERROR = 'Evidence photo persistence failed for required collection photoUrl';
 
 // ── Utility: Validate photoUrl is a proper HTTP(S) URL ───────────────────────
-function isValidHttpUrl(value: string | null | undefined): boolean {
+function isValidHttpUrl(value: string | null | undefined): value is string {
   if (!value || typeof value !== 'string') return false;
   try {
     const url = new URL(value);
@@ -38,6 +41,21 @@ function isValidHttpUrl(value: string | null | undefined): boolean {
   } catch {
     return false;
   }
+}
+
+function isDataImageUrl(value: string | null | undefined): value is string {
+  return typeof value === 'string' && /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(value);
+}
+
+function getRequiredCollectionReplayPhotoUrl(entry: Transaction & Partial<QueueMeta>): string | null {
+  const rawPhotoUrl = entry.rawInput?.photoUrl;
+  if (typeof rawPhotoUrl === 'string' && rawPhotoUrl.trim()) {
+    return rawPhotoUrl;
+  }
+  if (typeof entry.photoUrl === 'string' && entry.photoUrl.trim()) {
+    return entry.photoUrl;
+  }
+  return null;
 }
 const BASE_BACKOFF_MS = 2_000; // 2 s → 4 s → 8 s → 16 s → 32 s
 
@@ -122,6 +140,10 @@ export interface QueueMeta {
    *   'permanent' — validation / auth / not-found; retry will not help.
    */
   lastErrorCategory?: 'transient' | 'permanent';
+  /** Evidence photo still needs to be persisted to storage before replay. */
+  photoPending?: boolean;
+  /** Most recent storage/persistence error for a queued evidence photo. */
+  lastEvidenceError?: string;
 }
 
 function readLocalQueue(): Array<Transaction & Partial<QueueMeta>> {
@@ -164,6 +186,8 @@ function toTransactionUpsertPayload(entry: Transaction & Partial<QueueMeta>): Tr
     nextRetryAt: _nextRetryAt,
     rawInput: _rawInput,
     lastErrorCategory: _lastErrorCategory,
+    photoPending: _photoPending,
+    lastEvidenceError: _lastEvidenceError,
     ...transaction
   } = entry;
 
@@ -225,6 +249,64 @@ function generateOperationId(): string {
 }
 
 // ── Enqueue (save when offline) ───────────────────────────────────────────────
+async function prepareCollectionEvidenceForQueue(
+  tx: Transaction,
+  rawInput?: CollectionSubmissionInput,
+): Promise<{
+  tx: Transaction & Pick<Partial<QueueMeta>, 'photoPending' | 'lastEvidenceError'>;
+  rawInput?: CollectionSubmissionInput;
+}> {
+  if (!rawInput) {
+    return { tx, rawInput };
+  }
+
+  const sourcePhotoUrl = rawInput.photoUrl ?? tx.photoUrl ?? null;
+  const storedRawInput: CollectionSubmissionInput = { ...rawInput, photoUrl: null };
+
+  if (!isDataImageUrl(sourcePhotoUrl)) {
+    return {
+      tx: { ...tx, photoUrl: sourcePhotoUrl ?? tx.photoUrl },
+      rawInput: sourcePhotoUrl ? { ...storedRawInput, photoUrl: sourcePhotoUrl } : storedRawInput,
+    };
+  }
+
+  try {
+    const persistedPhotoUrl = await persistEvidencePhotoUrl(sourcePhotoUrl, {
+      category: 'collection',
+      entityId: rawInput.txId,
+      driverId: rawInput.driverId,
+      required: false,
+    });
+
+    if (isValidHttpUrl(persistedPhotoUrl)) {
+      return {
+        tx: { ...tx, photoUrl: persistedPhotoUrl, photoPending: false, lastEvidenceError: undefined },
+        rawInput: { ...storedRawInput, photoUrl: persistedPhotoUrl },
+      };
+    }
+
+    return {
+      tx: {
+        ...tx,
+        photoUrl: sourcePhotoUrl,
+        photoPending: true,
+        lastEvidenceError: FAILED_COLLECTION_PHOTO_PERSISTENCE_ERROR,
+      },
+      rawInput: storedRawInput,
+    };
+  } catch (error) {
+    return {
+      tx: {
+        ...tx,
+        photoUrl: sourcePhotoUrl,
+        photoPending: true,
+        lastEvidenceError: error instanceof Error ? error.message : String(error),
+      },
+      rawInput: storedRawInput,
+    };
+  }
+}
+
 /**
  * Enqueue a transaction for later replay when connectivity is restored.
  *
@@ -235,12 +317,12 @@ function generateOperationId(): string {
  *                  accepting locally-computed values.
  */
 export async function enqueueTransaction(tx: Transaction, rawInput?: CollectionSubmissionInput): Promise<void> {
-  // Strip photoUrl from the stored rawInput copy to avoid duplicating the
-  // (potentially large) base64 payload that is already on tx.photoUrl.
-  // During replay, flushQueue reconstructs photoUrl from the stored tx entry.
-  const storedRawInput: CollectionSubmissionInput | undefined = rawInput
-    ? { ...rawInput, photoUrl: null }
-    : undefined;
+  // Avoid duplicating base64 in rawInput. If evidence can already be persisted,
+  // store the public URL; otherwise keep the dataURL only on the queue entry and
+  // mark it for a required persist attempt before replay.
+  const prepared = await prepareCollectionEvidenceForQueue(tx, rawInput);
+  const storedTx = prepared.tx;
+  const storedRawInput = prepared.rawInput;
 
   const meta: QueueMeta = {
     operationId: generateOperationId(),
@@ -248,13 +330,15 @@ export async function enqueueTransaction(tx: Transaction, rawInput?: CollectionS
     _queuedAt: new Date().toISOString(),
     retryCount: 0,
     rawInput: storedRawInput,
+    photoPending: storedTx.photoPending,
+    lastEvidenceError: storedTx.lastEvidenceError,
   };
 
   try {
     const db    = await openDB();
     const store = db.transaction(STORE_TX, 'readwrite').objectStore(STORE_TX);
     await new Promise<void>((resolve, reject) => {
-      const req = store.put({ ...tx, isSynced: false, ...meta });
+      const req = store.put({ ...storedTx, isSynced: false, ...meta });
       req.onsuccess = () => resolve();
       req.onerror   = () => reject(req.error);
     });
@@ -263,7 +347,7 @@ export async function enqueueTransaction(tx: Transaction, rawInput?: CollectionS
     // Fallback: use writeLocalQueue which handles unavailable localStorage
     console.warn('[OfflineQueue] IDB unavailable, falling back to localStorage/memory cache', err);
     const list = readLocalQueue();
-    const updated = [...list.filter(t => t.id !== tx.id), { ...tx, isSynced: false, ...meta }];
+    const updated = [...list.filter(t => t.id !== tx.id), { ...storedTx, isSynced: false, ...meta }];
     writeLocalQueue(updated);
   }
 }
@@ -370,6 +454,103 @@ export async function markSynced(id: string, authoritativeData?: Partial<Transac
   } catch {
     const list = readLocalQueue().map(t => t.id === id ? { ...t, ...update } : t);
     try { localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(list)); } catch (_) {}
+  }
+}
+
+async function updateQueuedEvidencePhoto(
+  id: string,
+  photoUrl: string,
+  rawInput?: CollectionSubmissionInput,
+): Promise<void> {
+  try {
+    const db = await openDB();
+    const txDb = db.transaction(STORE_TX, 'readwrite');
+    const store = txDb.objectStore(STORE_TX);
+    const item = await new Promise<(Transaction & Partial<QueueMeta>) | undefined>((res, rej) => {
+      const r = store.get(id);
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    if (item) {
+      await new Promise<void>((res, rej) => {
+        const r = store.put({
+          ...item,
+          photoUrl,
+          rawInput: rawInput ? { ...rawInput, photoUrl } : item.rawInput,
+          photoPending: false,
+          lastEvidenceError: undefined,
+        });
+        r.onsuccess = () => res();
+        r.onerror = () => rej(r.error);
+      });
+    }
+    db.close();
+  } catch {
+    const list = readLocalQueue();
+    const updated = list.map(t =>
+      t.id === id
+        ? {
+            ...t,
+            photoUrl,
+            rawInput: rawInput ? { ...rawInput, photoUrl } : t.rawInput,
+            photoPending: false,
+            lastEvidenceError: undefined,
+          }
+        : t,
+    );
+    writeLocalQueue(updated);
+  }
+}
+
+async function persistQueuedEvidencePhoto(
+  entry: Transaction & Partial<QueueMeta>,
+): Promise<{ success: true; photoUrl: string } | { success: false; error: string; category: 'transient' | 'permanent' }> {
+  const replayPhotoUrl = getRequiredCollectionReplayPhotoUrl(entry);
+  if (!replayPhotoUrl) {
+    return {
+      success: false,
+      error: MISSING_COLLECTION_PHOTO_ERROR,
+      category: classifyError(MISSING_COLLECTION_PHOTO_ERROR),
+    };
+  }
+
+  if (isValidHttpUrl(replayPhotoUrl)) {
+    return { success: true, photoUrl: replayPhotoUrl };
+  }
+
+  if (!entry.photoPending && !isDataImageUrl(replayPhotoUrl)) {
+    return {
+      success: false,
+      error: FAILED_COLLECTION_PHOTO_PERSISTENCE_ERROR,
+      category: classifyError(FAILED_COLLECTION_PHOTO_PERSISTENCE_ERROR),
+    };
+  }
+
+  try {
+    const persistedPhotoUrl = await persistEvidencePhotoUrl(replayPhotoUrl, {
+      category: 'collection',
+      entityId: entry.rawInput?.txId ?? entry.id,
+      driverId: entry.rawInput?.driverId ?? entry.driverId,
+      required: true,
+    });
+
+    if (!isValidHttpUrl(persistedPhotoUrl)) {
+      return {
+        success: false,
+        error: FAILED_COLLECTION_PHOTO_PERSISTENCE_ERROR,
+        category: classifyError(FAILED_COLLECTION_PHOTO_PERSISTENCE_ERROR),
+      };
+    }
+
+    await updateQueuedEvidencePhoto(entry.id, persistedPhotoUrl, entry.rawInput);
+    return { success: true, photoUrl: persistedPhotoUrl };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      success: false,
+      error: message,
+      category: classifyError(message),
+    };
   }
 }
 
@@ -505,13 +686,16 @@ export async function flushQueue(
           continue;
         }
 
-        // Reconstruct photoUrl from the stored tx entry rather than rawInput,
-        // since photoUrl is stripped from rawInput at enqueue time to avoid
-        // storing duplicate base64 payloads.
-      const replayInput: CollectionSubmissionInput = {
-        ...entry.rawInput,
-        photoUrl: entry.rawInput.photoUrl ?? (entry.photoUrl ?? null),
-      };
+        const replayPhoto = await persistQueuedEvidencePhoto(entry);
+        if (!replayPhoto.success) {
+          await recordRetryFailure(tx.id, replayPhoto.error, replayPhoto.category);
+          continue;
+        }
+
+        const replayInput: CollectionSubmissionInput = {
+          ...entry.rawInput,
+          photoUrl: replayPhoto.photoUrl,
+        };
 
         const result = await options.submitCollection(replayInput);
         if (result.success) {
@@ -539,9 +723,9 @@ export async function flushQueue(
           flushed++;
           options.onProgress?.(flushed, pending.length);
         } else {
-          // Cast to narrow the union: TypeScript's control flow narrowing is not
-          // reliably applied to discriminated unions in this project's tsconfig.
-          const failResult = result as { success: false; error: string };
+          const failResult = isFailure(result)
+            ? result
+            : { success: false as const, error: 'Unknown collection replay failure' };
           appendCollectionSubmissionAudit({
             timestamp: new Date().toISOString(),
             event: 'queue_flush_failure',
@@ -554,7 +738,7 @@ export async function flushQueue(
             source: 'offline',
             reason: failResult.error,
           });
-          const category = classifyError(failResult.error);
+          const category = failResult.kind === 'config' ? 'permanent' : classifyError(failResult.error);
           await recordRetryFailure(tx.id, failResult.error, category);
         }
         continue;
@@ -646,11 +830,14 @@ export function classifyError(msg: string): 'transient' | 'permanent' {
     '504 gateway timeout',
     'request aborted',
     'offline',
+    'evidence photo upload failed',
   ];
   if (transientSignals.some(s => lower.includes(s))) return 'transient';
 
   // ✅ 新增：permanent 错误信号（不可重试，立即 dead-letter）
   const permanentSignals = [
+    'missing required collection evidence photourl',
+    'missing required',
     'forbidden',
     // 'authentication required' is intentionally excluded: an expired JWT is
     // a transient condition — the user can re-login and the item should retry.
@@ -664,6 +851,8 @@ export function classifyError(msg: string): 'transient' | 'permanent' {
     'schema mismatch',
     'duplicate key',   // already exists, retry won't help
     'constraint',
+    'supabase not configured',
+    'evidence photo persistence failed',
   ];
   if (permanentSignals.some(s => lower.includes(s))) return 'permanent';
   
@@ -1055,10 +1244,15 @@ export async function replayDeadLetterItem(
         };
       }
 
-      // Reconstruct photoUrl from the stored tx entry (stripped from rawInput at enqueue time).
+      const replayPhoto = await persistQueuedEvidencePhoto(entry);
+      if (!replayPhoto.success) {
+        await _updateDeadLetterError(id, replayPhoto.error, replayPhoto.category);
+        return { success: false, error: replayPhoto.error };
+      }
+
       const replayInput: CollectionSubmissionInput = {
         ...entry.rawInput,
-        photoUrl: entry.rawInput.photoUrl ?? (entry.photoUrl ?? null),
+        photoUrl: replayPhoto.photoUrl,
       };
 
       const result = await options.submitCollection(replayInput);
@@ -1066,16 +1260,15 @@ export async function replayDeadLetterItem(
         await markSynced(id, result.transaction);
         return { success: true, transaction: result.transaction };
       } else {
-        // Failure: update lastError while keeping the entry in dead-letter state.
-        // retryCount stays at MAX_RETRIES so the item remains visible for the operator.
-        // Cast to narrow the union: TypeScript's control flow narrowing is not
-        // reliably applied to discriminated unions in this project's tsconfig.
-        const failureResult = result as { success: false; error: string };
-        await _updateDeadLetterError(id, failureResult.error, classifyError(failureResult.error));
+        const failureResult = isFailure(result)
+          ? result
+          : { success: false as const, error: 'Unknown collection replay failure' };
+        const category = failureResult.kind === 'config' ? 'permanent' : classifyError(failureResult.error);
+        await _updateDeadLetterError(id, failureResult.error, category);
         captureQueueMessage('offline_queue_manual_replay_failed', {
           txId: id,
           errorMessage: failureResult.error,
-          errorCategory: classifyError(failureResult.error),
+          errorCategory: category,
           entryType: entry.type ?? 'collection',
         });
         return { success: false, error: failureResult.error };

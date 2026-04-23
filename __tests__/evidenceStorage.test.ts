@@ -179,13 +179,23 @@ describe('persistEvidencePhotoUrl() — upload error', () => {
       entityId: 'e-1',
     });
 
-    // Upload failures are non-blocking: the function logs a warning and
-    // returns null so a Storage outage cannot freeze the sync pipeline.
     expect(result).toBeNull();
     expect(console.warn).toHaveBeenCalledWith(
-      '[evidenceStorage] Upload failed for collection/unknown-driver/e-1.jpg after 3 attempts — proceeding without photo URL.',
+      '[evidenceStorage] Upload failed for collection/unknown-driver/e-1.jpg after 3 attempts.',
       'Storage quota exceeded',
     );
+  });
+
+  it('throws when required evidence upload returns an error', async () => {
+    mockUpload.mockResolvedValue({ error: { message: 'Storage quota exceeded' } });
+
+    await expect(
+      persistEvidencePhotoUrl(JPEG_DATA_URL, {
+        category: 'collection',
+        entityId: 'e-1',
+        required: true,
+      }),
+    ).rejects.toThrow('Evidence photo upload failed: Storage quota exceeded');
   });
 });
 

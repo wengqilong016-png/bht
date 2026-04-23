@@ -250,6 +250,26 @@ describe('orchestrateCollectionSubmission', () => {
     expect(logger.warn).toHaveBeenCalled();
   });
 
+  it('does not enqueue when online submission fails for evidence', async () => {
+    const submitCollectionV2 = jest.fn<() => Promise<unknown>>().mockResolvedValue({
+      success: false,
+      error: 'Evidence photo persistence failed for required collection photoUrl',
+      kind: 'evidence',
+    });
+    const createCollectionTransaction = jest.fn();
+    const enqueueTransaction = jest.fn<() => Promise<unknown>>().mockResolvedValue(undefined);
+
+    await expect(orchestrateCollectionSubmission(makeInput(), {
+      submitCollectionV2,
+      createCollectionTransaction,
+      enqueueTransaction,
+      logger: { warn: jest.fn() },
+    } as any)).rejects.toThrow('Evidence photo persistence failed');
+
+    expect(createCollectionTransaction).not.toHaveBeenCalled();
+    expect(enqueueTransaction).not.toHaveBeenCalled();
+  });
+
   it('hydrates offline fallback transactions with derived workflow fields', async () => {
     const offlineTransaction = makeTransaction({ id: 'offline-enriched', isSynced: false });
     const submitCollectionV2 = jest.fn<() => Promise<unknown>>().mockResolvedValue({

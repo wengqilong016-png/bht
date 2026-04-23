@@ -130,6 +130,7 @@ describe('submitCollectionV2', () => {
     expect(tx.netPayable).toBe(29000);
     expect(tx.isSynced).toBe(true);
     expect(tx.type).toBe('collection');
+    expect(tx.photoUrl).toContain('/storage/v1/object/public/evidence/');
     expect(tx.approvalStatus).toBe('approved');
     expect(tx.expenseType).toBe('public');
     expect(tx.expenseCategory).toBe('fuel');
@@ -166,6 +167,45 @@ describe('submitCollectionV2', () => {
     expect(mockUpload).toHaveBeenCalledTimes(1);
     const [path] = mockUpload.mock.calls[0] as [string, Blob];
     expect(path).toBe('collection/drv-001/TX-test-001.jpg');
+  });
+
+  it('returns failure without RPC when collection photoUrl is missing', async () => {
+    const result = await submitCollectionV2({ ...baseInput, photoUrl: null });
+
+    expect(result.success).toBe(false);
+    if (result.success === false) {
+      expect(result.error).toBe('Missing required collection evidence photoUrl');
+      expect(result.kind).toBe('evidence');
+    }
+    expect(mockUpload).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it('returns failure without RPC when required evidence upload fails', async () => {
+    mockUpload.mockResolvedValue({ error: { message: 'Storage quota exceeded' } });
+
+    const result = await submitCollectionV2(baseInput);
+
+    expect(result.success).toBe(false);
+    if (result.success === false) {
+      expect(result.error).toContain('Evidence photo persistence failed');
+      expect(result.error).toContain('Storage quota exceeded');
+      expect(result.kind).toBe('evidence');
+    }
+    expect(mockUpload).toHaveBeenCalledTimes(3);
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it('returns failure without RPC when persistence does not produce an HTTP photo URL', async () => {
+    const result = await submitCollectionV2({ ...baseInput, photoUrl: 'not-a-url' });
+
+    expect(result.success).toBe(false);
+    if (result.success === false) {
+      expect(result.error).toBe('Evidence photo persistence failed for required collection photoUrl');
+      expect(result.kind).toBe('evidence');
+    }
+    expect(mockUpload).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it('forwards driver id as p_driver_id (server enforces ownership)', async () => {

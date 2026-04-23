@@ -174,7 +174,10 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         step: 'confirm',
         errorCategory: submissionState.message || 'submission_error',
       });
-      showToastRef.current(lang === 'zh' ? '提交失败，请重试' : 'Imeshindwa, jaribu tena', 'error');
+      showToastRef.current(
+        submissionState.message || (lang === 'zh' ? '提交失败，请重试' : 'Imeshindwa, jaribu tena'),
+        'error',
+      );
     }
   }, [submissionState, lang, resetSubmissionState, onTelemetryEvent]);
 

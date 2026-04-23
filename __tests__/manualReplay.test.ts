@@ -18,9 +18,14 @@
 
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 
-import { MAX_RETRIES } from '../offlineQueue';
-
 import type { CollectionSubmissionInput, CollectionSubmissionResult } from '../services/collectionSubmissionService';
+
+const MAX_RETRIES = 5;
+const mockPersistEvidencePhotoUrl = jest.fn<(...args: unknown[]) => Promise<string | null>>();
+
+jest.mock('../services/evidenceStorage', () => ({
+  persistEvidencePhotoUrl: (...args: unknown[]) => mockPersistEvidencePhotoUrl(...(args as [])),
+}));
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -44,6 +49,7 @@ function makeTx(overrides: Partial<Record<string, unknown>> = {}): any {
     extraIncome: 0,
     netPayable: 17000,
     gps: { lat: -6.8, lng: 39.3 },
+    photoUrl: 'data:image/jpeg;base64,queued-photo',
     dataUsageKB: 10,
     isSynced: false,
     type: 'collection',
@@ -103,6 +109,8 @@ function deadLetterEntry(id: string): void {
 let originalIndexedDB: typeof globalThis['indexedDB'];
 
 beforeEach(() => {
+  mockPersistEvidencePhotoUrl.mockReset();
+  mockPersistEvidencePhotoUrl.mockResolvedValue('https://example.com/evidence/queued-photo.jpg');
   originalIndexedDB = globalThis.indexedDB;
   Object.defineProperty(globalThis, 'indexedDB', {
     value: undefined,
@@ -255,6 +263,45 @@ describe('replayDeadLetterItem — collection replay (rawInput present)', () => 
     // Pre-computed finance fields must NOT appear on the raw input
     expect(capturedInput!).not.toHaveProperty('revenue');
     expect(capturedInput!).not.toHaveProperty('netPayable');
+  });
+
+  it('persists a pending dataURL photo before manual replay', async () => {
+    const { enqueueTransaction, replayDeadLetterItem } = await import('../offlineQueue');
+    const dataUrl = 'data:image/jpeg;base64,pending-manual-photo';
+    const publicUrl = 'https://example.com/evidence/manual-photo.jpg';
+    const tx = makeTx({ photoUrl: dataUrl });
+    await enqueueTransaction(tx, makeRawInput(tx.id));
+
+    const stored = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
+    localStorage.setItem('bahati_offline_queue', JSON.stringify(stored.map((entry: any) => (
+      entry.id === tx.id
+        ? {
+            ...entry,
+            retryCount: MAX_RETRIES,
+            lastError: 'Network request failed',
+            lastErrorCategory: 'transient',
+            photoUrl: dataUrl,
+            rawInput: { ...entry.rawInput, photoUrl: null },
+            photoPending: true,
+          }
+        : entry
+    ))));
+    mockPersistEvidencePhotoUrl.mockClear();
+    mockPersistEvidencePhotoUrl.mockResolvedValue(publicUrl);
+
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>()
+      .mockResolvedValue({ success: true, transaction: { ...tx, photoUrl: publicUrl, isSynced: true } as any, source: 'server' });
+
+    const result = await replayDeadLetterItem(tx.id, {
+      supabaseClient: makeSupabaseStub(),
+      submitCollection,
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockPersistEvidencePhotoUrl).toHaveBeenCalledTimes(1);
+    expect(mockPersistEvidencePhotoUrl.mock.calls[0]?.[1]).toMatchObject({ required: true });
+    const replayInput = (submitCollection.mock.calls[0] as [CollectionSubmissionInput])[0];
+    expect(replayInput.photoUrl).toBe(publicUrl);
   });
 
   it('keeps entry in dead-letter with updated lastError on submitCollection failure', async () => {

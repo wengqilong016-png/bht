@@ -18,6 +18,19 @@ import { Transaction } from '../types';
 
 import { persistEvidencePhotoUrl } from './evidenceStorage';
 
+const MISSING_COLLECTION_PHOTO_ERROR = 'Missing required collection evidence photoUrl';
+const FAILED_COLLECTION_PHOTO_PERSISTENCE_ERROR = 'Evidence photo persistence failed for required collection photoUrl';
+
+function isValidHttpUrl(value: string | null | undefined): value is string {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Raw inputs accepted by the server write entrypoint.
  * These mirror the driver's form data — no pre-computed finance totals.
@@ -49,9 +62,32 @@ export interface CollectionSubmissionInput {
 }
 
 /** Discriminated result so callers can branch on success / source. */
+export type CollectionSubmissionFailureKind = 'evidence' | 'rpc' | 'config' | 'network';
+
 export type CollectionSubmissionResult =
   | { success: true; transaction: Transaction; source: 'server' }
-  | { success: false; error: string };
+  | { success: false; error: string; kind?: CollectionSubmissionFailureKind };
+
+export function isFailure(
+  result: CollectionSubmissionResult,
+): result is { success: false; error: string; kind?: CollectionSubmissionFailureKind } {
+  return result.success === false;
+}
+
+function classifyRpcException(error: unknown): CollectionSubmissionFailureKind {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  if (
+    message.includes('timeout') ||
+    message.includes('abort') ||
+    message.includes('network') ||
+    message.includes('fetch') ||
+    message.includes('offline') ||
+    message.includes('connection')
+  ) {
+    return 'network';
+  }
+  return 'rpc';
+}
 
 /**
  * Submit a collection to the server-authoritative write entrypoint.
@@ -66,16 +102,29 @@ export async function submitCollectionV2(
   input: CollectionSubmissionInput,
 ): Promise<CollectionSubmissionResult> {
   if (!supabase) {
-    return { success: false, error: 'Supabase not configured' };
+    return { success: false, error: 'Supabase not configured', kind: 'config' };
   }
 
-  // persistEvidencePhotoUrl is non-blocking: on upload failure it logs a warning
-  // and returns null instead of throwing, so a Storage outage cannot block submission.
-  const persistedPhotoUrl = await persistEvidencePhotoUrl(input.photoUrl, {
-    category: 'collection',
-    entityId: input.txId,
-    driverId: input.driverId,
-  });
+  if (!input.photoUrl?.trim()) {
+    return { success: false, error: MISSING_COLLECTION_PHOTO_ERROR, kind: 'evidence' };
+  }
+
+  let persistedPhotoUrl: string | null;
+  try {
+    persistedPhotoUrl = await persistEvidencePhotoUrl(input.photoUrl, {
+      category: 'collection',
+      entityId: input.txId,
+      driverId: input.driverId,
+      required: true,
+    });
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : String(e);
+    return { success: false, error: `${FAILED_COLLECTION_PHOTO_PERSISTENCE_ERROR}: ${detail}`, kind: 'evidence' };
+  }
+
+  if (!isValidHttpUrl(persistedPhotoUrl)) {
+    return { success: false, error: FAILED_COLLECTION_PHOTO_PERSISTENCE_ERROR, kind: 'evidence' };
+  }
 
   let data: unknown;
   let error: { message: string } | null;
@@ -107,13 +156,14 @@ export async function submitCollectionV2(
     error = result.error as { message: string } | null;
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error calling submit_collection_v2';
-    return { success: false, error: msg };
+    return { success: false, error: msg, kind: classifyRpcException(e) };
   }
 
   if (error || !data) {
     return {
       success: false,
       error: (error as { message?: string } | null)?.message || 'submit_collection_v2 returned no data',
+      kind: 'rpc',
     };
   }
 
@@ -140,7 +190,9 @@ export async function submitCollectionV2(
     extraIncome:           Number(row['extraIncome'] ?? 0),
     netPayable:            Number(row['netPayable'] ?? 0),
     gps:                   (row['gps'] as { lat: number; lng: number }) ?? input.gps ?? { lat: 0, lng: 0 },
-    photoUrl:              row['photoUrl'] != null ? String(row['photoUrl']) : persistedPhotoUrl ?? undefined,
+    photoUrl:              isValidHttpUrl(row['photoUrl'] != null ? String(row['photoUrl']) : null)
+                             ? String(row['photoUrl'])
+                             : persistedPhotoUrl,
     dataUsageKB:           Number(row['dataUsageKB'] ?? 120),
     aiScore:               row['aiScore'] != null ? Number(row['aiScore']) : undefined,
     isAnomaly:             Boolean(row['isAnomaly']),

@@ -6,6 +6,7 @@ interface EvidenceUploadOptions {
   category: 'collection' | 'reset-request' | 'payroll' | 'driver-profile';
   entityId: string;
   driverId?: string | null;
+  required?: boolean;
 }
 
 interface ParsedDataUrl {
@@ -101,7 +102,7 @@ async function uploadWithRetry(
   }
 
   console.warn(
-    `[evidenceStorage] Upload failed for ${objectPath} after ${MAX_RETRIES + 1} attempts — proceeding without photo URL.`,
+    `[evidenceStorage] Upload failed for ${objectPath} after ${MAX_RETRIES + 1} attempts.`,
     uploadError?.message,
   );
   return uploadError;
@@ -127,6 +128,9 @@ export async function persistEvidencePhotoUrl(
 
   const uploadError = await uploadWithRetry(bucket, objectPath, blob, mimeType);
   if (uploadError) {
+    if (options.required) {
+      throw new Error(`Evidence photo upload failed: ${uploadError.message}`);
+    }
     return null;
   }
 

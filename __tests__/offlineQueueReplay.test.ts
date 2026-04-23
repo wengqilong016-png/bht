@@ -15,6 +15,12 @@ import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals
 
 import type { CollectionSubmissionInput, CollectionSubmissionResult } from '../services/collectionSubmissionService';
 
+const mockPersistEvidencePhotoUrl = jest.fn<(...args: unknown[]) => Promise<string | null>>();
+
+jest.mock('../services/evidenceStorage', () => ({
+  persistEvidencePhotoUrl: (...args: unknown[]) => mockPersistEvidencePhotoUrl(...(args as [])),
+}));
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function makeTx(overrides: Partial<Record<string, unknown>> = {}): any {
@@ -37,6 +43,7 @@ function makeTx(overrides: Partial<Record<string, unknown>> = {}): any {
     extraIncome: 0,
     netPayable: 17000,
     gps: { lat: -6.8, lng: 39.3 },
+    photoUrl: 'data:image/jpeg;base64,queued-photo',
     dataUsageKB: 10,
     isSynced: false,
     type: 'collection',
@@ -80,6 +87,8 @@ function makeSupabaseStub(upsertError: { message: string } | null = null) {
 let originalIndexedDB: typeof globalThis['indexedDB'];
 
 beforeEach(() => {
+  mockPersistEvidencePhotoUrl.mockReset();
+  mockPersistEvidencePhotoUrl.mockResolvedValue('https://example.com/evidence/queued-photo.jpg');
   originalIndexedDB = globalThis.indexedDB;
   Object.defineProperty(globalThis, 'indexedDB', {
     value: undefined,
@@ -129,6 +138,14 @@ describe('classifyError', () => {
     expect(classifyError('Internal Server Error')).toBe('transient');
     expect(classifyError('Service Unavailable')).toBe('transient');
     expect(classifyError('timeout')).toBe('transient');
+  });
+
+  it('classifies collection evidence failures for the retry path', async () => {
+    const { classifyError } = await import('../offlineQueue');
+    expect(classifyError('Missing required collection evidence photoUrl')).toBe('permanent');
+    expect(classifyError('Evidence photo upload failed: Storage quota exceeded')).toBe('transient');
+    expect(classifyError('Evidence photo persistence failed for required collection photoUrl')).toBe('permanent');
+    expect(classifyError('Supabase not configured')).toBe('permanent');
   });
 });
 
@@ -195,6 +212,71 @@ describe('flushQueue — collection replay via submitCollection callback', () =>
     expect(stored?.netPayable).toBe(15000);
   });
 
+  it('replays an entry with an HTTP photo URL without uploading evidence again', async () => {
+    const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
+
+    const httpPhotoUrl = 'https://example.com/evidence/already-persisted.jpg';
+    const tx = makeTx({ photoUrl: httpPhotoUrl });
+    const rawInput = { ...makeRawInput(tx.id), photoUrl: httpPhotoUrl };
+    await enqueueTransaction(tx, rawInput);
+    mockPersistEvidencePhotoUrl.mockClear();
+
+    const successResult: CollectionSubmissionResult = {
+      success: true,
+      transaction: { ...tx, photoUrl: httpPhotoUrl, isSynced: true } as any,
+      source: 'server',
+    };
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>()
+      .mockResolvedValue(successResult);
+
+    const flushed = await flushQueue(makeSupabaseStub(), { submitCollection });
+
+    expect(flushed).toBe(1);
+    expect(mockPersistEvidencePhotoUrl).not.toHaveBeenCalled();
+    expect(submitCollection).toHaveBeenCalledTimes(1);
+    const callArg = (submitCollection.mock.calls[0] as [CollectionSubmissionInput])[0];
+    expect(callArg.photoUrl).toBe(httpPhotoUrl);
+  });
+
+  it('persists a pending dataURL photo once before replaying the collection', async () => {
+    const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
+
+    const dataUrl = 'data:image/jpeg;base64,pending-photo';
+    const publicUrl = 'https://example.com/evidence/pending-photo.jpg';
+    const tx = makeTx({ photoUrl: dataUrl });
+    const rawInput = makeRawInput(tx.id);
+    await enqueueTransaction(tx, rawInput);
+
+    const stored = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
+    localStorage.setItem('bahati_offline_queue', JSON.stringify(stored.map((entry: any) => (
+      entry.id === tx.id
+        ? { ...entry, photoUrl: dataUrl, rawInput: { ...entry.rawInput, photoUrl: null }, photoPending: true }
+        : entry
+    ))));
+    mockPersistEvidencePhotoUrl.mockClear();
+    mockPersistEvidencePhotoUrl.mockResolvedValue(publicUrl);
+
+    const successResult: CollectionSubmissionResult = {
+      success: true,
+      transaction: { ...tx, photoUrl: publicUrl, isSynced: true } as any,
+      source: 'server',
+    };
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>()
+      .mockResolvedValue(successResult);
+
+    const flushed = await flushQueue(makeSupabaseStub(), { submitCollection });
+
+    expect(flushed).toBe(1);
+    expect(mockPersistEvidencePhotoUrl).toHaveBeenCalledTimes(1);
+    expect(mockPersistEvidencePhotoUrl.mock.calls[0]?.[1]).toMatchObject({ required: true });
+    const callArg = (submitCollection.mock.calls[0] as [CollectionSubmissionInput])[0];
+    expect(callArg.photoUrl).toBe(publicUrl);
+    const updated = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
+    const updatedEntry = updated.find((entry: any) => entry.id === tx.id);
+    expect(updatedEntry?.photoPending).toBe(false);
+    expect(updatedEntry?.photoUrl).toBe(publicUrl);
+  });
+
   it('dead-letters a collection entry (does not upsert) when submitCollection callback is absent', async () => {
     const { enqueueTransaction, flushQueue, getDeadLetterItems } = await import('../offlineQueue');
 
@@ -213,6 +295,24 @@ describe('flushQueue — collection replay via submitCollection callback', () =>
     // Entry is dead-lettered immediately (permanent failure)
     const deadLetters = await getDeadLetterItems();
     expect(deadLetters.some(d => d.id === tx.id)).toBe(true);
+  });
+
+  it('dead-letters a collection entry with missing photoUrl before submitCollection', async () => {
+    const { enqueueTransaction, flushQueue, getDeadLetterItems } = await import('../offlineQueue');
+
+    const tx = makeTx({ photoUrl: null });
+    const rawInput = makeRawInput(tx.id);
+    await enqueueTransaction(tx, rawInput);
+
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>();
+    const flushed = await flushQueue(makeSupabaseStub(), { submitCollection });
+
+    expect(flushed).toBe(0);
+    expect(submitCollection).not.toHaveBeenCalled();
+    const deadLetters = await getDeadLetterItems();
+    const entry = deadLetters.find(d => d.id === tx.id) as any;
+    expect(entry?.lastError).toBe('Missing required collection evidence photoUrl');
+    expect(entry?.lastErrorCategory).toBe('permanent');
   });
 
   it('routes reset requests through submitResetRequest callback', async () => {

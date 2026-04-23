@@ -4,6 +4,7 @@ import { createCollectionTransaction } from '../utils/transactionBuilder';
 
 import { appendCollectionSubmissionAudit } from './collectionSubmissionAudit';
 import {
+  isFailure,
   submitCollectionV2,
   type CollectionSubmissionInput,
   type CollectionSubmissionResult,
@@ -280,11 +281,12 @@ export async function orchestrateCollectionSubmission(
       };
     }
 
+    const fallbackError = isFailure(result) ? result.error : 'Unknown submission failure';
     deps.logger.warn(
-      '[collectionSubmissionOrchestrator] submit_collection_v2 failed, falling back to local path:',
-      // Cast to narrow the union: TypeScript's control flow narrowing is not
-      // reliably applied to discriminated unions in this project's tsconfig.
-      (result as { success: false; error: string }).error,
+      isFailure(result) && result.kind === 'evidence'
+        ? '[collectionSubmissionOrchestrator] submit_collection_v2 failed with evidence error:'
+        : '[collectionSubmissionOrchestrator] submit_collection_v2 failed, falling back to local path:',
+      fallbackError,
     );
     appendCollectionSubmissionAudit({
       timestamp: new Date().toISOString(),
@@ -296,13 +298,17 @@ export async function orchestrateCollectionSubmission(
       currentScoreRaw: input.currentScore,
       resolvedScore: rawInput.currentScore,
       previousScore: input.selectedLocation.lastScore,
-      reason: (result as { success: false; error: string }).error,
+      reason: fallbackError,
       metadata: {
-        fallback: 'offline_queue',
+        fallback: isFailure(result) && result.kind === 'evidence' ? 'blocked_evidence' : 'offline_queue',
+        kind: isFailure(result) ? result.kind : undefined,
       },
     });
 
-    const fallbackError = (result as { success: false; error: string }).error;
+    if (isFailure(result) && result.kind === 'evidence') {
+      throw new Error(fallbackError);
+    }
+
     const offlineTransaction = buildOfflineTransaction(input, rawInput, deps);
     await enqueueOfflineTransaction(offlineTransaction, rawInput, input, fallbackError, deps);
 
