@@ -90,7 +90,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
   };
 
   return (
-    <div className="max-w-md mx-auto py-2.5 px-3 pb-24 animate-in fade-in space-y-2.5">
+    <div className="mx-auto max-w-md animate-in fade-in space-y-2.5">
       <WizardStepBar current="capture" lang={lang} />
 
       <CollectionWorkbenchHeader
@@ -115,13 +115,13 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_minmax(9.5rem,0.85fr)]">
           <input
             type="number"
             value={currentScore}
             onChange={e => onUpdateScore(e.target.value)}
             data-testid="driver-current-score-input"
-            className="w-1/2 text-[30px] font-black bg-transparent outline-none text-slate-900 placeholder:text-slate-200"
+            className="min-h-[4.25rem] w-full rounded-subcard border border-slate-100 bg-slate-50 px-3 text-[30px] font-black text-slate-900 outline-none placeholder:text-slate-300 focus:border-amber-300 focus:bg-white"
             placeholder="0000"
             inputMode="numeric"
             autoFocus
@@ -129,7 +129,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
           <button
             onClick={handlePickPhoto}
             data-testid="driver-photo-picker-button"
-            className={`flex-1 py-3 rounded-card border flex items-center justify-center gap-2 transition-all active:scale-95 ${photoData ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-900 border-slate-900 text-white'}`}
+            className={`flex min-h-[4.25rem] w-full items-center justify-center gap-2 rounded-subcard border px-3 py-3 transition-all active:scale-95 ${photoData ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-900 border-slate-900 text-white'}`}
           >
             {photoData ? <CheckCircle2 size={16} /> : <Camera size={16} />}
             <span className="text-caption font-black uppercase tracking-widest">
@@ -253,7 +253,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
       </div>
 
       {/* Next button */}
-      <div className="sticky bottom-0 z-20 -mx-3 mt-4 border-t border-slate-200 bg-white/95 px-3 pb-2 pt-3 backdrop-blur">
+      <div className="sticky bottom-[calc(var(--mobile-nav-height,4.75rem)+env(safe-area-inset-bottom))] z-20 mt-4 rounded-card border border-slate-200 bg-white/95 p-2 backdrop-blur md:bottom-0">
         <button
           onClick={onNext}
           disabled={!currentScore || isScoreBelowLastReading}

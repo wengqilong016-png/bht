@@ -75,7 +75,7 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
   const shared = { lang, t, calculations };
 
   return (
-    <div className="max-w-md mx-auto py-2.5 px-3 pb-24 animate-in fade-in space-y-2.5">
+    <div className="mx-auto max-w-md animate-in fade-in space-y-2.5">
       <WizardStepBar current="amounts" lang={lang} />
 
       <CollectionWorkbenchHeader

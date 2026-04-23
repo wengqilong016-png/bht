@@ -27,7 +27,7 @@ const ShellHeader: React.FC<ShellHeaderProps> = ({
   belowHeader,
 }) => (
   <header className="border-b flex-shrink-0 z-30 bg-white/95 backdrop-blur border-slate-200 pt-[max(env(safe-area-inset-top),0px)]">
-    <div className="flex items-center justify-between px-4 py-3">
+    <div className="flex items-center justify-between px-4 py-2.5 sm:py-3">
       <div className="flex items-center gap-3">
         {showMobileBrand && (
           <div className="md:hidden flex items-center gap-2">
@@ -38,8 +38,8 @@ const ShellHeader: React.FC<ShellHeaderProps> = ({
           </div>
         )}
         <div>
-          <p className="text-caption font-black text-slate-400 uppercase tracking-[0.25em]">{subtitle}</p>
-          <p className="text-sm font-black text-slate-900 uppercase">{title}</p>
+          <p className="text-caption font-black text-slate-400 uppercase tracking-[0.2em]">{subtitle}</p>
+          <p className="text-sm font-black text-slate-900 uppercase leading-tight">{title}</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -49,7 +49,7 @@ const ShellHeader: React.FC<ShellHeaderProps> = ({
         {actions}
       </div>
     </div>
-    <div className="px-3 pb-3 sm:hidden">
+    <div className="px-3 pb-2.5 sm:hidden">
       <SyncStatusPill syncStatus={syncStatus} lang={lang} variant="light" fullWidth />
     </div>
     {belowHeader}

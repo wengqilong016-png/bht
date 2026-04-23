@@ -1,9 +1,7 @@
 @import './styles/tokens.css';
 @import './styles/themes.css';
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@config './tailwind.config.js';
 
 /* ─── Design System Tokens ─────────────────────────────────────────── */
 @layer base {
@@ -19,6 +17,7 @@
     --field-bg: #f8fafc;
     --field-btn-radius: 14px;
     --field-card-radius: 16px;
+    --mobile-nav-height: 4.75rem;
   }
 }
 

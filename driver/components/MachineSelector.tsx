@@ -162,10 +162,10 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
   }, [assignedLocations.length, locationCards]);
 
   return (
-    <div className="max-w-md mx-auto py-3 px-3 animate-in fade-in space-y-2.5">
+    <div className="mx-auto max-w-md animate-in fade-in space-y-2.5">
       {/* Offline status banner */}
       {!isOnline && (
-        <div className="flex items-center gap-3 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-2xl">
+        <div className="flex items-center gap-3 rounded-card border border-amber-200 bg-amber-50 px-3 py-2.5 shadow-field">
           <WifiOff size={16} className="text-amber-500 flex-shrink-0" />
           <div className="min-w-0">
             <p className="text-caption font-black text-amber-700 uppercase">
@@ -186,7 +186,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
 
       {/* Online with pending queue */}
       {isOnline && offlineQueueCount > 0 && (
-        <div className="flex items-center gap-3 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-2xl">
+        <div className="flex items-center gap-3 rounded-card border border-amber-200 bg-amber-50 px-3 py-2.5 shadow-field">
           <DatabaseBackup size={16} className="text-amber-500 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-caption font-black text-amber-700 uppercase">
@@ -196,24 +196,22 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
         </div>
       )}
 
-      <div className="flex items-start justify-between gap-3 rounded-3xl bg-white border border-slate-200 px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
-        <div>
-          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2 uppercase">
+      <div className="flex items-start justify-between gap-3 rounded-card border border-slate-200 bg-white px-4 py-3 shadow-field">
+        <div className="min-w-0">
+          <h2 className="flex items-center gap-2 text-lg font-black uppercase leading-tight text-slate-900">
             <ScanLine className="text-amber-600" size={18} />
             {t.selectMachine}
           </h2>
-          <p className="text-caption font-black text-slate-400 uppercase tracking-widest mt-1">
+          <p className="mt-1 text-caption font-black uppercase tracking-wide text-slate-400">
             {collectionOverview.totalMachines} {lang === 'zh' ? '台机器' : 'machines'} · {todayDriverTransactions.length} {t.todaysCollections}
           </p>
         </div>
-        <div className="rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 px-3 py-2 text-white shadow-[0_10px_24px_rgba(245,158,11,0.32)] ring-1 ring-amber-300/40">
-          <div className="flex items-center gap-2">
-            <Coins size={13} className="text-white" />
-            <span className="text-[10px] font-black uppercase tracking-widest">
-              {lang === 'zh' ? '流动硬币' : 'Floating Coins'}
-            </span>
+        <div className="shrink-0 rounded-subcard border border-amber-100 bg-amber-50 px-3 py-2 text-amber-700">
+          <div className="flex items-center justify-end gap-1.5 text-caption font-black uppercase leading-3">
+            <Coins size={12} />
+            <span>{lang === 'zh' ? '流动硬币' : 'Float'}</span>
           </div>
-          <span className="mt-1 block text-right text-sm font-black">
+          <span className="mt-1 block text-right text-sm font-black text-slate-900">
             {(currentDriver?.dailyFloatingCoins ?? 0).toLocaleString()}
           </span>
         </div>
@@ -237,7 +235,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
               {currentDraftLocation.area || '—'} · {t.score} {(currentDraftLocation.lastScore ?? 0).toLocaleString()}
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2 rounded-2xl bg-white px-3 py-2 text-caption font-black uppercase tracking-wide text-amber-600">
+          <div className="flex shrink-0 items-center gap-2 rounded-btn bg-white px-3 py-2 text-caption font-black uppercase tracking-wide text-amber-600">
             <ScanLine size={13} />
             {t.resumeEntry}
           </div>
@@ -262,7 +260,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
 
       <div className="space-y-2">
         {!hasAssignedLocations && locations.length > 0 && (
-          <div className="px-3 py-2.5 bg-amber-50 border border-amber-100 rounded-2xl flex items-center gap-2">
+          <div className="flex items-center gap-2 rounded-card border border-amber-100 bg-amber-50 px-3 py-2.5">
             <AlertTriangle size={13} className="text-amber-500 flex-shrink-0" />
             <p className="text-caption font-black text-amber-700 uppercase tracking-widest">
               {lang === 'zh' ? '当前没有分配给你的机器，请联系管理员。' : 'No machines are assigned to you. Please contact admin.'}
@@ -270,7 +268,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
           </div>
         )}
         {locationCards.length === 0 && (
-          <div className="py-12 text-center bg-white rounded-2xl border border-dashed border-slate-200">
+          <div className="rounded-card border border-dashed border-slate-200 bg-white py-12 text-center">
             <Layers size={36} className="mx-auto text-slate-200 mb-3" />
             <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.noMachinesAssigned}</p>
           </div>

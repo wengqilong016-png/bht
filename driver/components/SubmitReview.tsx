@@ -193,10 +193,10 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       : (lang === 'zh' ? '待同步' : 'Pending sync');
 
     return (
-      <div data-testid="driver-submit-complete" className="max-w-md mx-auto py-3 px-3 pb-24 animate-in fade-in space-y-3">
-        <div className="rounded-card border border-emerald-200 bg-gradient-to-b from-emerald-50 to-white px-4 py-5 shadow-sm">
+      <div data-testid="driver-submit-complete" className="mx-auto max-w-md animate-in fade-in space-y-3">
+        <div className="rounded-card border border-emerald-200 bg-white px-4 py-5 shadow-field">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-md shadow-emerald-200">
+            <div className="flex h-12 w-12 items-center justify-center rounded-subcard bg-emerald-500 text-white shadow-field">
               <CheckCircle2 size={22} />
             </div>
             <div className="min-w-0">
@@ -211,19 +211,19 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+          <div className="rounded-card border border-slate-200 bg-white px-3 py-2.5">
             <p className="text-caption font-black uppercase tracking-wide text-slate-400">{lang === 'zh' ? '机器读数' : 'Reading'}</p>
             <p className="mt-1 text-sm font-black text-slate-900">{transaction.currentScore.toLocaleString()}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+          <div className="rounded-card border border-slate-200 bg-white px-3 py-2.5">
             <p className="text-caption font-black uppercase tracking-wide text-slate-400">{t.net}</p>
             <p className="mt-1 text-sm font-black text-slate-900">TZS {transaction.netPayable.toLocaleString()}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+          <div className="rounded-card border border-slate-200 bg-white px-3 py-2.5">
             <p className="text-caption font-black uppercase tracking-wide text-slate-400">{lang === 'zh' ? '提交状态' : 'Status'}</p>
             <p className="mt-1 text-sm font-black text-slate-900">{sourceLabel}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+          <div className="rounded-card border border-slate-200 bg-white px-3 py-2.5">
             <p className="text-caption font-black uppercase tracking-wide text-slate-400">{lang === 'zh' ? '网点' : 'Site'}</p>
             <p className="mt-1 text-sm font-black text-slate-900">{selectedLocation.area || transaction.locationName}</p>
           </div>
@@ -233,7 +233,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           type="button"
           onClick={handleReturnHome}
           data-testid="driver-return-home"
-          className="w-full rounded-2xl bg-amber-600 px-4 py-4 text-sm font-black uppercase text-white shadow-lg shadow-amber-200/40 transition-all active:scale-95"
+          className="w-full rounded-card bg-amber-600 px-4 py-4 text-sm font-black uppercase text-white shadow-field-md transition-all active:scale-95"
         >
           {returnLabel}
         </button>
@@ -389,7 +389,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   };
 
   return (
-    <div className="max-w-md mx-auto py-2.5 px-3 pb-24 animate-in fade-in space-y-2.5">
+    <div className="mx-auto max-w-md animate-in fade-in space-y-2.5">
       <WizardStepBar current="confirm" lang={lang} />
 
       <CollectionWorkbenchHeader
@@ -549,7 +549,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         </div>
       )}
 
-      <div className="sticky bottom-0 z-20 -mx-3 mt-4 border-t border-slate-200 bg-white/95 px-3 pb-2 pt-3 backdrop-blur">
+      <div className="sticky bottom-[calc(var(--mobile-nav-height,4.75rem)+env(safe-area-inset-bottom))] z-20 mt-4 rounded-card border border-slate-200 bg-white/95 p-2 backdrop-blur md:bottom-0">
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={onBack}

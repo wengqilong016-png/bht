@@ -36,7 +36,7 @@ const ShellMobileNav: React.FC<ShellMobileNavProps> = ({
   const gridCols = hasOverflow ? items.length + 1 : items.length;
 
   const wrapperClass = position === 'bottom'
-    ? 'fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 py-2 backdrop-blur supports-[padding:max(0px)]:pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden'
+    ? 'fixed inset-x-0 bottom-0 z-40 min-h-[var(--mobile-nav-height,4.75rem)] border-t border-slate-200 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden'
     : 'md:hidden border-t border-slate-200 px-2 py-2';
 
   return (
@@ -49,14 +49,14 @@ const ShellMobileNav: React.FC<ShellMobileNavProps> = ({
             <button
               key={item.id}
               onClick={() => onSelectView(item.id)}
-              className={`flex flex-col items-center gap-1 rounded-subcard px-2 py-2 text-caption font-black uppercase whitespace-nowrap transition-all relative ${
+              className={`relative flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 rounded-btn px-1.5 py-1.5 text-caption font-black transition-all ${
                 active ? 'bg-slate-900 text-white' : 'text-slate-400'
               }`}
             >
               {item.icon}
-              <span className="truncate text-caption">{item.label}</span>
+              <span className="max-w-full truncate text-[10px] leading-3">{item.label}</span>
               {showStat && (
-                <span className={`text-caption font-bold normal-case ${active ? 'text-slate-300' : 'text-slate-500'}`}>
+                <span className={`text-[10px] font-bold leading-3 normal-case ${active ? 'text-slate-300' : 'text-slate-500'}`}>
                   {item.stat!.value}
                 </span>
               )}
@@ -73,12 +73,12 @@ const ShellMobileNav: React.FC<ShellMobileNavProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowOverflow(!showOverflow)}
-              className={`flex flex-col items-center gap-1 rounded-subcard px-2 py-2 text-caption font-black uppercase whitespace-nowrap transition-all w-full ${
+              className={`flex min-h-[3.25rem] w-full flex-col items-center justify-center gap-0.5 rounded-btn px-1.5 py-1.5 text-caption font-black transition-all ${
                 isActiveInOverflow ? 'bg-slate-900 text-white' : showOverflow ? 'bg-slate-200 text-slate-700' : 'text-slate-400'
               }`}
             >
               {showOverflow ? <X size={16} /> : <MoreHorizontal size={16} />}
-              <span className="truncate text-caption">{lang === 'zh' ? '更多' : 'More'}</span>
+              <span className="max-w-full truncate text-[10px] leading-3">{lang === 'zh' ? '更多' : 'More'}</span>
             </button>
 
             {showOverflow && (

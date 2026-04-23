@@ -366,7 +366,7 @@ export function FinanceNavigation({
   onNext: () => void;
 }) {
   return (
-    <div className="sticky bottom-0 z-20 -mx-3 mt-4 border-t border-slate-200 bg-white/95 px-3 pb-2 pt-3 backdrop-blur">
+    <div className="sticky bottom-[calc(var(--mobile-nav-height,4.75rem)+env(safe-area-inset-bottom))] z-20 mt-4 rounded-card border border-slate-200 bg-white/95 p-2 backdrop-blur md:bottom-0">
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={onBack}
