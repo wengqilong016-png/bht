@@ -229,12 +229,12 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleReturnHome}
-          data-testid="driver-return-home"
-          className="w-full rounded-card bg-amber-600 px-4 py-4 text-sm font-black uppercase text-white shadow-field-md transition-all active:scale-95"
-        >
+        <button aria-label="返回收款首页"
+           type="button"
+           onClick={handleReturnHome}
+           data-testid="driver-return-home"
+           className="w-full rounded-card bg-amber-600 px-4 py-4 text-sm font-black uppercase text-white shadow-field-md transition-all active:scale-95"
+         >
           {returnLabel}
         </button>
       </div>
@@ -523,7 +523,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           </p>
         </div>
         {!gpsCoords && gpsPermission !== 'denied' && (
-          <button onClick={onRequestGps} className="p-1.5 bg-white rounded-xl border border-slate-200 text-amber-600 flex-shrink-0">
+          <button aria-label="action button" onClick={onRequestGps} className="p-1.5 bg-white rounded-xl border border-slate-200 text-amber-600 flex-shrink-0">
             <RotateCcw size={12} />
           </button>
         )}
@@ -552,6 +552,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       <div className="sticky bottom-[calc(var(--mobile-nav-height,4.75rem)+env(safe-area-inset-bottom))] z-20 mt-4 rounded-card border border-slate-200 bg-white/95 p-2 backdrop-blur md:bottom-0">
         <div className="grid grid-cols-2 gap-3">
           <button
+            type="button"
             onClick={onBack}
             className="py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl font-black uppercase text-xs hover:text-amber-600 transition-colors flex items-center justify-center gap-2"
           >
@@ -559,6 +560,9 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
             {lang === 'zh' ? '返回上一步' : 'Back'}
           </button>
           <button
+            type="button"
+            aria-label="提交报告"
+            aria-disabled={isProcessing || !currentScore || isScoreBelowLastReading}
             onClick={handleSubmit}
             disabled={isProcessing || !currentScore || isScoreBelowLastReading}
             data-testid="driver-submit-button"
