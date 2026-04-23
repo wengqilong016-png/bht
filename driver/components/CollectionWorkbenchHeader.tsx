@@ -47,9 +47,11 @@ const CollectionWorkbenchHeader: React.FC<CollectionWorkbenchHeaderProps> = ({
             <div className="flex shrink-0 items-center gap-1.5">
               {onSwitchMachine && (
                 <button
-                  type="button"
-                  onClick={onSwitchMachine}
-                  className="rounded-full border border-slate-200 bg-white px-2 py-1 text-caption font-black uppercase text-amber-600 transition-colors hover:border-amber-200 hover:bg-amber-50"
+                  {...useAriaButton({
+                    onClick: onSwitchMachine,
+                    label: t.switchMachine,
+                    className: "rounded-full border border-slate-200 bg-white px-2 py-1 text-caption font-black uppercase text-amber-600 transition-colors hover:border-amber-200 hover:bg-amber-50",
+                  })}
                 >
                   {t.switchMachine}
                 </button>

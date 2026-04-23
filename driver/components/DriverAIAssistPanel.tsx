@@ -130,6 +130,7 @@ const DriverAIAssistPanel: React.FC<Props> = (props) => {
             : 'bg-amber-600 text-white shadow-amber-300/50'
         }`}
         aria-label="AI 助手"
+        aria-expanded={open}
       >
         {warnCount > 0
           ? <WifiOff size={18} />
@@ -152,7 +153,13 @@ const DriverAIAssistPanel: React.FC<Props> = (props) => {
                 {props.lang === 'zh' ? 'AI 状态助手' : 'Msaidizi wa AI'}
               </p>
             </div>
-            <button onClick={() => setOpen(false)} className="text-amber-200 hover:text-white">
+            <button
+              {...useAriaButton({
+                onClick: () => setOpen(false),
+                label: 'Close AI assistant',
+                className: 'text-amber-200 hover:text-white',
+              })}
+            >
               <X size={14} />
             </button>
           </div>

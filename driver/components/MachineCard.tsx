@@ -257,63 +257,65 @@ const MachineCard: React.FC<MachineCardProps> = ({
             <RefreshCw size={11} /> {lang === 'zh' ? '重置' : 'Reset'}
           </button>
           )}
-          <button type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (hasDividendBalance) onRequestPayout(loc.id);
-            }}
-            disabled={!hasDividendBalance}
-            className="flex min-h-11 flex-1 items-center justify-center gap-1.5 border-r border-slate-100 px-3 py-2 text-caption font-black uppercase text-emerald-600 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+          <button
+            {...useAriaButton({
+              onClick: (e) => { e.stopPropagation(); if (hasDividendBalance) onRequestPayout(loc.id); },
+              label: lang === 'zh' ? '提现分红' : 'Payout dividends',
+              disabled: !hasDividendBalance,
+              className: "flex min-h-11 flex-1 items-center justify-center gap-1.5 border-r border-slate-100 px-3 py-2 text-caption font-black uppercase text-emerald-600 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent",
+            })}
           >
             <Wallet size={11} /> {lang === 'zh' ? '提现' : 'Payout'}
           </button>
           {onCreateOfficeLoan && (
             <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onTelemetryEvent?.('office_loan_opened', {
-                  step: 'office_loan',
-                  locationId: loc.id,
-                });
-                setShowOfficeLoanForm(current => !current);
-              }}
-              aria-expanded={showOfficeLoanForm}
-              aria-label={t.officeLoanAction}
-              className="flex min-h-11 flex-1 items-center justify-center gap-1.5 border-r border-slate-100 px-3 py-2 text-caption font-black uppercase text-amber-700 transition-colors hover:bg-amber-50"
+              {...useAriaButton({
+                onClick: (e) => {
+                  e.stopPropagation();
+                  onTelemetryEvent?.('office_loan_opened', {
+                    step: 'office_loan',
+                    locationId: loc.id,
+                  });
+                  setShowOfficeLoanForm(current => !current);
+                },
+                pressed: showOfficeLoanForm,
+                label: t.officeLoanAction,
+                className: 'flex min-h-11 flex-1 items-center justify-center gap-1.5 border-r border-slate-100 px-3 py-2 text-caption font-black uppercase text-amber-700 transition-colors hover:bg-amber-50',
+              })}
             >
               <Banknote size={11} /> {t.officeLoanAction}
             </button>
           )}
           {loc.coords && (
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(`https://www.google.com/maps/dir/?api=1&destination=${loc.coords!.lat},${loc.coords!.lng}`, '_blank');
-              }}
-              className="flex min-h-11 flex-1 items-center justify-center gap-1.5 border-r border-slate-100 px-3 py-2 text-caption font-black uppercase text-amber-600 transition-colors hover:bg-amber-50"
+              {...useAriaButton({
+                onClick: (e) => { e.stopPropagation(); window.open(`https://www.google.com/maps/dir/?api=1&destination=${loc.coords!.lat},${loc.coords!.lng}`, '_blank'); },
+                label: t.navigateTo + ' ' + loc.name,
+                className: 'flex min-h-11 flex-1 items-center justify-center gap-1.5 border-r border-slate-100 px-3 py-2 text-caption font-black uppercase text-amber-600 transition-colors hover:bg-amber-50',
+              })}
             >
               <Navigation size={11} /> {t.navigateTo}
             </button>
           )}
           {onUpdateLocation && (
             <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (showSiteInfoForm) {
-                  setShowSiteInfoForm(false);
-                  return;
-                }
-                onTelemetryEvent?.('site_info_opened', {
-                  step: 'site_info',
-                  locationId: loc.id,
-                });
-                openSiteInfoForm();
-              }}
-              aria-expanded={showSiteInfoForm}
-              aria-label={showSiteInfoForm ? '收起站点信息' : '补充站点信息'}
-              className="flex min-h-11 flex-1 items-center justify-center gap-1.5 px-3 py-2 text-caption font-black uppercase text-amber-600 transition-colors hover:bg-amber-50"
+              {...useAriaButton({
+                onClick: (e) => {
+                  e.stopPropagation();
+                  if (showSiteInfoForm) {
+                    setShowSiteInfoForm(false);
+                    return;
+                  }
+                  onTelemetryEvent?.('site_info_opened', {
+                    step: 'site_info',
+                    locationId: loc.id,
+                  });
+                  openSiteInfoForm();
+                },
+                pressed: showSiteInfoForm,
+                label: showSiteInfoForm ? '收起站点信息' : '补充站点信息',
+                className: 'flex min-h-11 flex-1 items-center justify-center gap-1.5 px-3 py-2 text-caption font-black uppercase text-amber-600 transition-colors hover:bg-amber-50',
+              })}
             >
               <UserPen size={11} /> {lang === 'zh' ? '补充信息' : 'Site Info'}
             </button>
@@ -369,7 +371,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
             <p className="text-caption font-black uppercase text-slate-500">
               {lang === 'zh' ? '补充店主信息' : 'Update Site Info'}
             </p>
-            <button onClick={() => setShowSiteInfoForm(false)} className="text-slate-400 hover:text-slate-600">
+            <button onClick={() => setShowSiteInfoForm(false)} aria-label="Close" className="text-slate-400 hover:text-slate-600">
               <X size={14} />
             </button>
           </div>
@@ -419,9 +421,12 @@ const MachineCard: React.FC<MachineCardProps> = ({
           </div>
 
           <button
-            onClick={handleSaveSiteInfo}
-            disabled={isSavingSiteInfo}
-            className="w-full rounded-xl bg-amber-600 py-2.5 text-[11px] font-black uppercase text-white flex items-center justify-center gap-1.5 hover:bg-amber-700 disabled:opacity-60 transition-colors"
+            {...useAriaButton({
+              onClick: handleSaveSiteInfo,
+              label: lang === 'zh' ? '保存站点信息' : 'Save site info',
+              disabled: isSavingSiteInfo,
+              className: 'w-full rounded-xl bg-amber-600 py-2.5 text-[11px] font-black uppercase text-white flex items-center justify-center gap-1.5 hover:bg-amber-700 disabled:opacity-60 transition-colors',
+            })}
           >
             {isSavingSiteInfo ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
             {lang === 'zh' ? '保存' : 'Save'}

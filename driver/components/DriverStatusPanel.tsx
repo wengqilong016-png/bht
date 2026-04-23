@@ -20,6 +20,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useAppData } from '../../contexts/DataContext';
 import { useMutations } from '../../contexts/MutationContext';
 import { useFormStatus } from '../../hooks/useFormStatus';
+import { useAriaButton } from '../../src/hooks/useAriaButton';
 import { persistEvidencePhotoUrl } from '../../services/evidenceStorage';
 import { TRANSLATIONS, resizeImage } from '../../types';
 
@@ -213,9 +214,13 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
           )}
 
           <button
-            type="submit"
-            disabled={profileForm.isLoading || updateDrivers.isPending || !isOnline}
-            className="inline-flex items-center gap-2 rounded-btn bg-slate-900 px-4 py-3 text-caption font-black uppercase text-white transition hover:bg-slate-800 disabled:opacity-60"
+            {...useAriaButton({
+              type: 'submit' as const,
+              label: t.saveDriverProfile,
+              disabled: profileForm.isLoading || updateDrivers.isPending || !isOnline,
+              useNativeDisabled: true,
+              className: "inline-flex items-center gap-2 rounded-btn bg-slate-900 px-4 py-3 text-caption font-black uppercase text-white transition hover:bg-slate-800 disabled:opacity-60",
+            })}
           >
             {profileForm.isLoading || updateDrivers.isPending ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
             {t.saveDriverProfile}
