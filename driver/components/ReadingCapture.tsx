@@ -127,9 +127,12 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
             autoFocus
           />
           <button
+            type="button"
             onClick={handlePickPhoto}
             data-testid="driver-photo-picker-button"
-            className={`flex min-h-[4.25rem] w-full items-center justify-center gap-2 rounded-subcard border px-3 py-3 transition-all active:scale-95 ${photoData ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-900 border-slate-900 text-white'}`}
+            aria-label={photoData ? (lang === 'zh' ? '重新拍摄凭证' : 'Retake proof') : (lang === 'zh' ? '拍摄凭证' : 'Capture proof')}
+            className={`flex min-h-[4.25rem] w-full items-center justify-center gap-2 rounded-subcard border px-3 py-3 transition-all active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${photoData ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-900 border-slate-900 text-white'}`}
+
           >
             {photoData ? <CheckCircle2 size={16} /> : <Camera size={16} />}
             <span className="text-caption font-black uppercase tracking-widest">
@@ -219,7 +222,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
               <p className={`text-caption font-black uppercase ${textCls}`}>{label}</p>
             </div>
             {!isGpsGranted && (
-              <button onClick={onRequestGps} className="p-1.5 bg-white rounded-subcard border border-slate-200 text-amber-600 flex-shrink-0">
+              <button type="button" onClick={onRequestGps} aria-label={t.gpsAcquiring} className="p-1.5 bg-white rounded-subcard border border-slate-200 text-amber-600 flex-shrink-0">
                 <RotateCcw size={12} />
               </button>
             )}
@@ -254,12 +257,12 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
 
       {/* Next button */}
       <div className="sticky bottom-[calc(var(--mobile-nav-height,4.75rem)+env(safe-area-inset-bottom))] z-20 mt-4 rounded-card border border-slate-200 bg-white/95 p-2 backdrop-blur md:bottom-0">
-        <button
-          onClick={onNext}
-          disabled={!currentScore || isScoreBelowLastReading}
-          data-testid="driver-capture-next"
-          className="w-full py-4 bg-amber-600 text-white rounded-card font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-3 shadow-lg shadow-amber-200/40"
-        >
+          <button type="button" aria-label={t.nextFinancialStep}
+            onClick={onNext}
+            disabled={!currentScore || isScoreBelowLastReading}
+            data-testid="driver-capture-next"
+            className="w-full py-4 bg-amber-600 text-white rounded-card font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-3 shadow-lg shadow-amber-200/40"
+          >
           <ChevronRight size={18} />
           {t.nextFinancialStep}
         </button>
