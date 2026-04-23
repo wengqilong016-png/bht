@@ -2,6 +2,7 @@ import { ChevronRight, Lock, RefreshCw, Wallet, UserPen, Camera, X, Save, Loader
 import React, { useRef, useState } from 'react';
 
 import { useToast } from '../../contexts/ToastContext';
+import { useAriaButton } from '../../src/hooks/useAriaButton';
 import { Location, CONSTANTS } from '../../types';
 import { compressAndResizeImage } from '../../utils/imageUtils';
 
@@ -153,14 +154,13 @@ const MachineCard: React.FC<MachineCardProps> = ({
   return (
     <div className="overflow-hidden rounded-card border border-slate-200 bg-white shadow-field">
       <button
-        type="button"
-        onClick={() => { if (!isLocked) onSelect(loc.id); }}
-        disabled={isLocked}
-        aria-disabled={isLocked}
-        aria-pressed={false}
-        aria-label={isLocked ? `Machine ${loc.machineId || ''} locked` : `Select machine ${loc.machineId || ''}`}
+        {...useAriaButton({
+          disabled: isLocked,
+          label: isLocked ? `Machine ${loc.machineId || ''} locked` : `Select machine ${loc.machineId || ''}`,
+          onClick: () => { if (!isLocked) onSelect(loc.id); },
+          className: `w-full text-left transition-colors ${isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:bg-slate-50 active:bg-slate-100'}`,
+        })}
         data-testid={`driver-machine-select-${loc.id}`}
-        className={`w-full text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:bg-slate-50 active:bg-slate-100'}`}
       >
         <div className="flex items-start gap-3 px-4 py-3">
           <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-subcard bg-slate-900 text-white">
@@ -247,14 +247,17 @@ const MachineCard: React.FC<MachineCardProps> = ({
       {!isLocked && (
         <div className="grid grid-cols-2 border-t border-slate-100 bg-slate-50 sm:flex">
           {isNear9999 && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onRequestReset(loc.id); }}
-              className="flex min-h-11 flex-1 items-center justify-center gap-1.5 border-r border-slate-100 px-3 py-2 text-caption font-black uppercase text-rose-600 transition-colors hover:bg-rose-50"
-            >
-              <RefreshCw size={11} /> {lang === 'zh' ? '重置' : 'Reset'}
-            </button>
+<button
+            {...useAriaButton({
+              onClick: (e) => { e.stopPropagation(); onRequestReset(loc.id); },
+              label: `Reset machine ${loc.machineId || ''}`,
+              className: `flex min-h-11 flex-1 items-center justify-center gap-1.5 border-r border-slate-100 px-3 py-2 text-caption font-black uppercase text-rose-600 transition-colors hover:bg-rose-50`,
+            })}
+          >
+            <RefreshCw size={11} /> {lang === 'zh' ? '重置' : 'Reset'}
+          </button>
           )}
-          <button
+          <button type="button"
             onClick={(e) => {
               e.stopPropagation();
               if (hasDividendBalance) onRequestPayout(loc.id);

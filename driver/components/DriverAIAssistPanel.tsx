@@ -1,4 +1,5 @@
 import { BotMessageSquare, X, CheckCircle2, AlertTriangle, Info, WifiOff, Clock } from 'lucide-react';
+import { useAriaButton } from '../../src/hooks/useAriaButton';
 import React, { useState, useMemo } from 'react';
 
 import { getTodayLocalDate } from '../../utils/dateUtils';

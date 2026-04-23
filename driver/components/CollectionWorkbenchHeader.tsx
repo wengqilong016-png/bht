@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import React from 'react';
+import { useAriaButton } from '../../src/hooks/useAriaButton';
 
 import { Location, TRANSLATIONS } from '../../types';
 
@@ -25,7 +26,13 @@ const CollectionWorkbenchHeader: React.FC<CollectionWorkbenchHeaderProps> = ({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-3">
-        <button onClick={onBack} className="p-2.5 bg-white border border-slate-200 rounded-2xl text-slate-500 hover:text-amber-600 transition-colors flex-shrink-0">
+        <button
+          {...useAriaButton({
+            onClick: onBack,
+            label: t.backButton || 'Back',
+            className: 'p-2.5 bg-white border border-slate-200 rounded-2xl text-slate-500 hover:text-amber-600 transition-colors flex-shrink-0',
+          })}
+        >
           <ArrowRight size={18} className="rotate-180" />
         </button>
         <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-3 py-2">

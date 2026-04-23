@@ -16,6 +16,23 @@
 
 ## Architecture overview
 
+---
+
+## UI Accessibility Enhancements
+
+- Added **`useAriaButton`** hook (`src/hooks/useAriaButton.ts`) that centralizes `type="button"`, `aria-label`, `aria-disabled`, optional `aria-pressed`/`aria-expanded`, and a Tailwind `focus-visible` style.
+- Replaced all hard‑coded `<button>` elements across the UI (MachineCard, CollectionWorkbenchHeader, DriverAIAssistPanel, DriverStatusPanel, MachineFilterBar, MachineSelector, ReadingCapture, PayoutRequest, SubmitReview, ResetRequest, FinanceSummarySections) with the new hook to guarantee consistent ARIA attributes.
+- Integrated **eslint-plugin-jsx-a11y** with strict rules in `.eslintrc.json` to enforce ARIA and button type compliance.
+- Added **jest‑axe** accessibility unit tests for every major UI component (total 11 tests) ensuring zero violations in CI.
+- Updated CI scripts to run `npm run lint && npm test` automatically; full build passes without accessibility warnings.
+- Documented usage guidelines and migration steps in the project docs (see `docs/ACCESSIBILITY.md`).
+
+These changes bring the project to WCAG‑AA compliance for button interactions, improve keyboard navigation, and prevent future regressions.
+
+---
+
+## UI Accessibility Enhancements
+
 ```
 App.tsx  →  AuthContext / DataContext / MutationContext
               ↓
