@@ -100,7 +100,7 @@ describe('buildCollectionSubmissionInput', () => {
     expect(input.driverId).toBe('drv-1');
     expect(input.currentScore).toBe(150);
     expect(input.expenses).toBe(0);
-    expect(input.tip).toBe(0);
+    expect(input.tip).toBe(10);
     expect(input.ownerRetention).toBe(12);
     expect(input.coinExchange).toBe(5);
     expect(input.reportedStatus).toBe('active');
@@ -134,11 +134,11 @@ describe('buildCollectionSubmissionInput', () => {
     expect(input.reportedStatus).toBe('maintenance');
   });
 
-  it('drops collection expense values and metadata at the submission boundary', () => {
+  it('drops collection expense values and metadata but preserves the explicit tip at the submission boundary', () => {
     const input = buildCollectionSubmissionInput(
       makeInput({
         expenses: '7500',
-        tip: '500',
+        tip: '1000',
         expenseType: 'private',
         expenseCategory: 'fuel',
         expenseDescription: 'should not persist',
@@ -146,13 +146,13 @@ describe('buildCollectionSubmissionInput', () => {
     );
 
     expect(input.expenses).toBe(0);
-    expect(input.tip).toBe(0);
+    expect(input.tip).toBe(1000);
     expect(input.expenseType).toBeNull();
     expect(input.expenseCategory).toBeNull();
     expect(input.expenseDescription).toBeUndefined();
   });
 
-  it('ignores legacy tip drafts when expenseCategory is tip', () => {
+  it('uses explicit tip while still clearing legacy tip expense metadata', () => {
     const input = buildCollectionSubmissionInput(
       makeInput({
         expenses: '',
@@ -163,7 +163,7 @@ describe('buildCollectionSubmissionInput', () => {
     );
 
     expect(input.expenses).toBe(0);
-    expect(input.tip).toBe(0);
+    expect(input.tip).toBe(500);
     expect(input.expenseType).toBeNull();
     expect(input.expenseCategory).toBeNull();
     expect(input.expenseDescription).toBeUndefined();
@@ -180,9 +180,14 @@ describe('buildCollectionSubmissionInput', () => {
     );
 
     expect(input.expenses).toBe(0);
-    expect(input.tip).toBe(0);
+    expect(input.tip).toBe(50);
     expect(input.expenseType).toBeNull();
     expect(input.expenseCategory).toBeNull();
+  });
+
+  it('normalizes empty and non-numeric tip values to 0', () => {
+    expect(buildCollectionSubmissionInput(makeInput({ tip: '' })).tip).toBe(0);
+    expect(buildCollectionSubmissionInput(makeInput({ tip: 'abc' })).tip).toBe(0);
   });
 
   it('does not include legacy tip annotations in notes', () => {
@@ -246,6 +251,9 @@ describe('orchestrateCollectionSubmission', () => {
     expect(result.transaction).toBe(offlineTransaction);
     expect(result.fallbackReason).toBe('rpc failed');
     expect(createCollectionTransaction).toHaveBeenCalledTimes(1);
+    expect(createCollectionTransaction.mock.calls[0][4]).toEqual(
+      expect.objectContaining({ expenses: 0, tip: 10 }),
+    );
     expect(enqueueTransaction).toHaveBeenCalledTimes(1);
     expect(logger.warn).toHaveBeenCalled();
   });

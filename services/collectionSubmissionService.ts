@@ -195,6 +195,7 @@ export async function submitCollectionV2(
     debtDeduction:         Number(row['debtDeduction'] ?? 0),
     startupDebtDeduction:  Number(row['startupDebtDeduction'] ?? 0),
     expenses:              Number(row['expenses'] ?? input.expenses),
+    tip:                   Number(row['tip'] ?? input.tip),
     coinExchange:          Number(row['coinExchange'] ?? input.coinExchange),
     extraIncome:           Number(row['extraIncome'] ?? 0),
     netPayable:            Number(row['netPayable'] ?? 0),

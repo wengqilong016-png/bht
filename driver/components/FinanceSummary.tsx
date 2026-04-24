@@ -11,6 +11,7 @@ import {
   OwnerRetentionSection,
   RevenueSummary,
   StartupDebtDeductionSection,
+  TipPaymentSection,
   type FinanceSummaryCalculations,
 } from './finance/FinanceSummarySections';
 import WizardStepBar from './WizardStepBar';
@@ -24,11 +25,13 @@ interface FinanceSummaryProps {
   coinExchange: string;
   ownerRetention: string;
   isOwnerRetaining: boolean;
+  tip: string;
   startupDebtDeduction: string;
   calculations: FinanceSummaryCalculations;
   onUpdateCoinExchange: (val: string) => void;
   onUpdateOwnerRetention: (val: string) => void;
   onUpdateIsOwnerRetaining: (val: boolean) => void;
+  onUpdateTip: (val: string) => void;
   onUpdateStartupDebtDeduction: (val: string) => void;
   onNext: () => void;
   onBack: () => void;
@@ -45,11 +48,13 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
   coinExchange,
   ownerRetention,
   isOwnerRetaining,
+  tip,
   startupDebtDeduction,
   calculations,
   onUpdateCoinExchange,
   onUpdateOwnerRetention,
   onUpdateIsOwnerRetaining,
+  onUpdateTip,
   onUpdateStartupDebtDeduction,
   onNext,
   onBack,
@@ -92,7 +97,7 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
         previewSource={previewSource}
       />
 
-      <FinanceMetricGrid {...shared} />
+      <FinanceMetricGrid {...shared} isOwnerRetaining={isOwnerRetaining} />
 
       <div className="rounded-2xl border border-slate-200 bg-white p-3">
         <div className="mb-3 flex items-center justify-between gap-2">
@@ -101,11 +106,11 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
               {lang === 'zh' ? '金额录入' : 'Cash Inputs'}
             </p>
             <p className="mt-1 text-caption font-bold uppercase tracking-wide text-slate-300">
-              {lang === 'zh' ? '分红、换币、商家欠款' : 'Dividend, exchange, merchant debt'}
+              {lang === 'zh' ? '分红、换币、小费、商家欠款' : 'Dividend, exchange, tip, merchant debt'}
             </p>
           </div>
           <span className="rounded-full bg-slate-100 px-2 py-1 text-caption font-black uppercase text-slate-500">
-            {previewSource === 'server' ? 'server' : 'local'}
+            {previewSource === 'server' ? (lang === 'zh' ? '服务器' : 'server') : (lang === 'zh' ? '本地' : 'local')}
           </span>
         </div>
 
@@ -124,6 +129,11 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
             {...shared}
             coinExchange={coinExchange}
             onUpdateCoinExchange={onUpdateCoinExchange}
+          />
+          <TipPaymentSection
+            {...shared}
+            tip={tip}
+            onUpdateTip={onUpdateTip}
           />
           <StartupDebtDeductionSection
             {...shared}

@@ -113,6 +113,7 @@ export function createCollectionTransaction(
     debtDeduction?: number;
     startupDebtDeduction?: number;
     expenses?: number;
+    tip?: number;
     coinExchange?: number;
     extraIncome?: number;
     netPayable?: number;
@@ -136,6 +137,7 @@ export function createCollectionTransaction(
     debtDeduction: options.debtDeduction ?? financials.debtDeduction,
     startupDebtDeduction: options.startupDebtDeduction ?? financials.startupDebtDeduction,
     expenses: options.expenses ?? financials.expenses,
+    tip: options.tip ?? 0,
     coinExchange: options.coinExchange ?? financials.coinExchange,
     extraIncome: options.extraIncome ?? financials.extraIncome,
     netPayable: options.netPayable ?? financials.netPayable,

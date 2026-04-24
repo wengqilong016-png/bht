@@ -66,6 +66,7 @@ export interface Transaction {
   debtDeduction: number;
   startupDebtDeduction: number;
   expenses: number;
+  tip?: number;
   coinExchange: number;
   extraIncome: number;
   netPayable: number;

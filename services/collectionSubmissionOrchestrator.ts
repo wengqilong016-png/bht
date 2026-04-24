@@ -123,6 +123,7 @@ function buildOfflineTransaction(
       ownerRetention: input.calculations.finalRetention,
       startupDebtDeduction: input.calculations.startupDebtDeduction,
       expenses: rawInput.expenses,
+      tip: rawInput.tip,
       coinExchange: rawInput.coinExchange,
       netPayable: input.calculations.netPayable,
       photoUrl: input.photoData || undefined,
@@ -177,7 +178,7 @@ export function buildCollectionSubmissionInput(
   input: OrchestrateCollectionSubmissionInput,
 ): CollectionSubmissionInput {
   const expenseValue = 0;
-  const tipValue = 0;
+  const tipValue = parseAmount(input.tip);
   const trimmedScore = input.currentScore.trim();
   const parsedScore = Number.parseInt(trimmedScore, 10);
   if (trimmedScore === '' || Number.isNaN(parsedScore)) {

@@ -25,6 +25,7 @@ interface SubmitReviewProps {
   photoData: string | null;
   aiReviewData: AIReviewData | null;
   coinExchange: string;
+  tip: string;
   startupDebtDeduction: string;
   draftTxId: string;
   gpsCoords: { lat: number; lng: number } | null;
@@ -65,7 +66,7 @@ export type CompletionResult = {
 
 const SubmitReview: React.FC<SubmitReviewProps> = ({
   selectedLocation, currentDriver, lang, isOnline, currentScore, photoData,
-  aiReviewData, coinExchange, startupDebtDeduction, draftTxId,
+  aiReviewData, coinExchange, tip, startupDebtDeduction, draftTxId,
   gpsCoords, gpsPermission, isOwnerRetaining, ownerRetention, calculations,
   onSubmit, onBack, onSwitchMachine, onReset, onReturnHome, onRequestGps, nextMachine, pendingCount,
   allTransactions, todayStr, onTelemetryEvent,
@@ -259,7 +260,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       expenseCategory: undefined,
       expenseDescription: undefined,
       coinExchange,
-      tip: '',
+      tip,
       draftTxId,
       isOwnerRetaining,
       ownerRetention,

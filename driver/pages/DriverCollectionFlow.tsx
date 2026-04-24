@@ -105,7 +105,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     coinExchange: draft.coinExchange,
     ownerRetention: draft.ownerRetention,
     isOwnerRetaining: draft.isOwnerRetaining,
-    tip: '',
+    tip: draft.tip,
     startupDebtDeduction: draft.startupDebtDeduction,
     initialFloat: currentDriver?.dailyFloatingCoins || 0,
   });
@@ -474,12 +474,14 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
           coinExchange={draft.coinExchange}
           ownerRetention={draft.ownerRetention}
           isOwnerRetaining={draft.isOwnerRetaining}
+          tip={draft.tip}
           startupDebtDeduction={draft.startupDebtDeduction}
           calculations={financeResult}
           previewSource={financeResult.source}
           onUpdateCoinExchange={(v) => updateDraft({ coinExchange: v })}
           onUpdateOwnerRetention={(v) => updateDraft({ ownerRetention: v })}
           onUpdateIsOwnerRetaining={(v) => updateDraft({ isOwnerRetaining: v })}
+          onUpdateTip={(v) => updateDraft({ tip: v })}
           onUpdateStartupDebtDeduction={(v) => updateDraft({ startupDebtDeduction: v })}
           onNext={() => {
             recordFlowEvent('amounts_next_clicked');
@@ -506,6 +508,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         photoData={draft.photoData}
         aiReviewData={draft.aiReviewData}
         coinExchange={draft.coinExchange}
+        tip={draft.tip}
         startupDebtDeduction={draft.startupDebtDeduction}
         draftTxId={draft.draftTxId}
         gpsCoords={draft.gpsCoords}

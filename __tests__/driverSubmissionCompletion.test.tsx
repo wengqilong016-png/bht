@@ -88,6 +88,7 @@ describe('driver submission completion', () => {
           photoData="data:image/jpeg;base64,abc"
           aiReviewData={null}
           coinExchange="0"
+          tip="1000"
           startupDebtDeduction="0"
           draftTxId="draft-1"
           gpsCoords={{ lat: -6.8, lng: 39.2 }}
@@ -116,6 +117,14 @@ describe('driver submission completion', () => {
     expect(screen.getByText('1,200')).toBeTruthy();
     expect(screen.getByText('TZS 140')).toBeTruthy();
     expect(screen.getByText('云端已保存')).toBeTruthy();
+    expect(mockedOrchestrateCollectionSubmission).toHaveBeenCalledWith(
+      expect.objectContaining({
+        expenses: '',
+        tip: '1000',
+        expenseCategory: undefined,
+        expenseDescription: undefined,
+      }),
+    );
 
     fireEvent.click(screen.getByRole('button', { name: '返回收款首页' }));
     expect(onReturnHome).toHaveBeenCalledTimes(1);
@@ -141,6 +150,7 @@ describe('driver submission completion', () => {
           photoData="data:image/jpeg;base64,abc"
           aiReviewData={null}
           coinExchange="0"
+          tip="0"
           startupDebtDeduction="0"
           draftTxId="draft-2"
           gpsCoords={{ lat: -6.8, lng: 39.2 }}
@@ -191,6 +201,7 @@ describe('driver submission completion', () => {
             photoData="data:image/jpeg;base64,abc"
             aiReviewData={null}
             coinExchange="0"
+            tip="0"
             startupDebtDeduction="0"
             draftTxId="draft-rerender"
             gpsCoords={{ lat: -6.8, lng: 39.2 }}
@@ -245,6 +256,7 @@ describe('driver submission completion', () => {
           photoData={null}
           aiReviewData={null}
           coinExchange="0"
+          tip="0"
           startupDebtDeduction="0"
           draftTxId="draft-dup-1"
           gpsCoords={{ lat: -6.8, lng: 39.2 }}
