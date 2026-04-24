@@ -168,7 +168,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
                       <span>{pwdForm.message}</span>
                     </div>
                   )}
-                  <button type="submit" aria-label={t.submit_changes} aria-disabled={pwdForm.isLoading || !isOnline} type="submit" disabled={pwdForm.isLoading || !isOnline} className={submitClass}>
+                  <button type="submit" aria-label={t.submit_changes} aria-disabled={pwdForm.isLoading || !isOnline} disabled={pwdForm.isLoading || !isOnline} className={submitClass}>
                     {pwdForm.isLoading ? <Loader2 size={16} className="animate-spin" /> : <><Lock size={14} /> {t.saveChanges}</>}
                   </button>
                 </form>
