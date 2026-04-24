@@ -82,49 +82,6 @@ export function FinanceMetricGrid(shared: SharedFinanceSectionProps) {
   );
 }
 
-export function FinanceFlowExplanation({
-  isOwnerRetaining,
-  ...shared
-}: SharedFinanceSectionProps & {
-  isOwnerRetaining: boolean;
-}) {
-  const { lang, calculations } = shared;
-
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-      <p className="text-caption font-black uppercase tracking-widest text-slate-400">
-        {lang === 'zh' ? '本次账目如何流转' : 'How this money moves'}
-      </p>
-      <div className="mt-2 space-y-2 text-caption font-bold leading-relaxed text-slate-600">
-        <p>
-          {lang === 'zh'
-            ? `1. 机器营收 TZS ${calculations.revenue.toLocaleString()} 先算出。`
-            : `1. Revenue starts at TZS ${calculations.revenue.toLocaleString()}.`}
-        </p>
-        <p>
-          {isOwnerRetaining
-            ? (lang === 'zh'
-                ? `2. 商家留存 TZS ${calculations.finalRetention.toLocaleString()} 先记入当前点位分红余额，不会在本次直接支付。`
-                : `2. Owner share TZS ${calculations.finalRetention.toLocaleString()} is added to this location's dividend balance, not paid out immediately.`)
-            : (lang === 'zh'
-                ? `2. 商家分红 TZS ${calculations.finalRetention.toLocaleString()} 视为本次直接支付，不累加到分红余额。`
-                : `2. Owner share TZS ${calculations.finalRetention.toLocaleString()} is treated as a direct payout this run, not added to dividend balance.`)}
-        </p>
-        <p>
-          {lang === 'zh'
-            ? '3. 本次收款不再申报机器费用；小费、电费、其他日结支出在日结页处理。'
-            : '3. Collection runs no longer submit machine expenses; tips, electricity, and other settlement expenses are handled on the settlement page.'}
-        </p>
-        <p>
-          {lang === 'zh'
-            ? `4. 最终应缴现金为 TZS ${calculations.netPayable.toLocaleString()}，管理员确认日结后，这笔收款才会记为已结清。`
-            : `4. Final cash to hand in is TZS ${calculations.netPayable.toLocaleString()}, and it becomes settled only after admin confirms the daily settlement.`}
-        </p>
-      </div>
-    </div>
-  );
-}
-
 export function OwnerRetentionSection({
   currentDividendBalance,
   displayedOwnerAmount,
@@ -147,7 +104,9 @@ export function OwnerRetentionSection({
     <div className={`p-3 rounded-2xl border transition-all ${isOwnerRetaining ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'}`}>
       <div className="flex justify-between items-center mb-3">
         <label className={`text-caption font-black uppercase flex items-center gap-2 ${isOwnerRetaining ? 'text-amber-600' : 'text-emerald-600'}`}>
-          <HandCoins size={13} /> {isOwnerRetaining ? t.retention : (lang === 'zh' ? '支付商家分红' : 'Pay Owner Share')}
+          <HandCoins size={13} /> {isOwnerRetaining
+            ? (lang === 'zh' ? '站点分红余额' : 'Site Dividend Balance')
+            : (lang === 'zh' ? '理论分红' : 'Theoretical Dividend')}
         </label>
         <button
           type="button"
@@ -172,22 +131,22 @@ export function OwnerRetentionSection({
         <p className={`text-caption font-black uppercase ${isOwnerRetaining ? 'text-amber-500' : 'text-emerald-500'}`}>
           {isOwnerRetaining
             ? (lang === 'zh'
-                ? `默认按系统计算 TZS ${calculations.commission.toLocaleString()}，可直接修改`
-                : `Defaulted to system amount TZS ${calculations.commission.toLocaleString()}, editable`)
+                ? `理论分红 TZS ${calculations.commission.toLocaleString()}，本次计入余额，可直接修改`
+                : `Theoretical dividend TZS ${calculations.commission.toLocaleString()}, editable`)
             : (lang === 'zh'
-                ? `默认按系统计算 TZS ${calculations.commission.toLocaleString()}，本次支付给商家`
-                : `Defaulted to system amount TZS ${calculations.commission.toLocaleString()} to pay the owner`)}
+                ? `理论分红 TZS ${calculations.commission.toLocaleString()}，本次直接支付给商家`
+                : `Theoretical dividend TZS ${calculations.commission.toLocaleString()}, paid to owner this run`)}
         </p>
         <div className={`grid grid-cols-2 gap-2 rounded-2xl border px-3 py-2 ${isOwnerRetaining ? 'border-amber-200 bg-white/70' : 'border-emerald-200 bg-white/70'}`}>
           <div>
-            <p className="text-caption font-black uppercase text-slate-400">{lang === 'zh' ? '当前点位分红余额' : 'Current Location Balance'}</p>
+            <p className="text-caption font-black uppercase text-slate-400">{lang === 'zh' ? '当前余额' : 'Current Balance'}</p>
             <p className="mt-1 text-[11px] font-black text-slate-900">
               TZS {currentDividendBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </p>
           </div>
           <div>
             <p className="text-caption font-black uppercase text-slate-400">
-              {isOwnerRetaining ? (lang === 'zh' ? '留存后余额' : 'Projected Balance') : (lang === 'zh' ? '本次直接支付' : 'Paid This Run')}
+              {isOwnerRetaining ? (lang === 'zh' ? '提交后余额' : 'Balance After Submit') : (lang === 'zh' ? '本次支付金额' : 'Paid This Run')}
             </p>
             <p className={`mt-1 text-[11px] font-black ${isOwnerRetaining ? 'text-amber-700' : 'text-emerald-700'}`}>
               TZS {(isOwnerRetaining ? nextDividendBalance : calculations.finalRetention).toLocaleString(undefined, { maximumFractionDigits: 2 })}
@@ -197,52 +156,29 @@ export function OwnerRetentionSection({
         <p className={`text-caption font-bold leading-relaxed ${isOwnerRetaining ? 'text-amber-700' : 'text-emerald-700'}`}>
           {isOwnerRetaining
             ? (lang === 'zh'
-                ? '留存模式：金额累计到当前点位的分红余额，店主后续通过“分红提现申请”发起支付，由管理员审批后扣减。'
-                : 'Retention mode: this amount stays on the current location as dividend balance. The owner must request payout later, and admin approval deducts the balance.')
+                ? '站点分红模式：金额累加到当前点位分红余额，店主后续可申请提现，管理员审批后扣减。'
+                : 'Retention mode: amount accumulates into the site dividend balance. Owner can request payout later, subject to admin approval.')
             : (lang === 'zh'
                 ? '直付模式：本次就视为已支付给店主，不进入分红余额。'
-                : 'Direct-pay mode: this amount is treated as paid to the owner now and does not enter the dividend balance.')}
+                : 'Direct-pay mode: treated as paid to the owner now, does not enter the dividend balance.')}
         </p>
-      </div>
-    </div>
-  );
-}
-
-export function CollectionExpenseNoticeSection({
-  lang,
-  t,
-}: SharedFinanceSectionProps) {
-
-  return (
-    <div className="bg-rose-50 p-3 rounded-2xl border border-rose-100">
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <label className="text-caption font-black text-rose-500 uppercase flex items-center gap-2">
-          <Banknote size={13} /> {t.settlementExpenseLabel}
-        </label>
-        <span className="px-2 py-0.5 bg-white text-rose-500 rounded-tag text-caption font-black uppercase">
-          {lang === 'zh' ? '已迁移' : 'Moved'}
-        </span>
-      </div>
-      <p className="text-caption font-bold leading-relaxed text-rose-700">
-        {t.settlementExpenseMovedHint}
-      </p>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <div className="rounded-xl border border-white/80 bg-white px-3 py-2">
-          <p className="text-caption font-black uppercase text-rose-300">
-            {t.companyLabel}
-          </p>
-          <p className="mt-1 text-caption font-black text-rose-700">
-            {t.tipLabel} / {t.electricityLabel} / {t.otherLabel}
-          </p>
-        </div>
-        <div className="rounded-xl border border-white/80 bg-white px-3 py-2">
-          <p className="text-caption font-black uppercase text-amber-400">
-            {t.officeLoanLabel}
-          </p>
-          <p className="mt-1 text-caption font-black text-amber-700">
-            {lang === 'zh' ? '机器卡片单独提交' : 'Submit from machine card'}
-          </p>
-        </div>
+        {isOwnerRetaining && (() => {
+          const projectedTotal = currentDividendBalance + calculations.finalRetention;
+          const withdrawable = Math.floor(projectedTotal / 200) * 200;
+          const remainder = projectedTotal % 200;
+          return remainder > 0 ? (
+            <div className={`mt-2 rounded-2xl border px-3 py-2 text-caption font-bold ${isOwnerRetaining ? 'border-amber-200 bg-amber-50/50 text-amber-700' : 'border-emerald-200 bg-emerald-50/50 text-emerald-700'}`}>
+              <p className="font-black uppercase">
+                {lang === 'zh' ? '分红整除参考' : 'Divided by 200 reference'}
+              </p>
+              <p className="mt-0.5">
+                {lang === 'zh'
+                  ? `提交后余额 TZS ${projectedTotal.toLocaleString()}，可提取 TZS ${withdrawable.toLocaleString()}，尾差 TZS ${remainder}`
+                  : `Balance after submit TZS ${projectedTotal.toLocaleString()}, withdrawable TZS ${withdrawable.toLocaleString()}, remainder TZS ${remainder}`}
+              </p>
+            </div>
+          ) : null;
+        })()}
       </div>
     </div>
   );

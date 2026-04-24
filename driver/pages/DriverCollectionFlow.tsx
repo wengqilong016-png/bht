@@ -154,6 +154,14 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, draft.selectedLocId]);
 
+  // Auto-trigger GPS when entering capture step
+  useEffect(() => {
+    if (step === 'capture' && !draft.gpsCoords && gpsStatus === 'idle') {
+      void requestGpsWithTelemetry();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
   useEffect(() => {
     if (gpsStatus === 'idle' || gpsStatus === 'requesting') return;
     recordFlowEvent('gps_status_changed', {

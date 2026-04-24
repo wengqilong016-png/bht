@@ -36,7 +36,7 @@ export const zh: Record<string, string> = {
   enterId: '输入编号',
   diff: '差值',
   formula: '营收计算',
-  currentReading: '红色LED读数',
+  currentReading: '机器读数',
   confirmSubmit: '提交报告',
   photoRequired: '须拍照片',
   arrears: '我的挂账',

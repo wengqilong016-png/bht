@@ -5,8 +5,6 @@ import { Location, TRANSLATIONS } from '../../types';
 import CollectionWorkbenchHeader from './CollectionWorkbenchHeader';
 import {
   CoinExchangeSection,
-  CollectionExpenseNoticeSection,
-  FinanceFlowExplanation,
   FinanceMetricGrid,
   FinanceNavigation,
   FinanceWarnings,
@@ -96,11 +94,6 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
 
       <FinanceMetricGrid {...shared} />
 
-      <FinanceFlowExplanation
-        {...shared}
-        isOwnerRetaining={isOwnerRetaining}
-      />
-
       <div className="rounded-2xl border border-slate-200 bg-white p-3">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div>
@@ -108,7 +101,7 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
               {lang === 'zh' ? '金额录入' : 'Cash Inputs'}
             </p>
             <p className="mt-1 text-caption font-bold uppercase tracking-wide text-slate-300">
-              {lang === 'zh' ? '分红、换币、商家欠款' : 'Retention, exchange, merchant debt'}
+              {lang === 'zh' ? '分红、换币、商家欠款' : 'Dividend, exchange, merchant debt'}
             </p>
           </div>
           <span className="rounded-full bg-slate-100 px-2 py-1 text-caption font-black uppercase text-slate-500">
@@ -127,7 +120,6 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
         />
 
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <CollectionExpenseNoticeSection {...shared} />
           <CoinExchangeSection
             {...shared}
             coinExchange={coinExchange}

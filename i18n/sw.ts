@@ -36,7 +36,7 @@ export const sw: Record<string, string> = {
   enterId: 'Search by Name or ID',
   diff: 'Difference',
   formula: 'Revenue Calculation',
-  currentReading: 'Enter Red LED Number',
+  currentReading: 'Enter Reading',
   confirmSubmit: 'Confirm & Submit Report',
   photoRequired: 'Photo Required',
   arrears: 'My Debts',
