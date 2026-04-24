@@ -18,7 +18,7 @@ import WizardStepBar from './WizardStepBar';
 
 import type { FinanceCalculationSource } from '../../services/financeCalculator';
 
-interface FinanceSummaryProps {
+interface FinanceSummaryCoreProps {
   selectedLocation: Location;
   lang: 'zh' | 'sw';
   currentScore: string;
@@ -33,15 +33,20 @@ interface FinanceSummaryProps {
   onUpdateIsOwnerRetaining: (val: boolean) => void;
   onUpdateTip: (val: string) => void;
   onUpdateStartupDebtDeduction: (val: string) => void;
+  previewSource?: FinanceCalculationSource;
+  showRevenueSummary?: boolean;
+  showMetricGrid?: boolean;
+}
+
+interface FinanceSummaryProps extends FinanceSummaryCoreProps {
   onNext: () => void;
   onBack: () => void;
   onSwitchMachine?: () => void;
-  previewSource?: FinanceCalculationSource;
   nextMachine?: Location | null;
   pendingCount?: number;
 }
 
-const FinanceSummary: React.FC<FinanceSummaryProps> = ({
+export function FinanceSummaryContent({
   selectedLocation,
   lang,
   currentScore,
@@ -56,13 +61,10 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
   onUpdateIsOwnerRetaining,
   onUpdateTip,
   onUpdateStartupDebtDeduction,
-  onNext,
-  onBack,
-  onSwitchMachine,
   previewSource,
-  nextMachine,
-  pendingCount,
-}) => {
+  showRevenueSummary = true,
+  showMetricGrid = true,
+}: FinanceSummaryCoreProps) {
   const t = TRANSLATIONS[lang];
   const currentDividendBalance = Number(selectedLocation.dividendBalance || 0);
   const projectedDividendBalance = currentDividendBalance + calculations.finalRetention;
@@ -78,26 +80,17 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
   const shared = { lang, t, calculations };
 
   return (
-    <div className="mx-auto max-w-md animate-in fade-in space-y-2.5">
-      <WizardStepBar current="amounts" lang={lang} />
+    <>
+      {showRevenueSummary && (
+        <RevenueSummary
+          {...shared}
+          selectedLocation={selectedLocation}
+          currentScore={currentScore}
+          previewSource={previewSource}
+        />
+      )}
 
-      <CollectionWorkbenchHeader
-        selectedLocation={selectedLocation}
-        lang={lang}
-        onBack={onBack}
-        onSwitchMachine={onSwitchMachine}
-        nextMachine={nextMachine}
-        pendingCount={pendingCount}
-      />
-
-      <RevenueSummary
-        {...shared}
-        selectedLocation={selectedLocation}
-        currentScore={currentScore}
-        previewSource={previewSource}
-      />
-
-      <FinanceMetricGrid {...shared} isOwnerRetaining={isOwnerRetaining} />
+      {showMetricGrid && <FinanceMetricGrid {...shared} isOwnerRetaining={isOwnerRetaining} />}
 
       <div className="rounded-2xl border border-slate-200 bg-white p-3">
         <div className="mb-3 flex items-center justify-between gap-2">
@@ -149,9 +142,44 @@ const FinanceSummary: React.FC<FinanceSummaryProps> = ({
         isScoreBelowLastReading={isScoreBelowLastReading}
         selectedLocation={selectedLocation}
       />
+    </>
+  );
+}
+
+const FinanceSummary: React.FC<FinanceSummaryProps> = ({
+  selectedLocation,
+  lang,
+  onNext,
+  onBack,
+  onSwitchMachine,
+  nextMachine,
+  pendingCount,
+  ...contentProps
+}) => {
+  return (
+    <div className="mx-auto max-w-md animate-in fade-in space-y-2.5">
+      <WizardStepBar current="amounts" lang={lang} />
+
+      <CollectionWorkbenchHeader
+        selectedLocation={selectedLocation}
+        lang={lang}
+        onBack={onBack}
+        onSwitchMachine={onSwitchMachine}
+        nextMachine={nextMachine}
+        pendingCount={pendingCount}
+      />
+
+      <FinanceSummaryContent
+        {...contentProps}
+        selectedLocation={selectedLocation}
+        lang={lang}
+      />
 
       <FinanceNavigation
-        isScoreBelowLastReading={isScoreBelowLastReading}
+        isScoreBelowLastReading={
+          !Number.isNaN(parseInt(contentProps.currentScore, 10)) &&
+          parseInt(contentProps.currentScore, 10) < (selectedLocation?.lastScore ?? 0)
+        }
         lang={lang}
         onBack={onBack}
         onNext={onNext}

@@ -30,6 +30,9 @@ interface ReadingCaptureProps {
   diff: number;
   nextMachine?: Location | null;
   pendingCount?: number;
+  children?: React.ReactNode;
+  hideNextButton?: boolean;
+  hideStepBar?: boolean;
   onTelemetryEvent?: (
     eventName: DriverFlowEventInput['eventName'],
     options?: Partial<Omit<DriverFlowEventInput, 'driverId' | 'flowId' | 'eventName' | 'onlineStatus'>>,
@@ -54,6 +57,9 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
   diff,
   nextMachine,
   pendingCount,
+  children,
+  hideNextButton = false,
+  hideStepBar = false,
   onTelemetryEvent,
 }) => {
   const t = TRANSLATIONS[lang];
@@ -91,7 +97,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
 
   return (
     <div className="mx-auto max-w-md animate-in fade-in space-y-2.5">
-      <WizardStepBar current="capture" lang={lang} />
+      {!hideStepBar && <WizardStepBar current="capture" lang={lang} />}
 
       <CollectionWorkbenchHeader
         selectedLocation={selectedLocation}
@@ -156,20 +162,6 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
             <img src={photoData} className="w-full h-full object-cover grayscale brightness-110 contrast-125" alt={t.paymentProof} />
             <div className="absolute top-2 right-2 bg-emerald-500 text-white text-caption font-black uppercase px-2 py-0.5 rounded-tag flex items-center gap-1">
               <CheckCircle2 size={9} /> {t.photoReady}
-            </div>
-          </div>
-        )}
-
-        {/* Revenue preview */}
-        {currentScore && (
-          <div className={`mt-3 p-3 rounded-card text-white flex justify-between items-center ${revenue > 50000 ? 'bg-amber-600' : 'bg-slate-800'}`}>
-            <div>
-              <p className="text-caption font-black uppercase opacity-60">{t.diff} {diff}</p>
-              <p className="text-caption font-black uppercase opacity-60">{diff} × 200 TZS</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xl font-black">TZS {revenue.toLocaleString()}</p>
-              <p className="text-caption opacity-60 uppercase">{t.revenue}</p>
             </div>
           </div>
         )}
@@ -255,8 +247,11 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
         </div>
       </div>
 
+      {children}
+
       {/* Next button */}
-      <div className="sticky bottom-[calc(var(--mobile-nav-height,4.75rem)+env(safe-area-inset-bottom))] z-20 mt-4 rounded-card border border-slate-200 bg-white/95 p-2 backdrop-blur md:bottom-0">
+      {!hideNextButton && (
+        <div className="sticky bottom-[calc(var(--mobile-nav-height,4.75rem)+env(safe-area-inset-bottom))] z-20 mt-4 rounded-card border border-slate-200 bg-white/95 p-2 backdrop-blur md:bottom-0">
           <button type="button" aria-label={t.nextFinancialStep}
             onClick={onNext}
             disabled={!currentScore || isScoreBelowLastReading}
@@ -266,7 +261,8 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
           <ChevronRight size={18} />
           {t.nextFinancialStep}
         </button>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

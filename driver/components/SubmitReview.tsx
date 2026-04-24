@@ -51,6 +51,8 @@ interface SubmitReviewProps {
   onRequestGps: () => void;
   nextMachine?: Location | null;
   pendingCount?: number;
+  embedded?: boolean;
+  submissionBlockers?: string[];
   allTransactions: Transaction[];
   todayStr: string;
   onTelemetryEvent?: (
@@ -66,17 +68,14 @@ export type CompletionResult = {
 
 const SubmitReview: React.FC<SubmitReviewProps> = ({
   selectedLocation, currentDriver, lang, isOnline, currentScore, photoData,
-  aiReviewData, coinExchange, tip, startupDebtDeduction, draftTxId,
+  aiReviewData, coinExchange, tip, startupDebtDeduction: _startupDebtDeduction, draftTxId,
   gpsCoords, gpsPermission, isOwnerRetaining, ownerRetention, calculations,
   onSubmit, onBack, onSwitchMachine, onReset, onReturnHome, onRequestGps, nextMachine, pendingCount,
-  allTransactions, todayStr, onTelemetryEvent,
+  embedded = false, submissionBlockers = [], allTransactions, todayStr, onTelemetryEvent,
 }) => {
   const t = TRANSLATIONS[lang];
   const { showToast } = useToast();
   const { confirm } = useConfirm();
-  const settlementStatusHint = lang === 'zh'
-    ? '提交后收款单会先保存；管理员确认今日日结后，这笔收款才会记为已结清，并把次日流动硬币更新为实收硬币。'
-    : 'After submit, the collection is saved first. It becomes settled only after admin confirms the daily settlement, which also updates the next-day float to the actual coins submitted.';
   const parsedCurrentScore = parseInt(currentScore, 10);
   const hasNumericScore = !isNaN(parsedCurrentScore);
   const isScoreBelowLastReading = hasNumericScore && parsedCurrentScore < (selectedLocation?.lastScore ?? 0);
@@ -389,193 +388,158 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
     }
   };
 
+  const isSubmitBlocked = isProcessing || !currentScore || isScoreBelowLastReading || submissionBlockers.length > 0;
+
   return (
-    <div className="mx-auto max-w-md animate-in fade-in space-y-2.5">
-      <WizardStepBar current="confirm" lang={lang} />
+    <div className={embedded ? 'space-y-2.5' : 'mx-auto max-w-md animate-in fade-in space-y-2.5'}>
+      {!embedded && (
+        <>
+          <WizardStepBar current="confirm" lang={lang} />
 
-      <CollectionWorkbenchHeader
-        selectedLocation={selectedLocation}
-        lang={lang}
-        onBack={onBack}
-        onSwitchMachine={onSwitchMachine}
-        nextMachine={nextMachine}
-        pendingCount={pendingCount}
-      />
-
-      <div className="bg-slate-900 rounded-2xl px-4 py-3 text-white flex justify-between items-center">
-        <div>
-          <p className="text-caption font-black uppercase opacity-60">{t.net}</p>
-          <p className="text-caption font-bold opacity-40 uppercase mt-0.5">{t.cashToHandIn}</p>
-        </div>
-        <p className="text-4xl font-black">TZS {calculations.netPayable.toLocaleString()}</p>
-      </div>
-
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-        <p className="text-caption font-black uppercase tracking-[0.18em] text-amber-700">
-          {lang === 'zh' ? '提交后的账务状态' : 'What happens after submit'}
-        </p>
-        <p className="mt-1 text-caption font-bold leading-relaxed text-amber-800">
-          {settlementStatusHint}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
-          <p className="text-caption font-black uppercase tracking-wide text-slate-400">{t.score}</p>
-          <p className="mt-1 text-sm font-black text-slate-900">{currentScore || '0'}</p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
-          <p className="text-caption font-black uppercase tracking-wide text-slate-400">{t.exchange}</p>
-          <p className="mt-1 text-sm font-black text-slate-900">TZS {(parseInt(coinExchange) || 0).toLocaleString()}</p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
-          <p className="text-caption font-black uppercase tracking-wide text-slate-400">{t.coinStock}</p>
-          <p className="mt-1 text-sm font-black text-slate-900">{calculations.remainingCoins.toLocaleString()}</p>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100">
-        {[
-          { label: t.revenue, value: `TZS ${calculations.revenue.toLocaleString()}`, color: 'text-slate-900' },
-          {
-            label: isOwnerRetaining
-              ? (lang === 'zh' ? '商家留存（入分红余额）' : 'Owner Share (to dividend balance)')
-              : (lang === 'zh' ? '商家分红（本次直付）' : 'Owner Share (paid now)'),
-            value: `− TZS ${calculations.finalRetention.toLocaleString()}`,
-            color: 'text-amber-600',
-          },
-          ...(calculations.startupDebtDeduction > 0 || parseInt(startupDebtDeduction) > 0
-            ? [{ label: lang === 'zh' ? '商家欠款扣减' : 'Merchant Debt Deduction', value: `− TZS ${calculations.startupDebtDeduction.toLocaleString()}`, color: 'text-amber-600' }]
-            : []),
-          { label: t.exchange, value: `TZS ${(parseInt(coinExchange) || 0).toLocaleString()}`, color: 'text-emerald-600' },
-          { label: t.coinStock, value: `${calculations.remainingCoins.toLocaleString()} ${t.coinUnit}`, color: calculations.isCoinStockNegative ? 'text-rose-600 font-black' : 'text-slate-500' },
-        ].map((row) => (
-          <div key={row.label} className="flex justify-between items-center px-4 py-2.5">
-            <span className="text-caption font-black text-slate-400 uppercase">{row.label}</span>
-            <span className={`text-[11px] font-black ${row.color}`}>{row.value}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-        <p className="text-caption font-black uppercase tracking-[0.18em] text-slate-400">
-          {lang === 'zh' ? '本次审批/记账提示' : 'Approval and ledger notes'}
-        </p>
-        <div className="mt-2 space-y-2 text-caption font-bold leading-relaxed text-slate-600">
-          <p>
-            {isOwnerRetaining
-              ? (lang === 'zh'
-                  ? `商家留存 TZS ${calculations.finalRetention.toLocaleString()} 会累加到当前点位分红余额，店主后续提现仍需管理员审批。`
-                  : `Owner share TZS ${calculations.finalRetention.toLocaleString()} will be added to this location's dividend balance, and owner payout still requires admin approval later.`)
-              : (lang === 'zh'
-                  ? `商家分红 TZS ${calculations.finalRetention.toLocaleString()} 视为本次直接支付，不进入分红余额。`
-                  : `Owner share TZS ${calculations.finalRetention.toLocaleString()} is treated as a direct payout this run and will not enter dividend balance.`)}
-          </p>
-          <p>
-            {lang === 'zh'
-              ? `当前点位分红余额：TZS ${(selectedLocation.dividendBalance || 0).toLocaleString()}。`
-              : `Current location dividend balance: TZS ${(selectedLocation.dividendBalance || 0).toLocaleString()}.`}
-          </p>
-        </div>
-      </div>
-
-      {photoData && (
-        <div className="h-20 rounded-2xl overflow-hidden border border-slate-200 relative">
-          <img src={photoData} className="w-full h-full object-cover grayscale brightness-110 contrast-125" alt={t.paymentProof} />
-          <div className="absolute top-2 right-2 bg-emerald-500 text-white text-caption font-black uppercase px-2 py-0.5 rounded-tag flex items-center gap-1">
-            <CheckCircle2 size={9} /> {t.photoReady}
-          </div>
-        </div>
-      )}
-      {!photoData && draftTxId && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-amber-50 border border-amber-200">
-          <AlertTriangle size={14} className="text-amber-500 flex-shrink-0" />
-          <p className="text-caption font-black text-amber-700 leading-tight">
-            {lang === 'zh'
-              ? '⚠️ 照片在刷新后丢失，请返回上一步重新拍照。'
-              : '⚠️ Photo was lost after page refresh. Please go back and retake it.'}
-          </p>
-        </div>
+          <CollectionWorkbenchHeader
+            selectedLocation={selectedLocation}
+            lang={lang}
+            onBack={onBack}
+            onSwitchMachine={onSwitchMachine}
+            nextMachine={nextMachine}
+            pendingCount={pendingCount}
+          />
+        </>
       )}
 
-      <div className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl border ${
-        gpsPermission === 'denied' ? 'bg-rose-50 border-rose-200' :
-        gpsCoords ? 'bg-emerald-50 border-emerald-200' :
-        'bg-slate-50 border-slate-200'
-      }`}>
-        <div className={`p-1.5 rounded-btn flex-shrink-0 ${
-          gpsPermission === 'denied' ? 'bg-rose-500 text-white animate-pulse' :
-          gpsCoords ? 'bg-emerald-500 text-white' :
-          'bg-slate-400 text-white'
-        }`}>
-          <Satellite size={13} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className={`text-caption font-black uppercase ${
-            gpsPermission === 'denied' ? 'text-rose-600' :
-            gpsCoords ? 'text-emerald-700' :
-            'text-slate-500'
+      {!embedded && (
+        <>
+          <div className="bg-slate-900 rounded-2xl px-4 py-3 text-white flex justify-between items-center">
+            <div>
+              <p className="text-caption font-black uppercase opacity-60">{t.net}</p>
+              <p className="text-caption font-bold opacity-40 uppercase mt-0.5">{t.cashToHandIn}</p>
+            </div>
+            <p className="text-4xl font-black">TZS {calculations.netPayable.toLocaleString()}</p>
+          </div>
+
+          {photoData && (
+            <div className="h-20 rounded-2xl overflow-hidden border border-slate-200 relative">
+              <img src={photoData} className="w-full h-full object-cover grayscale brightness-110 contrast-125" alt={t.paymentProof} />
+              <div className="absolute top-2 right-2 bg-emerald-500 text-white text-caption font-black uppercase px-2 py-0.5 rounded-tag flex items-center gap-1">
+                <CheckCircle2 size={9} /> {t.photoReady}
+              </div>
+            </div>
+          )}
+          {!photoData && draftTxId && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-amber-50 border border-amber-200">
+              <AlertTriangle size={14} className="text-amber-500 flex-shrink-0" />
+              <p className="text-caption font-black text-amber-700 leading-tight">
+                {lang === 'zh'
+                  ? '照片在刷新后丢失，请返回上一步重新拍照。'
+                  : 'Photo was lost after page refresh. Please go back and retake it.'}
+              </p>
+            </div>
+          )}
+
+          <div className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl border ${
+            gpsPermission === 'denied' ? 'bg-rose-50 border-rose-200' :
+            gpsCoords ? 'bg-emerald-50 border-emerald-200' :
+            'bg-slate-50 border-slate-200'
           }`}>
-            {gpsPermission === 'denied'
-              ? t.gpsDenied
-              : gpsCoords
-                ? t.gpsLocked
-                : t.gpsAcquiring}
-          </p>
-        </div>
-        {!gpsCoords && gpsPermission !== 'denied' && (
-          <button
-            type="button"
-            onClick={onRequestGps}
-            aria-label={t.gpsAcquiring}
-            className="p-1.5 bg-white rounded-xl border border-slate-200 text-amber-600 flex-shrink-0"
-          >
-            <RotateCcw size={12} />
-          </button>
-        )}
-      </div>
+            <div className={`p-1.5 rounded-btn flex-shrink-0 ${
+              gpsPermission === 'denied' ? 'bg-rose-500 text-white animate-pulse' :
+              gpsCoords ? 'bg-emerald-500 text-white' :
+              'bg-slate-400 text-white'
+            }`}>
+              <Satellite size={13} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-caption font-black uppercase ${
+                gpsPermission === 'denied' ? 'text-rose-600' :
+                gpsCoords ? 'text-emerald-700' :
+                'text-slate-500'
+              }`}>
+                {gpsPermission === 'denied'
+                  ? t.gpsDenied
+                  : gpsCoords
+                    ? t.gpsLocked
+                    : t.gpsAcquiring}
+              </p>
+            </div>
+            {!gpsCoords && gpsPermission !== 'denied' && (
+              <button
+                type="button"
+                onClick={onRequestGps}
+                aria-label={t.gpsAcquiring}
+                className="p-1.5 bg-white rounded-xl border border-slate-200 text-amber-600 flex-shrink-0"
+              >
+                <RotateCcw size={12} />
+              </button>
+            )}
+          </div>
 
-      {calculations.isCoinStockNegative && (
-        <div className="flex items-center gap-3 px-3 py-2.5 bg-rose-50 border border-rose-200 rounded-2xl">
-          <AlertTriangle size={14} className="text-rose-500 flex-shrink-0" />
-          <p className="text-caption font-black text-rose-700 uppercase">
-            {lang === 'zh' ? '⚠ 硬币库存不足，请确认后提交' : '⚠ Coin stock insufficient — confirm before submit'}
-          </p>
-        </div>
+          {isScoreBelowLastReading && (
+            <div className="flex items-center gap-3 px-4 py-3 bg-rose-50 border border-rose-200 rounded-subcard">
+              <AlertTriangle size={14} className="text-rose-500 flex-shrink-0" />
+              <p className="text-caption font-black text-rose-700 uppercase">
+                {lang === 'zh'
+                  ? `当前读数低于上次记录 (${selectedLocation.lastScore.toLocaleString()})，不能按普通收款提交。`
+                  : `Current reading is below the last recorded score (${selectedLocation.lastScore.toLocaleString()}); normal collection submit is blocked.`}
+              </p>
+            </div>
+          )}
+        </>
       )}
 
-      {isScoreBelowLastReading && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-rose-50 border border-rose-200 rounded-subcard">
-          <AlertTriangle size={14} className="text-rose-500 flex-shrink-0" />
-          <p className="text-caption font-black text-rose-700 uppercase">
-            {lang === 'zh'
-              ? `当前读数低于上次记录 (${selectedLocation.lastScore.toLocaleString()})，不能按普通收款提交。`
-              : `Current reading is below the last recorded score (${selectedLocation.lastScore.toLocaleString()}); normal collection submit is blocked.`}
+      {embedded && (
+        <p className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-caption font-bold text-slate-500">
+          {lang === 'zh' ? '提交后由管理员复核入账。' : 'Admin reviews and posts this collection after submit.'}
+        </p>
+      )}
+
+      {submissionBlockers.length > 0 && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-caption font-black uppercase tracking-[0.18em] text-amber-700">
+            {lang === 'zh' ? '提交前需要补充' : 'Required before submit'}
           </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {submissionBlockers.map((blocker) => (
+              <span key={blocker} className="rounded-full bg-white px-2 py-1 text-caption font-black text-amber-700">
+                {blocker}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
       <div className="sticky bottom-[calc(var(--mobile-nav-height,4.75rem)+env(safe-area-inset-bottom))] z-20 mt-4 rounded-card border border-slate-200 bg-white/95 p-2 backdrop-blur md:bottom-0">
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl font-black uppercase text-xs hover:text-amber-600 transition-colors flex items-center justify-center gap-2"
-          >
-            <ArrowRight size={15} className="rotate-180" />
-            {lang === 'zh' ? '返回上一步' : 'Back'}
-          </button>
+        {embedded && (
+          <div className="mb-2 flex items-center justify-between rounded-2xl bg-slate-900 px-3 py-2 text-white">
+            <div>
+              <p className="text-caption font-black uppercase opacity-60">{t.net}</p>
+              <p className="text-caption font-bold uppercase opacity-40">{t.cashToHandIn}</p>
+            </div>
+            <p className="text-xl font-black">TZS {calculations.netPayable.toLocaleString()}</p>
+          </div>
+        )}
+        <div className={`grid gap-3 ${embedded ? 'grid-cols-1' : 'grid-cols-2'}`}>
+          {!embedded && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl font-black uppercase text-xs hover:text-amber-600 transition-colors flex items-center justify-center gap-2"
+            >
+              <ArrowRight size={15} className="rotate-180" />
+              {lang === 'zh' ? '返回上一步' : 'Back'}
+            </button>
+          )}
           <button
             type="button"
             aria-label="提交报告"
-            aria-disabled={isProcessing || !currentScore || isScoreBelowLastReading}
+            aria-disabled={isSubmitBlocked}
             onClick={handleSubmit}
-            disabled={isProcessing || !currentScore || isScoreBelowLastReading}
+            disabled={isSubmitBlocked}
             data-testid="driver-submit-button"
             className="py-4 bg-amber-600 text-white rounded-2xl font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-200/40"
           >
             {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             {submissionState.status === 'submitting' ? t.saving :
+             submissionBlockers.length > 0 ? (lang === 'zh' ? '资料不完整' : 'Incomplete') :
              !gpsCoords && gpsPermission !== 'denied' ? t.acquiringGps :
              t.confirmSubmit}
           </button>

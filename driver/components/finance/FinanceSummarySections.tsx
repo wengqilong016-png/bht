@@ -67,7 +67,7 @@ export function FinanceMetricGrid({
 }: SharedFinanceSectionProps & {
   isOwnerRetaining: boolean;
 }) {
-  const { lang, calculations } = shared;
+  const { lang, t, calculations } = shared;
 
   return (
     <div className="grid grid-cols-3 gap-2">
@@ -121,7 +121,7 @@ export function OwnerRetentionSection({
         <div className="flex items-center gap-2">
           <span className={`rounded-full px-2 py-1 text-caption font-black ${isOwnerRetaining ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
             {isOwnerRetaining
-              ? (lang === 'zh' ? '计入余额' : 'To Balance')
+              ? (lang === 'zh' ? '留存' : 'Retained')
               : (lang === 'zh' ? '直接支付' : 'Direct Pay')}
           </span>
           <button
@@ -298,7 +298,7 @@ export function StartupDebtDeductionSection({
     <div className="bg-amber-50 p-3 rounded-2xl border border-amber-100">
       <div className="flex items-center justify-between mb-2">
         <label className="text-caption font-black text-amber-600 uppercase flex items-center gap-2 tracking-widest">
-          <ShieldAlert size={13} /> {lang === 'zh' ? '商家欠款手动扣减' : 'Manual Merchant Debt Deduction'}
+          <ShieldAlert size={13} /> {lang === 'zh' ? '商家欠款还款' : 'Merchant Debt Repayment'}
         </label>
         <span className="text-caption font-black text-amber-400 uppercase">
           {lang === 'zh'
@@ -320,8 +320,8 @@ export function StartupDebtDeductionSection({
       </div>
       <p className="text-caption font-black text-amber-400 uppercase mt-2">
         {lang === 'zh'
-          ? '手动填写，本次只会按可扣上限和剩余商家欠款计入。'
-          : 'Manual entry. This run is capped by available cash and remaining merchant debt.'}
+          ? '手动填写，本次按剩余商家欠款上限入账。'
+          : 'Manual entry. This run is capped by remaining merchant debt and added to cash due.'}
       </p>
     </div>
   );
@@ -352,8 +352,8 @@ export function FinanceWarnings({
         <div className="p-3 rounded-subcard border border-amber-200 bg-amber-50">
           <p className="text-caption font-black uppercase text-amber-700">
             {lang === 'zh'
-              ? `本次将代商家回收欠款 TZS ${calculations.startupDebtDeduction.toLocaleString()}。`
-              : `This collection will recover TZS ${calculations.startupDebtDeduction.toLocaleString()} of merchant debt.`}
+              ? `本次商家还款入账 TZS ${calculations.startupDebtDeduction.toLocaleString()}。`
+              : `This collection adds TZS ${calculations.startupDebtDeduction.toLocaleString()} of merchant debt repayment.`}
           </p>
         </div>
       )}

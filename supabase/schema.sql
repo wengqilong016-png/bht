@@ -1671,11 +1671,10 @@ BEGIN
 
     v_startup_debt_deduction := LEAST(
         GREATEST(0, COALESCE(p_startup_debt_deduction_request, 0)),
-        GREATEST(0, COALESCE(p_startup_debt_balance, 0)),
-        v_available_after_core_deductions
+        GREATEST(0, COALESCE(p_startup_debt_balance, 0))
     );
 
-    v_net_payable := GREATEST(0, v_available_after_core_deductions - v_startup_debt_deduction);
+    v_net_payable := GREATEST(0, v_available_after_core_deductions + v_startup_debt_deduction);
 
     RETURN json_build_object(
         'diff',           v_diff,
@@ -1776,11 +1775,10 @@ BEGIN
 
     v_startup_debt_deduction := LEAST(
         GREATEST(0, COALESCE(p_startup_debt_deduction, 0)),
-        GREATEST(0, COALESCE(v_location."remainingStartupDebt", 0)),
-        v_available_after_core_deductions
+        GREATEST(0, COALESCE(v_location."remainingStartupDebt", 0))
     );
 
-    v_net_payable := GREATEST(0, v_available_after_core_deductions - v_startup_debt_deduction);
+    v_net_payable := GREATEST(0, v_available_after_core_deductions + v_startup_debt_deduction);
 
     INSERT INTO public.transactions (
         id, "timestamp", "uploadTimestamp",

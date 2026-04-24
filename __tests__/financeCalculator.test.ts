@@ -109,18 +109,17 @@ describe('calculateCollectionFinanceLocal', () => {
   });
 
   it('deducts expenses from netPayable', () => {
-    // diff=200, revenue=40000, no retention → netPayable before expenses = 40000
-    // subtract expenses 5000 → 35000
+    // diff=200, revenue=40000, commission=6000, subtract expenses 5000
     const result = calculateCollectionFinanceLocal(makeInput({ expenses: '5000' }));
-    expect(result.netPayable).toBe(40000 - 5000);
+    expect(result.netPayable).toBe(40000 - 6000 - 5000);
   });
 
   it('deducts tip from netPayable', () => {
     const result = calculateCollectionFinanceLocal(makeInput({ tip: '2000' }));
-    expect(result.netPayable).toBe(40000 - 2000);
+    expect(result.netPayable).toBe(40000 - 6000 - 2000);
   });
 
-  it('deducts manual merchant debt up to remaining startup debt and available cash', () => {
+  it('adds merchant debt repayment up to remaining startup debt', () => {
     const result = calculateCollectionFinanceLocal(
       makeInput({
         selectedLocation: makeLocation({ remainingStartupDebt: 7000 }),
@@ -128,7 +127,7 @@ describe('calculateCollectionFinanceLocal', () => {
       }),
     );
     expect(result.startupDebtDeduction).toBe(7000);
-    expect(result.netPayable).toBe(40000 - 7000);
+    expect(result.netPayable).toBe(40000 - 6000 + 7000);
   });
 
   it('clamps netPayable to 0 when deductions exceed revenue', () => {
@@ -153,25 +152,25 @@ describe('calculateCollectionFinanceLocal', () => {
     expect(result.finalRetention).toBe(result.commission);
   });
 
-  it('ignores ownerRetention when isOwnerRetaining is false', () => {
+  it('uses ownerRetention for direct-pay mode too', () => {
     const result = calculateCollectionFinanceLocal(
       makeInput({ isOwnerRetaining: false, ownerRetention: '9999' }),
     );
-    expect(result.finalRetention).toBe(0);
+    expect(result.finalRetention).toBe(9999);
   });
 
   it('calculates remainingCoins with initialFloat and coinExchange', () => {
-    // netPayable = 40000 (no deductions), initialFloat=5000, coinExchange=10000
-    // remainingCoins = 5000 + 40000 - 10000 = 35000
+    // netPayable = 34000, initialFloat=5000, coinExchange=10000
+    // remainingCoins = 5000 + 34000 - 10000 = 29000
     const result = calculateCollectionFinanceLocal(
       makeInput({ initialFloat: 5000, coinExchange: '10000' }),
     );
-    expect(result.remainingCoins).toBe(35000);
+    expect(result.remainingCoins).toBe(29000);
     expect(result.isCoinStockNegative).toBe(false);
   });
 
   it('flags isCoinStockNegative when remainingCoins < 0', () => {
-    // netPayable = 40000, initialFloat=0, coinExchange=50000 → remaining = -10000
+    // netPayable = 34000, initialFloat=0, coinExchange=50000 → remaining = -16000
     const result = calculateCollectionFinanceLocal(
       makeInput({ coinExchange: '50000' }),
     );

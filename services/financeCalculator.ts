@@ -108,18 +108,15 @@ export function calculateCollectionFinanceLocal(input: CollectionFinanceInput): 
   const commissionRate = selectedLocation.commissionRate ?? CONSTANTS.DEFAULT_PROFIT_SHARE;
   const commission = Math.floor(revenue * commissionRate);
 
-  const finalRetention = input.isOwnerRetaining
-    ? (normalized.ownerRetention ?? commission)
-    : 0;
+  const finalRetention = normalized.ownerRetention ?? commission;
 
   const remainingStartupDebt = Math.max(0, selectedLocation.remainingStartupDebt || 0);
   const availableAfterCoreDeductions = Math.max(0, revenue - finalRetention - normalized.expenses - normalized.tip);
   const startupDebtDeduction = Math.min(
     normalized.startupDebtDeductionRequest,
     remainingStartupDebt,
-    availableAfterCoreDeductions,
   );
-  const netPayable = Math.max(0, availableAfterCoreDeductions - startupDebtDeduction);
+  const netPayable = Math.max(0, availableAfterCoreDeductions + startupDebtDeduction);
   const remainingCoins = calculateRemainingCoins(normalized.initialFloat, netPayable, normalized.coinExchange);
 
   return {

@@ -1,22 +1,59 @@
--- Extract COIN_VALUE_TZS (200) as a named SQL function so future changes
--- only require updating this one definition instead of all RPC bodies.
---
--- get_coin_value_tzs() returns the TZS value of one machine coin/point.
--- All financial RPCs (submit_collection_v2, calculate_finance_v2) now
--- call this function instead of hardcoding 200.
+-- Treat merchant startup-debt repayment as cash collected, not a deduction
+-- from company cash due. Parameter names stay unchanged for API compatibility.
 
--- ─── 1. Define the constant helper ───────────────────────────────────────────
-
-CREATE OR REPLACE FUNCTION public.get_coin_value_tzs()
-RETURNS INTEGER
-LANGUAGE sql IMMUTABLE SECURITY DEFINER
+CREATE OR REPLACE FUNCTION public.calculate_finance_v2(
+    p_current_score      INTEGER,
+    p_previous_score     INTEGER,
+    p_commission_rate    NUMERIC,
+    p_expenses           INTEGER DEFAULT 0,
+    p_tip                INTEGER DEFAULT 0,
+    p_is_owner_retaining BOOLEAN DEFAULT TRUE,
+    p_owner_retention    NUMERIC DEFAULT NULL,
+    p_startup_debt_deduction_request INTEGER DEFAULT 0,
+    p_startup_debt_balance NUMERIC DEFAULT 0
+)
+RETURNS JSON LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = public, pg_temp
-AS $$ SELECT 200; $$;
+AS $$
+DECLARE
+    v_diff                           INTEGER;
+    v_revenue                        NUMERIC;
+    v_commission                     NUMERIC;
+    v_final_retention                NUMERIC;
+    v_available_after_core_deductions NUMERIC;
+    v_startup_debt_deduction         NUMERIC;
+    v_net_payable                    NUMERIC;
+BEGIN
+    v_diff       := GREATEST(0, p_current_score - p_previous_score);
+    v_revenue    := v_diff * get_coin_value_tzs();
+    v_commission := FLOOR(v_revenue * COALESCE(p_commission_rate, 0.15));
+    v_final_retention := GREATEST(0, COALESCE(p_owner_retention, v_commission));
 
-REVOKE EXECUTE ON FUNCTION public.get_coin_value_tzs() FROM PUBLIC;
-GRANT  EXECUTE ON FUNCTION public.get_coin_value_tzs() TO authenticated;
+    v_available_after_core_deductions := GREATEST(
+        0,
+        v_revenue - v_final_retention - ABS(COALESCE(p_expenses, 0)) - ABS(COALESCE(p_tip, 0))
+    );
 
--- ─── 2. Rebuild submit_collection_v2 using get_coin_value_tzs() ───────────────
+    v_startup_debt_deduction := LEAST(
+        GREATEST(0, COALESCE(p_startup_debt_deduction_request, 0)),
+        GREATEST(0, COALESCE(p_startup_debt_balance, 0))
+    );
+
+    v_net_payable := GREATEST(0, v_available_after_core_deductions + v_startup_debt_deduction);
+
+    RETURN json_build_object(
+        'diff',           v_diff,
+        'revenue',        v_revenue,
+        'commission',     v_commission,
+        'finalRetention', v_final_retention,
+        'startupDebtDeduction', v_startup_debt_deduction,
+        'netPayable',     v_net_payable
+    );
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.calculate_finance_v2(INTEGER, INTEGER, NUMERIC, INTEGER, INTEGER, BOOLEAN, NUMERIC, INTEGER, NUMERIC) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION public.calculate_finance_v2(INTEGER, INTEGER, NUMERIC, INTEGER, INTEGER, BOOLEAN, NUMERIC, INTEGER, NUMERIC) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.submit_collection_v2(
     p_tx_id                  TEXT,
@@ -57,7 +94,6 @@ DECLARE
     v_now                 TIMESTAMPTZ := NOW();
     v_rows_inserted       INTEGER;
 BEGIN
-    -- Authenticate caller: profiles.auth_user_id FK → auth.users.id
     SELECT * INTO v_caller_profile
     FROM public.profiles
     WHERE auth_user_id = auth.uid();
@@ -74,24 +110,20 @@ BEGIN
         RAISE EXCEPTION 'Permission denied: driver mismatch';
     END IF;
 
-    -- Fetch location
     SELECT * INTO v_location FROM public.locations WHERE id = p_location_id;
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Location not found: %', p_location_id;
     END IF;
 
-    -- Fetch driver
     SELECT * INTO v_driver FROM public.drivers WHERE id = p_driver_id;
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Driver not found: %', p_driver_id;
     END IF;
 
-    -- Finance computation using named constant function
     v_commission_rate := COALESCE(v_location."commissionRate", 0.15);
     v_diff            := GREATEST(0, p_current_score - COALESCE(v_location."lastScore", 0));
     v_revenue         := v_diff * get_coin_value_tzs();
     v_commission      := FLOOR(v_revenue * v_commission_rate);
-
     v_final_retention := GREATEST(0, COALESCE(p_owner_retention, v_commission));
 
     v_available_after_core_deductions :=
@@ -199,60 +231,3 @@ $$;
 
 REVOKE EXECUTE ON FUNCTION public.submit_collection_v2(TEXT, UUID, TEXT, INTEGER, INTEGER, INTEGER, INTEGER, BOOLEAN, NUMERIC, INTEGER, JSONB, TEXT, INTEGER, BOOLEAN, TEXT, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION public.submit_collection_v2(TEXT, UUID, TEXT, INTEGER, INTEGER, INTEGER, INTEGER, BOOLEAN, NUMERIC, INTEGER, JSONB, TEXT, INTEGER, BOOLEAN, TEXT, TEXT, TEXT, TEXT, TEXT) TO authenticated;
-
--- ─── 3. Rebuild calculate_finance_v2 using get_coin_value_tzs() ──────────────
-
-CREATE OR REPLACE FUNCTION public.calculate_finance_v2(
-    p_current_score      INTEGER,
-    p_previous_score     INTEGER,
-    p_commission_rate    NUMERIC,
-    p_expenses           INTEGER DEFAULT 0,
-    p_tip                INTEGER DEFAULT 0,
-    p_is_owner_retaining BOOLEAN DEFAULT TRUE,
-    p_owner_retention    NUMERIC DEFAULT NULL,
-    p_startup_debt_deduction_request INTEGER DEFAULT 0,
-    p_startup_debt_balance NUMERIC DEFAULT 0
-)
-RETURNS JSON LANGUAGE plpgsql STABLE SECURITY DEFINER
-SET search_path = public, pg_temp
-AS $$
-DECLARE
-    v_diff                           INTEGER;
-    v_revenue                        NUMERIC;
-    v_commission                     NUMERIC;
-    v_final_retention                NUMERIC;
-    v_available_after_core_deductions NUMERIC;
-    v_startup_debt_deduction         NUMERIC;
-    v_net_payable                    NUMERIC;
-BEGIN
-    v_diff       := GREATEST(0, p_current_score - p_previous_score);
-    v_revenue    := v_diff * get_coin_value_tzs();
-    v_commission := FLOOR(v_revenue * COALESCE(p_commission_rate, 0.15));
-
-    v_final_retention := GREATEST(0, COALESCE(p_owner_retention, v_commission));
-
-    v_available_after_core_deductions := GREATEST(
-        0,
-        v_revenue - v_final_retention - ABS(COALESCE(p_expenses, 0)) - ABS(COALESCE(p_tip, 0))
-    );
-
-    v_startup_debt_deduction := LEAST(
-        GREATEST(0, COALESCE(p_startup_debt_deduction_request, 0)),
-        GREATEST(0, COALESCE(p_startup_debt_balance, 0))
-    );
-
-    v_net_payable := GREATEST(0, v_available_after_core_deductions + v_startup_debt_deduction);
-
-    RETURN json_build_object(
-        'diff',           v_diff,
-        'revenue',        v_revenue,
-        'commission',     v_commission,
-        'finalRetention', v_final_retention,
-        'startupDebtDeduction', v_startup_debt_deduction,
-        'netPayable',     v_net_payable
-    );
-END;
-$$;
-
-REVOKE EXECUTE ON FUNCTION public.calculate_finance_v2(INTEGER, INTEGER, NUMERIC, INTEGER, INTEGER, BOOLEAN, NUMERIC, INTEGER, NUMERIC) FROM PUBLIC;
-GRANT  EXECUTE ON FUNCTION public.calculate_finance_v2(INTEGER, INTEGER, NUMERIC, INTEGER, INTEGER, BOOLEAN, NUMERIC, INTEGER, NUMERIC) TO authenticated;

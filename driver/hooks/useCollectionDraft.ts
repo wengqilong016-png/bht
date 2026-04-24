@@ -44,7 +44,7 @@ const EMPTY_DRAFT: CollectionDraft = {
   expenseDescription: '',
   coinExchange: '',
   ownerRetention: '',
-  isOwnerRetaining: true,
+  isOwnerRetaining: false,
   tip: '',
   startupDebtDeduction: '',
   gpsCoords: null,
