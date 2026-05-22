@@ -15,7 +15,6 @@ import { Location, CONSTANTS, safeRandomUUID } from '../../types';
 import { getTodayLocalDate } from '../../utils/dateUtils';
 import { createExpenseTransaction } from '../../utils/transactionBuilder';
 import FinanceSummary from '../components/FinanceSummary';
-import type { FinanceSummaryCalculations } from '../components/finance/FinanceSummarySections';
 import MachineSelector from '../components/MachineSelector';
 import PayoutRequest from '../components/PayoutRequest';
 import ReadingCapture from '../components/ReadingCapture';
@@ -477,7 +476,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
           isOwnerRetaining={draft.isOwnerRetaining}
           tip={draft.tip}
           startupDebtDeduction={draft.startupDebtDeduction}
-          calculations={financeResult as unknown as FinanceSummaryCalculations}
+          calculations={financeResult}
           previewSource={financeResult.source}
           onUpdateCoinExchange={(v) => updateDraft({ coinExchange: v })}
           onUpdateOwnerRetention={(v) => updateDraft({ ownerRetention: v })}
@@ -516,7 +515,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         gpsPermission={draft.gpsPermission}
         isOwnerRetaining={draft.isOwnerRetaining}
         ownerRetention={draft.ownerRetention}
-        calculations={financeResult as any}
+        calculations={financeResult}
         onSubmit={async (result) => {
           recordFlowEvent(
             result.source === 'server' ? 'submit_success' : 'submit_offline_queued',

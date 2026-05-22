@@ -8,6 +8,7 @@ import { extractGpsFromExif, estimateLocationFromContext } from '../../offlineQu
 import { Location, Driver, TRANSLATIONS } from '../../types';
 
 import CollectionWorkbenchHeader from './CollectionWorkbenchHeader';
+import { formatFinanceAmount, type FinanceAmount } from './finance/FinanceSummarySections';
 import WizardStepBar from './WizardStepBar';
 
 
@@ -35,13 +36,13 @@ interface SubmitReviewProps {
   isOwnerRetaining: boolean;
   ownerRetention: string;
   calculations: {
-    diff: number;
-    revenue: number;
-    commission: number;
-    finalRetention: number;
-    startupDebtDeduction: number;
-    netPayable: number;
-    remainingCoins: number;
+    diff: FinanceAmount;
+    revenue: FinanceAmount;
+    commission: FinanceAmount;
+    finalRetention: FinanceAmount;
+    startupDebtDeduction: FinanceAmount;
+    netPayable: FinanceAmount;
+    remainingCoins: FinanceAmount;
     isCoinStockNegative: boolean;
   };
   onSubmit: (result: CompletionResult) => void | Promise<void>;
@@ -415,7 +416,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
               <p className="text-caption font-black uppercase opacity-60">{t.net}</p>
               <p className="text-caption font-bold opacity-40 uppercase mt-0.5">{t.cashToHandIn}</p>
             </div>
-            <p className="text-4xl font-black">TZS {calculations.netPayable.toLocaleString()}</p>
+            <p className="text-4xl font-black">TZS {formatFinanceAmount(calculations.netPayable)}</p>
           </div>
 
           {photoData && (
@@ -515,7 +516,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
               <p className="text-caption font-black uppercase opacity-60">{t.net}</p>
               <p className="text-caption font-bold uppercase opacity-40">{t.cashToHandIn}</p>
             </div>
-            <p className="text-xl font-black">TZS {calculations.netPayable.toLocaleString()}</p>
+            <p className="text-xl font-black">TZS {formatFinanceAmount(calculations.netPayable)}</p>
           </div>
         )}
         <div className={`grid gap-3 ${embedded ? 'grid-cols-1' : 'grid-cols-2'}`}>

@@ -675,7 +675,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                     </span>
                     {entry.isOwnerRetaining && fin && (
                       <span className="text-xs font-black text-amber-600">
-                        TZS {fin.finalRetention.toLocaleString()}
+                        TZS {fin.finalRetention.toNumber().toLocaleString()}
                       </span>
                     )}
                   </div>

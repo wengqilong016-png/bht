@@ -2,15 +2,30 @@ import { ArrowRight, Banknote, ChevronRight, Coins, HandCoins, ShieldAlert, Trop
 
 import type { FinanceCalculationSource } from '../../../services/financeCalculator';
 import type { Location } from '../../../types';
+import { Money } from '../../../utils/money';
+
+export type FinanceAmount = number | Money;
+
+export function financeAmountToNumber(value: FinanceAmount): number {
+  if (value instanceof Money) return value.toNumber();
+  return Number.isFinite(value) ? value : 0;
+}
+
+export function formatFinanceAmount(
+  value: FinanceAmount,
+  options?: Intl.NumberFormatOptions,
+): string {
+  return financeAmountToNumber(value).toLocaleString(undefined, options);
+}
 
 export interface FinanceSummaryCalculations {
-  diff: number;
-  revenue: number;
-  commission: number;
-  finalRetention: number;
-  startupDebtDeduction: number;
-  netPayable: number;
-  remainingCoins: number;
+  diff: FinanceAmount;
+  revenue: FinanceAmount;
+  commission: FinanceAmount;
+  finalRetention: FinanceAmount;
+  startupDebtDeduction: FinanceAmount;
+  netPayable: FinanceAmount;
+  remainingCoins: FinanceAmount;
   isCoinStockNegative: boolean;
 }
 
@@ -31,9 +46,10 @@ export function RevenueSummary({
   previewSource?: FinanceCalculationSource;
 }) {
   const { t, calculations } = shared;
+  const revenue = financeAmountToNumber(calculations.revenue);
 
   return (
-    <div className={`px-3 py-2.5 rounded-2xl text-white flex justify-between items-center ${calculations.revenue > 50000 ? 'bg-amber-600' : 'bg-slate-800'}`}>
+    <div className={`px-3 py-2.5 rounded-2xl text-white flex justify-between items-center ${revenue > 50000 ? 'bg-amber-600' : 'bg-slate-800'}`}>
       <div>
         <p className="text-caption font-black uppercase opacity-60">{t.formula}</p>
         <p className="text-caption font-bold opacity-50">({currentScore} - {selectedLocation?.lastScore}) x 200</p>
@@ -47,13 +63,13 @@ export function RevenueSummary({
         )}
       </div>
       <div className="text-right">
-        {calculations.revenue > 50000 && (
+        {revenue > 50000 && (
           <div className="flex items-center gap-1 justify-end mb-1">
             <Trophy size={10} className="text-yellow-300" />
             <span className="text-caption font-black text-yellow-300 uppercase">High Value</span>
           </div>
         )}
-        <p className="text-2xl font-black">TZS {calculations.revenue.toLocaleString()}</p>
+        <p className="text-2xl font-black">TZS {formatFinanceAmount(calculations.revenue)}</p>
         <p className="text-caption opacity-60 uppercase">{t.revenue}</p>
       </div>
     </div>
@@ -76,7 +92,7 @@ export function FinanceMetricGrid({
             ? (lang === 'zh' ? '计入余额' : 'Added to Balance')
             : (lang === 'zh' ? '支付分红' : 'Owner Payout')}
         </p>
-        <p className="mt-1 text-sm font-black text-slate-900">TZS {calculations.finalRetention.toLocaleString()}</p>
+        <p className="mt-1 text-sm font-black text-slate-900">TZS {formatFinanceAmount(calculations.finalRetention)}</p>
       </div>
       <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
         <p className="text-caption font-black uppercase tracking-wide text-slate-400">{t.expenses}</p>
@@ -84,7 +100,7 @@ export function FinanceMetricGrid({
       </div>
       <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
         <p className="text-caption font-black uppercase tracking-wide text-slate-400">{t.net}</p>
-        <p className="mt-1 text-sm font-black text-slate-900">TZS {calculations.netPayable.toLocaleString()}</p>
+        <p className="mt-1 text-sm font-black text-slate-900">TZS {formatFinanceAmount(calculations.netPayable)}</p>
       </div>
     </div>
   );
@@ -141,17 +157,17 @@ export function OwnerRetentionSection({
             value={displayedOwnerAmount}
             onChange={e => onUpdateOwnerRetention(e.target.value)}
             className={`w-full text-2xl font-black bg-transparent outline-none placeholder:opacity-40 ${isOwnerRetaining ? 'text-amber-900 placeholder:text-amber-200' : 'text-emerald-900 placeholder:text-emerald-200'}`}
-            placeholder={String(calculations.commission)}
+            placeholder={String(financeAmountToNumber(calculations.commission))}
           />
         </div>
         <p className={`text-caption font-black uppercase ${isOwnerRetaining ? 'text-amber-500' : 'text-emerald-500'}`}>
           {isOwnerRetaining
             ? (lang === 'zh'
-                ? `理论分红 TZS ${calculations.commission.toLocaleString()}，本次计入余额，可直接修改`
-                : `Theoretical dividend TZS ${calculations.commission.toLocaleString()}, editable`)
+                ? `理论分红 TZS ${formatFinanceAmount(calculations.commission)}，本次计入余额，可直接修改`
+                : `Theoretical dividend TZS ${formatFinanceAmount(calculations.commission)}, editable`)
             : (lang === 'zh'
-                ? `理论分红 TZS ${calculations.commission.toLocaleString()}，本次直接支付给商家`
-                : `Theoretical dividend TZS ${calculations.commission.toLocaleString()}, paid to owner this run`)}
+                ? `理论分红 TZS ${formatFinanceAmount(calculations.commission)}，本次直接支付给商家`
+                : `Theoretical dividend TZS ${formatFinanceAmount(calculations.commission)}, paid to owner this run`)}
         </p>
         <p className={`text-caption font-bold leading-relaxed ${isOwnerRetaining ? 'text-amber-700' : 'text-emerald-700'}`}>
           {isOwnerRetaining
@@ -173,7 +189,7 @@ export function OwnerRetentionSection({
             <div>
               <p className="text-caption font-black text-slate-400">{lang === 'zh' ? '本次计入' : 'Added This Run'}</p>
               <p className="mt-1 text-[11px] font-black text-amber-700">
-                TZS {calculations.finalRetention.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                TZS {formatFinanceAmount(calculations.finalRetention, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <div>
@@ -197,13 +213,13 @@ export function OwnerRetentionSection({
             <div>
               <p className="text-caption font-black text-slate-400">{lang === 'zh' ? '理论分红' : 'Theoretical'}</p>
               <p className="mt-1 text-[11px] font-black text-slate-900">
-                TZS {calculations.commission.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                TZS {formatFinanceAmount(calculations.commission, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <div>
               <p className="text-caption font-black text-slate-400">{lang === 'zh' ? '本次支付' : 'Paid This Run'}</p>
               <p className="mt-1 text-[11px] font-black text-emerald-700">
-                TZS {calculations.finalRetention.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                TZS {formatFinanceAmount(calculations.finalRetention, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <div>
@@ -348,12 +364,12 @@ export function FinanceWarnings({
           </p>
         </div>
       )}
-      {calculations.startupDebtDeduction > 0 && (
+      {financeAmountToNumber(calculations.startupDebtDeduction) > 0 && (
         <div className="p-3 rounded-subcard border border-amber-200 bg-amber-50">
           <p className="text-caption font-black uppercase text-amber-700">
             {lang === 'zh'
-              ? `本次商家还款入账 TZS ${calculations.startupDebtDeduction.toLocaleString()}。`
-              : `This collection adds TZS ${calculations.startupDebtDeduction.toLocaleString()} of merchant debt repayment.`}
+              ? `本次商家还款入账 TZS ${formatFinanceAmount(calculations.startupDebtDeduction)}。`
+              : `This collection adds TZS ${formatFinanceAmount(calculations.startupDebtDeduction)} of merchant debt repayment.`}
           </p>
         </div>
       )}

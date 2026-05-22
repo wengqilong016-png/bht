@@ -12,6 +12,7 @@ import {
   RevenueSummary,
   StartupDebtDeductionSection,
   TipPaymentSection,
+  financeAmountToNumber,
   type FinanceSummaryCalculations,
 } from './finance/FinanceSummarySections';
 import WizardStepBar from './WizardStepBar';
@@ -67,11 +68,13 @@ export function FinanceSummaryContent({
 }: FinanceSummaryCoreProps) {
   const t = TRANSLATIONS[lang];
   const currentDividendBalance = Number(selectedLocation.dividendBalance || 0);
-  const projectedDividendBalance = currentDividendBalance + calculations.finalRetention;
+  const finalRetention = financeAmountToNumber(calculations.finalRetention);
+  const commission = financeAmountToNumber(calculations.commission);
+  const projectedDividendBalance = currentDividendBalance + finalRetention;
   const shouldShowComputedOwnerAmount =
-    ownerRetention === '' || (ownerRetention === '0' && calculations.commission > 0);
+    ownerRetention === '' || (ownerRetention === '0' && commission > 0);
   const displayedOwnerAmount = shouldShowComputedOwnerAmount
-    ? String(calculations.commission)
+    ? String(commission)
     : ownerRetention;
   const parsedCurrentScore = parseInt(currentScore, 10);
   const hasNumericScore = !isNaN(parsedCurrentScore);

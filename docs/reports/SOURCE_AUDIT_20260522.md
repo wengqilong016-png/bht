@@ -19,13 +19,14 @@
 - 修复: `submitCollectionV2` 将 `tx_conflict` 视为幂等成功，返回服务端已有交易行并标记 `idempotentReplay`；回放不会重复写 finance audit。
 - 验证: `npm run test:ci -- collectionSubmissionService.test.ts`、`npm run test:ci -- offlineQueueReplay.test.ts`、`npm run test:ci -- collectionSubmissionOrchestrator.test.ts`、`npm run typecheck`、`npm run lint`。
 
-## 待处理
-
 ### 3. Money 值对象被当作 number 传给司机收款 UI
 
 - 证据: `financeCalculator.ts` 返回 `Money`，但 `FinanceSummarySections.tsx`、`SubmitReview.tsx` 类型仍按 number 渲染，调用 `toLocaleString()`。
 - 风险: 金额显示可能变成对象字符串或重复单位，数字比较/加减可能出现错误。
-- 建议: 在 UI 边界统一用 `Money.toNumber()` 或 `Money.format()`，移除 `as unknown as` / `as any` 类型逃逸。
+- 修复: 在司机收款 UI 边界引入 `FinanceAmount` 兼容层，显示/比较统一转为 number；移除 `DriverCollectionFlow` 对 `financeResult` 的类型逃逸，并修复 `QuickCollect` 的直接 `Money.toLocaleString()`。
+- 验证: `npm run test:ci -- FinanceSummary.test.tsx`、`npm run test:ci -- DriverCollectionFlow.test.tsx`、`npm run test:ci -- SubmitReview.test.tsx`、`npm run test:ci -- QuickCollect.test.tsx`、`npm run typecheck`、`npm run lint`。
+
+## 待处理
 
 ### 4. 公共 AI API 缺少服务端鉴权与限流
 
