@@ -28,16 +28,20 @@ export function useSupabaseMutations(
   onMutationError?: (error: unknown) => void,
 ) {
   const queryClient = useQueryClient();
+  const activeDriverId =
+    currentUser?.role === 'driver'
+      ? currentUser.driverId ?? currentUser.id
+      : currentUser?.driverId;
 
   // Compute role-aware query keys so optimistic updates land on the same cache
   // entries that useSupabaseData reads from.
   const transactionQueryKey = [
     'transactions',
-    getTransactionQueryScope(currentUser?.role, currentUser?.driverId).cacheScope,
+    getTransactionQueryScope(currentUser?.role, activeDriverId).cacheScope,
   ] as const;
   const settlementQueryKey = [
     'dailySettlements',
-    getSettlementQueryScope(currentUser?.role, currentUser?.driverId).cacheScope,
+    getSettlementQueryScope(currentUser?.role, activeDriverId).cacheScope,
   ] as const;
   const transactionStorageKey = `${CONSTANTS.STORAGE_TRANSACTIONS_KEY}:${transactionQueryKey[1]}`;
   const settlementStorageKey = `${CONSTANTS.STORAGE_SETTLEMENTS_KEY}:${settlementQueryKey[1]}`;
@@ -80,8 +84,8 @@ export function useSupabaseMutations(
 
       // Report queue health for fleet-wide diagnostics (driver devices only).
       // Intentionally fire-and-forget — a diagnostics failure must not fail the sync.
-      if (currentUser?.role === 'driver' && currentUser.driverId) {
-        reportQueueHealthToServer(supabase, currentUser.driverId, currentUser.name).catch(() => {});
+      if (currentUser?.role === 'driver' && activeDriverId) {
+        reportQueueHealthToServer(supabase, activeDriverId, currentUser.name).catch(() => {});
       }
 
       // If items were flushed, wait briefly so Supabase can propagate writes

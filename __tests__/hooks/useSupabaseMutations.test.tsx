@@ -36,8 +36,8 @@ jest.mock('../../services/localDB', () => ({
 }));
 
 jest.mock('../../services/supabaseRoleScope', () => ({
-  getTransactionQueryScope: jest.fn<() => { cacheScope: string }>().mockReturnValue({ cacheScope: 'admin-all' }),
-  getSettlementQueryScope: jest.fn<() => { cacheScope: string }>().mockReturnValue({ cacheScope: 'admin-all' }),
+  getTransactionQueryScope: jest.fn<(...args: unknown[]) => { cacheScope: string }>().mockReturnValue({ cacheScope: 'admin-all' }),
+  getSettlementQueryScope: jest.fn<(...args: unknown[]) => { cacheScope: string }>().mockReturnValue({ cacheScope: 'admin-all' }),
 }));
 
 jest.mock('../../repositories/driverRepository', () => ({
@@ -102,6 +102,7 @@ import { useSupabaseMutations } from '../../hooks/useSupabaseMutations';
 import { updateDrivers as repoUpdateDrivers } from '../../repositories/driverRepository';
 import { upsertLocationsWithSignal, deleteLocations as repoDeleteLocations } from '../../repositories/locationRepository';
 import { flushQueue, enqueueTransaction, resetRetryBackoff, reportQueueHealthToServer } from '../../offlineQueue';
+import { getSettlementQueryScope, getTransactionQueryScope } from '../../services/supabaseRoleScope';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -165,6 +166,23 @@ describe('useSupabaseMutations', () => {
       expect(reportQueueHealthToServer as any).toHaveBeenCalledWith(
         mockState.supabase,
         'drv-1',
+        'Driver',
+      );
+    });
+
+    it('uses user id as the active driver id when driver profile id is missing', async () => {
+      const { result } = setupHook(true, { id: 'auth-driver-1', role: 'driver', name: 'Driver', username: 'driver' });
+      (flushQueue as any).mockResolvedValue(0);
+
+      await act(async () => {
+        await result.current.syncOfflineData.mutateAsync();
+      });
+
+      expect(getTransactionQueryScope as any).toHaveBeenCalledWith('driver', 'auth-driver-1');
+      expect(getSettlementQueryScope as any).toHaveBeenCalledWith('driver', 'auth-driver-1');
+      expect(reportQueueHealthToServer as any).toHaveBeenCalledWith(
+        mockState.supabase,
+        'auth-driver-1',
         'Driver',
       );
     });
