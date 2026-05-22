@@ -1,4 +1,5 @@
 import { createAIClient } from './_lib/aiClient.js';
+import { enforceApiRateLimit, requireApiUser } from './_lib/apiAuth.js';
 
 import type OpenAI from 'openai';
 
@@ -128,6 +129,19 @@ export default {
   async fetch(request: Request) {
     if (request.method !== 'POST') {
       return new Response('Method Not Allowed', { status: 405 });
+    }
+
+    const auth = await requireApiUser(request, { roles: ['admin'] });
+    if (!auth.ok) {
+      return auth.response;
+    }
+
+    const rateLimitResponse = enforceApiRateLimit(`admin-ai:${auth.user.id}`, {
+      limit: 30,
+      windowMs: 60_000,
+    });
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const aiConfig = createAIClient();

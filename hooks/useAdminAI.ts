@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 
+import { buildAuthenticatedJsonHeaders } from '../services/apiAuthHeaders';
 import { getTodayLocalDate } from '../utils/dateUtils';
 import { getLocationDeletionDiagnostics } from '../utils/locationWorkflow';
 
@@ -260,7 +261,7 @@ export function useAdminAI(
       try {
         const res = await fetch('/api/admin-ai', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await buildAuthenticatedJsonHeaders(),
           body: JSON.stringify({
             message: text,
             history: messages,

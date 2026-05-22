@@ -1,4 +1,5 @@
 import { createAIClient } from './_lib/aiClient.js';
+import { enforceApiRateLimit, requireApiUser } from './_lib/apiAuth.js';
 
 const LANG_NAMES: Record<string, string> = {
   zh: 'Simplified Chinese',
@@ -10,6 +11,19 @@ export default {
   async fetch(request: Request) {
     if (request.method !== 'POST') {
       return new Response('Method Not Allowed', { status: 405 });
+    }
+
+    const auth = await requireApiUser(request, { roles: ['admin', 'driver'] });
+    if (!auth.ok) {
+      return auth.response;
+    }
+
+    const rateLimitResponse = enforceApiRateLimit(`translate:${auth.user.id}`, {
+      limit: 60,
+      windowMs: 60_000,
+    });
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const aiConfig = createAIClient();

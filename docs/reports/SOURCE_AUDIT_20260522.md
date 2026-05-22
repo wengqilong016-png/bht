@@ -26,13 +26,14 @@
 - 修复: 在司机收款 UI 边界引入 `FinanceAmount` 兼容层，显示/比较统一转为 number；移除 `DriverCollectionFlow` 对 `financeResult` 的类型逃逸，并修复 `QuickCollect` 的直接 `Money.toLocaleString()`。
 - 验证: `npm run test:ci -- FinanceSummary.test.tsx`、`npm run test:ci -- DriverCollectionFlow.test.tsx`、`npm run test:ci -- SubmitReview.test.tsx`、`npm run test:ci -- QuickCollect.test.tsx`、`npm run typecheck`、`npm run lint`。
 
-## 待处理
-
 ### 4. 公共 AI API 缺少服务端鉴权与限流
 
 - 证据: `api/scan-meter.ts`、`api/admin-ai.ts`、`api/translate.ts` 公开 POST 后直接使用服务端 AI key。
 - 风险: 公开调用者可消耗 AI 配额；当前主要是成本和滥用风险，不是直接数据泄露。
-- 建议: 增加会话校验、角色校验和基础限流。
+- 修复: 新增服务端 `requireApiUser` 会话/角色校验和内存窗口限流；客户端请求自动带 Supabase session bearer token；扫描、翻译允许 admin/driver，管理员 AI 仅允许 admin。
+- 验证: `npm run test:ci -- apiAuth.test.ts`、`npm run test:ci -- scanMeterService.test.ts`、`npm run test:ci -- translateService.test.ts`、`npm run test:ci -- useAdminAI.test.ts`、`npm run typecheck`、`npm run lint`。
+
+## 待处理
 
 ### 5. 司机更新站点信息的 RLS 范围偏宽
 

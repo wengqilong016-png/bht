@@ -6,6 +6,8 @@ import {
   type ScanMeterSuccessPayload,
 } from '../types/scanMeter';
 
+import { buildAuthenticatedJsonHeaders } from './apiAuthHeaders';
+
 export type ScanMeterResult =
   | { success: true; data: ScanMeterSuccessPayload }
   | { success: false; status: number; code: string; message: string };
@@ -30,7 +32,7 @@ export async function scanMeterFromBase64(imageBase64: string): Promise<ScanMete
   try {
     const response = await fetch('/api/scan-meter', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await buildAuthenticatedJsonHeaders(),
       body: JSON.stringify({ imageBase64 }),
     });
 
@@ -82,6 +84,15 @@ export function getScanMeterErrorMessage(code: string, lang: 'zh' | 'sw'): strin
       return lang === 'zh'
         ? 'AI 服务暂时不可用，请稍后重试。'
         : 'AI service is temporarily unavailable. Please try again later.';
+    case SCAN_METER_ERROR_CODES.UNAUTHORIZED:
+    case SCAN_METER_ERROR_CODES.FORBIDDEN:
+      return lang === 'zh'
+        ? '请先登录后再使用 AI 扫描。'
+        : 'Sign in before using AI scan.';
+    case SCAN_METER_ERROR_CODES.RATE_LIMITED:
+      return lang === 'zh'
+        ? 'AI 扫描请求过于频繁，请稍后再试。'
+        : 'Too many AI scan requests. Please try again later.';
     default:
       return lang === 'zh'
         ? `AI 扫描失败：${code}`

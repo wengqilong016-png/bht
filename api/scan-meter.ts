@@ -1,5 +1,6 @@
 import { SCAN_METER_ERROR_CODES } from '../types/scanMeter';
 
+import { enforceApiRateLimit, requireApiUser } from './_lib/apiAuth.js';
 import { createAIClient, getVisionModel } from './_lib/aiClient.js';
 
 const stripJsonFence = (value: string) =>
@@ -24,6 +25,19 @@ export default {
   async fetch(request: Request) {
     if (request.method !== 'POST') {
       return jsonError(405, SCAN_METER_ERROR_CODES.METHOD_NOT_ALLOWED, 'Method Not Allowed');
+    }
+
+    const auth = await requireApiUser(request, { roles: ['admin', 'driver'] });
+    if (!auth.ok) {
+      return auth.response;
+    }
+
+    const rateLimitResponse = enforceApiRateLimit(`scan-meter:${auth.user.id}`, {
+      limit: 20,
+      windowMs: 60_000,
+    });
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const aiConfig = createAIClient();

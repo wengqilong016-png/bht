@@ -1,13 +1,15 @@
 /**
  * 翻译服务 - 通过同源 API 调用服务端翻译代理，避免在浏览器暴露私钥。
  */
+import { buildAuthenticatedJsonHeaders } from './apiAuthHeaders';
+
 export const translateToChinese = async (text: string): Promise<string> => {
   if (!text || text.trim() === '') return text;
   
   try {
     const response = await fetch('/api/translate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await buildAuthenticatedJsonHeaders(),
       body: JSON.stringify({
         text,
         target: 'zh',
