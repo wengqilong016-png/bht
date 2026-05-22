@@ -33,10 +33,9 @@
 - 修复: 新增服务端 `requireApiUser` 会话/角色校验和内存窗口限流；客户端请求自动带 Supabase session bearer token；扫描、翻译允许 admin/driver，管理员 AI 仅允许 admin。
 - 验证: `npm run test:ci -- apiAuth.test.ts`、`npm run test:ci -- scanMeterService.test.ts`、`npm run test:ci -- translateService.test.ts`、`npm run test:ci -- useAdminAI.test.ts`、`npm run typecheck`、`npm run lint`。
 
-## 待处理
-
 ### 5. 司机更新站点信息的 RLS 范围偏宽
 
 - 证据: schema/migration 允许司机更新分配给自己的 location 行，但未限制列级权限。
 - 风险: 持有 anon key + driver JWT 的客户端可尝试更新非 UI 暴露字段。
-- 建议: 改为受限 RPC 或列级授权，只开放司机可维护字段。
+- 修复: 新增 `enforce_driver_location_update_fields` 触发器，仅当业务角色为 driver 时限制可变更列；司机只能维护当前 UI 使用的店主姓名、电话、店主照片，admin 和 service 维护路径不受影响。
+- 验证: `git diff --check`、schema/migration 读回验证；当前未连接本地 Supabase 数据库，未实际执行迁移。
