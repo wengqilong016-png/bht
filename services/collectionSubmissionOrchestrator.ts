@@ -1,6 +1,7 @@
 import { enqueueTransaction } from '../offlineQueue';
 import { CONSTANTS } from '../types';
 import { createCollectionTransaction } from '../utils/transactionBuilder';
+import { Money } from '../utils/money';
 
 import { appendCollectionSubmissionAudit } from './collectionSubmissionAudit';
 import {
@@ -14,14 +15,15 @@ import type { Driver, Location, Transaction } from '../types';
 
 export type SubmissionGpsSource = 'live' | 'exif' | 'estimated' | 'none';
 
+/** Money-typed calculations from the finance preview. */
 export interface CollectionSubmissionCalculations {
-  diff: number;
-  revenue: number;
-  commission: number;
-  finalRetention: number;
-  startupDebtDeduction: number;
-  netPayable: number;
-  remainingCoins: number;
+  diff: Money;
+  revenue: Money;
+  commission: Money;
+  finalRetention: Money;
+  startupDebtDeduction: Money;
+  netPayable: Money;
+  remainingCoins: Money;
   isCoinStockNegative: boolean;
 }
 
@@ -74,11 +76,14 @@ function parseInteger(value: string): number {
   return parseInt(value, 10) || 0;
 }
 
-function parseAmount(value: string): number {
+function parseTzs(value: string): Money {
   const normalized = value.replace(/,/g, '').trim();
-  if (!normalized) return 0;
-  const parsed = Number.parseFloat(normalized);
-  return Number.isFinite(parsed) ? parsed : 0;
+  if (!normalized) return Money.zero('TZS');
+  try {
+    return Money.tzs(normalized);
+  } catch {
+    return Money.zero('TZS');
+  }
 }
 
 function normalizeReportedStatus(
@@ -115,18 +120,18 @@ function buildOfflineTransaction(
     input.selectedLocation,
     input.currentDriver,
     input.resolvedGps,
-    rawInput.currentScore,
+    rawInput.currentScore, // this is a coin count, not money — sent as number to RPC
     {
       txId: input.draftTxId,
-      revenue: input.calculations.revenue,
-      commission: input.calculations.commission,
-      ownerRetention: input.calculations.finalRetention,
+      revenue: input.calculations.revenue.toNumber(),
+      commission: input.calculations.commission.toNumber(),
+      ownerRetention: input.calculations.finalRetention.toNumber(),
       isOwnerRetaining: input.isOwnerRetaining,
-      startupDebtDeduction: input.calculations.startupDebtDeduction,
+      startupDebtDeduction: input.calculations.startupDebtDeduction.toNumber(),
       expenses: rawInput.expenses,
       tip: rawInput.tip,
       coinExchange: rawInput.coinExchange,
-      netPayable: input.calculations.netPayable,
+      netPayable: input.calculations.netPayable.toNumber(),
       photoUrl: input.photoData || undefined,
       dataUsageKB: 120,
       notes: rawInput.notes || undefined,
@@ -179,17 +184,15 @@ export function buildCollectionSubmissionInput(
   input: OrchestrateCollectionSubmissionInput,
 ): CollectionSubmissionInput {
   // Expenses are intentionally 0 for collection transactions.
-  // Expenses incurred during collections (office loans, private loans, etc.)
-  // are recorded as separate type='expense' transactions via
-  // createExpenseTransaction(). This keeps the collection transaction's
-  // financial calculation clean and expense tracking auditable via
-  // independent transaction records with expenseStatus/approvalStatus.
   const expenseValue = 0;
-  const tipValue = parseAmount(input.tip);
+  const tipValue = parseTzs(input.tip).toNumber();
   const trimmedScore = input.currentScore.trim();
-  const parsedScore = Math.floor(parseAmount(trimmedScore));
-  const cleanScore = trimmedScore.replace(/,/g, "");
-  const isInvalidScore = trimmedScore === "" || Number.isNaN(Number(cleanScore)) || Number.isNaN(parsedScore);
+  const parsedScore = Math.floor(parseTzs(trimmedScore).toNumber());
+  const cleanScore = trimmedScore.replace(/,/g, '');
+  const isInvalidScore =
+    trimmedScore === '' ||
+    Number.isNaN(Number(cleanScore)) ||
+    Number.isNaN(parsedScore);
   if (isInvalidScore) {
     appendCollectionSubmissionAudit({
       timestamp: new Date().toISOString(),
@@ -210,7 +213,10 @@ export function buildCollectionSubmissionInput(
     const parsed = parseInt(input.aiReviewData.score, 10);
     return Number.isNaN(parsed) ? undefined : parsed;
   })();
-  const isAnomaly = recognizedScore !== undefined ? Math.abs(userScore - recognizedScore) > CONSTANTS.ANOMALY_SCORE_DIFF_THRESHOLD : false;
+  const isAnomaly =
+    recognizedScore !== undefined
+      ? Math.abs(userScore - recognizedScore) > CONSTANTS.ANOMALY_SCORE_DIFF_THRESHOLD
+      : false;
   const reportedStatus = normalizeReportedStatus(
     input.aiReviewData?.condition,
     input.selectedLocation?.status,
@@ -219,28 +225,32 @@ export function buildCollectionSubmissionInput(
   const notes = [
     input.aiReviewData?.notes,
     input.gpsSourceType !== 'live' ? `[GPS: ${input.gpsSourceType}]` : null,
-  ].filter(Boolean).join(' ') || null;
+  ]
+    .filter(Boolean)
+    .join(' ') || null;
 
   return {
-    txId:            input.draftTxId,
-    locationId:      input.selectedLocation.id,
-    driverId:        input.currentDriver.id,
-    currentScore:    Math.min(userScore, CONSTANTS.MAX_REASONABLE_SCORE),
-    expenses:        expenseValue,
-    tip:             tipValue,
-    startupDebtDeduction: input.calculations.startupDebtDeduction,
+    txId: input.draftTxId,
+    locationId: input.selectedLocation.id,
+    driverId: input.currentDriver.id,
+    currentScore: Math.min(userScore, CONSTANTS.MAX_REASONABLE_SCORE),
+    expenses: expenseValue,
+    tip: tipValue,
+    startupDebtDeduction: input.calculations.startupDebtDeduction.toNumber(),
     isOwnerRetaining: input.isOwnerRetaining,
-    ownerRetention:  input.ownerRetention !== ''
-      ? parseAmount(input.ownerRetention)
-      : null,
-    coinExchange:    parseInteger(input.coinExchange),
-    gps:             input.resolvedGps.lat === 0 && input.resolvedGps.lng === 0 ? null : input.resolvedGps,
-    photoUrl:        input.photoData || null,
-    aiScore:         recognizedScore ?? null,
-    anomalyFlag:     isAnomaly,
+    ownerRetention:
+      input.ownerRetention !== '' ? parseTzs(input.ownerRetention).toNumber() : null,
+    coinExchange: parseInteger(input.coinExchange),
+    gps:
+      input.resolvedGps.lat === 0 && input.resolvedGps.lng === 0
+        ? null
+        : input.resolvedGps,
+    photoUrl: input.photoData || null,
+    aiScore: recognizedScore ?? null,
+    anomalyFlag: isAnomaly,
     notes,
-    expenseType:        null,
-    expenseCategory:    null,
+    expenseType: null,
+    expenseCategory: null,
     expenseDescription: undefined,
     reportedStatus,
   };
@@ -253,8 +263,18 @@ async function fallbackToOffline(
   reason: string | null,
 ): Promise<OrchestratedCollectionSubmissionResult> {
   const offlineTransaction = buildOfflineTransaction(input, rawInput, deps);
-  await enqueueOfflineTransaction(offlineTransaction, rawInput, input, reason ?? 'Offline fallback', deps);
-  return { source: 'offline', transaction: offlineTransaction, fallbackReason: reason };
+  await enqueueOfflineTransaction(
+    offlineTransaction,
+    rawInput,
+    input,
+    reason ?? 'Offline fallback',
+    deps,
+  );
+  return {
+    source: 'offline',
+    transaction: offlineTransaction,
+    fallbackReason: reason,
+  };
 }
 
 export async function orchestrateCollectionSubmission(
@@ -307,7 +327,9 @@ export async function orchestrateCollectionSubmission(
       };
     }
 
-    const fallbackError = isFailure(result) ? result.error : 'Unknown submission failure';
+    const fallbackError = isFailure(result)
+      ? result.error
+      : 'Unknown submission failure';
     deps.logger.warn(
       isFailure(result) && result.kind === 'evidence'
         ? '[collectionSubmissionOrchestrator] submit_collection_v2 failed with evidence error:'
@@ -326,7 +348,10 @@ export async function orchestrateCollectionSubmission(
       previousScore: input.selectedLocation.lastScore,
       reason: fallbackError,
       metadata: {
-        fallback: isFailure(result) && result.kind === 'evidence' ? 'blocked_evidence' : 'offline_queue',
+        fallback:
+          isFailure(result) && result.kind === 'evidence'
+            ? 'blocked_evidence'
+            : 'offline_queue',
         kind: isFailure(result) ? result.kind : undefined,
       },
     });

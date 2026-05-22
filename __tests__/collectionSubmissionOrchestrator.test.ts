@@ -1,5 +1,6 @@
-import { describe, it, expect, jest } from '@jest/globals';
-
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { Mock } from 'jest-mock';
+import { mockCalc } from '../helpers/fixtures';
 // Mock supabaseClient so import.meta.env is not evaluated in the Jest/Node environment
 jest.mock('../supabaseClient', () => ({ supabase: null }));
 
@@ -77,7 +78,7 @@ function makeInput(overrides: Partial<OrchestrateCollectionSubmissionInput> = {}
     draftTxId: 'draft-1',
     isOwnerRetaining: true,
     ownerRetention: '12',
-    calculations: {
+    calculations: mockCalc({
       diff: 50,
       revenue: 50,
       commission: 10,
@@ -85,8 +86,7 @@ function makeInput(overrides: Partial<OrchestrateCollectionSubmissionInput> = {}
       startupDebtDeduction: 0,
       netPayable: 8,
       remainingCoins: 20,
-      isCoinStockNegative: false,
-    },
+    }),
     resolvedGps: { lat: -6.8, lng: 39.2 },
     gpsSourceType: 'live',
     ...overrides,
@@ -354,10 +354,10 @@ describe('buildCollectionSubmissionInput() — normalizeReportedStatus branches'
       draftTxId: 'TX-test',
       isOwnerRetaining: false,
       ownerRetention: '',
-      calculations: {
+      calculations: mockCalc({
         diff: 100, revenue: 50000, commission: 10000, finalRetention: 0,
-        startupDebtDeduction: 0, netPayable: 40000, remainingCoins: 50, isCoinStockNegative: false,
-      },
+        startupDebtDeduction: 0, netPayable: 40000, remainingCoins: 50,
+      }),
       resolvedGps: { lat: -6.8, lng: 39.2 },
       gpsSourceType: 'live',
     };

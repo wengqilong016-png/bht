@@ -37,6 +37,7 @@
     "supabase/functions",
     "driver-app",
     "android",
-    "e2e"
+    "e2e",
+    "__tests__"
   ]
 }

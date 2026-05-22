@@ -454,6 +454,58 @@ CREATE TABLE IF NOT EXISTS public.health_alerts (
     resolved_at TIMESTAMPTZ
 );
 
+-- ── score_events ──────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.score_events (
+    id           UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    location_id  UUID NOT NULL REFERENCES public.locations(id) ON DELETE CASCADE,
+    old_score    BIGINT,
+    new_score    BIGINT NOT NULL,
+    source       TEXT NOT NULL DEFAULT 'update'
+                 CHECK (source IN ('submit_collection_v2', 'approve_reset_request', 'update', 'recovery')),
+    actor_id     TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE public.score_events IS
+  'Append-only event log recording every locations.lastScore change. Used for audit and state recovery.';
+
+COMMENT ON COLUMN public.score_events.old_score IS
+  'Previous lastScore value before this change. NULL for the first event.';
+
+COMMENT ON COLUMN public.score_events.new_score IS
+  'New lastScore value after this change.';
+
+COMMENT ON COLUMN public.score_events.source IS
+  'Which code path triggered the change: submit_collection_v2, approve_reset_request, update (trigger), or recovery.';
+
+CREATE INDEX IF NOT EXISTS idx_score_events_location_created
+  ON public.score_events (location_id, created_at DESC);
+
+-- ── score_snapshots ───────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.score_snapshots (
+    id             UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    location_id    UUID NOT NULL REFERENCES public.locations(id) ON DELETE CASCADE,
+    score          BIGINT NOT NULL,
+    last_event_id  UUID REFERENCES public.score_events(id) ON DELETE SET NULL,
+    event_count    INTEGER NOT NULL DEFAULT 0,
+    snapshot_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE public.score_snapshots IS
+  'Periodic score snapshots to accelerate recovery. Created when ≥50 events accumulated AND ≥1 hour since last snapshot.';
+
+COMMENT ON COLUMN public.score_snapshots.last_event_id IS
+  'The last score_events row included in this snapshot. Events after this must be replayed.';
+
+COMMENT ON COLUMN public.score_snapshots.event_count IS
+  'Number of score_events rows this snapshot covers (informational).';
+
+CREATE INDEX IF NOT EXISTS idx_score_snapshots_location_snapshot
+  ON public.score_snapshots (location_id, snapshot_at DESC);
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 2. 约束 / Constraints
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -2191,6 +2243,185 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.generate_health_alerts_v1() FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION public.generate_health_alerts_v1() TO authenticated;
 
+-- ── create_score_snapshot ─────────────────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION public.create_score_snapshot(
+    p_location_id UUID
+)
+RETURNS JSON
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+    v_last_snapshot   public.score_snapshots%ROWTYPE;
+    v_last_event_id   UUID;
+    v_event_count     INTEGER;
+    v_current_score   BIGINT;
+    v_min_gap         INTERVAL := '1 hour';
+    v_min_events      INTEGER := 50;
+    v_snapshot_id     UUID;
+BEGIN
+    SELECT *
+      INTO v_last_snapshot
+      FROM public.score_snapshots
+     WHERE location_id = p_location_id
+     ORDER BY snapshot_at DESC
+     LIMIT 1;
+
+    IF FOUND AND (NOW() - v_last_snapshot.snapshot_at) < v_min_gap THEN
+        RETURN json_build_object(
+            'skipped', true,
+            'reason', 'minimum snapshot gap not met',
+            'last_snapshot_at', v_last_snapshot.snapshot_at,
+            'min_gap', v_min_gap::text
+        );
+    END IF;
+
+    IF FOUND THEN
+        SELECT COUNT(*), MAX(e.id)
+          INTO v_event_count, v_last_event_id
+          FROM public.score_events e
+         WHERE e.location_id = p_location_id
+           AND e.created_at > v_last_snapshot.snapshot_at;
+    ELSE
+        SELECT COUNT(*), MAX(e.id)
+          INTO v_event_count, v_last_event_id
+          FROM public.score_events e
+         WHERE e.location_id = p_location_id;
+    END IF;
+
+    IF COALESCE(v_event_count, 0) < v_min_events THEN
+        RETURN json_build_object(
+            'skipped', true,
+            'reason', 'not enough events since last snapshot',
+            'event_count', COALESCE(v_event_count, 0),
+            'min_events', v_min_events
+        );
+    END IF;
+
+    SELECT "lastScore" INTO v_current_score
+      FROM public.locations
+     WHERE id = p_location_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Location not found: %', p_location_id USING ERRCODE = 'P0002';
+    END IF;
+
+    INSERT INTO public.score_snapshots (
+        location_id, score, last_event_id, event_count, snapshot_at
+    ) VALUES (
+        p_location_id,
+        COALESCE(v_current_score, 0),
+        v_last_event_id,
+        v_event_count,
+        NOW()
+    )
+    RETURNING id INTO v_snapshot_id;
+
+    RETURN json_build_object(
+        'snapshot_id', v_snapshot_id,
+        'location_id', p_location_id,
+        'score', COALESCE(v_current_score, 0),
+        'event_count', v_event_count,
+        'snapshot_at', NOW()
+    );
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.create_score_snapshot(UUID) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION public.create_score_snapshot(UUID) TO authenticated;
+
+-- ── recover_last_score ────────────────────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION public.recover_last_score(
+    p_location_id UUID
+)
+RETURNS JSON
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+    v_snapshot        public.score_snapshots%ROWTYPE;
+    v_recovered       BIGINT;
+    v_events_replayed INTEGER;
+    v_source_events   INTEGER;
+    v_total_events    INTEGER;
+BEGIN
+    SELECT *
+      INTO v_snapshot
+      FROM public.score_snapshots
+     WHERE location_id = p_location_id
+     ORDER BY snapshot_at DESC
+     LIMIT 1;
+
+    IF FOUND THEN
+        v_recovered := v_snapshot.score;
+
+        WITH replayed AS (
+            SELECT e.id, e.new_score, e.created_at
+              FROM public.score_events e
+             WHERE e.location_id = p_location_id
+               AND e.created_at > v_snapshot.snapshot_at
+             ORDER BY e.created_at ASC, e.id ASC
+        )
+        SELECT
+            COALESCE(
+                (SELECT replayed.new_score
+                   FROM replayed
+                  ORDER BY replayed.created_at DESC, replayed.id DESC
+                  LIMIT 1
+                ),
+                v_recovered
+            ),
+            (SELECT COUNT(*) FROM replayed)
+          INTO v_recovered, v_events_replayed;
+
+        v_source_events := v_snapshot.event_count;
+    ELSE
+        WITH all_events AS (
+            SELECT e.id, e.new_score, e.created_at
+              FROM public.score_events e
+             WHERE e.location_id = p_location_id
+             ORDER BY e.created_at ASC, e.id ASC
+        )
+        SELECT
+            COALESCE(
+                (SELECT all_events.new_score
+                   FROM all_events
+                  ORDER BY all_events.created_at DESC, all_events.id DESC
+                  LIMIT 1
+                ),
+                0
+            ),
+            (SELECT COUNT(*) FROM all_events)
+          INTO v_recovered, v_events_replayed;
+
+        v_source_events := 0;
+    END IF;
+
+    v_total_events := v_source_events + v_events_replayed;
+
+    RETURN json_build_object(
+        'location_id', p_location_id,
+        'recovered_score', v_recovered,
+        'snapshot_score', CASE WHEN v_snapshot.id IS NOT NULL THEN v_snapshot.score ELSE NULL END,
+        'snapshot_id', v_snapshot.id,
+        'snapshot_events', v_source_events,
+        'events_replayed', v_events_replayed,
+        'total_events', v_total_events,
+        'method', CASE
+            WHEN v_snapshot.id IS NOT NULL AND v_events_replayed > 0 THEN 'snapshot+replay'
+            WHEN v_snapshot.id IS NOT NULL THEN 'snapshot_only'
+            WHEN v_events_replayed > 0 THEN 'full_replay'
+            ELSE 'no_data'
+        END
+    );
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.recover_last_score(UUID) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION public.recover_last_score(UUID) TO authenticated;
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 6. 自动化触发器 / Automation Triggers（已加固安全版本）
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -2258,6 +2489,46 @@ CREATE TRIGGER trigger_on_reset_locked
 AFTER UPDATE OF "resetLocked" ON public.locations
 FOR EACH ROW
 EXECUTE FUNCTION public.on_reset_locked();
+
+-- 分数事件记录触发器（每次 lastScore 变更时追加 score_events）
+CREATE OR REPLACE FUNCTION public.record_score_event()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+    v_source TEXT := 'update';
+BEGIN
+    BEGIN
+        v_source := COALESCE(
+            NULLIF(current_setting('bht.score_source', true), ''),
+            'update'
+        );
+    EXCEPTION
+        WHEN OTHERS THEN
+            v_source := 'update';
+    END;
+
+    INSERT INTO public.score_events (
+        location_id, old_score, new_score, source, actor_id
+    ) VALUES (
+        NEW.id,
+        OLD."lastScore",
+        NEW."lastScore",
+        v_source,
+        COALESCE(auth.uid()::text, 'anon')
+    );
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_score_event ON public.locations;
+CREATE TRIGGER trg_score_event
+    AFTER UPDATE OF "lastScore" ON public.locations
+    FOR EACH ROW
+    WHEN (NEW."lastScore" IS DISTINCT FROM OLD."lastScore")
+    EXECUTE FUNCTION public.record_score_event();
 
 -- 司机提交事件通知（driver_flow_events submit_* → durable notifications）
 CREATE OR REPLACE FUNCTION public.on_driver_flow_event_notification()
@@ -2331,6 +2602,7 @@ EXECUTE FUNCTION public.on_driver_flow_event_notification();
 REVOKE EXECUTE ON FUNCTION public.on_transaction_anomaly() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.on_machine_overflow()    FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.on_reset_locked()        FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.record_score_event()     FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.on_driver_flow_event_notification() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.on_driver_flow_event_notification() FROM authenticated;
 
@@ -2393,6 +2665,8 @@ ALTER TABLE public.support_cases        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.support_audit_log    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.queue_health_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.health_alerts        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.score_events        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.score_snapshots     ENABLE ROW LEVEL SECURITY;
 
 -- ── profiles ─────────────────────────────────────────────────────────────────
 
@@ -2645,6 +2919,30 @@ CREATE POLICY queue_health_update ON public.queue_health_reports FOR UPDATE TO a
 DROP POLICY IF EXISTS health_alerts_select ON public.health_alerts;
 CREATE POLICY health_alerts_select ON public.health_alerts FOR SELECT TO authenticated
     USING (public.is_admin());
+
+-- ── score_events ──────────────────────────────────────────────────────────────
+
+DROP POLICY IF EXISTS score_events_select ON public.score_events;
+CREATE POLICY score_events_select ON public.score_events FOR SELECT TO authenticated
+    USING (
+        public.is_admin()
+        OR location_id IN (
+            SELECT id FROM public.locations
+            WHERE "assignedDriverId" = public.get_my_driver_id()
+        )
+    );
+
+-- ── score_snapshots ───────────────────────────────────────────────────────────
+
+DROP POLICY IF EXISTS score_snapshots_select ON public.score_snapshots;
+CREATE POLICY score_snapshots_select ON public.score_snapshots FOR SELECT TO authenticated
+    USING (
+        public.is_admin()
+        OR location_id IN (
+            SELECT id FROM public.locations
+            WHERE "assignedDriverId" = public.get_my_driver_id()
+        )
+    );
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 完成 / Done

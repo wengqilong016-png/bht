@@ -3,7 +3,18 @@
  *
  * Tests for all three transaction builder functions.
  */
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+
+// Mock eventBus before importing the module under test
+const mockEventBusEmit = jest.fn();
+jest.mock('../utils/eventBus', () => ({
+  eventBus: {
+    emit: mockEventBusEmit,
+    on: jest.fn(),
+    off: jest.fn(),
+    clear: jest.fn(),
+  },
+}));
 
 import {
   createPayoutRequestTransaction,
@@ -66,6 +77,10 @@ const GPS = { lat: -6.7924, lng: 39.2083 };
 // ── createPayoutRequestTransaction ─────────────────────────────────────────
 
 describe('createPayoutRequestTransaction()', () => {
+  beforeEach(() => {
+    mockEventBusEmit.mockClear();
+  });
+
   it('returns a transaction with type payout_request', () => {
     const tx = createPayoutRequestTransaction(makeLocation(), makeDriver(), GPS, 50000, 'Need cash');
     expect(tx.type).toBe('payout_request');
@@ -101,6 +116,11 @@ describe('createPayoutRequestTransaction()', () => {
   it('sets approvalStatus to pending', () => {
     const tx = createPayoutRequestTransaction(makeLocation(), makeDriver(), GPS, 1000, '');
     expect(tx.approvalStatus).toBe('pending');
+  });
+
+  it('sets auditStatus to pending', () => {
+    const tx = createPayoutRequestTransaction(makeLocation(), makeDriver(), GPS, 1000, '');
+    expect(tx.auditStatus).toBe('pending');
   });
 
   it('sets isSynced to false', () => {
@@ -141,11 +161,23 @@ describe('createPayoutRequestTransaction()', () => {
     expect(() => new Date(tx.timestamp)).not.toThrow();
     expect(new Date(tx.timestamp).toString()).not.toBe('Invalid Date');
   });
+
+  // ── ADR-002: event emission ─────────────────────────────────────────────
+
+  it('emits transaction_built event with the created transaction', () => {
+    const tx = createPayoutRequestTransaction(makeLocation(), makeDriver(), GPS, 50000, 'test');
+    expect(mockEventBusEmit).toHaveBeenCalledTimes(1);
+    expect(mockEventBusEmit).toHaveBeenCalledWith('transaction_built', tx);
+  });
 });
 
 // ── createResetRequestTransaction ──────────────────────────────────────────
 
 describe('createResetRequestTransaction()', () => {
+  beforeEach(() => {
+    mockEventBusEmit.mockClear();
+  });
+
   it('returns a transaction with type reset_request', () => {
     const tx = createResetRequestTransaction(makeLocation(), makeDriver(), GPS, 'http://photo.jpg', '');
     expect(tx.type).toBe('reset_request');
@@ -171,6 +203,11 @@ describe('createResetRequestTransaction()', () => {
     expect(tx.approvalStatus).toBe('pending');
   });
 
+  it('sets auditStatus to pending', () => {
+    const tx = createResetRequestTransaction(makeLocation(), makeDriver(), GPS, '', '');
+    expect(tx.auditStatus).toBe('pending');
+  });
+
   it('sets dataUsageKB to 80', () => {
     const tx = createResetRequestTransaction(makeLocation(), makeDriver(), GPS, '', '');
     expect(tx.dataUsageKB).toBe(80);
@@ -185,11 +222,21 @@ describe('createResetRequestTransaction()', () => {
     const tx = createResetRequestTransaction(makeLocation(), makeDriver(), null, '', '');
     expect(tx.gps).toEqual({ lat: 0, lng: 0 });
   });
+
+  it('emits transaction_built event', () => {
+    const tx = createResetRequestTransaction(makeLocation(), makeDriver(), GPS, 'photo.jpg', 'note');
+    expect(mockEventBusEmit).toHaveBeenCalledTimes(1);
+    expect(mockEventBusEmit).toHaveBeenCalledWith('transaction_built', tx);
+  });
 });
 
 // ── createCollectionTransaction ────────────────────────────────────────────
 
 describe('createCollectionTransaction()', () => {
+  beforeEach(() => {
+    mockEventBusEmit.mockClear();
+  });
+
   it('returns a transaction with type collection', () => {
     const tx = createCollectionTransaction(makeLocation(), makeDriver(), GPS, 600);
     expect(tx.type).toBe('collection');
@@ -198,6 +245,11 @@ describe('createCollectionTransaction()', () => {
   it('sets approvalStatus to approved', () => {
     const tx = createCollectionTransaction(makeLocation(), makeDriver(), GPS, 600);
     expect(tx.approvalStatus).toBe('approved');
+  });
+
+  it('sets auditStatus to pending', () => {
+    const tx = createCollectionTransaction(makeLocation(), makeDriver(), GPS, 600);
+    expect(tx.auditStatus).toBe('pending');
   });
 
   it('sets currentScore from argument', () => {
@@ -300,5 +352,11 @@ describe('createCollectionTransaction()', () => {
   it('defaults gps to {0,0} when gpsCoords is null', () => {
     const tx = createCollectionTransaction(makeLocation(), makeDriver(), null, 600);
     expect(tx.gps).toEqual({ lat: 0, lng: 0 });
+  });
+
+  it('emits transaction_built event', () => {
+    const tx = createCollectionTransaction(makeLocation(), makeDriver(), GPS, 600);
+    expect(mockEventBusEmit).toHaveBeenCalledTimes(1);
+    expect(mockEventBusEmit).toHaveBeenCalledWith('transaction_built', tx);
   });
 });

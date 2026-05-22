@@ -12,6 +12,7 @@ import { useAppData } from '../contexts/DataContext';
 import { useMutations } from '../contexts/MutationContext';
 import { logFinanceAudit, logFinanceAuditBatch } from '../services/financeAuditService';
 import { Driver, Location, TRANSLATIONS } from '../types';
+import { Money } from '../utils/money';
 
 import FinanceAuditPanel from './dashboard/FinanceAuditPanel';
 
@@ -77,8 +78,8 @@ function buildDriverAuditEntries(
       entity_id: driver.id,
       entity_name: driver.name,
       actor_id: actorId,
-      old_value: driver.remainingDebt ?? 0,
-      new_value: updatedDriver.remainingDebt,
+      old_value: Money.tzs(driver.remainingDebt ?? 0),
+      new_value: Money.tzs(updatedDriver.remainingDebt),
     });
   }
 
@@ -89,8 +90,8 @@ function buildDriverAuditEntries(
       entity_id: driver.id,
       entity_name: driver.name,
       actor_id: actorId,
-      old_value: driver.dailyFloatingCoins ?? 0,
-      new_value: updatedDriver.dailyFloatingCoins,
+      old_value: Money.tzs(driver.dailyFloatingCoins ?? 0),
+      new_value: Money.tzs(updatedDriver.dailyFloatingCoins),
     });
   }
 
@@ -165,8 +166,8 @@ const DebtManager: React.FC<DebtManagerProps> = () => {
         entity_id: locationId,
         entity_name: targetLocation?.name,
         actor_id: activeDriverId,
-        old_value: targetLocation?.remainingStartupDebt ?? 0,
-        new_value: nextDebt,
+        old_value: Money.tzs(targetLocation?.remainingStartupDebt ?? 0),
+        new_value: Money.tzs(nextDebt),
         payload: { recoveryAmount: amount },
       });
       scheduleSuccessPulse(setSuccessPulse, locationId);

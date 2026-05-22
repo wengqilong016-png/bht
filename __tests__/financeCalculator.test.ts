@@ -72,16 +72,16 @@ function makeInput(overrides: Partial<CollectionFinanceInput> = {}): CollectionF
 describe('calculateCollectionFinanceLocal', () => {
   it('returns zero result when selectedLocation is null', () => {
     const result = calculateCollectionFinanceLocal(makeInput({ selectedLocation: null }));
-    expect(result.diff).toBe(0);
-    expect(result.revenue).toBe(0);
-    expect(result.netPayable).toBe(0);
+    expect(result.diff.toNumber()).toBe(0);
+    expect(result.revenue.toNumber()).toBe(0);
+    expect(result.netPayable.toNumber()).toBe(0);
     expect(result.source).toBe('local');
   });
 
   it('returns zero result when selectedLocation is undefined', () => {
     const result = calculateCollectionFinanceLocal(makeInput({ selectedLocation: undefined }));
-    expect(result.diff).toBe(0);
-    expect(result.revenue).toBe(0);
+    expect(result.diff.toNumber()).toBe(0);
+    expect(result.revenue.toNumber()).toBe(0);
   });
 
   it('calculates diff, revenue, and commission correctly', () => {
@@ -89,34 +89,34 @@ describe('calculateCollectionFinanceLocal', () => {
     // revenue = 200 * COIN_VALUE_TZS (200) = 40 000
     // commission = floor(40000 * 0.15) = 6 000
     const result = calculateCollectionFinanceLocal(makeInput());
-    expect(result.diff).toBe(200);
-    expect(result.revenue).toBe(200 * CONSTANTS.COIN_VALUE_TZS);
-    expect(result.commission).toBe(Math.floor(200 * CONSTANTS.COIN_VALUE_TZS * 0.15));
+    expect(result.diff.toNumber()).toBe(200);
+    expect(result.revenue.toNumber()).toBe(200 * CONSTANTS.COIN_VALUE_TZS);
+    expect(result.commission.toNumber()).toBe(Math.floor(200 * CONSTANTS.COIN_VALUE_TZS * 0.15));
     expect(result.source).toBe('local');
   });
 
   it('treats commissionRate 0 as a valid zero percent rate', () => {
     const loc = makeLocation({ commissionRate: 0 });
     const result = calculateCollectionFinanceLocal(makeInput({ selectedLocation: loc }));
-    expect(result.commission).toBe(0);
+    expect(result.commission.toNumber()).toBe(0);
   });
 
   it('clamps diff to 0 when currentScore <= lastScore', () => {
     // score 900 < lastScore 1000 → diff 0
     const result = calculateCollectionFinanceLocal(makeInput({ currentScore: '900' }));
-    expect(result.diff).toBe(0);
-    expect(result.revenue).toBe(0);
+    expect(result.diff.toNumber()).toBe(0);
+    expect(result.revenue.toNumber()).toBe(0);
   });
 
   it('deducts expenses from netPayable', () => {
     // diff=200, revenue=40000, commission=6000, subtract expenses 5000
     const result = calculateCollectionFinanceLocal(makeInput({ expenses: '5000' }));
-    expect(result.netPayable).toBe(40000 - 6000 - 5000);
+    expect(result.netPayable.toNumber()).toBe(40000 - 6000 - 5000);
   });
 
   it('deducts tip from netPayable', () => {
     const result = calculateCollectionFinanceLocal(makeInput({ tip: '2000' }));
-    expect(result.netPayable).toBe(40000 - 6000 - 2000);
+    expect(result.netPayable.toNumber()).toBe(40000 - 6000 - 2000);
   });
 
   it('adds merchant debt repayment up to remaining startup debt', () => {
@@ -126,13 +126,13 @@ describe('calculateCollectionFinanceLocal', () => {
         startupDebtDeduction: '9000',
       }),
     );
-    expect(result.startupDebtDeduction).toBe(7000);
-    expect(result.netPayable).toBe(40000 - 6000 + 7000);
+    expect(result.startupDebtDeduction.toNumber()).toBe(7000);
+    expect(result.netPayable.toNumber()).toBe(40000 - 6000 + 7000);
   });
 
   it('clamps netPayable to 0 when deductions exceed revenue', () => {
     const result = calculateCollectionFinanceLocal(makeInput({ expenses: '99999' }));
-    expect(result.netPayable).toBe(0);
+    expect(result.netPayable.toNumber()).toBe(0);
   });
 
   it('applies owner retention (explicit amount)', () => {
@@ -140,8 +140,8 @@ describe('calculateCollectionFinanceLocal', () => {
     const result = calculateCollectionFinanceLocal(
       makeInput({ isOwnerRetaining: true, ownerRetention: '6000' }),
     );
-    expect(result.finalRetention).toBe(6000);
-    expect(result.netPayable).toBe(40000 - 6000);
+    expect(result.finalRetention.toNumber()).toBe(6000);
+    expect(result.netPayable.toNumber()).toBe(40000 - 6000);
   });
 
   it('falls back to commission when ownerRetention is empty string', () => {
@@ -149,14 +149,14 @@ describe('calculateCollectionFinanceLocal', () => {
     const result = calculateCollectionFinanceLocal(
       makeInput({ isOwnerRetaining: true, ownerRetention: '' }),
     );
-    expect(result.finalRetention).toBe(result.commission);
+    expect(result.finalRetention.toNumber()).toBe(result.commission.toNumber());
   });
 
   it('uses ownerRetention for direct-pay mode too', () => {
     const result = calculateCollectionFinanceLocal(
       makeInput({ isOwnerRetaining: false, ownerRetention: '9999' }),
     );
-    expect(result.finalRetention).toBe(9999);
+    expect(result.finalRetention.toNumber()).toBe(9999);
   });
 
   it('calculates remainingCoins with initialFloat and coinExchange', () => {
@@ -165,7 +165,7 @@ describe('calculateCollectionFinanceLocal', () => {
     const result = calculateCollectionFinanceLocal(
       makeInput({ initialFloat: 5000, coinExchange: '10000' }),
     );
-    expect(result.remainingCoins).toBe(29000);
+    expect(result.remainingCoins.toNumber()).toBe(29000);
     expect(result.isCoinStockNegative).toBe(false);
   });
 
@@ -181,15 +181,15 @@ describe('calculateCollectionFinanceLocal', () => {
     const result = calculateCollectionFinanceLocal(
       makeInput({ currentScore: 'abc', expenses: 'xyz' }),
     );
-    expect(result.diff).toBe(0);
-    expect(result.revenue).toBe(0);
+    expect(result.diff.toNumber()).toBe(0);
+    expect(result.revenue.toNumber()).toBe(0);
   });
 
   it('applies Math.abs to expenses and tip (aligns with server ABS)', () => {
     // negative tip must be treated as positive deduction, same as server
     // diff=200, revenue=40000, commission=6000, tip=-1000 should be treated as 1000 deduction
     const result = calculateCollectionFinanceLocal(makeInput({ tip: '-1000' }));
-    expect(result.netPayable).toBe(40000 - 6000 - 1000); // 33000, not 35000
+    expect(result.netPayable.toNumber()).toBe(40000 - 6000 - 1000); // 33000, not 35000
   });
 });
 
@@ -200,22 +200,22 @@ describe('calculateCollectionFinanceLocal — edge cases', () => {
     // Score > 100 000 is silently clamped, producing at most 100 000 - lastScore diff
     const result = calculateCollectionFinanceLocal(makeInput({ currentScore: '2147483647' }));
     // lastScore=1000, MAX=100000 → diff=99000, revenue=19 800 000
-    expect(result.diff).toBe(100000 - 1000);
-    expect(result.revenue).toBe(99000 * CONSTANTS.COIN_VALUE_TZS);
+    expect(result.diff.toNumber()).toBe(100000 - 1000);
+    expect(result.revenue.toNumber()).toBe(99000 * CONSTANTS.COIN_VALUE_TZS);
   });
 
   it('caps currentScore at MAX_REASONABLE_SCORE when it equals exactly 100 000', () => {
     const result = calculateCollectionFinanceLocal(makeInput({ currentScore: '100000' }));
-    expect(result.diff).toBe(100000 - 1000);
-    expect(result.revenue).toBe(99000 * CONSTANTS.COIN_VALUE_TZS);
+    expect(result.diff.toNumber()).toBe(100000 - 1000);
+    expect(result.revenue.toNumber()).toBe(99000 * CONSTANTS.COIN_VALUE_TZS);
   });
 
   it('clamps netPayable to 0 when expenses alone exceed revenue', () => {
     // diff=200, revenue=40000, commission=6000, expenses=50000 → netPayable=0
     const result = calculateCollectionFinanceLocal(makeInput({ expenses: '50000' }));
-    expect(result.diff).toBe(200);
-    expect(result.revenue).toBe(40000);
-    expect(result.netPayable).toBe(0);
+    expect(result.diff.toNumber()).toBe(200);
+    expect(result.revenue.toNumber()).toBe(40000);
+    expect(result.netPayable.toNumber()).toBe(0);
     // revenue is still 40000 — only netPayable is clamped
   });
 
@@ -223,12 +223,12 @@ describe('calculateCollectionFinanceLocal — edge cases', () => {
     // revenue=40000, commission=6000, expenses=20000 + tip=20000 = 40000 deductions
     // availableAfterCoreDeductions = 40000-6000-20000-20000 = -6000 → clamped to 0
     const result = calculateCollectionFinanceLocal(makeInput({ expenses: '20000', tip: '20000' }));
-    expect(result.diff).toBe(200);
-    expect(result.revenue).toBe(40000);
-    expect(result.netPayable).toBe(0);
+    expect(result.diff.toNumber()).toBe(200);
+    expect(result.revenue.toNumber()).toBe(40000);
+    expect(result.netPayable.toNumber()).toBe(0);
     // finalRetention and commission remain computed normally
-    expect(result.commission).toBe(6000);
-    expect(result.finalRetention).toBe(6000);
+    expect(result.commission.toNumber()).toBe(6000);
+    expect(result.finalRetention.toNumber()).toBe(6000);
   });
 
   it('clamps expenses + tip > revenue even with ownerRetention override', () => {
@@ -237,8 +237,8 @@ describe('calculateCollectionFinanceLocal — edge cases', () => {
     const result = calculateCollectionFinanceLocal(
       makeInput({ expenses: '20000', tip: '15000', isOwnerRetaining: true, ownerRetention: '10000' }),
     );
-    expect(result.netPayable).toBe(0);
-    expect(result.finalRetention).toBe(10000);
+    expect(result.netPayable.toNumber()).toBe(0);
+    expect(result.finalRetention.toNumber()).toBe(10000);
   });
 
   it('clamps startupDebtDeduction to remainingStartupDebt when request exceeds balance', () => {
@@ -247,7 +247,7 @@ describe('calculateCollectionFinanceLocal — edge cases', () => {
     const result = calculateCollectionFinanceLocal(
       makeInput({ selectedLocation: loc, startupDebtDeduction: '99999' }),
     );
-    expect(result.startupDebtDeduction).toBe(5000);
+    expect(result.startupDebtDeduction.toNumber()).toBe(5000);
   });
 
   it('netPayable is 0 when every deduction is extreme', () => {
@@ -258,7 +258,7 @@ describe('calculateCollectionFinanceLocal — edge cases', () => {
     const result = calculateCollectionFinanceLocal(
       makeInput({ expenses: '99999', tip: '99999', isOwnerRetaining: true, ownerRetention: '99999' }),
     );
-    expect(result.netPayable).toBe(0);
+    expect(result.netPayable.toNumber()).toBe(0);
     expect(result.isCoinStockNegative).toBe(false);
   });
 
@@ -267,8 +267,8 @@ describe('calculateCollectionFinanceLocal — edge cases', () => {
     const result = calculateCollectionFinanceLocal(
       makeInput({ selectedLocation: loc, startupDebtDeduction: '50000' }),
     );
-    expect(result.startupDebtDeduction).toBe(0);
-    expect(result.netPayable).toBe(40000 - 6000);
+    expect(result.startupDebtDeduction.toNumber()).toBe(0);
+    expect(result.netPayable.toNumber()).toBe(40000 - 6000);
   });
 });
 
@@ -278,8 +278,8 @@ describe('calculateCollectionFinanceLocal — 极限值 (extreme values)', () =>
   it('clamps currentScore at MAX_REASONABLE_SCORE even for 2^31-1 (PostgreSQL INTEGER max)', () => {
     // PostgreSQL INTEGER: -2147483648 to 2147483647
     const result = calculateCollectionFinanceLocal(makeInput({ currentScore: '2147483647' }));
-    expect(result.diff).toBe(100000 - 1000); // MAX_REASONABLE_SCORE 100000 - lastScore 1000
-    expect(result.revenue).toBe(99000 * CONSTANTS.COIN_VALUE_TZS);
+    expect(result.diff.toNumber()).toBe(100000 - 1000); // MAX_REASONABLE_SCORE 100000 - lastScore 1000
+    expect(result.revenue.toNumber()).toBe(99000 * CONSTANTS.COIN_VALUE_TZS);
     expect(result.source).toBe('local');
   });
 
@@ -288,8 +288,8 @@ describe('calculateCollectionFinanceLocal — 极限值 (extreme values)', () =>
     const result = calculateCollectionFinanceLocal(makeInput({ currentScore: '-2147483648' }));
     // Math.min(Math.floor(-2147483648), 100000) = -2147483648
     // Math.max(0, -2147483648 - 1000) = 0
-    expect(result.diff).toBe(0);
-    expect(result.revenue).toBe(0);
+    expect(result.diff.toNumber()).toBe(0);
+    expect(result.revenue.toNumber()).toBe(0);
   });
 
   it('currentScore = 0 with lastScore = 0 → diff=0, revenue=0', () => {
@@ -297,26 +297,26 @@ describe('calculateCollectionFinanceLocal — 极限值 (extreme values)', () =>
     const result = calculateCollectionFinanceLocal(
       makeInput({ selectedLocation: loc, currentScore: '0' }),
     );
-    expect(result.diff).toBe(0);
-    expect(result.revenue).toBe(0);
-    expect(result.netPayable).toBe(0);
+    expect(result.diff.toNumber()).toBe(0);
+    expect(result.revenue.toNumber()).toBe(0);
+    expect(result.netPayable.toNumber()).toBe(0);
   });
 
   it('expenses + tip exactly equal to revenue → netPayable=0 at boundary', () => {
     // diff=200, revenue=40000, commission=6000
     // expenses=34000, tip=0 → availableAfterCoreDeductions = 40000-6000-34000-0 = 0
     const result = calculateCollectionFinanceLocal(makeInput({ expenses: '34000', tip: '0' }));
-    expect(result.revenue).toBe(40000);
-    expect(result.netPayable).toBe(0);
+    expect(result.revenue.toNumber()).toBe(40000);
+    expect(result.netPayable.toNumber()).toBe(0);
     // diff and revenue are still computed, only netPayable is clamped
-    expect(result.diff).toBe(200);
+    expect(result.diff.toNumber()).toBe(200);
   });
 
   it('tip + expenses = revenue - commission boundary', () => {
     // revenue=40000, commission=6000
     // expenses=17000, tip=17000 → 40000-6000-17000-17000 = 0
     const result = calculateCollectionFinanceLocal(makeInput({ expenses: '17000', tip: '17000' }));
-    expect(result.netPayable).toBe(0);
+    expect(result.netPayable.toNumber()).toBe(0);
   });
 
   it('startupDebtDeduction exactly equals remainingStartupDebt', () => {
@@ -324,8 +324,8 @@ describe('calculateCollectionFinanceLocal — 极限值 (extreme values)', () =>
     const result = calculateCollectionFinanceLocal(
       makeInput({ selectedLocation: loc, startupDebtDeduction: '75000' }),
     );
-    expect(result.startupDebtDeduction).toBe(75000);
-    expect(result.netPayable).toBe(40000 - 6000 + 75000);
+    expect(result.startupDebtDeduction.toNumber()).toBe(75000);
+    expect(result.netPayable.toNumber()).toBe(40000 - 6000 + 75000);
   });
 
   it('startupDebtDeduction = 2147483647 with remainingStartupDebt = 100000 → clamped to 100000', () => {
@@ -334,7 +334,7 @@ describe('calculateCollectionFinanceLocal — 极限值 (extreme values)', () =>
     const result = calculateCollectionFinanceLocal(
       makeInput({ selectedLocation: loc, startupDebtDeduction: '2147483647' }),
     );
-    expect(result.startupDebtDeduction).toBe(100000);
+    expect(result.startupDebtDeduction.toNumber()).toBe(100000);
   });
 
   it('combined extremes: max currentScore + max expenses + max tip + max ownerRetention', () => {
@@ -352,25 +352,25 @@ describe('calculateCollectionFinanceLocal — 极限值 (extreme values)', () =>
         ownerRetention: '999999',
       }),
     );
-    expect(result.diff).toBe(99000);
-    expect(result.revenue).toBe(19800000);
-    expect(result.commission).toBe(2970000);
-    expect(result.finalRetention).toBe(999999);
-    expect(result.netPayable).toBe(19800000 - 999999 - 999999 - 999999);
+    expect(result.diff.toNumber()).toBe(99000);
+    expect(result.revenue.toNumber()).toBe(19800000);
+    expect(result.commission.toNumber()).toBe(2970000);
+    expect(result.finalRetention.toNumber()).toBe(999999);
+    expect(result.netPayable.toNumber()).toBe(19800000 - 999999 - 999999 - 999999);
     expect(result.source).toBe('local');
   });
 
   it('expenses as negative string still treated as positive deduction', () => {
     // Math.abs(-5000) = 5000 deducted
     const result = calculateCollectionFinanceLocal(makeInput({ expenses: '-5000' }));
-    expect(result.netPayable).toBe(40000 - 6000 - 5000);
+    expect(result.netPayable.toNumber()).toBe(40000 - 6000 - 5000);
   });
 
   it('commissionRate = 1 (100%) consumes all revenue', () => {
     const loc = makeLocation({ commissionRate: 1 });
     const result = calculateCollectionFinanceLocal(makeInput({ selectedLocation: loc }));
-    expect(result.commission).toBe(40000); // 100% of 40000
-    expect(result.netPayable).toBe(0); // revenue - commission = 0
+    expect(result.commission.toNumber()).toBe(40000); // 100% of 40000
+    expect(result.netPayable.toNumber()).toBe(0); // revenue - commission = 0
   });
 
   it('commissionRate = 1.5 (150%) — revenue floor still applies', () => {
@@ -378,8 +378,8 @@ describe('calculateCollectionFinanceLocal — 极限值 (extreme values)', () =>
     // netPayable = max(0, 40000 - 60000) = 0
     const loc = makeLocation({ commissionRate: 1.5 });
     const result = calculateCollectionFinanceLocal(makeInput({ selectedLocation: loc }));
-    expect(result.commission).toBe(60000);
-    expect(result.netPayable).toBe(0);
+    expect(result.commission.toNumber()).toBe(60000);
+    expect(result.netPayable.toNumber()).toBe(0);
   });
 });
 
@@ -461,12 +461,12 @@ describe('calculateCollectionFinancePreview — SQL contract', () => {
 
     const result = await calculateCollectionFinancePreview(makeInput());
     expect(result.source).toBe('server');
-    expect(result.diff).toBe(200);
-    expect(result.revenue).toBe(40000);
+    expect(result.diff.toNumber()).toBe(200);
+    expect(result.revenue.toNumber()).toBe(40000);
     // Fallback from local: commission=6000, finalRetention=6000, netPayable=34000
-    expect(result.commission).toBe(6000);
-    expect(result.finalRetention).toBe(6000);
-    expect(result.netPayable).toBe(34000);
+    expect(result.commission.toNumber()).toBe(6000);
+    expect(result.finalRetention.toNumber()).toBe(6000);
+    expect(result.netPayable.toNumber()).toBe(34000);
   });
 
   it('treats server diff=0 correctly (no revenue)', async () => {
@@ -477,9 +477,9 @@ describe('calculateCollectionFinancePreview — SQL contract', () => {
 
     const result = await calculateCollectionFinancePreview(makeInput({ currentScore: '500' }));
     expect(result.source).toBe('server');
-    expect(result.diff).toBe(0);
-    expect(result.revenue).toBe(0);
-    expect(result.netPayable).toBe(0);
+    expect(result.diff.toNumber()).toBe(0);
+    expect(result.revenue.toNumber()).toBe(0);
+    expect(result.netPayable.toNumber()).toBe(0);
   });
 
   it('submit_collection_v2 idempotency: server returns persisted row on conflict', async () => {
@@ -501,9 +501,9 @@ describe('calculateCollectionFinancePreview — SQL contract', () => {
     // But server returns persisted row (ON CONFLICT for same txId) with different values
     const result = await calculateCollectionFinancePreview(makeInput());
     expect(result.source).toBe('server');
-    expect(result.revenue).toBe(30000);
-    expect(result.commission).toBe(4500);
-    expect(result.netPayable).toBe(25500);
+    expect(result.revenue.toNumber()).toBe(30000);
+    expect(result.commission.toNumber()).toBe(4500);
+    expect(result.netPayable.toNumber()).toBe(25500);
     // Local values are overridden by server-authoritative data
   });
 });
@@ -540,8 +540,8 @@ describe('calculateCollectionFinancePreview', () => {
 
     const result = await calculateCollectionFinancePreview(makeInput());
     expect(result.source).toBe('server');
-    expect(result.revenue).toBe(40000);
-    expect(result.netPayable).toBe(34000);
+    expect(result.revenue.toNumber()).toBe(40000);
+    expect(result.netPayable.toNumber()).toBe(34000);
   });
 
   it('incorporates coinExchange and initialFloat into remainingCoins from server path', async () => {
@@ -554,7 +554,7 @@ describe('calculateCollectionFinancePreview', () => {
       makeInput({ initialFloat: 5000, coinExchange: '10000' }),
     );
     expect(result.source).toBe('server');
-    expect(result.remainingCoins).toBe(35000); // 5000 + 40000 - 10000
+    expect(result.remainingCoins.toNumber()).toBe(35000); // 5000 + 40000 - 10000
   });
 
   it('falls back to local result when RPC returns an error', async () => {
@@ -695,7 +695,7 @@ describe('calculateCollectionFinancePreview', () => {
       makeInput({ coinExchange: '5000', initialFloat: 0 }),
     );
 
-    expect(result.remainingCoins).toBe(1700 - 5000); // negative
+    expect(result.remainingCoins.toNumber()).toBe(1700 - 5000); // negative
     expect(result.isCoinStockNegative).toBe(true);
   });
 });

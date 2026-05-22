@@ -55,7 +55,7 @@ import {
   buildCollectionSubmissionInput,
   type OrchestrateCollectionSubmissionInput,
 } from '../../services/collectionSubmissionOrchestrator';
-import { makeLocation, makeDriver, resetFixtureCounter } from '../helpers/fixtures';
+import { makeLocation, makeDriver, resetFixtureCounter, mockCalc } from '../helpers/fixtures';
 
 function makeOrchestratorInput(
   overrides: Partial<OrchestrateCollectionSubmissionInput> = {},
@@ -77,16 +77,15 @@ function makeOrchestratorInput(
     draftTxId: 'draft-001',
     isOwnerRetaining: false,
     ownerRetention: '',
-    calculations: {
-      diff: 200,
-      revenue: 200,
-      commission: 60,
-      finalRetention: 140,
+    calculations: mockCalc({
+      diff: 50,
+      revenue: 50,
+      commission: 10,
+      finalRetention: 12,
       startupDebtDeduction: 0,
-      netPayable: 140,
-      remainingCoins: 100,
-      isCoinStockNegative: false,
-    },
+      netPayable: 8,
+      remainingCoins: 20,
+    }),
     resolvedGps: { lat: -6.7924, lng: 39.2083 },
     gpsSourceType: 'live',
     ...overrides,

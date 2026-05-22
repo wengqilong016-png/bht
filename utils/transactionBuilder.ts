@@ -1,4 +1,5 @@
 import { Transaction, Location, Driver, safeRandomUUID } from '../types';
+import { eventBus } from './eventBus';
 
 /**
  * Common fields shared across all transaction types
@@ -67,7 +68,7 @@ export function createPayoutRequestTransaction(
   payoutAmount: number,
   notes: string
 ): Transaction {
-  return {
+  const tx: Transaction = {
     id: `PAY-${safeRandomUUID()}`,
     timestamp: new Date().toISOString(),
     ...createBaseTransaction(location, driver, gpsCoords),
@@ -75,11 +76,14 @@ export function createPayoutRequestTransaction(
     dataUsageKB: 40,
     type: 'payout_request',
     approvalStatus: 'pending',
+    auditStatus: 'pending',
     payoutAmount,
     notes,
     // currentScore is intentionally lastScore (inherited from createBaseTransaction):
     // payout requests do not carry a new meter reading.
   };
+  eventBus.emit('transaction_built', tx);
+  return tx;
 }
 
 /**
@@ -92,7 +96,7 @@ export function createResetRequestTransaction(
   photoUrl: string,
   notes: string
 ): Transaction {
-  return {
+  const tx: Transaction = {
     id: `RST-${safeRandomUUID()}`,
     timestamp: new Date().toISOString(),
     ...createBaseTransaction(location, driver, gpsCoords),
@@ -101,10 +105,13 @@ export function createResetRequestTransaction(
     dataUsageKB: 80,
     type: 'reset_request',
     approvalStatus: 'pending',
+    auditStatus: 'pending',
     notes,
     // currentScore is intentionally lastScore (inherited from createBaseTransaction):
     // reset requests do not carry a new meter reading.
   };
+  eventBus.emit('transaction_built', tx);
+  return tx;
 }
 
 /**
@@ -137,7 +144,7 @@ export function createCollectionTransaction(
   const base = createBaseTransaction(location, driver, gpsCoords);
   const financials = createDefaultFinancials();
 
-  return {
+  const tx: Transaction = {
     id: options.txId || `TX-${safeRandomUUID()}`,
     timestamp: new Date().toISOString(),
     ...base,
@@ -157,9 +164,12 @@ export function createCollectionTransaction(
     dataUsageKB: options.dataUsageKB ?? 100,
     type: 'collection',
     approvalStatus: 'approved',
+    auditStatus: 'pending',
     notes: options.notes,
     anomalyFlag: options.anomalyFlag,
   };
+  eventBus.emit('transaction_built', tx);
+  return tx;
 }
 
 export function createExpenseTransaction(
@@ -174,7 +184,7 @@ export function createExpenseTransaction(
     notes?: string;
   }
 ): Transaction {
-  return {
+  const tx: Transaction = {
     id: `EXP-${safeRandomUUID()}`,
     timestamp: new Date().toISOString(),
     ...createBaseTransaction(location, driver, gpsCoords),
@@ -182,6 +192,7 @@ export function createExpenseTransaction(
     dataUsageKB: 40,
     type: 'expense',
     approvalStatus: 'pending',
+    auditStatus: 'pending',
     expenseStatus: 'pending',
     expenses: options.amount,
     expenseType: options.expenseType,
@@ -191,4 +202,6 @@ export function createExpenseTransaction(
     // currentScore is intentionally lastScore (inherited from createBaseTransaction):
     // expense transactions do not carry a new meter reading.
   };
+  eventBus.emit('transaction_built', tx);
+  return tx;
 }

@@ -22,7 +22,17 @@ export const CONSTANTS = {
   /** Minimum absolute difference between user-entered score and AI-recognised score
    *  to flag a transaction as anomalous. Increase to reduce false-positives. */
   ANOMALY_SCORE_DIFF_THRESHOLD: 50,
-  /** Hard cap on user-entered score values to prevent absurd amounts
-   *  from producing astronomical diff/revenue calculations. */
+  /**
+   * Client-side auxiliary score cap.
+   * 
+   * ⚠️  This is a UI convenience clamp, NOT a security boundary.
+   *     The SERVER (submit_collection_v2 RPC + DB CHECK constraints)
+   *     is the authoritative defense line. This constant exists solely
+   *     to give the user early feedback — the server will independently
+   *     validate every submitted value and reject out-of-range amounts
+   *     regardless of what the client sends.
+   * 
+   *     Server authoritative limit: 1,000,000 (see migration 20260522000000)
+   */
   MAX_REASONABLE_SCORE: 100000,
 } as const;

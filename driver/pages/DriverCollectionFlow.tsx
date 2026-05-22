@@ -15,6 +15,7 @@ import { Location, CONSTANTS, safeRandomUUID } from '../../types';
 import { getTodayLocalDate } from '../../utils/dateUtils';
 import { createExpenseTransaction } from '../../utils/transactionBuilder';
 import FinanceSummary from '../components/FinanceSummary';
+import type { FinanceSummaryCalculations } from '../components/finance/FinanceSummarySections';
 import MachineSelector from '../components/MachineSelector';
 import PayoutRequest from '../components/PayoutRequest';
 import ReadingCapture from '../components/ReadingCapture';
@@ -116,7 +117,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
       selectedLocation &&
       draft.currentScore &&
       draft.isOwnerRetaining &&
-      (draft.ownerRetention === '' || (draft.ownerRetention === '0' && financeResult.commission > 0))
+      (draft.ownerRetention === '' ||      (draft.ownerRetention === '0' && financeResult.commission.toNumber() > 0))
     ) {
       const score = parseInt(draft.currentScore) || 0;
       const diff = Math.max(0, score - selectedLocation.lastScore);
@@ -456,8 +457,8 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
           onSwitchMachine={handleSwitchMachine}
           nextMachine={nextQueuedMachine}
           pendingCount={remainingPendingStops}
-          revenue={financeResult.revenue}
-          diff={financeResult.diff}
+          revenue={financeResult.revenue.toNumber()}
+          diff={financeResult.diff.toNumber()}
         />
       </div>
     );
@@ -476,7 +477,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
           isOwnerRetaining={draft.isOwnerRetaining}
           tip={draft.tip}
           startupDebtDeduction={draft.startupDebtDeduction}
-          calculations={financeResult}
+          calculations={financeResult as unknown as FinanceSummaryCalculations}
           previewSource={financeResult.source}
           onUpdateCoinExchange={(v) => updateDraft({ coinExchange: v })}
           onUpdateOwnerRetention={(v) => updateDraft({ ownerRetention: v })}
@@ -515,7 +516,7 @@ const DriverCollectionFlow: React.FC<DriverCollectionFlowProps> = ({
         gpsPermission={draft.gpsPermission}
         isOwnerRetaining={draft.isOwnerRetaining}
         ownerRetention={draft.ownerRetention}
-        calculations={financeResult}
+        calculations={financeResult as any}
         onSubmit={async (result) => {
           recordFlowEvent(
             result.source === 'server' ? 'submit_success' : 'submit_offline_queued',

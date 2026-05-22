@@ -108,3 +108,39 @@ export function makeUser(overrides: Partial<User> = {}): User {
 export function resetFixtureCounter(): void {
   counter = 0;
 }
+
+/**
+ * Create a mock CollectionSubmissionCalculations object from plain numbers.
+ * Each field gets a minimal Money-like object with .toNumber() for tests.
+ */
+export function mockCalc(v: {
+  diff?: number; revenue?: number; commission?: number;
+  finalRetention?: number; startupDebtDeduction?: number;
+  netPayable?: number; remainingCoins?: number;
+} = {}): any {
+  const m = (n: number) => ({
+    toNumber: () => n,
+    isNegative: () => n < 0,
+    isZero: () => n === 0,
+    isPositive: () => n > 0,
+    equals: (o: any) => o?.toNumber?.() === n,
+    isGreaterThan: (o: any) => n > (o?.toNumber?.() ?? 0),
+    isLessThan: (o: any) => n < (o?.toNumber?.() ?? 0),
+    isGreaterThanOrEqual: (o: any) => n >= (o?.toNumber?.() ?? 0),
+    isLessThanOrEqual: (o: any) => n <= (o?.toNumber?.() ?? 0),
+    toDecimal: () => String(n),
+    toJSON: () => ({ amount: String(n), currency: 'TZS' }),
+    toString: () => `${n} TZS`,
+  });
+  return {
+    diff: m(v.diff ?? 200),
+    revenue: m(v.revenue ?? 40000),
+    commission: m(v.commission ?? 6000),
+    finalRetention: m(v.finalRetention ?? 6000),
+    startupDebtDeduction: m(v.startupDebtDeduction ?? 0),
+    netPayable: m(v.netPayable ?? 34000),
+    remainingCoins: m(v.remainingCoins ?? 29000),
+    isCoinStockNegative: (v.remainingCoins ?? 29000) < 0,
+    source: 'local',
+  };
+}

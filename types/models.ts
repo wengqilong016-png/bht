@@ -108,6 +108,9 @@ export interface Transaction {
   payoutAmount?: number;
 
   anomalyFlag?: boolean;
+
+  /** Transaction audit status: pending → done/failed (ADR-002 async audit) */
+  auditStatus?: 'pending' | 'done' | 'failed';
 }
 
 export interface Driver {
@@ -309,5 +312,26 @@ export interface DriverFlowEvent {
   errorCategory?: string | null;
   durationMs?: number | null;
   payload?: Record<string, unknown>;
+  createdAt: string;
+}
+
+/**
+ * Transaction audit log entry (ADR-002 async audit pipeline).
+ * Written by AuditConsumer after consuming a transaction_built event.
+ */
+export interface TransactionAuditLogEntry {
+  id: string;
+  transactionId: string;
+  transactionType: string;
+  locationId: string;
+  driverId: string;
+  /** Key fields checked during audit (at minimum: semantic + power-law dedup). */
+  checkedFields: string[];
+  /** Result: 'pass' or 'fail'. */
+  result: 'pass' | 'fail';
+  /** Human-readable failure reason if result === 'fail'. */
+  failureReason?: string;
+  /** Number of retry attempts (0 = first attempt). */
+  attempt: number;
   createdAt: string;
 }

@@ -14,6 +14,7 @@ import WizardStepBar from './WizardStepBar';
 import type { DriverFlowEventInput } from '../../services/driverFlowTelemetry';
 import type { Transaction } from '../../types';
 import type { AIReviewData } from '../hooks/useCollectionDraft';
+import type { CollectionSubmissionCalculations } from '../../services/collectionSubmissionOrchestrator';
 
 
 interface SubmitReviewProps {
@@ -263,7 +264,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       draftTxId,
       isOwnerRetaining,
       ownerRetention,
-      calculations,
+      calculations: calculations as unknown as CollectionSubmissionCalculations,
       resolvedGps,
       gpsSourceType,
     });

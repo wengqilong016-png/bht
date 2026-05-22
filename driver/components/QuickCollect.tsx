@@ -269,8 +269,8 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
         txId: result.transaction.id,
         previousScore: result.transaction.previousScore ?? entry.location.lastScore ?? 0,
         currentScore: result.transaction.currentScore ?? parsedScore,
-        revenue: result.transaction.revenue ?? calc.revenue,
-        netPayable: result.transaction.netPayable ?? calc.netPayable,
+        revenue: result.transaction.revenue ?? calc.revenue.toNumber(),
+        netPayable: result.transaction.netPayable ?? calc.netPayable.toNumber(),
         message: zeroRevenueAnomaly
           ? (lang === 'zh' ? '云端已记录但营业额为0' : 'Cloud recorded but revenue is 0')
           : result.source === 'server'
@@ -375,8 +375,8 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
           txId: draftTxId,
           previousScore: entry.location.lastScore ?? 0,
           currentScore: parsedScore,
-          revenue: calc.revenue,
-          netPayable: calc.netPayable,
+          revenue: calc.revenue.toNumber(),
+          netPayable: calc.netPayable.toNumber(),
           message: lang === 'zh' ? '提交失败' : 'Submit failed',
           detail: errorMessage || (lang === 'zh' ? '请截图联系管理员' : 'Screenshot and contact admin'),
         },
@@ -571,13 +571,13 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                       <div className="grid grid-cols-2 gap-2">
                         <div className="bg-slate-50 rounded-subcard px-3 py-2">
                           <span className="text-caption text-slate-400">{t.diff}</span>
-                          <span className={`ml-2 text-sm font-black ${fin.diff >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            {fin.diff >= 0 ? '+' : ''}{fin.diff.toLocaleString()}
+                          <span className={`ml-2 text-sm font-black ${fin.diff.toNumber() >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {fin.diff.toNumber() >= 0 ? '+' : ''}{fin.diff.toNumber().toLocaleString()}
                           </span>
                         </div>
                         <div className="bg-amber-50 rounded-subcard px-3 py-2">
                           <span className="text-caption text-slate-400">{t.revenue}</span>
-                          <span className="ml-2 text-sm font-black text-amber-700">TZS {fin.revenue.toLocaleString()}</span>
+                          <span className="ml-2 text-sm font-black text-amber-700">TZS {fin.revenue.toNumber().toLocaleString()}</span>
                         </div>
                       </div>
 
@@ -587,24 +587,24 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                           <span className="text-caption text-slate-400 block">
                             {lang === 'zh' ? '佣金' : 'Comm'}
                           </span>
-                          <span className="text-xs font-black text-slate-700">TZS {fin.commission.toLocaleString()}</span>
+                          <span className="text-xs font-black text-slate-700">TZS {fin.commission.toNumber().toLocaleString()}</span>
                         </div>
                         <div className="bg-slate-50 rounded-subcard px-2 py-1.5 text-center">
                           <span className="text-caption text-slate-400 block">
                             {lang === 'zh' ? '留存' : 'Retention'}
                           </span>
-                          <span className="text-xs font-black text-slate-700">TZS {fin.finalRetention.toLocaleString()}</span>
+                          <span className="text-xs font-black text-slate-700">TZS {fin.finalRetention.toNumber().toLocaleString()}</span>
                         </div>
                         <div
                           className={`rounded-subcard px-2 py-1.5 text-center ${
-                            fin.netPayable >= 0 ? 'bg-amber-50' : 'bg-rose-50'
+                            fin.netPayable.toNumber() >= 0 ? 'bg-amber-50' : 'bg-rose-50'
                           }`}
                         >
                           <span className="text-caption text-slate-400 block">
                             {lang === 'zh' ? '应付' : 'Net'}
                           </span>
-                          <span className={`text-xs font-black ${fin.netPayable >= 0 ? 'text-amber-700' : 'text-rose-600'}`}>
-                            TZS {fin.netPayable.toLocaleString()}
+                          <span className={`text-xs font-black ${fin.netPayable.toNumber() >= 0 ? 'text-amber-700' : 'text-rose-600'}`}>
+                            TZS {fin.netPayable.toNumber().toLocaleString()}
                           </span>
                           {fin.isCoinStockNegative && (
                             <span className="block text-[9px] text-rose-500 font-bold mt-0.5">

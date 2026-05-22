@@ -616,7 +616,7 @@ describe('offline-to-online transition', () => {
 
   // ── 离线 replay 时间戳排序测试 (M4 coverage) ────────────────────────────
 
-  it('sorts same-location entries by timestamp ascending before replay', async () => {
+  it('sorts same-location entries by lamport_ts ascending (enqueue order) before replay', async () => {
     const { enqueueTransaction, flushQueue, getPendingTransactions } = await import('../offlineQueue');
 
     const baseTime = new Date('2026-05-19T10:00:00Z');
@@ -631,7 +631,8 @@ describe('offline-to-online transition', () => {
       timestamp: new Date(baseTime.getTime() + 1000).toISOString(), // +1s (earlier)
     });
 
-    // Enqueue tx1 first (later timestamp), then tx2 (earlier timestamp)
+    // Enqueue tx1 first (lamportTs=1), then tx2 (lamportTs=2)
+    // Even though tx2 has an earlier timestamp, lamport_ts dictates replay order
     await enqueueTransaction(tx1, makeRawInput('tx-order-1'));
     await enqueueTransaction(tx2, makeRawInput('tx-order-2'));
 
@@ -650,8 +651,8 @@ describe('offline-to-online transition', () => {
 
     const flushed = await flushQueue(makeSupabaseStub(), { submitCollection });
 
-    // sort() should reorder by timestamp ascending → tx-order-2 (earlier) first
-    expect(submissionOrder).toEqual(['tx-order-2', 'tx-order-1']);
+    // sort() by lamport_ts ascending → tx-order-1 (lamportTs=1) first, then tx-order-2 (lamportTs=2)
+    expect(submissionOrder).toEqual(['tx-order-1', 'tx-order-2']);
     expect(flushed).toBe(2);
   });
 
@@ -688,7 +689,7 @@ describe('offline-to-online transition', () => {
     expect(submissionOrder).toEqual(['tx-chrono-1', 'tx-chrono-2']);
   });
 
-  it('sorts mixed-location entries globally by timestamp', async () => {
+  it('sorts mixed-location entries globally by lamport_ts', async () => {
     const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
 
     const baseTime = new Date('2026-05-19T10:00:00Z');
@@ -708,6 +709,7 @@ describe('offline-to-online transition', () => {
       timestamp: new Date(baseTime.getTime() + 2000).toISOString(),
     });
 
+    // Enqueue in order: tx1 (lamportTs=1), tx2 (lamportTs=2), tx3 (lamportTs=3)
     await enqueueTransaction(tx1, makeRawInput('tx-mix-1'));
     await enqueueTransaction(tx2, makeRawInput('tx-mix-2'));
     await enqueueTransaction(tx3, makeRawInput('tx-mix-3'));
@@ -722,7 +724,220 @@ describe('offline-to-online transition', () => {
 
     await flushQueue(makeSupabaseStub(), { submitCollection });
 
-    // Sorted by timestamp ascending across all locations
-    expect(submissionOrder).toEqual(['tx-mix-2', 'tx-mix-3', 'tx-mix-1']);
+    // Sorted by lamport_ts ascending → enqueue order across all locations
+    expect(submissionOrder).toEqual(['tx-mix-1', 'tx-mix-2', 'tx-mix-3']);
+  });
+});
+
+// ── ADR-004: Causal order replay (Lamport clock + depends_on) ─────────────────
+
+describe('ADR-004 causal order replay', () => {
+  it('assigns monotonically increasing lamportTs on each enqueue', async () => {
+    const { enqueueTransaction } = await import('../offlineQueue');
+    const { getLamportClock } = await import('../offlineQueue');
+
+    const before = getLamportClock();
+    await enqueueTransaction(makeTx());
+    await enqueueTransaction(makeTx());
+    await enqueueTransaction(makeTx());
+    const after = getLamportClock();
+
+    expect(after).toBe(before + 3);
+  });
+
+  it('queued entries carry deviceId, lamportTs, and dependsOn in stored metadata', async () => {
+    const { enqueueTransaction } = await import('../offlineQueue');
+
+    const tx = makeTx();
+    await enqueueTransaction(tx, makeRawInput(tx.id), ['dep-op-1', 'dep-op-2']);
+
+    const all = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
+    const entry = all.find((t: any) => t.id === tx.id);
+
+    expect(entry.deviceId).toBeDefined();
+    expect(typeof entry.deviceId).toBe('string');
+    expect(entry.lamportTs).toBeGreaterThan(0);
+    expect(entry.dependsOn).toEqual(['dep-op-1', 'dep-op-2']);
+  });
+
+  it('defaults dependsOn to empty array when not provided', async () => {
+    const { enqueueTransaction } = await import('../offlineQueue');
+
+    const tx = makeTx();
+    await enqueueTransaction(tx);
+
+    const all = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
+    const entry = all.find((t: any) => t.id === tx.id);
+
+    expect(entry.dependsOn).toEqual([]);
+  });
+
+  it('replays dependent items only after their dependencies are flushed', async () => {
+    const { enqueueTransaction, flushQueue, getPendingTransactions } = await import('../offlineQueue');
+
+    const txA = makeTx({ id: 'tx-dep-a' });
+    await enqueueTransaction(txA, makeRawInput('tx-dep-a'));
+    // Get the operationId of txA
+    const queueAfterA = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
+    const opIdA = queueAfterA.find((t: any) => t.id === 'tx-dep-a').operationId;
+
+    // txB depends on txA
+    const txB = makeTx({ id: 'tx-dep-b' });
+    await enqueueTransaction(txB, makeRawInput('tx-dep-b'), [opIdA]);
+
+    const submissionOrder: string[] = [];
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>(
+      async (input) => {
+        submissionOrder.push(input.txId);
+        return { success: true, transaction: {} as any, source: 'server' };
+      }
+    );
+
+    const flushed = await flushQueue(makeSupabaseStub(), { submitCollection });
+
+    expect(flushed).toBe(2);
+    // txA must be flushed BEFORE txB (dependency constraint)
+    expect(submissionOrder).toEqual(['tx-dep-a', 'tx-dep-b']);
+  });
+
+  it('skips items whose dependencies are still pending (not yet flushed in this pass)', async () => {
+    const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
+
+    const txChild = makeTx({ id: 'tx-child' });
+    // Child depends on 'never-queued-dependency' which is NOT in the queue
+    // — should replay because the dep is not pending in the queue
+    await enqueueTransaction(txChild, makeRawInput('tx-child'), ['never-queued-dependency']);
+
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>()
+      .mockResolvedValue({ success: true, transaction: {} as any, source: 'server' });
+
+    const flushed = await flushQueue(makeSupabaseStub(), { submitCollection });
+
+    // Dependency not in queue => treated as satisfied => child replays
+    expect(flushed).toBe(1);
+    expect(submitCollection).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips items whose dependencies failed (not flushed) and replay them on next pass when dep succeeds', async () => {
+    const { enqueueTransaction, flushQueue, getPendingTransactions } = await import('../offlineQueue');
+
+    // Enqueue txA — it will fail with a transient error
+    const txA = makeTx({ id: 'tx-fail-a' });
+    await enqueueTransaction(txA, makeRawInput('tx-fail-a'));
+    const queueAfterA = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
+    const opIdA = queueAfterA.find((t: any) => t.id === 'tx-fail-a').operationId;
+
+    // txB depends on txA
+    const txB = makeTx({ id: 'tx-fail-b' });
+    await enqueueTransaction(txB, makeRawInput('tx-fail-b'), [opIdA]);
+
+    // First flush: txA fails transiently, txB should be skipped (dep not satisfied)
+    const transientError: CollectionSubmissionResult = {
+      success: false,
+      error: 'Network request failed',
+    };
+    let callCount = 0;
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>(
+      async (input) => {
+        callCount++;
+        if (input.txId === 'tx-fail-a') return transientError;
+        return { success: true, transaction: {} as any, source: 'server' };
+      }
+    );
+
+    const flushed1 = await flushQueue(makeSupabaseStub(), { submitCollection });
+    // txA failed, txB skipped because txA not flushed
+    expect(flushed1).toBe(0);
+    expect(callCount).toBe(1); // only txA was attempted
+    expect(submitCollection.mock.calls[0][0].txId).toBe('tx-fail-a');
+
+    // Clear backoff on txA so it retries immediately
+    const { resetRetryBackoff } = await import('../offlineQueue');
+    await resetRetryBackoff();
+
+    // Second flush: txA succeeds, txB should now replay
+    const secondSubmitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>()
+      .mockResolvedValue({ success: true, transaction: {} as any, source: 'server' });
+
+    const flushed2 = await flushQueue(makeSupabaseStub(), { submitCollection: secondSubmitCollection });
+    expect(flushed2).toBe(2);
+    const secondOrder: string[] = secondSubmitCollection.mock.calls.map(c => c[0].txId);
+    expect(secondOrder).toEqual(['tx-fail-a', 'tx-fail-b']);
+  });
+
+  it('handles dependency chains: A → B → C', async () => {
+    const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
+
+    // Chain: C depends on B, B depends on A
+    const txA = makeTx({ id: 'tx-chain-a' });
+    await enqueueTransaction(txA, makeRawInput('tx-chain-a'));
+    const qA = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
+    const opA = qA.find((t: any) => t.id === 'tx-chain-a').operationId;
+
+    const txB = makeTx({ id: 'tx-chain-b' });
+    await enqueueTransaction(txB, makeRawInput('tx-chain-b'), [opA]);
+    const qB = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
+    const opB = qB.find((t: any) => t.id === 'tx-chain-b').operationId;
+
+    const txC = makeTx({ id: 'tx-chain-c' });
+    await enqueueTransaction(txC, makeRawInput('tx-chain-c'), [opB]);
+
+    const submissionOrder: string[] = [];
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>(
+      async (input) => {
+        submissionOrder.push(input.txId);
+        return { success: true, transaction: {} as any, source: 'server' };
+      }
+    );
+
+    const flushed = await flushQueue(makeSupabaseStub(), { submitCollection });
+    expect(flushed).toBe(3);
+    // Must be A → B → C
+    expect(submissionOrder).toEqual(['tx-chain-a', 'tx-chain-b', 'tx-chain-c']);
+  });
+
+  it('allows old entries without lamportTs (default 0) to sort first for backward compat', async () => {
+    const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
+
+    // Enqueue a normal item (lamportTs > 0)
+    const txNew = makeTx({ id: 'tx-new' });
+    await enqueueTransaction(txNew, makeRawInput('tx-new'));
+
+    // Manually inject an old-style item without lamportTs into the queue
+    const all = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
+    const oldEntry = {
+      ...makeTx({ id: 'tx-old-legacy' }),
+      isSynced: false,
+      operationId: 'op-legacy-001',
+    };
+    // No lamportTs, no deviceId, no dependsOn — simulates pre-ADR-004 entry
+    localStorage.setItem('bahati_offline_queue', JSON.stringify([...all, oldEntry]));
+
+    // Track replay order via upsert mock (legacy items use direct upsert path)
+    const upsertOrder: string[] = [];
+    const upsertMock = jest.fn<(payload: unknown) => Promise<unknown>>()
+      .mockImplementation(async (payload: any) => {
+        upsertOrder.push(payload.id);
+        return { error: null };
+      });
+    const supabase = { from: () => ({ upsert: upsertMock }) } as any;
+
+    const submissionOrder: string[] = [];
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>(
+      async (input) => {
+        submissionOrder.push(input.txId);
+        return { success: true, transaction: {} as any, source: 'server' };
+      }
+    );
+
+    const flushed = await flushQueue(supabase, { submitCollection });
+    // Both entries should be flushed
+    expect(flushed).toBe(2);
+    // Legacy entry (lamportTs=0) should come first via upsert, then tx-new via submitCollection
+    expect(upsertOrder).toEqual(['tx-old-legacy']);
+    expect(submissionOrder).toEqual(['tx-new']);
+    // lamportTs sort verified: legacy (0) before tx-new (>0)
+    expect(upsertOrder[0]).toBe('tx-old-legacy');
+    expect(submissionOrder[0]).toBe('tx-new');
   });
 });

@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useConfirm } from '../../contexts/ConfirmContext';
 import { useToast } from '../../contexts/ToastContext';
 import { logFinanceAuditBatch } from '../../services/financeAuditService';
+import { Money } from '../../utils/money';
 import { Location, Driver, Transaction } from '../../types';
 import { getOptimizedImageUrl } from '../../utils/imageUtils';
 import { getLocationDeletionDiagnostics, normalizeMachineId } from '../../utils/locationWorkflow';
@@ -216,8 +217,8 @@ const SitesTab: React.FC<SitesTabProps> = ({
           entity_id: updated.id,
           entity_name: updated.name,
           actor_id: actorId ?? 'unknown',
-          old_value: editingLoc.remainingStartupDebt ?? 0,
-          new_value: updated.remainingStartupDebt ?? 0,
+          old_value: Money.tzs(editingLoc.remainingStartupDebt ?? 0),
+          new_value: Money.tzs(updated.remainingStartupDebt ?? 0),
         });
       }
       if (auditEntries.length > 0) logFinanceAuditBatch(auditEntries);
@@ -406,8 +407,8 @@ const SitesTab: React.FC<SitesTabProps> = ({
         entity_id: locId,
         entity_name: loc.name,
         actor_id: actorId ?? 'admin',
-        old_value: loc.remainingStartupDebt,
-        new_value: 0,
+        old_value: Money.tzs(loc.remainingStartupDebt),
+        new_value: Money.zero('TZS'),
         payload: {
           action: 'force_clear_blockers',
           cleared: {

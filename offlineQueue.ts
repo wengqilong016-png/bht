@@ -58,6 +58,26 @@ function getRequiredCollectionReplayPhotoUrl(entry: Transaction & Partial<QueueM
   }
   return null;
 }
+// ── Lamport logical clock (ADR-004) ───────────────────────────────────────────
+/** Per-device monotonic counter for causal ordering of offline operations. */
+let _lamportClock = 0;
+
+/** Read the current Lamport clock value without incrementing. */
+export function getLamportClock(): number {
+  return _lamportClock;
+}
+
+/** Increment and return the next Lamport clock value. */
+export function tickLamportClock(): number {
+  return ++_lamportClock;
+}
+
+/** Reset the Lamport clock (for tests only — not exported as public API). */
+function _resetLamportClock(): void {
+  _lamportClock = 0;
+}
+void _resetLamportClock; // suppress unused-variable warning; keep for test use
+
 const BASE_BACKOFF_MS = 2_000; // 2 s → 4 s → 8 s → 16 s → 32 s
 
 // ✅ 问题 8 修复：localStorage 可用性检查 + 内存缓存降级
@@ -148,6 +168,20 @@ export interface QueueMeta {
   photoPending?: boolean;
   /** Most recent storage/persistence error for a queued evidence photo. */
   lastEvidenceError?: string;
+  /**
+   * ADR-004: Causal ordering fields for offline replay.
+   *
+   * Each queued operation carries a Lamport logical clock value and an
+   * optional list of operationIds it depends on.  During replay, operations
+   * are sorted by lamport_ts ascending and dependency constraints are
+   * honoured so causal chains (e.g. reset → collection) are preserved.
+   */
+  /** Stable per-device identifier (shared with queue_health_reports). */
+  deviceId: string;
+  /** Lamport logical clock value — monotonic per-device counter. */
+  lamportTs: number;
+  /** OperationIds that MUST be successfully flushed before this item can replay. */
+  dependsOn: string[];
 }
 
 function normalizeQueueMeta(item: Transaction & Partial<QueueMeta>): Transaction & QueueMeta {
@@ -157,6 +191,9 @@ function normalizeQueueMeta(item: Transaction & Partial<QueueMeta>): Transaction
     entityVersion: item.entityVersion ?? 1,
     _queuedAt: item._queuedAt ?? new Date().toISOString(),
     retryCount: item.retryCount ?? 0,
+    deviceId: item.deviceId ?? getOrCreateDeviceId(),
+    lamportTs: item.lamportTs ?? 0,
+    dependsOn: item.dependsOn ?? [],
   };
 }
 
@@ -202,6 +239,9 @@ function toTransactionUpsertPayload(entry: Transaction & Partial<QueueMeta>): Tr
     lastErrorCategory: _lastErrorCategory,
     photoPending: _photoPending,
     lastEvidenceError: _lastEvidenceError,
+    deviceId: _deviceId,
+    lamportTs: _lamportTs,
+    dependsOn: _dependsOn,
     ...transaction
   } = entry;
 
@@ -329,8 +369,14 @@ async function prepareCollectionEvidenceForQueue(
  *                  When provided, replay will call `submit_collection_v2`
  *                  so the server recomputes finance authoritatively instead of
  *                  accepting locally-computed values.
+ * @param dependsOn Optional causal dependencies (ADR-004).  OperationIds that
+ *                  must be successfully flushed before this item can replay.
  */
-export async function enqueueTransaction(tx: Transaction, rawInput?: CollectionSubmissionInput): Promise<void> {
+export async function enqueueTransaction(
+  tx: Transaction,
+  rawInput?: CollectionSubmissionInput,
+  dependsOn?: string[],
+): Promise<void> {
   // Avoid duplicating base64 in rawInput. If evidence can already be persisted,
   // store the public URL; otherwise keep the dataURL only on the queue entry and
   // mark it for a required persist attempt before replay.
@@ -346,6 +392,9 @@ export async function enqueueTransaction(tx: Transaction, rawInput?: CollectionS
     rawInput: storedRawInput,
     photoPending: storedTx.photoPending,
     lastEvidenceError: storedTx.lastEvidenceError,
+    deviceId: getOrCreateDeviceId(),
+    lamportTs: tickLamportClock(),
+    dependsOn: dependsOn ?? [],
   };
 
   try {
@@ -722,6 +771,9 @@ async function flushSingleItem(
     }
 
     // ── Generic upsert fallback (legacy entries without authoritative callbacks) ──
+    // ⚠️  Legacy entries bypass the server-authoritative submit_collection_v2 RPC
+    //     and its amount validation gate.  Database CHECK constraints (added in
+    //     migration 20260522000000) are the last line of defense for this path.
     const { error } = await supabaseClient
       .from('transactions')
       .upsert(toTransactionUpsertPayload(entry));
@@ -788,13 +840,25 @@ export async function flushQueue(
     const pending = await getPendingTransactions();
     if (pending.length === 0) return 0;
 
-    // Sort by timestamp ascending so sequential collections at the same
-    // location replay in the correct chronological order.  IndexedDB
-    // returns rows by primary key (random UUID), not insertion order.
-    pending.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    // Sort by lamport_ts ascending (ADR-004 causal order).  Operations with
+    // explicit `dependsOn` constraints are skipped during iteration if their
+    // dependencies haven't been flushed yet, ensuring causal chains are preserved.
+    // Old entries without lamport_ts (default 0) sort first for backward compat.
+    pending.sort((a, b) => {
+      const aEntry = a as Transaction & Partial<QueueMeta>;
+      const bEntry = b as Transaction & Partial<QueueMeta>;
+      return (aEntry.lamportTs ?? 0) - (bEntry.lamportTs ?? 0);
+    });
 
     const now = Date.now();
     let flushed = 0;
+    /** Set of operationIds that have been successfully flushed in this pass. */
+    const flushedOpIds = new Set<string>();
+
+    // Track remaining queue opIds for dependency satisfaction checks.
+    const remainingOpIds = new Set(
+      pending.map(tx => (tx as Transaction & Partial<QueueMeta>).operationId).filter(Boolean) as string[],
+    );
 
     for (const tx of pending) {
       // Check global timeout
@@ -820,9 +884,26 @@ export async function flushQueue(
         continue;
       }
 
+      // ADR-004: Skip items whose causal dependencies haven't been flushed yet.
+      // Dependencies that are NOT in the queue (already synced or never queued)
+      // are considered satisfied.  Items with unsatisfied deps will retry on
+      // the next flush pass.
+      if (entry.dependsOn && entry.dependsOn.length > 0) {
+        const hasUnsatisfiedDep = entry.dependsOn.some(
+          depId => remainingOpIds.has(depId) && !flushedOpIds.has(depId),
+        );
+        if (hasUnsatisfiedDep) {
+          continue;
+        }
+      }
+
       const outcome = await flushSingleItem(entry, supabaseClient, options);
       if (outcome === 'flushed') {
         flushed++;
+        if (entry.operationId) {
+          flushedOpIds.add(entry.operationId);
+          remainingOpIds.delete(entry.operationId);
+        }
         options?.onProgress?.(flushed, pending.length);
       }
       // 'skipped' and 'failed' don't increment flushed
