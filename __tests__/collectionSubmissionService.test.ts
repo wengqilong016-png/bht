@@ -242,6 +242,7 @@ describe('submitCollectionV2', () => {
       ...serverRow,
       revenue: 38000,   // values from the original submission
       netPayable: 27000,
+      tx_conflict: true,
     };
     mockRpc.mockResolvedValue({ data: persistedRow, error: null });
 
@@ -250,6 +251,7 @@ describe('submitCollectionV2', () => {
 
     expect(result.success).toBe(true);
     if (!result.success) return;
+    expect(result.idempotentReplay).toBe(true);
     // Client must trust the server-returned row, not locally computed values
     expect(result.transaction.revenue).toBe(38000);
     expect(result.transaction.netPayable).toBe(27000);

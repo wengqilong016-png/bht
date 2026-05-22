@@ -716,6 +716,7 @@ async function flushSingleItem(
           metadata: {
             paymentStatus: result.transaction.paymentStatus,
             approvalStatus: result.transaction.approvalStatus,
+            idempotentReplay: result.idempotentReplay === true,
           },
         });
         await markSynced(entry.id, result.transaction);

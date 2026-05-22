@@ -305,7 +305,7 @@ export async function orchestrateCollectionSubmission(
     if (result.success) {
       appendCollectionSubmissionAudit({
         timestamp: new Date().toISOString(),
-        event: 'submit_server_success',
+        event: result.idempotentReplay ? 'submit_server_replay' : 'submit_server_success',
         txId: result.transaction.id,
         locationId: result.transaction.locationId,
         locationName: result.transaction.locationName,

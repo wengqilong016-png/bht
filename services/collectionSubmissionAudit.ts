@@ -3,6 +3,7 @@ export interface CollectionSubmissionAuditEntry {
   event:
     | 'submit_attempt'
     | 'submit_server_success'
+    | 'submit_server_replay'
     | 'submit_server_failure'
     | 'submit_offline_enqueued'
     | 'submit_invalid_score'

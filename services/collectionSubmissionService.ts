@@ -79,7 +79,7 @@ export interface CollectionSubmissionInput {
 export type CollectionSubmissionFailureKind = 'evidence' | 'rpc' | 'config' | 'network';
 
 export type CollectionSubmissionResult =
-  | { success: true; transaction: Transaction; source: 'server' }
+  | { success: true; transaction: Transaction; source: 'server'; idempotentReplay?: boolean }
   | { success: false; error: string; kind?: CollectionSubmissionFailureKind };
 
 export function isFailure(
@@ -197,16 +197,9 @@ export async function submitCollectionV2(
   }
 
   // Gate 3: Idempotent replay — ON CONFLICT (id) DO NOTHING returned an
-  // existing row. This signals a duplicate submission (same txId). The
-  // caller MUST NOT log submit_success for this; the transaction already
-  // exists and no new state was committed.
-  if (rpcData['tx_conflict']) {
-    return {
-      success: false,
-      error: `Transaction ${input.txId} already exists (duplicate submission prevented)`,
-      kind: 'rpc',
-    };
-  }
+  // existing row. This is a successful replay of already-committed state,
+  // not a new submission.
+  const isIdempotentReplay = rpcData['tx_conflict'] === true;
 
   // Normalize the server JSON payload
   const row = data as Record<string, unknown>;
@@ -260,37 +253,44 @@ export async function submitCollectionV2(
   };
 
   // ── Write finance audit to Postgres (fire-and-forget, must not block main flow) ──
-  void (async () => {
-    try {
-      if (supabase) {
-        await supabase.from('finance_audit_log').insert({
-          event_type: 'collection_submission',
-          entity_type: 'location',
-          entity_id: input.locationId,
-          entity_name: transaction.locationName || null,
-          actor_id: input.driverId,
-          old_value: transaction.previousScore,
-          new_value: transaction.currentScore,
-          payload: {
-            txId: transaction.id,
-            revenue: transaction.revenue,
-            commission: transaction.commission,
-            debtDeduction: transaction.debtDeduction,
-            startupDebtDeduction: transaction.startupDebtDeduction,
-            expenses: transaction.expenses,
-            tip: transaction.tip,
-            coinExchange: transaction.coinExchange,
-            netPayable: transaction.netPayable,
-            isOwnerRetaining: transaction.isOwnerRetaining,
-            ownerRetention: transaction.ownerRetention,
-            timestamp: transaction.timestamp,
-          },
-        });
+  if (!isIdempotentReplay) {
+    void (async () => {
+      try {
+        if (supabase) {
+          await supabase.from('finance_audit_log').insert({
+            event_type: 'collection_submission',
+            entity_type: 'location',
+            entity_id: input.locationId,
+            entity_name: transaction.locationName || null,
+            actor_id: input.driverId,
+            old_value: transaction.previousScore,
+            new_value: transaction.currentScore,
+            payload: {
+              txId: transaction.id,
+              revenue: transaction.revenue,
+              commission: transaction.commission,
+              debtDeduction: transaction.debtDeduction,
+              startupDebtDeduction: transaction.startupDebtDeduction,
+              expenses: transaction.expenses,
+              tip: transaction.tip,
+              coinExchange: transaction.coinExchange,
+              netPayable: transaction.netPayable,
+              isOwnerRetaining: transaction.isOwnerRetaining,
+              ownerRetention: transaction.ownerRetention,
+              timestamp: transaction.timestamp,
+            },
+          });
+        }
+      } catch {
+        // Audit must never block the main flow
       }
-    } catch {
-      // Audit must never block the main flow
-    }
-  })();
+    })();
+  }
 
-  return { success: true, transaction, source: 'server' };
+  return {
+    success: true,
+    transaction,
+    source: 'server',
+    ...(isIdempotentReplay ? { idempotentReplay: true } : {}),
+  };
 }

@@ -1,7 +1,7 @@
 # BHT 源码审查记录
 
 > 日期: 2026-05-22
-> 当前验证基线: GitHub Actions `4c2aae2` CI / Vercel / Android APK 均通过。
+> 审查起点: GitHub Actions `a53ca81` CI / Vercel / Android APK 均通过。
 
 ## 已处理
 
@@ -12,13 +12,14 @@
 - 修复: `useSupabaseMutations` 内统一计算 `activeDriverId`，与 `useSupabaseData` 作用域保持一致。
 - 验证: `npm run test:ci -- __tests__/hooks/useSupabaseMutations.test.tsx`、`npm run typecheck`、`npm run lint`。
 
-## 待处理
-
 ### 2. 离线队列重复交易回放与后端幂等语义不一致
 
 - 证据: `offlineQueue.ts` 注释要求重复 `txId` 回放视为成功并标记 synced；`collectionSubmissionService.ts` 对 RPC 返回 `tx_conflict` 时返回失败。
 - 风险: 已在服务端成功写入但客户端未确认的离线记录，重放时可能进入失败/死信，而不是清队列。
-- 建议: 针对 `tx_conflict` 增加幂等成功分支，并补真实 `submitCollectionV2` 回放测试。
+- 修复: `submitCollectionV2` 将 `tx_conflict` 视为幂等成功，返回服务端已有交易行并标记 `idempotentReplay`；回放不会重复写 finance audit。
+- 验证: `npm run test:ci -- collectionSubmissionService.test.ts`、`npm run test:ci -- offlineQueueReplay.test.ts`、`npm run test:ci -- collectionSubmissionOrchestrator.test.ts`、`npm run typecheck`、`npm run lint`。
+
+## 待处理
 
 ### 3. Money 值对象被当作 number 传给司机收款 UI
 
