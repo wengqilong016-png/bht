@@ -472,6 +472,7 @@ describe('useSupabaseMutations', () => {
   describe('reviewSettlement', () => {
     it('calls repo reviewSettlement when online', async () => {
       const { reviewSettlement: repoReviewSettlement } = await import('../../repositories/settlementRepository');
+      const { updateDriverCoins } = await import('../../repositories/driverRepository');
       const { result } = setupHook(true);
 
       await act(async () => {
@@ -483,6 +484,8 @@ describe('useSupabaseMutations', () => {
       });
 
       expect(repoReviewSettlement).toHaveBeenCalledWith('ds-1', 'confirmed', 'OK');
+      // H22 regression guard: coin update must stay inside review_daily_settlement_v1 RPC.
+      expect(updateDriverCoins).not.toHaveBeenCalled();
     });
 
     it('throws when offline', async () => {

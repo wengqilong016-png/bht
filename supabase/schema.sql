@@ -26,7 +26,7 @@ INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 VALUES (
     'evidence',
     'evidence',
-    TRUE,
+    FALSE,
     5242880,
     ARRAY['image/jpeg', 'image/png', 'image/webp']
 )
@@ -35,6 +35,23 @@ SET
     public = EXCLUDED.public,
     file_size_limit = EXCLUDED.file_size_limit,
     allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_policies
+        WHERE schemaname = 'storage'
+          AND tablename = 'objects'
+          AND policyname = 'Evidence select by authenticated users'
+    ) THEN
+        CREATE POLICY "Evidence select by authenticated users"
+            ON storage.objects
+            FOR SELECT
+            TO authenticated
+            USING (bucket_id = 'evidence');
+    END IF;
+END $$;
 
 DO $$
 BEGIN
@@ -60,6 +77,23 @@ BEGIN
         FROM pg_policies
         WHERE schemaname = 'storage'
           AND tablename = 'objects'
+          AND policyname = 'Kiosk photos select by authenticated users'
+    ) THEN
+        CREATE POLICY "Kiosk photos select by authenticated users"
+            ON storage.objects
+            FOR SELECT
+            TO authenticated
+            USING (bucket_id = 'kiosk-photos');
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_policies
+        WHERE schemaname = 'storage'
+          AND tablename = 'objects'
           AND policyname = 'Evidence updates by authenticated users'
     ) THEN
         CREATE POLICY "Evidence updates by authenticated users"
@@ -75,7 +109,7 @@ INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 VALUES (
     'kiosk-photos',
     'kiosk-photos',
-    TRUE,
+    FALSE,
     5242880,
     ARRAY['image/jpeg', 'image/png', 'image/webp']
 )
@@ -2659,10 +2693,28 @@ RETURNS TRIGGER SECURITY DEFINER
 SET search_path = public, pg_temp
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    v_driver_id TEXT;
 BEGIN
     PERFORM realtime.broadcast_changes(
         'db:' || TG_TABLE_NAME, TG_OP, TG_OP, TG_TABLE_NAME, TG_TABLE_SCHEMA, NEW, OLD
     );
+
+    IF TG_TABLE_NAME = 'transactions' THEN
+        v_driver_id := COALESCE(NEW."driverId", OLD."driverId");
+        IF v_driver_id IS NOT NULL AND btrim(v_driver_id) <> '' THEN
+            PERFORM realtime.broadcast_changes(
+                'db:transactions:' || v_driver_id,
+                TG_OP,
+                TG_OP,
+                TG_TABLE_NAME,
+                TG_TABLE_SCHEMA,
+                NEW,
+                OLD
+            );
+        END IF;
+    END IF;
+
     RETURN COALESCE(NEW, OLD);
 END;
 $$;
@@ -2687,7 +2739,14 @@ CREATE TRIGGER daily_settlements_broadcast_trigger
 DROP POLICY IF EXISTS "authenticated_users_can_receive_broadcasts" ON realtime.messages;
 CREATE POLICY "authenticated_users_can_receive_broadcasts" ON realtime.messages
     FOR SELECT TO authenticated
-    USING (topic IN ('db:transactions', 'db:drivers', 'db:daily_settlements'));
+    USING (
+        public.is_admin()
+        OR (
+            public.get_my_role() = 'driver'
+            AND topic = 'db:transactions:' || public.get_my_driver_id()
+        )
+        OR topic = 'db:locations'
+    );
 
 CREATE INDEX IF NOT EXISTS idx_realtime_messages_topic ON realtime.messages (topic);
 
@@ -2927,7 +2986,35 @@ CREATE POLICY support_audit_log_select ON public.support_audit_log FOR SELECT TO
 
 DROP POLICY IF EXISTS support_audit_log_insert ON public.support_audit_log;
 CREATE POLICY support_audit_log_insert ON public.support_audit_log FOR INSERT TO authenticated
-    WITH CHECK (true);
+    WITH CHECK (public.is_admin());
+
+-- Keep snapshot aligned with 20260522000005_tighten_audit_table_insert_policies.sql.
+-- These tables may not exist in all environments, so policies are guarded.
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'transaction_audit_log' AND relkind = 'r') THEN
+        DROP POLICY IF EXISTS tx_audit_insert ON public.transaction_audit_log;
+        CREATE POLICY tx_audit_insert ON public.transaction_audit_log
+            FOR INSERT TO authenticated
+            WITH CHECK (
+                public.is_admin()
+                OR (
+                    public.get_my_role() = 'driver'
+                    AND driver_id = public.get_my_driver_id()
+                )
+            );
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'amount_validation_audit' AND relkind = 'r') THEN
+        DROP POLICY IF EXISTS amount_validation_audit_insert ON public.amount_validation_audit;
+        CREATE POLICY amount_validation_audit_insert ON public.amount_validation_audit
+            FOR INSERT TO authenticated
+            WITH CHECK (public.is_admin());
+    END IF;
+END $$;
 
 -- ── driver_flow_events ───────────────────────────────────────────────────────
 

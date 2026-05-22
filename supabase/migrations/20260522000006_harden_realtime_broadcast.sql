@@ -10,9 +10,8 @@
 -- Fix:
 --   1. Transactions: broadcast to BOTH the global topic (admin) AND a per-driver
 --      topic db:transactions:{driverId} filtered to that driver's rows.
---   2. Drivers: strip sensitive financial columns (baseSalary, commissionRate,
---      remainingDebt, initialDebt) before broadcast.
---   3. Daily settlements: restrict to admin-only via RLS on realtime.messages.
+--   2. Restrict realtime.messages SELECT so drivers cannot subscribe to global
+--      finance topics.
 --
 -- The global topics (db:transactions, db:drivers, db:daily_settlements) remain
 -- available for admin use. Drivers must subscribe to their per-driver topic.
@@ -30,8 +29,6 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
   v_driver_id TEXT;
-  v_safe_new JSONB;
-  v_safe_old JSONB;
 BEGIN
   -- ── Broadcast to the global topic (admin use) ──────────────────────────────
   -- Global broadcasts include full row data. These are restricted to admin
@@ -50,11 +47,8 @@ BEGIN
   -- Each transaction also goes to a driver-specific topic so the driver only
   -- sees their own rows.
   IF TG_TABLE_NAME = 'transactions' THEN
-    v_driver_id := COALESCE(
-      NEW->>'driverId',
-      OLD->>'driverId'
-    );
-    IF v_driver_id IS NOT NULL AND v_driver_id != '' THEN
+    v_driver_id := COALESCE(NEW."driverId", OLD."driverId");
+    IF v_driver_id IS NOT NULL AND btrim(v_driver_id) <> '' THEN
       PERFORM realtime.broadcast_changes(
         'db:transactions:' || v_driver_id,
         TG_OP,
@@ -67,30 +61,6 @@ BEGIN
     END IF;
   END IF;
 
-  -- ── Strip sensitive columns from driver table broadcasts ───────────────────
-  -- Overwrite the global driver broadcast with a sanitized version that
-  -- excludes salary, commission, and debt fields.
-  IF TG_TABLE_NAME = 'drivers' THEN
-    -- Build a sanitized NEW record
-    IF NEW IS NOT NULL THEN
-      v_safe_new := to_jsonb(NEW) - 'baseSalary' - 'commissionRate' - 'initialDebt' - 'remainingDebt';
-    END IF;
-    IF OLD IS NOT NULL THEN
-      v_safe_old := to_jsonb(OLD) - 'baseSalary' - 'commissionRate' - 'initialDebt' - 'remainingDebt';
-    END IF;
-    -- Re-broadcast the sanitized version over the global topic (replacing the
-    -- unsanitized broadcast above — the last broadcast wins for realtime)
-    PERFORM realtime.broadcast_changes(
-      'db:' || TG_TABLE_NAME,
-      TG_OP,
-      TG_OP,
-      TG_TABLE_NAME,
-      TG_TABLE_SCHEMA,
-      v_safe_new,
-      v_safe_old
-    );
-  END IF;
-
   RETURN COALESCE(NEW, OLD);
 END;
 $$;
@@ -100,29 +70,18 @@ $$;
 -- Drop the old policy that allowed all authenticated users to receive all topics
 DROP POLICY IF EXISTS "authenticated_users_can_receive_broadcasts" ON realtime.messages;
 
--- New policy: admin sees everything, drivers see only their own per-driver topics
+-- New policy: admin sees everything, drivers only their own transaction topic
 CREATE POLICY "authenticated_users_can_receive_broadcasts" ON realtime.messages
   FOR SELECT TO authenticated
   USING (
-    -- Admin: access to all broadcast topics
     public.is_admin()
     OR
-    -- Driver: access to their own per-driver transaction topic
     (
       public.get_my_role() = 'driver'
       AND topic = 'db:transactions:' || public.get_my_driver_id()
     )
     OR
-    -- Driver: access to sanitized driver topic (own driver data, no sensitive fields)
-    (
-      public.get_my_role() = 'driver'
-      AND topic = 'db:drivers'
-    )
-    OR
-    -- Location changes are visible to all authenticated users
-    (
-      topic = 'db:locations'
-    )
+    topic = 'db:locations'
   );
 
 COMMIT;

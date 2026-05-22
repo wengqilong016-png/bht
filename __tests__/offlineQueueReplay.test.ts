@@ -614,6 +614,69 @@ describe('offline-to-online transition', () => {
     expect(submitCollection).toHaveBeenCalledTimes(1);
   });
 
+  it('falls back to local mutex when BroadcastChannel is unavailable and still prevents double-submit', async () => {
+    const originalBroadcastChannel = (globalThis as any).BroadcastChannel;
+    Object.defineProperty(globalThis, 'BroadcastChannel', {
+      value: undefined,
+      configurable: true,
+      writable: true,
+    });
+
+    try {
+      // Reload module so offlineQueue initializes without BroadcastChannel support.
+      jest.resetModules();
+      const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
+
+      const tx = makeTx();
+      await enqueueTransaction(tx, makeRawInput(tx.id));
+
+      let resolveSubmission: ((value: CollectionSubmissionResult) => void) | null = null;
+      const pendingSubmission = new Promise<CollectionSubmissionResult>((resolve) => {
+        resolveSubmission = resolve;
+      });
+      const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>()
+        .mockImplementation(() => pendingSubmission);
+
+      const firstFlush = flushQueue(makeSupabaseStub(), { submitCollection });
+      const secondFlush = flushQueue(makeSupabaseStub(), { submitCollection });
+
+      // Even without BroadcastChannel, module-level local mutex must reject concurrent pass.
+      expect(await secondFlush).toBe(0);
+      await new Promise<void>((resolve, reject) => {
+        const startedAt = Date.now();
+        const waitForSubmission = () => {
+          if (submitCollection.mock.calls.length === 1) {
+            resolve();
+            return;
+          }
+          if (Date.now() - startedAt > 1_000) {
+            reject(new Error('submitCollection was not invoked by the in-flight flush'));
+            return;
+          }
+          setTimeout(waitForSubmission, 0);
+        };
+        waitForSubmission();
+      });
+      expect(submitCollection).toHaveBeenCalledTimes(1);
+
+      if (!resolveSubmission) throw new Error('Expected resolveSubmission to be set');
+      resolveSubmission({
+        success: true,
+        transaction: { ...tx, isSynced: true } as any,
+        source: 'server',
+      });
+
+      expect(await firstFlush).toBe(1);
+      expect(submitCollection).toHaveBeenCalledTimes(1);
+    } finally {
+      Object.defineProperty(globalThis, 'BroadcastChannel', {
+        value: originalBroadcastChannel,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+
   // ── 离线 replay 时间戳排序测试 (M4 coverage) ────────────────────────────
 
   it('sorts same-location entries by lamport_ts ascending (enqueue order) before replay', async () => {

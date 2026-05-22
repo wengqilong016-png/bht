@@ -246,7 +246,7 @@ describe('useSupabaseMutations settlement workflow', () => {
     const drivers = queryClient.getQueryData<Driver[]>(['drivers']) ?? [];
     expect(drivers[0]?.dailyFloatingCoins).toBe(7000);
     expect(mockReviewSettlement).toHaveBeenCalledWith('STL-1', 'confirmed', undefined);
-    expect(mockUpdateDriverCoins).toHaveBeenCalledWith('drv-1', 7000);
+    expect(mockUpdateDriverCoins).not.toHaveBeenCalled();
   });
 
   it('marks matching collection transactions rejected when settlement is rejected', async () => {

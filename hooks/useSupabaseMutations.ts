@@ -8,7 +8,7 @@ import {
   approveResetRequest as repoApproveResetRequest,
   reviewAnomalyTransaction as repoReviewAnomalyTransaction,
 } from '../repositories/approvalRepository';
-import { updateDrivers as updateDriverRows, updateDriverCoins } from '../repositories/driverRepository';
+import { updateDrivers as updateDriverRows } from '../repositories/driverRepository';
 import { upsertLocationsWithSignal, deleteLocations as repoDeleteLocations } from '../repositories/locationRepository';
 import { createPayoutRequest, createResetRequest } from '../repositories/requestRepository';
 import { createSettlement as repoCreateSettlement, reviewSettlement as repoReviewSettlement } from '../repositories/settlementRepository';
@@ -467,27 +467,7 @@ export function useSupabaseMutations(
       note?: string;
     }) => {
       if (!isOnline) throw new Error('Settlement review requires online mode');
-      const reviewedSettlement = await repoReviewSettlement(settlementId, status, note);
-      if (reviewedSettlement.driverId && shouldApplySettlementDriverCoinUpdate(reviewedSettlement.status)) {
-        const nextDayStartingCoins = reviewedSettlement.actualCoins || 0;
-        try {
-          await updateDriverCoins(reviewedSettlement.driverId, nextDayStartingCoins);
-        } catch (coinError) {
-          // Server-side inconsistency: settlement is reviewed but driver coins not updated
-          // The RPC should ideally handle both atomically; until then, surface the split
-          console.error('Settlement reviewed but driver coin update failed — manual reconciliation needed', {
-            settlementId,
-            driverId: reviewedSettlement.driverId,
-            expectedCoins: nextDayStartingCoins,
-            error: coinError instanceof Error ? coinError.message : String(coinError),
-          });
-          throw new Error(
-            `Settlement review succeeded but driver coin sync failed. ` +
-            `The review is persisted; coins will be reconciled on the next review.`
-          );
-        }
-      }
-      return reviewedSettlement;
+      return repoReviewSettlement(settlementId, status, note);
     },
     onSuccess: (reviewedSettlement) => {
       if (reviewedSettlement) {
