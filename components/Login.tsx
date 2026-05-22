@@ -2,7 +2,7 @@ import { User, Lock, ArrowRight, AlertCircle, Loader2, Languages, Crown, Setting
 import React, { useState, useEffect } from 'react';
 
 import { fetchCurrentUserProfile, signInWithEmailPassword, signOutCurrentUser } from '../services/authService';
-import { checkDbHealth, supabase, SUPABASE_URL, envVarsMissing, usingRuntimeCredentials, saveRuntimeCredentials, clearRuntimeCredentials } from '../supabaseClient';
+import { checkDbHealth, supabase, SUPABASE_URL, envVarsMissing, usingRuntimeCredentials, saveRuntimeCredentials, clearRuntimeCredentials, isSupabaseServiceRoleKey } from '../supabaseClient';
 import { User as UserType, TRANSLATIONS } from '../types';
 
 import EnvMissingErrorPage from './EnvMissingErrorPage';
@@ -96,7 +96,24 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
       setSettingsError(lang === 'zh' ? 'URL 必须以 https:// 开头' : 'URL must start with https://');
       return;
     }
-    saveRuntimeCredentials(trimUrl, trimKey);
+    if (isSupabaseServiceRoleKey(trimKey)) {
+      setSettingsError(
+        lang === 'zh'
+          ? '不能保存 Service Role Key；请填写 anon public key。'
+          : 'Do not save a Service Role Key. Use the anon public key.',
+      );
+      return;
+    }
+    try {
+      saveRuntimeCredentials(trimUrl, trimKey);
+    } catch {
+      setSettingsError(
+        lang === 'zh'
+          ? '保存连接信息失败，请确认填写的是 anon public key。'
+          : 'Failed to save connection settings. Confirm this is the anon public key.',
+      );
+      return;
+    }
     setSettingsSaved(true);
     // Brief delay so the "Saved" confirmation is visible before the page reloads
     setTimeout(() => window.location.reload(), 800);

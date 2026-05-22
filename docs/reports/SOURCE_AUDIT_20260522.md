@@ -39,3 +39,10 @@
 - 风险: 持有 anon key + driver JWT 的客户端可尝试更新非 UI 暴露字段。
 - 修复: 新增 `enforce_driver_location_update_fields` 触发器，仅当业务角色为 driver 时限制可变更列；司机只能维护当前 UI 使用的店主姓名、电话、店主照片，admin 和 service 维护路径不受影响。
 - 验证: `git diff --check`、schema/migration 读回验证；当前未连接本地 Supabase 数据库，未实际执行迁移。
+
+### 6. Runtime Supabase 连接设置未阻止 service_role key
+
+- 证据: `supabaseClient.ts` 明确警告 runtime credentials 只能保存 anon key，但 `saveRuntimeCredentials` 原先无条件写入 `localStorage`；`Login.tsx` 也只做 URL/key 非空校验。
+- 风险: 管理员或运维误粘 service_role JWT 时，浏览器端会持久化绕过 RLS 的密钥。
+- 修复: 保存前解码 Supabase JWT payload，明确识别 `role=service_role` 时拒绝保存；无法解码的 publishable key 不拦截，避免破坏新式公开 key。
+- 验证: `npm run test:ci -- supabaseClient.test.ts`、`npm run typecheck`、`npm run lint`。

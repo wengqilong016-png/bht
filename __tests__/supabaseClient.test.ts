@@ -37,4 +37,29 @@ describe('checkDbHealth', () => {
     const { checkDbHealth } = await import('../supabaseClient');
     await expect(checkDbHealth()).resolves.toBe(false);
   });
+
+  it('detects service_role JWT keys without rejecting anon or publishable keys', async () => {
+    const { isSupabaseServiceRoleKey } = await import('../supabaseClient');
+    const serviceRoleKey = makeJwtKey({ role: 'service_role' });
+    const anonKey = makeJwtKey({ role: 'anon' });
+
+    expect(isSupabaseServiceRoleKey(serviceRoleKey)).toBe(true);
+    expect(isSupabaseServiceRoleKey(anonKey)).toBe(false);
+    expect(isSupabaseServiceRoleKey('sb_publishable_example')).toBe(false);
+  });
+
+  it('refuses to persist a service_role runtime key', async () => {
+    localStorage.clear();
+    const { saveRuntimeCredentials } = await import('../supabaseClient');
+    const serviceRoleKey = makeJwtKey({ role: 'service_role' });
+
+    expect(() => saveRuntimeCredentials('https://example.supabase.co', serviceRoleKey)).toThrow('service_role');
+    expect(localStorage.getItem('bht-runtime-creds')).toBeNull();
+  });
 });
+
+function makeJwtKey(payload: Record<string, unknown>): string {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  return `${header}.${body}.signature`;
+}

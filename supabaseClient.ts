@@ -17,6 +17,43 @@ const RUNTIME_CREDS_KEY = 'bht-runtime-creds';
 
 interface RuntimeCreds { url: string; key: string }
 
+function decodeBase64Url(value: string): string | null {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+
+  try {
+    if (typeof globalThis.atob === 'function') {
+      return globalThis.atob(padded);
+    }
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from(padded, 'base64').toString('utf8');
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+export function getSupabaseJwtRole(key: string): string | null {
+  const [, payload] = key.trim().split('.');
+  if (!payload) return null;
+
+  const decoded = decodeBase64Url(payload);
+  if (!decoded) return null;
+
+  try {
+    const parsed = JSON.parse(decoded) as { role?: unknown };
+    return typeof parsed.role === 'string' ? parsed.role : null;
+  } catch {
+    return null;
+  }
+}
+
+export function isSupabaseServiceRoleKey(key: string): boolean {
+  return getSupabaseJwtRole(key) === 'service_role';
+}
+
 function loadRuntimeCreds(): RuntimeCreds | null {
   try {
     const raw = globalThis.localStorage?.getItem(RUNTIME_CREDS_KEY);
@@ -31,6 +68,10 @@ function loadRuntimeCreds(): RuntimeCreds | null {
 /** Persist runtime credentials and reload the page so the Supabase client
  *  re-initialises with the new values. */
 export function saveRuntimeCredentials(url: string, key: string): void {
+  if (isSupabaseServiceRoleKey(key)) {
+    throw new Error('Refusing to store a Supabase service_role key in browser storage.');
+  }
+
   try {
     localStorage.setItem(
       RUNTIME_CREDS_KEY,
