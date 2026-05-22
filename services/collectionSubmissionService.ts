@@ -38,13 +38,13 @@ function safeNumber(value: unknown, fallback: number = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
-/** Runtime NaN guard — prevents server-returned NaN from polluting lat/lng
- *  past the compile-time `as` assertion on line 224. */
+/** Runtime NaN guard + range validation — prevents server-returned NaN or
+ *  out-of-range coordinates from polluting GPS data. */
 function isValidGps(value: unknown): value is { lat: number; lng: number } {
   if (!value || typeof value !== 'object') return false;
   const gps = value as { lat: number; lng: number };
-  return typeof gps.lat === 'number' && !Number.isNaN(gps.lat)
-      && typeof gps.lng === 'number' && !Number.isNaN(gps.lng);
+  return typeof gps.lat === 'number' && !Number.isNaN(gps.lat) && Math.abs(gps.lat) <= 90
+      && typeof gps.lng === 'number' && !Number.isNaN(gps.lng) && Math.abs(gps.lng) <= 180;
 }
 
 function isDataImageUrl(value: string | null | undefined): value is string {

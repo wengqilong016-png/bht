@@ -235,7 +235,7 @@ describe('delete-driver edge function', () => {
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toEqual({
       success: false,
-      error: 'transactions locked',
+      error: 'Internal server error',
       code: 'TRANSACTION_UNLINK_FAILED',
     });
     expect(mockDriverDeleteEq).not.toHaveBeenCalled();
@@ -250,7 +250,7 @@ describe('delete-driver edge function', () => {
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toEqual({
       success: false,
-      error: 'locations locked',
+      error: 'Internal server error',
       code: 'LOCATION_UNLINK_FAILED',
     });
     expect(mockProfileDeleteEq).not.toHaveBeenCalled();
@@ -266,7 +266,7 @@ describe('delete-driver edge function', () => {
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toEqual({
       success: false,
-      error: 'profile locked',
+      error: 'Internal server error',
       code: 'PROFILE_DELETE_FAILED',
     });
     expect(mockDriverDeleteEq).not.toHaveBeenCalled();

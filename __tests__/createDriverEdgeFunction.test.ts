@@ -163,7 +163,7 @@ describe('create-driver edge function', () => {
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toMatchObject({
       success: false,
-      error: 'drivers business update failed: drivers locked',
+      error: 'Internal server error',
     });
     expect(mockDeleteUser).toHaveBeenCalledWith('auth-1');
     expect(mockDriverDeleteEq).toHaveBeenCalledWith('id', 'drv-1');

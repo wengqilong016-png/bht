@@ -139,8 +139,9 @@ Deno.serve(async (req: Request) => {
     .maybeSingle<ExistingDriverSnapshot>();
 
   if (existingDriverLookupError) {
+    console.error('Driver lookup failed:', existingDriverLookupError.message);
     return json(
-      { success: false, error: `Driver lookup failed: ${existingDriverLookupError.message}` },
+      { success: false, error: 'Internal server error' },
       500,
     );
   }
@@ -224,9 +225,10 @@ Deno.serve(async (req: Request) => {
     .maybeSingle<{ id: string }>();
 
   if (driverFetchError || !driverRow) {
+    console.error('drivers trigger insert verification failed:', driverFetchError?.message ?? 'row not found');
     await rollbackCreatedRows();
     return json(
-      { success: false, error: `drivers trigger insert failed: ${driverFetchError?.message ?? 'row not found'}` },
+      { success: false, error: 'Internal server error' },
       500,
     );
   }
@@ -238,9 +240,10 @@ Deno.serve(async (req: Request) => {
     .maybeSingle<{ auth_user_id: string; driver_id: string }>();
 
   if (profileFetchError || profileRow?.driver_id !== driverId) {
+    console.error('profiles trigger insert verification failed:', profileFetchError?.message ?? 'row not found');
     await rollbackCreatedRows();
     return json(
-      { success: false, error: `profiles trigger insert failed: ${profileFetchError?.message ?? 'row not found'}` },
+      { success: false, error: 'Internal server error' },
       500,
     );
   }
@@ -263,9 +266,10 @@ Deno.serve(async (req: Request) => {
       .eq('id', driverId);
 
     if (businessFieldsError) {
+      console.error('drivers business update failed:', businessFieldsError.message);
       await rollbackCreatedRows();
       return json(
-        { success: false, error: `drivers business update failed: ${businessFieldsError.message}` },
+        { success: false, error: 'Internal server error' },
         500,
       );
     }

@@ -45,7 +45,8 @@ async function unlinkDriverReferences(driverId: string): Promise<{ error: string
     .eq('driverId', driverId);
 
   if (transactionUnlinkError) {
-    return { error: transactionUnlinkError.message, code: 'TRANSACTION_UNLINK_FAILED' };
+    console.error('transaction unlink failed:', transactionUnlinkError.message);
+    return { error: 'Internal server error', code: 'TRANSACTION_UNLINK_FAILED' };
   }
 
   const { error: settlementUnlinkError } = await supabaseAdmin
@@ -54,7 +55,8 @@ async function unlinkDriverReferences(driverId: string): Promise<{ error: string
     .eq('driverId', driverId);
 
   if (settlementUnlinkError) {
-    return { error: settlementUnlinkError.message, code: 'SETTLEMENT_UNLINK_FAILED' };
+    console.error('settlement unlink failed:', settlementUnlinkError.message);
+    return { error: 'Internal server error', code: 'SETTLEMENT_UNLINK_FAILED' };
   }
 
   const { error: locationUnlinkError } = await supabaseAdmin
@@ -63,7 +65,8 @@ async function unlinkDriverReferences(driverId: string): Promise<{ error: string
     .eq('assignedDriverId', driverId);
 
   if (locationUnlinkError) {
-    return { error: locationUnlinkError.message, code: 'LOCATION_UNLINK_FAILED' };
+    console.error('location unlink failed:', locationUnlinkError.message);
+    return { error: 'Internal server error', code: 'LOCATION_UNLINK_FAILED' };
   }
 
   return null;
@@ -106,7 +109,8 @@ Deno.serve(async (req: Request) => {
     .maybeSingle<{ auth_user_id: string | null }>();
 
   if (driverLookupError) {
-    return errorJson(driverLookupError.message, 500, 'DRIVER_LOOKUP_FAILED');
+    console.error('driver lookup failed:', driverLookupError.message);
+    return errorJson('Internal server error', 500, 'DRIVER_LOOKUP_FAILED');
   }
 
   // ── 4. Delete Supabase Auth user when linked ─────────────────────────────
@@ -115,7 +119,8 @@ Deno.serve(async (req: Request) => {
       profileRow.auth_user_id,
     );
     if (authDeleteError) {
-      return errorJson(authDeleteError.message, 500, 'AUTH_DELETE_FAILED');
+      console.error('auth user delete failed:', authDeleteError.message);
+      return errorJson('Internal server error', 500, 'AUTH_DELETE_FAILED');
     }
   }
 
@@ -134,7 +139,8 @@ Deno.serve(async (req: Request) => {
     .eq('driver_id', driverId);
 
   if (profileDeleteError) {
-    return errorJson(profileDeleteError.message, 500, 'PROFILE_DELETE_FAILED');
+    console.error('profile delete failed:', profileDeleteError.message);
+    return errorJson('Internal server error', 500, 'PROFILE_DELETE_FAILED');
   }
 
   const { error: driverDeleteError } = await supabaseAdmin
@@ -143,7 +149,8 @@ Deno.serve(async (req: Request) => {
     .eq('id', driverId);
 
   if (driverDeleteError) {
-    return errorJson(driverDeleteError.message, 500, 'DRIVER_DELETE_FAILED');
+    console.error('driver delete failed:', driverDeleteError.message);
+    return errorJson('Internal server error', 500, 'DRIVER_DELETE_FAILED');
   }
 
   return json({ success: true, driver_id: driverId });
