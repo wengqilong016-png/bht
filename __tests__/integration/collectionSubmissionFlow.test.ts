@@ -29,6 +29,7 @@ jest.mock('../../supabaseClient', () => ({
       from: jest.fn(() => ({
         upload: jest.fn<() => Promise<unknown>>().mockResolvedValue({ data: { path: 'test.jpg' }, error: null }),
         getPublicUrl: jest.fn<() => unknown>().mockReturnValue({ data: { publicUrl: 'https://example.com/test.jpg' } }),
+        createSignedUrl: jest.fn<() => unknown>().mockReturnValue({ data: { signedUrl: 'https://signed.example.com/test.jpg' } }),
       })),
     },
   },

@@ -18,8 +18,8 @@ export function useNextQueuedMachine({
   todayStr,
 }: UseNextQueuedMachineInput) {
   const assignedLocations = useMemo(() => {
-    const mine = locations.filter((location) => location.assignedDriverId === currentDriverId);
-    return mine.length > 0 ? mine : locations;
+    if (!currentDriverId) return [];
+    return locations.filter((location) => location.assignedDriverId === currentDriverId);
   }, [currentDriverId, locations]);
 
   const visitedLocationIds = useMemo(() => {

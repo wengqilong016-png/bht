@@ -67,8 +67,32 @@ export async function fetchTransactions(opts: FetchTransactionsOptions): Promise
   return result;
 }
 
+// Fields allowed for client-side upsert. Server-managed fields (e.g. idempotency
+// markers, server-computed timestamps) are excluded to prevent accidental overwrite.
+const UPSERT_ALLOWED_FIELDS = new Set([
+  'id', 'timestamp', 'uploadTimestamp', 'locationId', 'locationName',
+  'driverId', 'driverName', 'previousScore', 'currentScore', 'revenue',
+  'commission', 'ownerRetention', 'isOwnerRetaining', 'debtDeduction', 'startupDebtDeduction',
+  'expenses', 'coinExchange', 'extraIncome', 'netPayable', 'gps', 'gpsDeviation',
+  'photoUrl', 'dataUsageKB', 'aiScore', 'isAnomaly', 'notes',
+  'type', 'approvalStatus', 'paymentStatus', 'reportedStatus',
+  'expenseType', 'expenseCategory', 'expenseStatus', 'expenseDescription',
+  'payoutAmount', 'anomalyFlag',
+]);
+
+function stripDisallowedFields(tx: Partial<Transaction>): Partial<Transaction> {
+  const safe: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(tx)) {
+    if (UPSERT_ALLOWED_FIELDS.has(key)) {
+      safe[key] = value;
+    }
+  }
+  return safe as Partial<Transaction>;
+}
+
 export async function upsertTransaction(tx: Partial<Transaction>): Promise<void> {
   if (!supabase) throw new Error('Supabase client unavailable');
-  const { error } = await supabase.from('transactions').upsert(tx);
+  const safe = stripDisallowedFields(tx);
+  const { error } = await supabase.from('transactions').upsert(safe);
   if (error) throw error;
 }

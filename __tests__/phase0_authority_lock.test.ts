@@ -52,6 +52,7 @@ describe('Phase 0 — no new .from() calls targeting deprecated tables', () => {
    */
   const LEGACY_ALLOWLIST: Record<string, Set<string>> = {
     'services/authService.ts':                  new Set(['profiles']),
+    'services/driverManagementService.ts':      new Set(['profiles']),
     'supabase/functions/_shared/authz.ts':      new Set(['profiles']),
     'supabase/functions/create-driver/index.ts': new Set(['profiles']),
     'supabase/functions/delete-driver/index.ts': new Set(['profiles']),

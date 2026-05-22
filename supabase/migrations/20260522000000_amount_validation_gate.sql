@@ -488,12 +488,14 @@ BEGIN
             NOT VALID;
     END IF;
 
+    -- Ensure tip column exists before adding constraint (schema drift fix)
+    ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS tip NUMERIC DEFAULT 0;
+
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint
         WHERE conname = 'transactions_tip_check'
           AND conrelid = 'public.transactions'::regclass
     ) THEN
-        -- tip 在 schema 中未定义 DEFAULT，可能为 NULL
         ALTER TABLE public.transactions
             ADD CONSTRAINT transactions_tip_check
             CHECK (tip IS NULL OR (tip >= 0 AND tip <= 5000000))

@@ -17,6 +17,7 @@ interface ParsedDataUrl {
 interface EvidenceBucket {
   upload: (path: string, body: Blob, options?: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
   getPublicUrl: (path: string) => { data: { publicUrl: string } };
+  createSignedUrl: (path: string, expiresIn: number) => { data: { signedUrl: string } };
 }
 
 function isDataImageUrl(value: string): boolean {
@@ -134,5 +135,5 @@ export async function persistEvidencePhotoUrl(
     return null;
   }
 
-  return bucket.getPublicUrl(objectPath).data.publicUrl;
+  return bucket.createSignedUrl(objectPath, 315360000).data.signedUrl; // 10-year expiry
 }

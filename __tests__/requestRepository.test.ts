@@ -11,6 +11,7 @@ jest.mock('../supabaseClient', () => ({
       from: () => ({
         upload: (...args: unknown[]) => mockUpload(...args),
         getPublicUrl: (path: string) => mockGetPublicUrl(path),
+        createSignedUrl: (path: string) => ({ data: { signedUrl: `https://signed.example.com/${path}` } }),
       }),
     },
   },
@@ -23,9 +24,6 @@ beforeEach(() => {
   mockUpload.mockReset();
   mockGetPublicUrl.mockReset();
   mockUpload.mockResolvedValue({ error: null });
-  mockGetPublicUrl.mockImplementation((path: string) => ({
-    data: { publicUrl: `https://example.supabase.co/storage/v1/object/public/evidence/${path}` },
-  }));
 });
 
 describe('requestRepository', () => {
@@ -50,7 +48,7 @@ describe('requestRepository', () => {
       p_location_id: 'loc-1',
       p_driver_id: 'drv-1',
       p_gps: { lat: -6.8, lng: 39.3 },
-      p_photo_url: 'https://example.supabase.co/storage/v1/object/public/evidence/reset-request/drv-1/RST-1.jpg',
+      p_photo_url: 'https://signed.example.com/reset-request/drv-1/RST-1.jpg',
       p_notes: 'reset needed',
     });
     expect(result.type).toBe('reset_request');

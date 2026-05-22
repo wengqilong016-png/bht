@@ -6,17 +6,13 @@
  * channels backed by database triggers, invalidating the corresponding
  * React Query caches so the UI refreshes immediately.
  *
- * Uses dedicated private channels (`db:transactions`, `db:drivers`,
- * `db:daily_settlements`, `db:locations`) instead of `postgres_changes` for
- * better scalability.
- * Database triggers call `realtime.broadcast_changes()` to publish events.
+ * Uses dedicated private channels instead of `postgres_changes` for
+ * better scalability. Database triggers call `realtime.broadcast_changes()`.
  *
- * The existing polling inside useSupabaseData is kept as a fallback for
- * weak/offline network conditions; this hook is an enhancement on top.
+ * Drivers subscribe to a per-driver topic `db:transactions:{driverId}` so they
+ * only receive their own rows. Admins subscribe to global topics for all tables.
  *
- * Pass `userRole` to restrict subscriptions by role: drivers only need the
- * `db:transactions` channel (their own collection changes), while admins
- * subscribe to all four channels.
+ * Pass `userRole` and optionally `driverId` to select the correct channel set.
  */
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -38,16 +34,20 @@ const ADMIN_CHANNELS = [
   { topic: 'db:locations',         table: 'locations'         },
 ] as const;
 
-/** Reduced channel set for driver accounts — only their own transaction changes. */
-const DRIVER_CHANNELS = [
-  { topic: 'db:transactions',      table: 'transactions'      },
-] as const;
+/** Per-driver channel — driver only receives their own transaction broadcasts. */
+function getDriverChannels(driverId: string) {
+  return [
+    { topic: `db:transactions:${driverId}`, table: 'transactions' as const },
+  ];
+}
 
-type RealtimeChannelConfig = (typeof ADMIN_CHANNELS | typeof DRIVER_CHANNELS)[number];
-type RealtimeTableName = RealtimeChannelConfig['table'];
+type RealtimeChannelConfig = { topic: string; table: 'transactions' | 'drivers' | 'daily_settlements' | 'locations' };
 
-function getChannelConfigs(userRole: 'admin' | 'driver') {
-  return userRole === 'driver' ? DRIVER_CHANNELS : ADMIN_CHANNELS;
+function getChannelConfigs(userRole: 'admin' | 'driver', driverId?: string): RealtimeChannelConfig[] {
+  if (userRole === 'driver' && driverId) {
+    return getDriverChannels(driverId);
+  }
+  return ADMIN_CHANNELS as readonly RealtimeChannelConfig[] as RealtimeChannelConfig[];
 }
 
 function createStatusHandler(
@@ -78,8 +78,8 @@ function createStatusHandler(
 
 function subscribeToRealtimeChannels(
   client: NonNullable<typeof supabase>,
-  channelConfigs: typeof ADMIN_CHANNELS | typeof DRIVER_CHANNELS,
-  queue: (table: RealtimeTableName) => void,
+  channelConfigs: RealtimeChannelConfig[],
+  queue: (table: RealtimeChannelConfig['table']) => void,
   setRealtimeStatus: React.Dispatch<React.SetStateAction<RealtimeStatus>>,
 ) {
   const subscribedTopics = new Set<string>();
@@ -101,7 +101,7 @@ function subscribeToRealtimeChannels(
   });
 }
 
-export function useRealtimeSubscription(userRole?: 'admin' | 'driver', isOnline?: boolean) {
+export function useRealtimeSubscription(userRole?: 'admin' | 'driver', isOnline?: boolean, driverId?: string) {
   const queryClient = useQueryClient();
   const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>('disconnected');
 
@@ -121,7 +121,7 @@ export function useRealtimeSubscription(userRole?: 'admin' | 'driver', isOnline?
     const client = supabase;
     client.realtime.setAuth();
 
-    const channelConfigs = getChannelConfigs(userRole);
+    const channelConfigs = getChannelConfigs(userRole, driverId);
     const channels = subscribeToRealtimeChannels(client, channelConfigs, queue, setRealtimeStatus);
 
     return () => {

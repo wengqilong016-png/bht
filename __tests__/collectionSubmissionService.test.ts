@@ -39,6 +39,7 @@ jest.mock('../supabaseClient', () => ({
       from: () => ({
         upload: (...args: unknown[]) => mockUpload(...args),
         getPublicUrl: (path: string) => mockGetPublicUrl(path),
+        createSignedUrl: (path: string) => ({ data: { signedUrl: `https://signed.example.com/${path}` } }),
       }),
     },
   },
@@ -108,9 +109,6 @@ beforeEach(() => {
   mockUpload.mockReset();
   mockGetPublicUrl.mockReset();
   mockUpload.mockResolvedValue({ error: null });
-  mockGetPublicUrl.mockImplementation((path: string) => ({
-    data: { publicUrl: `https://example.supabase.co/storage/v1/object/public/evidence/${path}` },
-  }));
 });
 
 describe('submitCollectionV2', () => {
@@ -132,7 +130,7 @@ describe('submitCollectionV2', () => {
     expect(tx.netPayable).toBe(29000);
     expect(tx.isSynced).toBe(true);
     expect(tx.type).toBe('collection');
-    expect(tx.photoUrl).toContain('/storage/v1/object/public/evidence/');
+    expect(tx.photoUrl).toContain('signed.example.com');
     expect(tx.approvalStatus).toBe('approved');
     expect(tx.expenseType).toBe('public');
     expect(tx.expenseCategory).toBe('fuel');
@@ -153,7 +151,7 @@ describe('submitCollectionV2', () => {
     expect(rpcParams['p_current_score']).toBe(1200);
     expect(rpcParams['p_expenses']).toBe(5000);
     expect(rpcParams['p_tip']).toBe(0);
-    expect(String(rpcParams['p_photo_url'])).toContain('/storage/v1/object/public/evidence/');
+    expect(String(rpcParams['p_photo_url'])).toContain('signed.example.com');
 
     // Pre-computed finance fields must NOT be sent
     expect(rpcParams).not.toHaveProperty('revenue');

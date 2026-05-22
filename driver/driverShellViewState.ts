@@ -6,6 +6,9 @@ export function resolveCurrentDriver(drivers: Driver[], activeDriverId?: string)
     if (activeDriver) {
       return activeDriver;
     }
+    // Driver not found in list — refuse to fall back to an arbitrary driver
+    return undefined;
   }
-  return drivers.length > 0 ? drivers[0] : undefined;
+  // No activeDriverId provided — refuse to guess
+  return undefined;
 }

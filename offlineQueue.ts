@@ -216,6 +216,7 @@ function readLocalQueue(): Array<Transaction & QueueMeta> {
 function writeLocalQueue(queue: Array<Transaction & Partial<QueueMeta>>): void {
   if (!isLocalStorageAvailable()) {
     memoryQueueCache.set(QUEUE_STORAGE_KEY, queue);
+    Sentry.captureMessage('[OfflineQueue] localStorage unavailable — queue data in volatile memory', 'warning');
     return;
   }
 
@@ -224,6 +225,7 @@ function writeLocalQueue(queue: Array<Transaction & Partial<QueueMeta>>): void {
   } catch (err) {
     console.warn('[OfflineQueue] localStorage write failed, using memory cache', err);
     memoryQueueCache.set(QUEUE_STORAGE_KEY, queue);
+    Sentry.captureException(err, { tags: { context: 'offline_queue_storage_exhaustion' } });
   }
 }
 
@@ -407,7 +409,9 @@ export async function enqueueTransaction(
     });
     db.close();
   } catch (err) {
-    // Fallback: use writeLocalQueue which handles unavailable localStorage
+    // Fallback: use writeLocalQueue which handles unavailable localStorage.
+    // IDB unavailability alone is not a critical alert — localStorage is the expected
+    // fallback in constrained environments. Only escalate when both fail.
     console.warn('[OfflineQueue] IDB unavailable, falling back to localStorage/memory cache', err);
     const list = readLocalQueue();
     const updated = [...list.filter(t => t.id !== tx.id), { ...storedTx, isSynced: false, ...meta }];
@@ -499,18 +503,18 @@ export async function markSynced(id: string, authoritativeData?: Partial<Transac
     const db    = await openDB();
     const txDb = db.transaction(STORE_TX, 'readwrite');
     const store = txDb.objectStore(STORE_TX);
-    const item  = await new Promise<Transaction | undefined>((res, rej) => {
+    // get+put inside a single promise to keep the IDB transaction alive
+    await new Promise<void>((res, rej) => {
       const r = store.get(id);
-      r.onsuccess = () => res(r.result);
-      r.onerror   = () => rej(r.error);
+      r.onsuccess = () => {
+        const item = r.result as Transaction | undefined;
+        if (!item) return res();
+        const pr = store.put({ ...item, ...update });
+        pr.onsuccess = () => res();
+        pr.onerror   = () => rej(pr.error);
+      };
+      r.onerror = () => rej(r.error);
     });
-    if (item) {
-      await new Promise<void>((res, rej) => {
-        const r = store.put({ ...item, ...update });
-        r.onsuccess = () => res();
-        r.onerror   = () => rej(r.error);
-      });
-    }
     db.close();
   } catch {
     const list = readLocalQueue().map(t => t.id === id ? { ...t, ...update } : t);
@@ -527,24 +531,24 @@ async function updateQueuedEvidencePhoto(
     const db = await openDB();
     const txDb = db.transaction(STORE_TX, 'readwrite');
     const store = txDb.objectStore(STORE_TX);
-    const item = await new Promise<(Transaction & Partial<QueueMeta>) | undefined>((res, rej) => {
+    // get+put inside a single promise to keep the IDB transaction alive
+    await new Promise<void>((res, rej) => {
       const r = store.get(id);
-      r.onsuccess = () => res(r.result);
-      r.onerror = () => rej(r.error);
-    });
-    if (item) {
-      await new Promise<void>((res, rej) => {
-        const r = store.put({
+      r.onsuccess = () => {
+        const item = r.result as (Transaction & Partial<QueueMeta>) | undefined;
+        if (!item) return res();
+        const pr = store.put({
           ...item,
           photoUrl,
           rawInput: rawInput ? { ...rawInput, photoUrl } : item.rawInput,
           photoPending: false,
           lastEvidenceError: undefined,
         });
-        r.onsuccess = () => res();
-        r.onerror = () => rej(r.error);
-      });
-    }
+        pr.onsuccess = () => res();
+        pr.onerror   = () => rej(pr.error);
+      };
+      r.onerror = () => rej(r.error);
+    });
     db.close();
   } catch {
     const list = readLocalQueue();
@@ -652,6 +656,27 @@ export async function pruneOldSynced(daysOld = 7): Promise<void> {
  * and risking duplicate-submission errors on non-idempotent legacy entries.
  */
 let _isFlushing = false;
+
+// Cross-tab coordination: each tab generates a client ID at module load, then uses
+// BroadcastChannel to broadcast flush start/end. Before starting a flush, a tab
+// listens briefly to detect if another tab is already flushing.
+const _flushClientId = safeRandomUUID();
+let _otherTabFlushing = false;
+let _flushChannel: BroadcastChannel | null = null;
+try {
+  if (typeof BroadcastChannel !== 'undefined') {
+    _flushChannel = new BroadcastChannel('bahati_flush');
+    _flushChannel.addEventListener('message', (e: MessageEvent) => {
+      if (e.data?.type === 'flush_started' && e.data?.clientId !== _flushClientId) {
+        _otherTabFlushing = true;
+      } else if (e.data?.type === 'flush_ended' && e.data?.clientId !== _flushClientId) {
+        _otherTabFlushing = false;
+      }
+    });
+  }
+} catch {
+  // BroadcastChannel unavailable — local mutex only
+}
 
 /**
  * Attempt to flush a single queued entry to the server.
@@ -829,7 +854,13 @@ export async function flushQueue(
 ): Promise<number> {
   // Prevent concurrent flushes from double-submitting the same queued entries.
   if (_isFlushing) return 0;
+  if (_otherTabFlushing) return 0;
   _isFlushing = true;
+
+  // Broadcast flush start to other tabs
+  try {
+    _flushChannel?.postMessage({ type: 'flush_started', clientId: _flushClientId });
+  } catch { /* ignore */ }
 
   // ✅ 问题 6 修复：添加整体超时保护，防止 flushQueue 无限卡顿
   // 如果单个 submitCollection 超时，后续所有项都会被阻塞
@@ -912,6 +943,10 @@ export async function flushQueue(
     return flushed;
   } finally {
     _isFlushing = false;
+    // Broadcast flush end to other tabs
+    try {
+      _flushChannel?.postMessage({ type: 'flush_ended', clientId: _flushClientId });
+    } catch { /* ignore */ }
   }
 }
 
@@ -997,17 +1032,14 @@ async function recordRetryFailure(
     const db    = await openDB();
     const txDb  = db.transaction(STORE_TX, 'readwrite');
     const store = txDb.objectStore(STORE_TX);
-    const item  = await new Promise<(Transaction & Partial<QueueMeta>) | undefined>((res, rej) => {
+    // get+put inside a single promise to keep the IDB transaction alive
+    await new Promise<void>((res, rej) => {
       const r = store.get(id);
-      r.onsuccess = () => res(r.result);
-      r.onerror   = () => rej(r.error);
-    });
-    if (item) {
-      // Permanent errors skip to MAX_RETRIES so the entry is dead-lettered
-      // on the next flush pass and stops consuming retry budget.
-      const { newRetry, backoffMs } = computeRetryState(item.retryCount ?? 0, category);
-      await new Promise<void>((res, rej) => {
-        const r = store.put({
+      r.onsuccess = () => {
+        const item = r.result as (Transaction & Partial<QueueMeta>) | undefined;
+        if (!item) return res();
+        const { newRetry, backoffMs } = computeRetryState(item.retryCount ?? 0, category);
+        const pr = store.put({
           ...item,
           retryCount: newRetry,
           lastError: errorMessage,
@@ -1016,18 +1048,21 @@ async function recordRetryFailure(
             ? new Date(Date.now() + backoffMs).toISOString()
             : undefined,
         });
-        r.onsuccess = () => res();
-        r.onerror   = () => rej(r.error);
-      });
-      if (newRetry >= MAX_RETRIES) {
-        captureQueueMessage('offline_queue_dead_lettered', {
-          txId: id,
-          errorMessage,
-          errorCategory: category,
-          retryCount: newRetry,
-        });
-      }
-    }
+        pr.onsuccess = () => {
+          if (newRetry >= MAX_RETRIES) {
+            captureQueueMessage('offline_queue_dead_lettered', {
+              txId: id,
+              errorMessage,
+              errorCategory: category,
+              retryCount: newRetry,
+            });
+          }
+          res();
+        };
+        pr.onerror = () => rej(pr.error);
+      };
+      r.onerror = () => rej(r.error);
+    });
     db.close();
   } catch {
     // IDB unavailable — update localStorage fallback with retry/dead-letter metadata
@@ -1491,18 +1526,18 @@ async function _updateDeadLetterError(
     const db    = await openDB();
     const txDb  = db.transaction(STORE_TX, 'readwrite');
     const store = txDb.objectStore(STORE_TX);
-    const item  = await new Promise<(Transaction & Partial<QueueMeta>) | undefined>((res, rej) => {
+    // get+put inside a single promise to keep the IDB transaction alive
+    await new Promise<void>((res, rej) => {
       const r = store.get(id);
-      r.onsuccess = () => res(r.result);
-      r.onerror   = () => rej(r.error);
+      r.onsuccess = () => {
+        const item = r.result as (Transaction & Partial<QueueMeta>) | undefined;
+        if (!item) return res();
+        const pr = store.put({ ...item, lastError: errorMessage, lastErrorCategory: errorCategory });
+        pr.onsuccess = () => res();
+        pr.onerror   = () => rej(pr.error);
+      };
+      r.onerror = () => rej(r.error);
     });
-    if (item) {
-      await new Promise<void>((res, rej) => {
-        const r = store.put({ ...item, lastError: errorMessage, lastErrorCategory: errorCategory });
-        r.onsuccess = () => res();
-        r.onerror   = () => rej(r.error);
-      });
-    }
     db.close();
   } catch {
     try {

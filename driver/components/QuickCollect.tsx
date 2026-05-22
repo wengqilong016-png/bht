@@ -15,6 +15,7 @@ import {
   type FinanceCalculationResult,
 } from '../../services/financeCalculator';
 import { TRANSLATIONS, Location, safeRandomUUID } from '../../types';
+import { compressAndResizeImage } from '../../utils/imageUtils';
 import { getTodayLocalDate } from '../../utils/dateUtils';
 import { haversineM, formatDistance } from '../../utils/haversine';
 
@@ -387,12 +388,20 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
   /* ── Photo ───────────────────────────────────────────────────────── */
   const photoInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const handlePhotoSelected = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelected = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => { if (typeof reader.result === 'string') updateEntry(id, { photo: reader.result }); };
-    reader.readAsDataURL(file);
+    try {
+      const compressed = await compressAndResizeImage(file);
+      const reader = new FileReader();
+      reader.onload = () => { if (typeof reader.result === 'string') updateEntry(id, { photo: reader.result }); };
+      reader.readAsDataURL(compressed);
+    } catch {
+      // If compression fails, fall back to raw file
+      const reader = new FileReader();
+      reader.onload = () => { if (typeof reader.result === 'string') updateEntry(id, { photo: reader.result }); };
+      reader.readAsDataURL(file);
+    }
     e.target.value = '';
   };
 

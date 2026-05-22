@@ -16,9 +16,12 @@ import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals
 // ── Supabase mock ──────────────────────────────────────────────────────────
 const mockUpload = jest.fn<(...args: unknown[]) => Promise<unknown>>();
 const mockGetPublicUrl = jest.fn<(path: string) => unknown>();
+const mockCreateSignedUrl = jest.fn<(path: string, expiresIn: number) => { data: { signedUrl: string } }>()
+  .mockImplementation((path: string) => ({ data: { signedUrl: `https://signed.example.com/${path}` } }));
 const mockStorageFrom = jest.fn<(bucket: string) => unknown>(() => ({
   upload: mockUpload,
   getPublicUrl: mockGetPublicUrl,
+  createSignedUrl: mockCreateSignedUrl,
 }));
 
 jest.mock('../supabaseClient', () => ({

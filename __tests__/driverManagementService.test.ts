@@ -28,15 +28,33 @@ import {
 beforeEach(() => {
   jest.clearAllMocks();
   mockSupabase = {
+    auth: {
+      getUser: jest.fn<() => Promise<{ data: { user: { id: string } | null } }>>().mockResolvedValue({
+        data: { user: { id: 'admin-user-001' } },
+      }),
+    },
     functions: {
       invoke: (...args: unknown[]) => mockInvoke(...args),
     },
-    from: () => ({
-      update: (fields: Record<string, unknown>) => {
-        mockUpdate(fields);
-        return { eq: mockEq };
-      },
-    }),
+    from: (table?: string) => {
+      if (table === 'profiles') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: jest.fn<() => Promise<{ data: { role: string; driverId: string | null } | null }>>().mockResolvedValue({
+                data: { role: 'admin', driverId: null },
+              }),
+            }),
+          }),
+        };
+      }
+      return {
+        update: (fields: Record<string, unknown>) => {
+          mockUpdate(fields);
+          return { eq: mockEq };
+        },
+      };
+    },
   };
 });
 

@@ -32,6 +32,12 @@ function isValidHttpUrl(value: string | null | undefined): value is string {
   }
 }
 
+/** NaN-safe number coercion. `??` passes NaN through, so we must guard explicitly. */
+function safeNumber(value: unknown, fallback: number = 0): number {
+  const n = Number(value ?? fallback);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 /** Runtime NaN guard — prevents server-returned NaN from polluting lat/lng
  *  past the compile-time `as` assertion on line 224. */
 function isValidGps(value: unknown): value is { lat: number; lng: number } {
@@ -211,25 +217,25 @@ export async function submitCollectionV2(
     locationName:          String(row['locationName'] ?? ''),
     driverId:              String(row['driverId'] ?? input.driverId),
     driverName:            row['driverName'] != null ? String(row['driverName']) : undefined,
-    previousScore:         Number(row['previousScore'] ?? 0),
-    currentScore:          Number(row['currentScore'] ?? input.currentScore),
-    revenue:               Number(row['revenue'] ?? 0),
-    commission:            Number(row['commission'] ?? 0),
-    ownerRetention:        Number(row['ownerRetention'] ?? 0),
+    previousScore:         safeNumber(row['previousScore']),
+    currentScore:          safeNumber(row['currentScore'], input.currentScore),
+    revenue:               safeNumber(row['revenue']),
+    commission:            safeNumber(row['commission']),
+    ownerRetention:        safeNumber(row['ownerRetention']),
     isOwnerRetaining:      row['isOwnerRetaining'] == null ? input.isOwnerRetaining : Boolean(row['isOwnerRetaining']),
-    debtDeduction:         Number(row['debtDeduction'] ?? 0),
-    startupDebtDeduction:  Number(row['startupDebtDeduction'] ?? 0),
-    expenses:              Number(row['expenses'] ?? input.expenses),
-    tip:                   Number(row['tip'] ?? input.tip),
-    coinExchange:          Number(row['coinExchange'] ?? input.coinExchange),
-    extraIncome:           Number(row['extraIncome'] ?? 0),
-    netPayable:            Number(row['netPayable'] ?? 0),
+    debtDeduction:         safeNumber(row['debtDeduction']),
+    startupDebtDeduction:  safeNumber(row['startupDebtDeduction']),
+    expenses:              safeNumber(row['expenses'], input.expenses),
+    tip:                   safeNumber(row['tip'], input.tip),
+    coinExchange:          safeNumber(row['coinExchange'], input.coinExchange),
+    extraIncome:           safeNumber(row['extraIncome']),
+    netPayable:            safeNumber(row['netPayable']),
     gps:                   (isValidGps(row['gps']) ? (row['gps'] as { lat: number; lng: number }) : undefined) ?? input.gps ?? { lat: 0, lng: 0 },
     photoUrl:              isValidHttpUrl(row['photoUrl'] != null ? String(row['photoUrl']) : null)
                              ? String(row['photoUrl'])
                              : persistedPhotoUrl,
-    dataUsageKB:           Number(row['dataUsageKB'] ?? 120),
-    aiScore:               row['aiScore'] != null ? Number(row['aiScore']) : undefined,
+    dataUsageKB:           safeNumber(row['dataUsageKB'], 120),
+    aiScore:               row['aiScore'] != null ? safeNumber(row['aiScore']) : undefined,
     isAnomaly:             Boolean(row['isAnomaly']),
     anomalyFlag:           Boolean(row['anomalyFlag'] ?? row['isAnomaly']),
     isSynced:              true,
@@ -251,6 +257,15 @@ export async function submitCollectionV2(
                              ? String(row['expenseDescription'])
                              : undefined,
   };
+
+  // Post-construction integrity check: all numeric fields must be finite
+  const numericFields = ['previousScore','currentScore','revenue','commission','ownerRetention',
+    'debtDeduction','startupDebtDeduction','expenses','tip','coinExchange','extraIncome','netPayable'] as const;
+  for (const f of numericFields) {
+    if (!Number.isFinite(transaction[f] as number)) {
+      throw new Error(`submit_collection_v2 returned non-finite ${f}: ${transaction[f]}`);
+    }
+  }
 
   // ── Write finance audit to Postgres (fire-and-forget, must not block main flow) ──
   if (!isIdempotentReplay) {

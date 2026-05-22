@@ -43,13 +43,13 @@ describe('shell view state helpers', () => {
     expect(resolveCurrentDriver(drivers, 'd-2')?.id).toBe('d-2');
   });
 
-  it('resolveCurrentDriver falls back to first driver when activeDriverId does not match', () => {
+  it('resolveCurrentDriver returns undefined when activeDriverId does not match (no fallback)', () => {
     const drivers = [
       { id: 'd-1', name: 'Driver 1' },
       { id: 'd-2', name: 'Driver 2' },
     ] as Driver[];
 
-    expect(resolveCurrentDriver(drivers, 'd-404')?.id).toBe('d-1');
+    expect(resolveCurrentDriver(drivers, 'd-404')).toBeUndefined();
   });
 
   it('resolveCurrentDriver returns undefined for empty driver list', () => {

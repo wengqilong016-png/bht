@@ -470,7 +470,22 @@ export function useSupabaseMutations(
       const reviewedSettlement = await repoReviewSettlement(settlementId, status, note);
       if (reviewedSettlement.driverId && shouldApplySettlementDriverCoinUpdate(reviewedSettlement.status)) {
         const nextDayStartingCoins = reviewedSettlement.actualCoins || 0;
-        await updateDriverCoins(reviewedSettlement.driverId, nextDayStartingCoins);
+        try {
+          await updateDriverCoins(reviewedSettlement.driverId, nextDayStartingCoins);
+        } catch (coinError) {
+          // Server-side inconsistency: settlement is reviewed but driver coins not updated
+          // The RPC should ideally handle both atomically; until then, surface the split
+          console.error('Settlement reviewed but driver coin update failed — manual reconciliation needed', {
+            settlementId,
+            driverId: reviewedSettlement.driverId,
+            expectedCoins: nextDayStartingCoins,
+            error: coinError instanceof Error ? coinError.message : String(coinError),
+          });
+          throw new Error(
+            `Settlement review succeeded but driver coin sync failed. ` +
+            `The review is persisted; coins will be reconciled on the next review.`
+          );
+        }
       }
       return reviewedSettlement;
     },

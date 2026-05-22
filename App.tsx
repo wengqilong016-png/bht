@@ -96,7 +96,7 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
 
   // Start realtime subscriptions only now that a session exists.
   // Pass isOnline so the hook can re-authenticate the realtime JWT on reconnect.
-  useRealtimeSubscription(userRole ?? undefined, isOnline);
+  useRealtimeSubscription(userRole ?? undefined, isOnline, activeDriverId ?? undefined);
 
   const locations = cloudLocations;
   const drivers = cloudDrivers;

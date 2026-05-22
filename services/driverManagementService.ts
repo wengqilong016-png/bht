@@ -88,6 +88,20 @@ export async function persistDriverBusinessFields(
   fields: Pick<Driver, 'phone' | 'vehicleInfo' | 'dailyFloatingCoins' | 'baseSalary' | 'commissionRate' | 'initialDebt'> & { remainingDebt?: number },
 ): Promise<void> {
   if (!supabase) throw new Error('Supabase client unavailable');
+
+  // Verify the caller is either an admin or the driver being updated
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Authentication required');
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, driverId')
+    .eq('id', user.id)
+    .maybeSingle();
+  if (!profile) throw new Error('Profile not found');
+  if (profile.role !== 'admin' && profile.driverId !== driverId) {
+    throw new Error('Not authorized to update this driver');
+  }
+
   const { error } = await supabase
     .from('drivers')
     .update({

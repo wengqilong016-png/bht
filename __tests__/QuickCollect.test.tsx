@@ -1,4 +1,7 @@
 jest.mock('../supabaseClient', () => ({ supabase: null }));
+jest.mock('../utils/imageUtils', () => ({
+  compressAndResizeImage: jest.fn((file: File) => Promise.resolve(file)),
+}));
 jest.mock('../services/collectionSubmissionOrchestrator', () => ({ orchestrateCollectionSubmission: jest.fn() }));
 jest.mock('../services/financeCalculator', () => {
   const { Money } = require('../utils/money');

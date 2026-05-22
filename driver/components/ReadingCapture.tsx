@@ -1,6 +1,7 @@
 import { Camera, CheckCircle2, RotateCcw, Satellite, ChevronRight, WifiOff } from 'lucide-react';
 import React, { useRef } from 'react';
 
+import { compressAndResizeImage } from '../../utils/imageUtils';
 import { Location, TRANSLATIONS } from '../../types';
 
 import CollectionWorkbenchHeader from './CollectionWorkbenchHeader';
@@ -80,18 +81,32 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
     photoInputRef.current?.click();
   };
 
-  const handlePhotoSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === 'string' ? reader.result : null;
-      if (result) {
-        onUpdatePhoto(result);
-        onUpdateAiReview(null);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressed = await compressAndResizeImage(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = typeof reader.result === 'string' ? reader.result : null;
+        if (result) {
+          onUpdatePhoto(result);
+          onUpdateAiReview(null);
+        }
+      };
+      reader.readAsDataURL(compressed);
+    } catch {
+      // If compression fails, fall back to raw file
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = typeof reader.result === 'string' ? reader.result : null;
+        if (result) {
+          onUpdatePhoto(result);
+          onUpdateAiReview(null);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
     event.target.value = '';
   };
 

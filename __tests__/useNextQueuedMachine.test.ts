@@ -74,7 +74,7 @@ describe('useNextQueuedMachine', () => {
     expect(result.current.remainingPendingStops).toBe(1);
   });
 
-  it('falls back to all locations when no locations are assigned to current driver', () => {
+  it('returns no locations when no locations are assigned to current driver (no fallback)', () => {
     const locations: Location[] = [
       makeLocation({ id: 'loc-a', name: 'Alpha', assignedDriverId: 'driver-2' }),
       makeLocation({ id: 'loc-b', name: 'Beta', assignedDriverId: 'driver-3' }),
@@ -91,8 +91,8 @@ describe('useNextQueuedMachine', () => {
       }),
     );
 
-    expect(result.current.nextQueuedMachine?.id).toBe('loc-b');
-    expect(result.current.remainingPendingStops).toBe(2);
+    expect(result.current.nextQueuedMachine).toBeNull();
+    expect(result.current.remainingPendingStops).toBe(0);
   });
 
   it('returns the best available machine even when all non-selected stops were visited', () => {

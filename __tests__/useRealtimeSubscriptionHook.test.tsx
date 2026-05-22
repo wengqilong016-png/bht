@@ -129,13 +129,27 @@ describe('useRealtimeSubscription', () => {
     });
   });
 
-  it('subscribes driver users only to transaction updates', () => {
+  it('subscribes driver users only to their own per-driver transaction topic', () => {
+    const queryClient = new QueryClient();
+    const wrapper = makeWrapper(queryClient);
+
+    renderHook(() => useRealtimeSubscription('driver', true, 'drv-001'), { wrapper });
+
+    expect(Array.from(channelRegistry.keys())).toEqual(['db:transactions:drv-001']);
+  });
+
+  it('subscribes driver users to all channels when driverId is missing (fallback to admin)', () => {
     const queryClient = new QueryClient();
     const wrapper = makeWrapper(queryClient);
 
     renderHook(() => useRealtimeSubscription('driver', true), { wrapper });
 
-    expect(Array.from(channelRegistry.keys())).toEqual(['db:transactions']);
+    expect(Array.from(channelRegistry.keys())).toEqual([
+      'db:transactions',
+      'db:drivers',
+      'db:daily_settlements',
+      'db:locations',
+    ]);
   });
 
   it('skips subscription setup until the user role is resolved', () => {
@@ -180,20 +194,20 @@ describe('useRealtimeSubscription', () => {
   it('transitions to reconnecting/connected/disconnected as channel status changes', () => {
     const queryClient = new QueryClient();
     const wrapper = makeWrapper(queryClient);
-    const { result } = renderHook(() => useRealtimeSubscription('driver', true), { wrapper });
+    const { result } = renderHook(() => useRealtimeSubscription('driver', true, 'drv-001'), { wrapper });
 
     act(() => {
-      channelRegistry.get('db:transactions')?.emitStatus('CHANNEL_ERROR');
+      channelRegistry.get('db:transactions:drv-001')?.emitStatus('CHANNEL_ERROR');
     });
     expect(result.current.realtimeStatus).toBe('reconnecting');
 
     act(() => {
-      channelRegistry.get('db:transactions')?.emitStatus('SUBSCRIBED');
+      channelRegistry.get('db:transactions:drv-001')?.emitStatus('SUBSCRIBED');
     });
     expect(result.current.realtimeStatus).toBe('connected');
 
     act(() => {
-      channelRegistry.get('db:transactions')?.emitStatus('CLOSED');
+      channelRegistry.get('db:transactions:drv-001')?.emitStatus('CLOSED');
     });
     expect(result.current.realtimeStatus).toBe('disconnected');
   });

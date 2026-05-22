@@ -37,14 +37,14 @@ describe('resolveCurrentDriver()', () => {
     expect(result?.id).toBe('drv-bob');
   });
 
-  it('falls back to the first driver when activeDriverId is not found', () => {
+  it('returns undefined when activeDriverId is not found (no fallback)', () => {
     const result = resolveCurrentDriver([alice, bob], 'drv-unknown');
-    expect(result?.id).toBe('drv-alice');
+    expect(result).toBeUndefined();
   });
 
-  it('falls back to the first driver when activeDriverId is undefined', () => {
+  it('returns undefined when activeDriverId is not provided (no fallback)', () => {
     const result = resolveCurrentDriver([alice, bob], undefined);
-    expect(result?.id).toBe('drv-alice');
+    expect(result).toBeUndefined();
   });
 
   it('returns undefined when drivers array is empty', () => {
@@ -55,9 +55,9 @@ describe('resolveCurrentDriver()', () => {
     expect(resolveCurrentDriver([], 'drv-alice')).toBeUndefined();
   });
 
-  it('returns the only driver when there is exactly one', () => {
+  it('returns undefined when there is only one driver but no activeDriverId', () => {
     const result = resolveCurrentDriver([alice], undefined);
-    expect(result?.id).toBe('drv-alice');
+    expect(result).toBeUndefined();
   });
 
   it('returns driver by id even if not first in list', () => {
