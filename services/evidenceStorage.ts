@@ -17,7 +17,7 @@ interface ParsedDataUrl {
 interface EvidenceBucket {
   upload: (path: string, body: Blob, options?: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
   getPublicUrl: (path: string) => { data: { publicUrl: string } };
-  createSignedUrl: (path: string, expiresIn: number) => { data: { signedUrl: string } };
+  createSignedUrl: (path: string, expiresIn: number) => Promise<{ data: { signedUrl: string } | null; error: { message: string } | null }>;
 }
 
 function isDataImageUrl(value: string): boolean {
@@ -135,5 +135,12 @@ export async function persistEvidencePhotoUrl(
     return null;
   }
 
-  return bucket.createSignedUrl(objectPath, 315360000).data.signedUrl; // 10-year expiry
+  const signed = await bucket.createSignedUrl(objectPath, 315360000); // 10-year expiry
+  if (signed.error) {
+    if (options.required) {
+      throw new Error(`Evidence photo signed URL generation failed: ${signed.error.message}`);
+    }
+    return null;
+  }
+  return signed.data?.signedUrl ?? null;
 }

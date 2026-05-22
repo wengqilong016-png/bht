@@ -39,7 +39,7 @@ jest.mock('../supabaseClient', () => ({
       from: () => ({
         upload: (...args: unknown[]) => mockUpload(...args),
         getPublicUrl: (path: string) => mockGetPublicUrl(path),
-        createSignedUrl: (path: string) => ({ data: { signedUrl: `https://signed.example.com/${path}` } }),
+        createSignedUrl: (path: string) => Promise.resolve({ data: { signedUrl: `https://signed.example.com/${path}` }, error: null }),
       }),
     },
   },
