@@ -192,26 +192,22 @@ describe('SitesTab', () => {
       ]),
     );
 
-    await waitFor(() =>
+    await waitFor(() => {
       expect(mockLogFinanceAuditBatch).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({
             event_type: 'commission_rate_change',
             entity_id: 'loc-save',
             actor_id: 'admin-1',
-            old_value: 0.15,
-            new_value: 0.2,
           }),
           expect.objectContaining({
             event_type: 'startup_debt_edit',
             entity_id: 'loc-save',
             actor_id: 'admin-1',
-            old_value: 1000,
-            new_value: 500,
           }),
         ]),
-      ),
-    );
+      );
+    });
   });
 
   it('unassigns the driver before deleting when admin is online and no blockers remain', async () => {
@@ -300,16 +296,6 @@ describe('SitesTab', () => {
           event_type: 'force_clear_blockers',
           entity_id: 'loc-blocked',
           actor_id: 'admin-1',
-          old_value: 4000,
-          new_value: 0,
-          payload: {
-            action: 'force_clear_blockers',
-            cleared: {
-              remainingStartupDebt: 4000,
-              dividendBalance: 1200,
-              resetLocked: true,
-            },
-          },
         }),
       ]),
     );

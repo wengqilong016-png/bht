@@ -1,6 +1,9 @@
 jest.mock('../supabaseClient', () => ({ supabase: null }));
 jest.mock('../services/collectionSubmissionOrchestrator', () => ({ orchestrateCollectionSubmission: jest.fn() }));
-jest.mock('../services/financeCalculator', () => ({ calculateCollectionFinanceLocal: jest.fn(() => ({ diff: 200, revenue: 40000, commission: 6000, finalRetention: 6000, startupDebtDeduction: 0, netPayable: 34000, remainingCoins: 100, isCoinStockNegative: false, source: 'local' })) }));
+jest.mock('../services/financeCalculator', () => {
+  const { Money } = require('../utils/money');
+  return { calculateCollectionFinanceLocal: jest.fn(() => ({ diff: Money.tzs(200), revenue: Money.tzs(40000), commission: Money.tzs(6000), finalRetention: Money.tzs(6000), startupDebtDeduction: Money.tzs(0), netPayable: Money.tzs(34000), remainingCoins: Money.tzs(100), isCoinStockNegative: false, source: 'local' })) };
+});
 jest.mock('../services/driverFlowTelemetry', () => ({ recordDriverFlowEvent: jest.fn() }));
 
 /**

@@ -3,20 +3,23 @@ jest.mock('../services/driverFlowTelemetry', () => ({
   recordDriverFlowEvent: jest.fn(),
   flushDriverFlowEvents: jest.fn(),
 }));
-jest.mock('../services/financeCalculator', () => ({
-  calculateCollectionFinanceLocal: jest.fn(() => ({
-    diff: 200, revenue: 40000, commission: 6000, finalRetention: 6000,
-    startupDebtDeduction: 0, netPayable: 34000, remainingCoins: 100,
-    isCoinStockNegative: false, source: 'local',
-  })),
-  calculateCollectionFinancePreview: jest.fn(() =>
-    Promise.resolve({
-      diff: 200, revenue: 40000, commission: 6000, finalRetention: 6000,
-      startupDebtDeduction: 0, netPayable: 34000, remainingCoins: 100,
-      isCoinStockNegative: false, source: 'rpc',
-    }),
-  ),
-}));
+jest.mock('../services/financeCalculator', () => {
+  const { Money } = require('../utils/money');
+  return {
+    calculateCollectionFinanceLocal: jest.fn(() => ({
+      diff: Money.tzs(200), revenue: Money.tzs(40000), commission: Money.tzs(6000), finalRetention: Money.tzs(6000),
+      startupDebtDeduction: Money.tzs(0), netPayable: Money.tzs(34000), remainingCoins: Money.tzs(100),
+      isCoinStockNegative: false, source: 'local',
+    })),
+    calculateCollectionFinancePreview: jest.fn(() =>
+      Promise.resolve({
+        diff: Money.tzs(200), revenue: Money.tzs(40000), commission: Money.tzs(6000), finalRetention: Money.tzs(6000),
+        startupDebtDeduction: Money.tzs(0), netPayable: Money.tzs(34000), remainingCoins: Money.tzs(100),
+        isCoinStockNegative: false, source: 'rpc',
+      }),
+    ),
+  };
+});
 jest.mock('../driver/hooks/useGpsCapture', () => ({
   useGpsCapture: jest.fn((_existingCoords: any) => ({
     coords: null,
