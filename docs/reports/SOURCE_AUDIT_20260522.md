@@ -46,3 +46,10 @@
 - 风险: 管理员或运维误粘 service_role JWT 时，浏览器端会持久化绕过 RLS 的密钥。
 - 修复: 保存前解码 Supabase JWT payload，明确识别 `role=service_role` 时拒绝保存；无法解码的 publishable key 不拦截，避免破坏新式公开 key。
 - 验证: `npm run test:ci -- supabaseClient.test.ts`、`npm run typecheck`、`npm run lint`。
+
+### 7. create-driver 失败回滚可能留下未绑定 driver 行
+
+- 证据: `create-driver` Edge Function 由 Auth insert trigger 创建 `drivers/profiles`，但业务字段持久化失败时原先只删除 Auth 用户。
+- 风险: Auth 删除会级联删除 profile，但不会删除新建的 `drivers` 行，后续再次创建同名司机可能遇到残留数据或脏展示。
+- 修复: 创建 Auth 用户前记录 driver 行快照；回滚时如果本次新建 driver 则删除，如果原本存在则恢复 trigger 覆盖的 name/username。
+- 验证: `npm run test:ci -- createDriverEdgeFunction.test.ts`、`npm run typecheck`、`npm run lint`。

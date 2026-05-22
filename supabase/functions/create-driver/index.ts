@@ -40,6 +40,12 @@ type BusinessFields = {
   remainingDebt?: number;
 };
 
+type ExistingDriverSnapshot = {
+  id: string;
+  name: string;
+  username: string;
+};
+
 function numberOrUndefined(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
@@ -126,6 +132,19 @@ Deno.serve(async (req: Request) => {
     );
   }
 
+  const { data: existingDriverSnapshot, error: existingDriverLookupError } = await supabaseAdmin
+    .from('drivers')
+    .select('id, name, username')
+    .eq('id', driverId)
+    .maybeSingle<ExistingDriverSnapshot>();
+
+  if (existingDriverLookupError) {
+    return json(
+      { success: false, error: `Driver lookup failed: ${existingDriverLookupError.message}` },
+      500,
+    );
+  }
+
   // ── 4. Create Supabase Auth user ─────────────────────────────────────────
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
@@ -164,8 +183,38 @@ Deno.serve(async (req: Request) => {
 
   const authUserId = authData.user.id;
 
-  // Helper: roll back the just-created Auth user to avoid orphaned accounts.
-  const rollbackAuthUser = () => supabaseAdmin.auth.admin.deleteUser(authUserId);
+  // Helper: roll back the just-created Auth user and trigger-created rows to
+  // avoid orphaned drivers when post-create persistence fails.
+  const rollbackCreatedRows = async () => {
+    const { error: authRollbackError } = await supabaseAdmin.auth.admin.deleteUser(authUserId);
+    if (authRollbackError) {
+      console.error('create-driver rollback auth delete failed:', authRollbackError.message);
+    }
+
+    if (existingDriverSnapshot) {
+      const { error: restoreDriverError } = await supabaseAdmin
+        .from('drivers')
+        .update({
+          name: existingDriverSnapshot.name,
+          username: existingDriverSnapshot.username,
+        })
+        .eq('id', driverId);
+
+      if (restoreDriverError) {
+        console.error('create-driver rollback driver restore failed:', restoreDriverError.message);
+      }
+      return;
+    }
+
+    const { error: deleteDriverError } = await supabaseAdmin
+      .from('drivers')
+      .delete()
+      .eq('id', driverId);
+
+    if (deleteDriverError) {
+      console.error('create-driver rollback driver delete failed:', deleteDriverError.message);
+    }
+  };
 
   // ── 5. Verify trigger-created public rows ────────────────────────────────
   const { data: driverRow, error: driverFetchError } = await supabaseAdmin
@@ -175,7 +224,7 @@ Deno.serve(async (req: Request) => {
     .maybeSingle<{ id: string }>();
 
   if (driverFetchError || !driverRow) {
-    await rollbackAuthUser();
+    await rollbackCreatedRows();
     return json(
       { success: false, error: `drivers trigger insert failed: ${driverFetchError?.message ?? 'row not found'}` },
       500,
@@ -189,7 +238,7 @@ Deno.serve(async (req: Request) => {
     .maybeSingle<{ auth_user_id: string; driver_id: string }>();
 
   if (profileFetchError || profileRow?.driver_id !== driverId) {
-    await rollbackAuthUser();
+    await rollbackCreatedRows();
     return json(
       { success: false, error: `profiles trigger insert failed: ${profileFetchError?.message ?? 'row not found'}` },
       500,
@@ -214,7 +263,7 @@ Deno.serve(async (req: Request) => {
       .eq('id', driverId);
 
     if (businessFieldsError) {
-      await rollbackAuthUser();
+      await rollbackCreatedRows();
       return json(
         { success: false, error: `drivers business update failed: ${businessFieldsError.message}` },
         500,
