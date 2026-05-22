@@ -27,8 +27,8 @@ export default defineConfig({
       }
     },
     build: {
-      // Target Safari 13+ (iOS 13+) to ensure broad iOS compatibility
-      target: ['es2015', 'safari13'],
+      // Target Safari 15+ (iOS 15+) — BigInt (ES2020) is required by Money class
+      target: ['es2020', 'safari14'],
       rollupOptions: {
         output: {
           // Split heavy third-party libraries into separate cached chunks.
