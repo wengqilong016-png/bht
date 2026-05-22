@@ -267,12 +267,14 @@ export async function submitCollectionV2(
     }
   }
 
-  // ── Write finance audit to Postgres (fire-and-forget, must not block main flow) ──
+  // ── Write finance audit to Postgres (fire-and-forget with 2 retries, must not block main flow) ──
   if (!isIdempotentReplay) {
     void (async () => {
-      try {
-        if (supabase) {
-          await supabase.from('finance_audit_log').insert({
+      const maxRetries = 2;
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          if (supabase) {
+            await supabase.from('finance_audit_log').insert({
             event_type: 'collection_submission',
             entity_type: 'location',
             entity_id: input.locationId,
@@ -296,9 +298,14 @@ export async function submitCollectionV2(
             },
           });
         }
+        break; // success — exit retry loop
       } catch {
         // Audit must never block the main flow
+        if (attempt === maxRetries) {
+          console.warn('[FinanceAudit] audit write failed after retries — audit record lost for tx:', transaction.id);
+        }
       }
+    }
     })();
   }
 

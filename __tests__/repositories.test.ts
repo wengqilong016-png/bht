@@ -81,13 +81,19 @@ describe('driverRepository', () => {
 
   describe('updateDrivers()', () => {
     it('resolves without error on successful update', async () => {
-      setChainResult(null, null);
+      // First call validates IDs, second call updates
+      setChainResult([{ id: 'drv-1' }], null);
       await expect(updateDrivers([{ id: 'drv-1', name: 'Alice' }])).resolves.toBeUndefined();
     });
 
-    it('throws when Supabase returns an error', async () => {
-      setChainResult(null, new Error('update failed'));
-      await expect(updateDrivers([{ id: 'drv-1', name: 'Alice' }])).rejects.toThrow('update failed');
+    it('throws when validation query fails', async () => {
+      setChainResult(null, new Error('select failed'));
+      await expect(updateDrivers([{ id: 'drv-1', name: 'Alice' }])).rejects.toThrow('select failed');
+    });
+
+    it('throws when driver ID is not found', async () => {
+      setChainResult([], null);
+      await expect(updateDrivers([{ id: 'drv-unknown', name: 'Ghost' }])).rejects.toThrow('Driver(s) not found: drv-unknown');
     });
   });
 

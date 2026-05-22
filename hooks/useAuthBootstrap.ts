@@ -93,7 +93,14 @@ function handleRestoreFailure(
 
   if (error === 'No active session') {
     dispatch({ type: 'LOGOUT' });
+    return;
   }
+
+  // Transient errors (Timeout, network failure, etc.) with a valid cached
+  // user — finish initializing so the UI isn't stuck in a loading state.
+  // The cached user data remains available and will be refreshed by the
+  // polling query when connectivity is restored.
+  dispatch({ type: 'FINISH_INITIALIZING' });
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────

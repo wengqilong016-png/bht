@@ -110,7 +110,7 @@ describe('persistEvidencePhotoUrl() — successful upload', () => {
     expect(mockUpload).toHaveBeenCalledWith(
       'collection/drv-1/tx-42.jpg',
       expect.any(Blob),
-      expect.objectContaining({ contentType: 'image/jpeg', upsert: true }),
+      expect.objectContaining({ contentType: 'image/jpeg', upsert: false }),
     );
     expect(result).toContain('collection/drv-1/tx-42.jpg');
   });

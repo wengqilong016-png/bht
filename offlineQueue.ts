@@ -379,6 +379,17 @@ export async function enqueueTransaction(
   rawInput?: CollectionSubmissionInput,
   dependsOn?: string[],
 ): Promise<void> {
+  // Basic validation before enqueue — prevent corrupted entries from entering queue
+  if (!tx.id || typeof tx.id !== 'string') {
+    throw new Error('Cannot enqueue transaction: missing or invalid id');
+  }
+  if (!tx.driverId || typeof tx.driverId !== 'string') {
+    throw new Error(`Cannot enqueue transaction ${tx.id}: missing driverId`);
+  }
+  if (!tx.locationId || typeof tx.locationId !== 'string') {
+    throw new Error(`Cannot enqueue transaction ${tx.id}: missing locationId`);
+  }
+
   // Avoid duplicating base64 in rawInput. If evidence can already be persisted,
   // store the public URL; otherwise keep the dataURL only on the queue entry and
   // mark it for a required persist attempt before replay.
@@ -936,7 +947,7 @@ export async function flushQueue(
           flushedOpIds.add(entry.operationId);
           remainingOpIds.delete(entry.operationId);
         }
-        options?.onProgress?.(flushed, pending.length);
+        try { options?.onProgress?.(flushed, pending.length); } catch { /* callback must not interrupt flush */ }
       }
       // 'skipped' and 'failed' don't increment flushed
     }

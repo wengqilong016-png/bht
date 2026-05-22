@@ -85,7 +85,7 @@ async function uploadWithRetry(
     try {
       const { error } = await bucket.upload(objectPath, blob, {
         contentType: mimeType,
-        upsert: true,
+        upsert: false,
         signal: AbortSignal.timeout(15_000),
       });
       uploadError = error;

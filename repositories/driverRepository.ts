@@ -61,12 +61,33 @@ function toDriverUpdatePayload(driver: Partial<Driver>): DriverUpdate {
 
 export async function updateDrivers(drivers: Array<Partial<Driver> & { id: string }>): Promise<void> {
   if (!supabase) throw new Error('Supabase client unavailable');
+  if (drivers.length === 0) return;
+
+  // Validate all driver IDs exist before starting batch
+  const ids = drivers.map(d => d.id);
+  const { data: existing, error: fetchError } = await supabase
+    .from('drivers')
+    .select('id')
+    .in('id', ids);
+  if (fetchError) throw fetchError;
+
+  const existingIds = new Set((existing ?? []).map(d => d.id));
+  const unknown = ids.filter(id => !existingIds.has(id));
+  if (unknown.length > 0) {
+    throw new Error(`Driver(s) not found: ${unknown.join(', ')}`);
+  }
+
+  // Proceed with batch — collect all errors instead of failing on first
+  const failed: string[] = [];
   for (const driver of drivers) {
     const { error } = await supabase
       .from('drivers')
       .update(toDriverUpdatePayload(driver))
       .eq('id', driver.id);
-    if (error) throw error;
+    if (error) failed.push(`${driver.id}: ${error.message}`);
+  }
+  if (failed.length > 0) {
+    throw new Error(`Batch update partially failed (${failed.length}/${drivers.length}): ${failed.join('; ')}`);
   }
 }
 

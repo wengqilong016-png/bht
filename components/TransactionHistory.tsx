@@ -296,14 +296,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
                                 <button 
                                   onClick={async (e) => {
                                     const btn = e.currentTarget;
-                                    btn.innerHTML = '翻译中...';
+                                    btn.textContent = '翻译中...';
                                     try {
                                       const { translateToChinese } = await import('../services/translateService');
                                       const res = await translateToChinese(tx.notes || '');
-                                      btn.parentElement!.querySelector('p')!.innerText = `“ ${res} ”`;
+                                      btn.parentElement!.querySelector('p')!.textContent = `” ${res} “`;
                                       btn.style.display = 'none';
                                     } catch {
-                                      btn.innerHTML = '翻译失败';
+                                      btn.textContent = '翻译失败';
                                     }
                                   }}
                                   className="absolute top-2 right-2 p-1.5 bg-amber-100 text-amber-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-caption font-black"
