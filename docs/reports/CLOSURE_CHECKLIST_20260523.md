@@ -38,6 +38,7 @@
 | 安全审计 | `npm run security:audit` | 通过（1 个 moderate，不阻塞当前 CI） |
 | 构建 | `npm run build` | 通过 |
 | E2E | `npm run test:e2e` | 未通过，当前环境 Playwright/Chromium 启动权限失败 |
+| 远端 Actions | `push origin main` 后检查 GitHub Actions | 通过：`CI` / `Build Android APK` / `Deploy to Vercel` / `Push on main` 全部 success |
 
 ## E2E 阻塞说明
 
@@ -51,5 +52,5 @@
 
 ## 剩余风险
 
-- 远端 CI 是否全绿仍需推送后确认，当前本地唯一未闭环项是 E2E 环境权限。
+- 本地 `npm run test:e2e` 仍受当前环境的 Chromium 权限限制，后续若要在本机复现 E2E，需要先修复 Playwright 浏览器运行环境。
 - `npm audit` 仍有 1 个 `moderate` 级 `brace-expansion` 告警，本轮未升级依赖。
