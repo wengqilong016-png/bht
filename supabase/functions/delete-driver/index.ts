@@ -113,21 +113,14 @@ Deno.serve(async (req: Request) => {
     return errorJson('Internal server error', 500, 'DRIVER_LOOKUP_FAILED');
   }
 
-  // ── 4. Delete Supabase Auth user when linked ─────────────────────────────
-  if (profileRow?.auth_user_id) {
-    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(
-      profileRow.auth_user_id,
-    );
-    if (authDeleteError) {
-      console.error('auth user delete failed:', authDeleteError.message);
-      return errorJson('Internal server error', 500, 'AUTH_DELETE_FAILED');
-    }
-  }
-
-  // ── 5. Unlink dependents, delete profile, then delete drivers row ────────
+  // ── 4. Unlink dependents, delete profile, then delete drivers row ────────
   // Transactions and daily_settlements preserve historical financial records.
   // Locations also need explicit unassignment so the UI does not show stale
   // driver ownership after the account is gone.
+  //
+  // Order matters: DB cleanup runs BEFORE auth user deletion so a failure in
+  // the reversible DB steps does not leave an orphan auth user that can no
+  // longer log in.  Auth deletion is the last and most irreversible step.
   const unlinkError = await unlinkDriverReferences(driverId);
   if (unlinkError) {
     return errorJson(unlinkError.error, 500, unlinkError.code);
@@ -151,6 +144,24 @@ Deno.serve(async (req: Request) => {
   if (driverDeleteError) {
     console.error('driver delete failed:', driverDeleteError.message);
     return errorJson('Internal server error', 500, 'DRIVER_DELETE_FAILED');
+  }
+
+  // ── 5. Delete Supabase Auth user when linked ─────────────────────────────
+  // Only after all DB rows are removed — this is the irreversible step.
+  if (profileRow?.auth_user_id) {
+    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(
+      profileRow.auth_user_id,
+    );
+    if (authDeleteError) {
+      console.error('auth user delete failed:', authDeleteError.message);
+      // DB is clean, but auth user lingers — log prominently so the operator
+      // can manually remove it from the Supabase dashboard if needed.
+      console.error(
+        `MANUAL ACTION REQUIRED: delete auth user ${profileRow.auth_user_id} ` +
+        `(driver ${driverId}) via Supabase Dashboard → Authentication → Users.`,
+      );
+      return errorJson('Driver DB records removed, but auth account deletion failed. Please manually delete the auth user in Supabase Dashboard.', 500, 'AUTH_DELETE_FAILED');
+    }
   }
 
   return json({ success: true, driver_id: driverId });

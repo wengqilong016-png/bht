@@ -3,7 +3,7 @@ import {
   CheckCircle2, Loader2, Camera, ChevronRight, WifiOff, MapPin,
   Banknote, AlertTriangle, Calendar, Coins,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { useConfirm } from '../../contexts/ConfirmContext';
@@ -273,7 +273,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
     }
 
     const draftTxId = safeRandomUUID();
-    const calc = calculateCollectionFinanceLocal({
+    const calc = financePreviews[id] ?? calculateCollectionFinanceLocal({
       selectedLocation: entry.location,
       currentScore: entry.score,
       expenses: entry.expenses || '0',
@@ -436,6 +436,15 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
 
   /* ── Photo ───────────────────────────────────────────────────────── */
   const photoInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  useEffect(() => {
+    const refs = photoInputRefs.current;
+    return () => {
+      for (const key of Object.keys(refs)) {
+        delete refs[key];
+      }
+    };
+  }, []);
 
   const handlePhotoSelected = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

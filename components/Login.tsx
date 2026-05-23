@@ -14,7 +14,9 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => {
+    try { return sessionStorage.getItem('bht-login-email') ?? ''; } catch { return ''; }
+  });
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -115,6 +117,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
       return;
     }
     setSettingsSaved(true);
+    // Preserve email so the user doesn't have to re-type it after reload
+    try { if (email.trim()) sessionStorage.setItem('bht-login-email', email.trim()); } catch {}
     // Brief delay so the "Saved" confirmation is visible before the page reloads
     setTimeout(() => window.location.reload(), 800);
   };
