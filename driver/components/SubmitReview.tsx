@@ -6,6 +6,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useCollectionSubmission } from '../../hooks/useCollectionSubmission';
 import { extractGpsFromExif, estimateLocationFromContext } from '../../offlineQueue';
 import { Location, Driver, TRANSLATIONS } from '../../types';
+import { getCollectionAmountWarnings } from '../../utils/collectionAmountLimits';
 
 import CollectionWorkbenchHeader from './CollectionWorkbenchHeader';
 import { formatFinanceAmount, type FinanceAmount } from './finance/FinanceSummarySections';
@@ -67,6 +68,25 @@ export type CompletionResult = {
   source: 'server' | 'offline';
   transaction: Transaction;
 };
+
+const AMOUNT_FIELD_LABELS = {
+  zh: {
+    currentScore: '机器读数',
+    expenses: '费用',
+    coinExchange: '换币',
+    ownerRetention: '店主留存',
+    tip: '小费',
+    startupDebtDeduction: '商家欠款还款',
+  },
+  sw: {
+    currentScore: 'Score',
+    expenses: 'Expenses',
+    coinExchange: 'Coin exchange',
+    ownerRetention: 'Owner retention',
+    tip: 'Tip',
+    startupDebtDeduction: 'Debt repayment',
+  },
+} as const;
 
 const SubmitReview: React.FC<SubmitReviewProps> = ({
   selectedLocation, currentDriver, lang, isOnline, currentScore, photoData,
@@ -328,6 +348,37 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         onTelemetryEvent?.('submit_confirmation_cancelled', {
           step: 'confirm',
           errorCategory: 'coin_stock_negative_cancelled',
+        });
+        return;
+      }
+    }
+    const amountWarnings = getCollectionAmountWarnings({
+      currentScore,
+      coinExchange,
+      ownerRetention,
+      tip,
+      startupDebtDeduction: _startupDebtDeduction,
+    });
+    if (amountWarnings.length > 0) {
+      const warningSummary = amountWarnings
+        .map((warning) => {
+          const label = AMOUNT_FIELD_LABELS[lang][warning.field];
+          return `${label}: ${warning.value.toLocaleString()} > ${warning.max.toLocaleString()}`;
+        })
+        .join('\n');
+      const ok = await confirm({
+        title: lang === 'zh' ? '金额超出前端上限' : 'Amount exceeds client limit',
+        message: lang === 'zh'
+          ? `以下输入会按系统上限截断后提交：\n${warningSummary}\n\n是否继续提交？`
+          : `The following values will be clamped to the system limit before submit:\n${warningSummary}\n\nContinue?`,
+        confirmLabel: lang === 'zh' ? '继续提交' : 'Continue',
+        cancelLabel: lang === 'zh' ? '返回修改' : 'Go back',
+        destructive: true,
+      });
+      if (!ok) {
+        onTelemetryEvent?.('submit_confirmation_cancelled', {
+          step: 'confirm',
+          errorCategory: 'amount_limit_cancelled',
         });
         return;
       }

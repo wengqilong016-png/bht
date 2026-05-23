@@ -2,6 +2,7 @@ import { ArrowRight, Banknote, ChevronRight, Coins, HandCoins, ShieldAlert, Trop
 
 import type { FinanceCalculationSource } from '../../../services/financeCalculator';
 import type { Location } from '../../../types';
+import { COLLECTION_AMOUNT_LIMITS } from '../../../utils/collectionAmountLimits';
 import { Money } from '../../../utils/money';
 
 export type FinanceAmount = number | Money;
@@ -154,6 +155,8 @@ export function OwnerRetentionSection({
           <input
             type="number"
             step="0.01"
+            min="0"
+            max={COLLECTION_AMOUNT_LIMITS.ownerRetention}
             value={displayedOwnerAmount}
             onChange={e => onUpdateOwnerRetention(e.target.value)}
             className={`w-full text-2xl font-black bg-transparent outline-none placeholder:opacity-40 ${isOwnerRetaining ? 'text-amber-900 placeholder:text-amber-200' : 'text-emerald-900 placeholder:text-emerald-200'}`}
@@ -261,6 +264,7 @@ export function TipPaymentSection({
         <input
           type="number"
           min="0"
+          max={COLLECTION_AMOUNT_LIMITS.tip}
           value={tip}
           onChange={e => onUpdateTip(e.target.value)}
           className="w-full bg-transparent text-2xl font-black text-sky-900 outline-none placeholder:text-sky-200"
@@ -288,6 +292,8 @@ export function CoinExchangeSection({
         <div className="p-2 bg-emerald-500 rounded-btn text-white flex-shrink-0"><Coins size={16} /></div>
         <input
           type="number"
+          min="0"
+          max={COLLECTION_AMOUNT_LIMITS.coinExchange}
           value={coinExchange}
           onChange={e => onUpdateCoinExchange(e.target.value)}
           className="w-full text-2xl font-black bg-transparent outline-none text-emerald-900 placeholder:text-emerald-200"
@@ -327,6 +333,8 @@ export function StartupDebtDeductionSection({
           <span className="text-xs font-black text-amber-300">TZS</span>
           <input
             type="number"
+            min="0"
+            max={COLLECTION_AMOUNT_LIMITS.startupDebtDeduction}
             value={startupDebtDeduction}
             onChange={e => onUpdateStartupDebtDeduction(e.target.value)}
             className="w-full text-2xl font-black bg-transparent outline-none text-amber-900 placeholder:text-amber-200"

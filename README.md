@@ -23,6 +23,7 @@
 | 系统架构全链路 | `docs/traces/` — 5 份深度追踪文档 |
 | 运维操作 | `docs/guides/RUNBOOK.md` |
 | 快速修复 | `docs/guides/QUICK-FIX-GUIDE.md` |
+| 收尾清单 | `docs/reports/CLOSURE_CHECKLIST_20260523.md` |
 | 部署指南 | `docs/guides/DEPLOYMENT.md` · `docs/guides/MOBILE_BUILD_GUIDE.md` |
 | 安全相关 | `docs/reports/SECURITY_AUDIT_REPORT.md` · `docs/guides/SECURITY_OPERATIONS.md` |
 | 数据模型 | `docs/reference/DATA_MODEL_AUDIT.md` |

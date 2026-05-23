@@ -35,7 +35,7 @@ import SubmitReview from '../driver/components/SubmitReview';
 import type { CompletionResult } from '../driver/components/SubmitReview';
 
 import { makeDriver, makeLocation, makeTransaction, resetFixtureCounter } from './helpers/fixtures';
-import { act, renderWithProviders, screen, waitFor } from './helpers/test-utils';
+import { act, fireEvent, renderWithProviders, screen, waitFor } from './helpers/test-utils';
 
 const mockUseCollectionSubmission = useCollectionSubmission as jest.MockedFunction<typeof useCollectionSubmission>;
 const mockUseConfirm = useConfirm as jest.MockedFunction<typeof useConfirm>;
@@ -230,6 +230,28 @@ describe('SubmitReview', () => {
     expect(btn).toHaveTextContent('资料不完整');
   });
 
+  it('asks for confirmation when an amount exceeds the client limit and stops submit on cancel', async () => {
+    const submit = jest.fn();
+    const confirm = jest.fn().mockResolvedValue(false);
+    mockUseCollectionSubmission.mockReturnValue(defaultSubmissionState({ submit }));
+    mockUseConfirm.mockReturnValue({ confirm });
+
+    renderSR({
+      photoData: 'data:image/png;base64,abc123',
+      gpsCoords: { lat: -6.8, lng: 39.2 },
+      tip: '999999999',
+    });
+
+    fireEvent.click(screen.getByTestId('driver-submit-button'));
+
+    await waitFor(() => {
+      expect(confirm).toHaveBeenCalledWith(expect.objectContaining({
+        title: '金额超出前端上限',
+      }));
+    });
+    expect(submit).not.toHaveBeenCalled();
+  });
+
   // ─── ERROR STATE ──────────────────────────────────────────────────────────
 
   it('renders confirmation screen after error (does not show completion)', async () => {
@@ -284,7 +306,7 @@ describe('SubmitReview', () => {
       expect(screen.getByTestId('driver-return-home')).toBeInTheDocument();
     });
 
-    screen.getByTestId('driver-return-home').click();
+    fireEvent.click(screen.getByTestId('driver-return-home'));
     expect(onReturnHome).toHaveBeenCalledTimes(1);
   });
 });

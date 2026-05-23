@@ -6,6 +6,7 @@ import {
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useAuth } from '../../contexts/AuthContext';
+import { useConfirm } from '../../contexts/ConfirmContext';
 import { useAppData } from '../../contexts/DataContext';
 import { useToast } from '../../contexts/ToastContext';
 import { orchestrateCollectionSubmission } from '../../services/collectionSubmissionOrchestrator';
@@ -15,6 +16,7 @@ import {
   type FinanceCalculationResult,
 } from '../../services/financeCalculator';
 import { TRANSLATIONS, Location, safeRandomUUID } from '../../types';
+import { COLLECTION_AMOUNT_LIMITS, getCollectionAmountWarnings } from '../../utils/collectionAmountLimits';
 import { compressAndResizeImage } from '../../utils/imageUtils';
 import { getTodayLocalDate } from '../../utils/dateUtils';
 import { haversineM, formatDistance } from '../../utils/haversine';
@@ -88,6 +90,7 @@ function daysSinceDate(iso: string | undefined, today: string): number | null {
 
 const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver }) => {
   const { lang, activeDriverId } = useAuth();
+  const { confirm } = useConfirm();
   const { filteredLocations, isOnline } = useAppData();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
@@ -222,6 +225,49 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
         });
       }
       return;
+    }
+    const amountWarnings = getCollectionAmountWarnings({
+      currentScore: entry.score,
+      expenses: entry.expenses || '0',
+      coinExchange: entry.coinExchange || '0',
+      ownerRetention: entry.ownerRetention || '',
+      tip: entry.tip || '0',
+      startupDebtDeduction: '0',
+    });
+    if (amountWarnings.length > 0) {
+      const labelMap = lang === 'zh'
+        ? {
+            currentScore: '机器读数',
+            expenses: '费用',
+            coinExchange: '换币',
+            ownerRetention: '店主留存',
+            tip: '小费',
+            startupDebtDeduction: '商家欠款还款',
+          }
+        : {
+            currentScore: 'Score',
+            expenses: 'Expenses',
+            coinExchange: 'Coin exchange',
+            ownerRetention: 'Owner retention',
+            tip: 'Tip',
+            startupDebtDeduction: 'Debt repayment',
+          };
+      const warningSummary = amountWarnings
+        .map((warning) => `${labelMap[warning.field]}: ${warning.value.toLocaleString()} > ${warning.max.toLocaleString()}`)
+        .join('\n');
+      const ok = await confirm({
+        title: lang === 'zh' ? '金额超出前端上限' : 'Amount exceeds client limit',
+        message: lang === 'zh'
+          ? `以下输入会按系统上限截断后提交：\n${warningSummary}\n\n是否继续提交？`
+          : `The following values will be clamped to the system limit before submit:\n${warningSummary}\n\nContinue?`,
+        confirmLabel: lang === 'zh' ? '继续提交' : 'Continue',
+        cancelLabel: lang === 'zh' ? '返回修改' : 'Go back',
+        destructive: true,
+      });
+      if (!ok) {
+        updateEntry(id, { submitting: false });
+        return;
+      }
     }
 
     const draftTxId = safeRandomUUID();
@@ -635,6 +681,9 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                       </label>
                       <input
                         type="number"
+                        aria-label={lang === 'zh' ? '换币 (TZS)' : 'Coin exchange (TZS)'}
+                        min="0"
+                        max={COLLECTION_AMOUNT_LIMITS.coinExchange}
                         value={entry.coinExchange}
                         onChange={e => updateEntry(machine.id, { coinExchange: e.target.value })}
                         placeholder="0"
@@ -651,6 +700,9 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                       </label>
                       <input
                         type="number"
+                        aria-label={lang === 'zh' ? '小费 (TZS)' : 'Tip (TZS)'}
+                        min="0"
+                        max={COLLECTION_AMOUNT_LIMITS.tip}
                         value={entry.tip}
                         onChange={e => updateEntry(machine.id, { tip: e.target.value })}
                         placeholder="0"

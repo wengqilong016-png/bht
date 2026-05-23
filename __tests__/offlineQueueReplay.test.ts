@@ -212,6 +212,42 @@ describe('flushQueue — collection replay via submitCollection callback', () =>
     expect(stored?.netPayable).toBe(15000);
   });
 
+  it('replays queued collections in timestamp order before newer entries', async () => {
+    const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
+
+    const olderTx = makeTx({
+      id: 'tx-older',
+      timestamp: '2026-05-20T08:00:00.000Z',
+      currentScore: 180,
+    });
+    const newerTx = makeTx({
+      id: 'tx-newer',
+      timestamp: '2026-05-20T09:00:00.000Z',
+      currentScore: 240,
+    });
+
+    await enqueueTransaction(newerTx, makeRawInput(newerTx.id));
+    await enqueueTransaction(olderTx, makeRawInput(olderTx.id));
+
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>()
+      .mockImplementation(async (input) => ({
+        success: true,
+        transaction: {
+          ...(input.txId === olderTx.id ? olderTx : newerTx),
+          isSynced: true,
+        } as any,
+        source: 'server',
+      }));
+
+    const flushed = await flushQueue(makeSupabaseStub(), { submitCollection });
+
+    expect(flushed).toBe(2);
+    expect(submitCollection.mock.calls.map(([input]) => input.txId)).toEqual([
+      olderTx.id,
+      newerTx.id,
+    ]);
+  });
+
   it('replays an entry with an HTTP photo URL without uploading evidence again', async () => {
     const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
 
@@ -694,8 +730,8 @@ describe('offline-to-online transition', () => {
       timestamp: new Date(baseTime.getTime() + 1000).toISOString(), // +1s (earlier)
     });
 
-    // Enqueue tx1 first (lamportTs=1), then tx2 (lamportTs=2)
-    // Even though tx2 has an earlier timestamp, lamport_ts dictates replay order
+    // Enqueue tx1 first, then tx2.
+    // Business replay order now follows authoritative timestamp, not enqueue order.
     await enqueueTransaction(tx1, makeRawInput('tx-order-1'));
     await enqueueTransaction(tx2, makeRawInput('tx-order-2'));
 
@@ -714,8 +750,7 @@ describe('offline-to-online transition', () => {
 
     const flushed = await flushQueue(makeSupabaseStub(), { submitCollection });
 
-    // sort() by lamport_ts ascending → tx-order-1 (lamportTs=1) first, then tx-order-2 (lamportTs=2)
-    expect(submissionOrder).toEqual(['tx-order-1', 'tx-order-2']);
+    expect(submissionOrder).toEqual(['tx-order-2', 'tx-order-1']);
     expect(flushed).toBe(2);
   });
 
@@ -752,7 +787,7 @@ describe('offline-to-online transition', () => {
     expect(submissionOrder).toEqual(['tx-chrono-1', 'tx-chrono-2']);
   });
 
-  it('sorts mixed-location entries globally by lamport_ts', async () => {
+  it('sorts mixed-location entries globally by timestamp', async () => {
     const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
 
     const baseTime = new Date('2026-05-19T10:00:00Z');
@@ -772,7 +807,7 @@ describe('offline-to-online transition', () => {
       timestamp: new Date(baseTime.getTime() + 2000).toISOString(),
     });
 
-    // Enqueue in order: tx1 (lamportTs=1), tx2 (lamportTs=2), tx3 (lamportTs=3)
+    // Enqueue order differs from chronological order on purpose.
     await enqueueTransaction(tx1, makeRawInput('tx-mix-1'));
     await enqueueTransaction(tx2, makeRawInput('tx-mix-2'));
     await enqueueTransaction(tx3, makeRawInput('tx-mix-3'));
@@ -787,8 +822,7 @@ describe('offline-to-online transition', () => {
 
     await flushQueue(makeSupabaseStub(), { submitCollection });
 
-    // Sorted by lamport_ts ascending → enqueue order across all locations
-    expect(submissionOrder).toEqual(['tx-mix-1', 'tx-mix-2', 'tx-mix-3']);
+    expect(submissionOrder).toEqual(['tx-mix-2', 'tx-mix-3', 'tx-mix-1']);
   });
 });
 

@@ -2,6 +2,9 @@ jest.mock('../supabaseClient', () => ({ supabase: null }));
 jest.mock('../utils/imageUtils', () => ({
   compressAndResizeImage: jest.fn((file: File) => Promise.resolve(file)),
 }));
+jest.mock('../contexts/ConfirmContext', () => ({
+  useConfirm: jest.fn(),
+}));
 jest.mock('../services/collectionSubmissionOrchestrator', () => ({ orchestrateCollectionSubmission: jest.fn() }));
 jest.mock('../services/financeCalculator', () => {
   const { Money } = require('../utils/money');
@@ -17,6 +20,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { within } from '@testing-library/react';
 
 import QuickCollect from '../driver/components/QuickCollect';
+import { useConfirm } from '../contexts/ConfirmContext';
 import { orchestrateCollectionSubmission } from '../services/collectionSubmissionOrchestrator';
 import { recordDriverFlowEvent } from '../services/driverFlowTelemetry';
 
@@ -27,6 +31,7 @@ const mach1 = makeLocation({ id: 'loc-1', name: 'Machine A', lastScore: 1000, as
 const driver = makeDriver({ id: 'drv-1', dailyFloatingCoins: 0 });
 const mockOrchestrate = orchestrateCollectionSubmission as jest.MockedFunction<typeof orchestrateCollectionSubmission>;
 const mockRecordFlow = recordDriverFlowEvent as jest.MockedFunction<typeof recordDriverFlowEvent>;
+const mockUseConfirm = useConfirm as jest.MockedFunction<typeof useConfirm>;
 
 function renderQC(cfg: any = {}) {
   return renderWithProviders(
@@ -53,6 +58,7 @@ function renderQC(cfg: any = {}) {
 describe('QuickCollect', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseConfirm.mockReturnValue({ confirm: jest.fn().mockResolvedValue(true) });
     mockOrchestrate.mockResolvedValue({
       source: 'server',
       fallbackReason: null,
@@ -209,6 +215,30 @@ describe('QuickCollect', () => {
     const receipt = await screen.findByRole('status');
     expect(within(receipt).getByText(/离线已缓存/)).toBeInTheDocument();
     expect(within(receipt).getByText(/tx-offline/)).toBeInTheDocument();
+  });
+
+  it('asks for confirmation before clamping oversized amounts and stops submit on cancel', async () => {
+    const confirm = jest.fn().mockResolvedValue(false);
+    mockUseConfirm.mockReturnValue({ confirm });
+    renderQC({ auth: { lang: 'zh' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Machine A' }));
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['dummy'], 'photo.jpg', { type: 'image/jpeg' });
+    Object.defineProperty(fileInput, 'files', { value: [file], writable: false });
+    fireEvent.change(fileInput);
+    await waitFor(() => expect(screen.queryByText(/拍照凭证已添加/)).toBeInTheDocument());
+
+    fireEvent.change(screen.getByPlaceholderText('0000'), { target: { value: '1200' } });
+    fireEvent.change(screen.getByLabelText(/小费 \(TZS\)/), { target: { value: '999999999' } });
+    fireEvent.click(screen.getByRole('button', { name: '提交' }));
+
+    await waitFor(() => {
+      expect(confirm).toHaveBeenCalledWith(expect.objectContaining({
+        title: '金额超出前端上限',
+      }));
+    });
+    expect(mockOrchestrate).not.toHaveBeenCalled();
   });
 
   it('shows finance preview after entering valid score', async () => {

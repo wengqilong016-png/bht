@@ -41,9 +41,26 @@
 
 ## 二、测试结果
 
-**测试任务未完成。** 前序devops代理在跑全量测试时迭代次数耗尽(90/90)，未产出任何测试通过/失败数据。
+2026-05-23 已补跑本地验证，结果如下：
 
-建议后续补跑。
+- `npm run typecheck`：通过
+- `npm run lint`：通过（仅现有 warning）
+- `npm run test:coverage:ci`：通过，`100 suites / 1066 tests`
+- 定向回归：
+  - `__tests__/financeCalculator.test.ts`
+  - `__tests__/offlineQueueReplay.test.ts`
+  - `__tests__/collectionSubmissionOrchestrator.test.ts`
+  - `__tests__/SubmitReview.test.tsx`
+  - `__tests__/QuickCollect.test.tsx`
+  - 合计 `153/153` 通过
+- `npm run build`：通过
+
+`npm run test:e2e` 在当前执行环境未完成，失败原因为 Playwright Chromium 启动权限错误，不是业务断言失败：
+
+- `libGLESv2.so ... Permission denied`
+- `sandbox_linux.cc ... Permission denied`
+
+因此，本报告原先“未产出任何结果”的状态已失效，当前应视为“代码与单元/集成覆盖验证已完成，E2E 受环境阻塞待远端 CI 复核”。
 
 ---
 
@@ -69,7 +86,7 @@
 4. **M5清理**: 更新审计清单迁移引用至最新版本
 
 ### P2 (本周)
-5. **M4补充**: 补充极限值测试、离线replay顺序测试、SQL函数单元测试
+5. **M4补充**: 已补充极限值测试、离线 replay 顺序测试、RPC 契约回归测试；SQL 侧仍建议在可用 Supabase 环境补充
 
 ### P3 (本月)
 6. **M2迁移**: 高价值审计由localStorage迁移至Postgres finance_audit_log表

@@ -1,5 +1,6 @@
 import { enqueueTransaction } from '../offlineQueue';
 import { CONSTANTS } from '../types';
+import { clampCollectionAmount } from '../utils/collectionAmountLimits';
 import { createCollectionTransaction } from '../utils/transactionBuilder';
 import { Money } from '../utils/money';
 
@@ -71,20 +72,6 @@ const defaultDeps: CollectionSubmissionOrchestratorDeps = {
   enqueueTransaction,
   logger: console,
 };
-
-function parseInteger(value: string): number {
-  return parseInt(value, 10) || 0;
-}
-
-function parseTzs(value: string): Money {
-  const normalized = value.replace(/,/g, '').trim();
-  if (!normalized) return Money.zero('TZS');
-  try {
-    return Money.tzs(normalized);
-  } catch {
-    return Money.zero('TZS');
-  }
-}
 
 function normalizeReportedStatus(
   condition: string | null | undefined,
@@ -185,13 +172,13 @@ export function buildCollectionSubmissionInput(
 ): CollectionSubmissionInput {
   // Expenses are intentionally 0 for collection transactions.
   const expenseValue = 0;
-  const tipValue = parseTzs(input.tip).toNumber();
   const trimmedScore = input.currentScore.trim();
-  const parsedScore = Math.floor(parseTzs(trimmedScore).toNumber());
   const cleanScore = trimmedScore.replace(/,/g, '');
+  const numericScore = Number(cleanScore);
+  const parsedScore = Math.floor(numericScore);
   const isInvalidScore =
     trimmedScore === '' ||
-    Number.isNaN(Number(cleanScore)) ||
+    Number.isNaN(numericScore) ||
     Number.isNaN(parsedScore);
   if (isInvalidScore) {
     appendCollectionSubmissionAudit({
@@ -233,14 +220,14 @@ export function buildCollectionSubmissionInput(
     txId: input.draftTxId,
     locationId: input.selectedLocation.id,
     driverId: input.currentDriver.id,
-    currentScore: Math.min(userScore, CONSTANTS.MAX_REASONABLE_SCORE),
+    currentScore: clampCollectionAmount('currentScore', input.currentScore),
     expenses: expenseValue,
-    tip: tipValue,
+    tip: clampCollectionAmount('tip', input.tip),
     startupDebtDeduction: input.calculations.startupDebtDeduction.toNumber(),
     isOwnerRetaining: input.isOwnerRetaining,
     ownerRetention:
-      input.ownerRetention !== '' ? parseTzs(input.ownerRetention).toNumber() : null,
-    coinExchange: parseInteger(input.coinExchange),
+      input.ownerRetention !== '' ? clampCollectionAmount('ownerRetention', input.ownerRetention) : null,
+    coinExchange: clampCollectionAmount('coinExchange', input.coinExchange),
     gps:
       input.resolvedGps.lat === 0 && input.resolvedGps.lng === 0
         ? null

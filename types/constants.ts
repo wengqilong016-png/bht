@@ -18,6 +18,11 @@ export const CONSTANTS = {
   IMAGE_MAX_WIDTH: 800,
   IMAGE_QUALITY: 0.6,
   STAGNANT_DAYS_THRESHOLD: 7,
+  MAX_EXPENSES: 10000000,
+  MAX_TIP: 5000000,
+  MAX_COIN_EXCHANGE: 10000000,
+  MAX_OWNER_RETENTION: 20000000,
+  MAX_STARTUP_DEBT_DEDUCTION: 50000000,
   /** Minimum absolute difference between user-entered score and AI-recognised score
    *  to flag a transaction as anomalous. Increase to reduce false-positives. */
   ANOMALY_SCORE_DIFF_THRESHOLD: 50,

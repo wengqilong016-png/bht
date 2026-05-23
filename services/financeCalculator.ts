@@ -1,5 +1,6 @@
 import { supabase } from '../supabaseClient';
 import { CONSTANTS, Location } from '../types';
+import { clampCollectionAmount } from '../utils/collectionAmountLimits';
 import { Money } from '../utils/money';
 
 export type FinanceCalculationSource = 'local' | 'server';
@@ -45,20 +46,6 @@ type FinanceRpcPayload = Partial<Record<
   number
 >>;
 
-/**
- * Parse a form field string into a TZS Money amount.
- * Replaces the lossy parseAmount() — all string→money conversion goes through Money.tzs().
- */
-function parseTzs(value: string): Money {
-  const normalized = value.replace(/,/g, '').trim();
-  if (!normalized) return Money.zero('TZS');
-  try {
-    return Money.tzs(normalized);
-  } catch {
-    return Money.zero('TZS');
-  }
-}
-
 const EMPTY_RESULT: FinanceCalculationResult = {
   diff: Money.zero('TZS'),
   revenue: Money.zero('TZS'),
@@ -73,17 +60,31 @@ const EMPTY_RESULT: FinanceCalculationResult = {
 
 function normalizeFinanceInput(input: CollectionFinanceInput): NormalizedFinanceInput {
   return {
-    currentScore: Math.min(
-      Math.floor(parseTzs(input.currentScore).toNumber()),
-      CONSTANTS.MAX_REASONABLE_SCORE,
+    currentScore: clampCollectionAmount('currentScore', input.currentScore),
+    expenses: Money.tzs(clampCollectionAmount('expenses', input.expenses)),
+    tip: Money.tzs(clampCollectionAmount('tip', input.tip)),
+    startupDebtDeductionRequest: Money.tzs(
+      clampCollectionAmount('startupDebtDeduction', input.startupDebtDeduction),
     ),
-    expenses: parseTzs(input.expenses),
-    tip: parseTzs(input.tip),
-    startupDebtDeductionRequest: parseTzs(input.startupDebtDeduction),
-    ownerRetention: input.ownerRetention !== '' ? parseTzs(input.ownerRetention) : null,
+    ownerRetention: input.ownerRetention !== ''
+      ? Money.tzs(clampCollectionAmount('ownerRetention', input.ownerRetention))
+      : null,
     initialFloat: Money.tzs(input.initialFloat || 0),
-    coinExchange: parseTzs(input.coinExchange),
+    coinExchange: Money.tzs(clampCollectionAmount('coinExchange', input.coinExchange)),
   };
+}
+
+function getFinancePreviewRpcWarning(error: unknown, selectedLocation: Location): string {
+  const message = typeof error === 'object' && error !== null && 'message' in error
+    ? String((error as { message?: unknown }).message ?? '')
+    : '';
+  const looksLikeSignatureMismatch =
+    message.includes('calculate_finance_v2') &&
+    (message.includes('function') || message.includes('No function matches'));
+
+  return looksLikeSignatureMismatch
+    ? '[FinancePreview] RPC contract mismatch, falling back to local preview'
+    : `[FinancePreview] RPC preview unavailable for location ${selectedLocation.id}, falling back to local`;
 }
 
 function calculateRemainingCoins(
@@ -222,10 +223,11 @@ export async function calculateCollectionFinancePreview(
     }).abortSignal(AbortSignal.timeout(10_000));
 
     if (error || !data) {
-      console.warn(
-        '[FinancePreview] RPC version mismatch, falling back to local',
+      console.warn(getFinancePreviewRpcWarning(error, selectedLocation), {
         error,
-      );
+        locationId: selectedLocation.id,
+        requestedParamCount: 9,
+      });
       return fallback;
     }
 

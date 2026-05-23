@@ -883,13 +883,18 @@ export async function flushQueue(
     const pending = await getPendingTransactions();
     if (pending.length === 0) return 0;
 
-    // Sort by lamport_ts ascending (ADR-004 causal order).  Operations with
-    // explicit `dependsOn` constraints are skipped during iteration if their
-    // dependencies haven't been flushed yet, ensuring causal chains are preserved.
-    // Old entries without lamport_ts (default 0) sort first for backward compat.
+    // Replay by authoritative enqueue timestamp first so consecutive offline
+    // collections for the same machine preserve business order.  Use lamport_ts
+    // as the secondary key so explicit causal chains stay deterministic.
+    // Items with `dependsOn` are still guarded below and won't run early.
     pending.sort((a, b) => {
       const aEntry = a as Transaction & Partial<QueueMeta>;
       const bEntry = b as Transaction & Partial<QueueMeta>;
+      const aTimestamp = Date.parse(aEntry.timestamp ?? '') || 0;
+      const bTimestamp = Date.parse(bEntry.timestamp ?? '') || 0;
+      if (aTimestamp !== bTimestamp) {
+        return aTimestamp - bTimestamp;
+      }
       return (aEntry.lamportTs ?? 0) - (bEntry.lamportTs ?? 0);
     });
 

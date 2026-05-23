@@ -9,6 +9,7 @@ import {
   orchestrateCollectionSubmission,
   type OrchestrateCollectionSubmissionInput,
 } from '../services/collectionSubmissionOrchestrator';
+import { CONSTANTS } from '../types';
 
 import type { Driver, Location, Transaction } from '../types';
 
@@ -188,6 +189,20 @@ describe('buildCollectionSubmissionInput', () => {
   it('normalizes empty and non-numeric tip values to 0', () => {
     expect(buildCollectionSubmissionInput(makeInput({ tip: '' })).tip).toBe(0);
     expect(buildCollectionSubmissionInput(makeInput({ tip: 'abc' })).tip).toBe(0);
+  });
+
+  it('clamps currentScore, tip, ownerRetention, and coinExchange to frontend safety limits', () => {
+    const input = buildCollectionSubmissionInput(makeInput({
+      currentScore: '999999999',
+      tip: '999999999',
+      ownerRetention: '999999999',
+      coinExchange: '999999999',
+    }));
+
+    expect(input.currentScore).toBe(CONSTANTS.MAX_REASONABLE_SCORE);
+    expect(input.tip).toBe(CONSTANTS.MAX_TIP);
+    expect(input.ownerRetention).toBe(CONSTANTS.MAX_OWNER_RETENTION);
+    expect(input.coinExchange).toBe(CONSTANTS.MAX_COIN_EXCHANGE);
   });
 
   it('does not include legacy tip annotations in notes', () => {

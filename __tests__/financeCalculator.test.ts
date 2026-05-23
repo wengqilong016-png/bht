@@ -452,6 +452,29 @@ describe('calculateCollectionFinancePreview — SQL contract', () => {
     expect(params.p_owner_retention).toBe(null);
   });
 
+  it('clamps amount fields to the frontend safety limits before RPC preview', async () => {
+    mockRpc.mockResolvedValueOnce({
+      data: { diff: 99000, revenue: 19800000, commission: 2970000, finalRetention: 2970000, netPayable: 16830000 },
+      error: null,
+    });
+
+    await calculateCollectionFinancePreview(makeInput({
+      currentScore: '999999999',
+      coinExchange: '999999999',
+      tip: '999999999',
+      ownerRetention: '999999999',
+      startupDebtDeduction: '999999999',
+      isOwnerRetaining: true,
+    }));
+
+    const callArgs = mockRpc.mock.calls[0] as [string, Record<string, unknown>];
+    const params = callArgs[1];
+    expect(params.p_current_score).toBe(CONSTANTS.MAX_REASONABLE_SCORE);
+    expect(params.p_tip).toBe(CONSTANTS.MAX_TIP);
+    expect(params.p_owner_retention).toBe(CONSTANTS.MAX_OWNER_RETENTION);
+    expect(params.p_startup_debt_deduction_request).toBe(CONSTANTS.MAX_STARTUP_DEBT_DEDUCTION);
+  });
+
   it('handles server returning partial data (missing some fields)', async () => {
     mockRpc.mockResolvedValueOnce({
       // Server returns only diff and revenue — missing commission, finalRetention, netPayable
@@ -562,6 +585,13 @@ describe('calculateCollectionFinancePreview', () => {
 
     const result = await calculateCollectionFinancePreview(makeInput());
     expect(result.source).toBe('local');
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringContaining('[FinancePreview] RPC preview unavailable'),
+      expect.objectContaining({
+        locationId: 'loc-001',
+        requestedParamCount: 9,
+      }),
+    );
   });
 
   it('falls back to local result when RPC returns null data', async () => {
@@ -569,6 +599,25 @@ describe('calculateCollectionFinancePreview', () => {
 
     const result = await calculateCollectionFinancePreview(makeInput());
     expect(result.source).toBe('local');
+  });
+
+  it('logs a contract mismatch warning when the RPC signature no longer matches', async () => {
+    mockRpc.mockResolvedValueOnce({
+      data: null,
+      error: {
+        message: 'function public.calculate_finance_v2(integer, integer, numeric, integer, integer, boolean, numeric, integer, integer) does not exist',
+      },
+    });
+
+    const result = await calculateCollectionFinancePreview(makeInput());
+    expect(result.source).toBe('local');
+    expect(console.warn).toHaveBeenCalledWith(
+      '[FinancePreview] RPC contract mismatch, falling back to local preview',
+      expect.objectContaining({
+        locationId: 'loc-001',
+        requestedParamCount: 9,
+      }),
+    );
   });
 
   it('falls back to local result when RPC throws', async () => {
