@@ -24,10 +24,18 @@ export async function isAdmin(authHeader: string | null): Promise<string | null>
     .from('profiles')
     .select('role')
     .eq('auth_user_id', user.id)
-    .single<{ role: string }>();
+    .maybeSingle<{ role: string }>();
 
-  if (profileError || !profile) return null;
-  if (profile.role !== 'admin') return null;
+  // PGRST116 = no matching row — user has no profile (not an admin).  This is
+  // a normal authorization result, not a server error.  Actual database errors
+  // (connection failures, etc.) are logged and treated as denial for safety.
+  if (profileError) {
+    if (profileError.code !== 'PGRST116') {
+      console.error('authz profile lookup failed:', profileError.message);
+    }
+    return null;
+  }
+  if (!profile || profile.role !== 'admin') return null;
 
   return user.id;
 }

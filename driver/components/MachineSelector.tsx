@@ -56,7 +56,16 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
   const [offlineQueueCount, setOfflineQueueCount] = useState(0);
 
   useEffect(() => {
-    getPendingTransactions().then((list) => setOfflineQueueCount(list.length)).catch(() => {});
+    let cancelled = false;
+    const refresh = () => {
+      if (cancelled) return;
+      getPendingTransactions().then((list) => {
+        if (!cancelled) setOfflineQueueCount(list.length);
+      }).catch(() => {});
+    };
+    refresh();
+    const interval = setInterval(refresh, 15_000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
   const driverSpecificLocations = useMemo(() => locations.filter(l => l.assignedDriverId === currentDriver.id), [locations, currentDriver.id]);

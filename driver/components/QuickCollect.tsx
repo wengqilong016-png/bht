@@ -52,6 +52,7 @@ interface MachineEntry {
   ownerRetention: string;
   isOwnerRetaining: boolean;
   expenses: string;
+  startupDebtDeduction: string;
 }
 
 interface SubmissionReceipt {
@@ -133,6 +134,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
         location: assignedMachines.find(m => m.id === id) ?? ({} as Location),
         score: '', photo: null, submitting: false, submitted: false, receipt: null,
         coinExchange: '', tip: '', ownerRetention: '', isOwnerRetaining: false, expenses: '',
+        startupDebtDeduction: '',
       },
     [entries, assignedMachines],
   );
@@ -155,7 +157,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
         ownerRetention: e.ownerRetention || '',
         isOwnerRetaining: e.isOwnerRetaining,
         tip: e.tip || '0',
-        startupDebtDeduction: '0',
+        startupDebtDeduction: e.startupDebtDeduction || '0',
         initialFloat: currentDriver?.dailyFloatingCoins || 0,
       });
     }
@@ -232,7 +234,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
       coinExchange: entry.coinExchange || '0',
       ownerRetention: entry.ownerRetention || '',
       tip: entry.tip || '0',
-      startupDebtDeduction: '0',
+      startupDebtDeduction: entry.startupDebtDeduction || '0',
     });
     if (amountWarnings.length > 0) {
       const labelMap = lang === 'zh'
@@ -279,7 +281,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
       ownerRetention: entry.ownerRetention || '',
       isOwnerRetaining: entry.isOwnerRetaining,
       tip: entry.tip || '0',
-      startupDebtDeduction: '0',
+      startupDebtDeduction: entry.startupDebtDeduction || '0',
       initialFloat: currentDriver.dailyFloatingCoins || 0,
     });
 
@@ -386,6 +388,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
         updateEntry(id, {
           score: '', photo: null, submitting: false, submitted: true, receipt,
           coinExchange: '', tip: '', ownerRetention: '', isOwnerRetaining: false, expenses: '',
+          startupDebtDeduction: '',
         });
       }, 2500);
     } catch (err) {
@@ -711,6 +714,26 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                         className="w-full rounded-subcard border border-slate-200 bg-white px-2.5 py-2 text-xs font-bold text-slate-800 placeholder:text-slate-300 focus:border-amber-300 outline-none disabled:opacity-50"
                       />
                     </div>
+                  </div>
+
+                  {/* Startup debt deduction */}
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-0.5 block">
+                      <Banknote size={10} className="inline mr-0.5" />
+                      {lang === 'zh' ? '欠款还款 (TZS)' : 'Debt repay (TZS)'}
+                    </label>
+                    <input
+                      type="number"
+                      aria-label={lang === 'zh' ? '商家欠款还款 (TZS)' : 'Startup debt deduction (TZS)'}
+                      min="0"
+                      max={COLLECTION_AMOUNT_LIMITS.startupDebtDeduction}
+                      value={entry.startupDebtDeduction}
+                      onChange={e => updateEntry(machine.id, { startupDebtDeduction: e.target.value })}
+                      placeholder="0"
+                      inputMode="numeric"
+                      disabled={entry.submitting || entry.submitted}
+                      className="w-full rounded-subcard border border-slate-200 bg-white px-2.5 py-2 text-xs font-bold text-slate-800 placeholder:text-slate-300 focus:border-amber-300 outline-none disabled:opacity-50"
+                    />
                   </div>
 
                   {/* Owner retention toggle */}

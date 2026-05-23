@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useConfirm } from '../../contexts/ConfirmContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useCollectionSubmission } from '../../hooks/useCollectionSubmission';
-import { extractGpsFromExif, estimateLocationFromContext } from '../../offlineQueue';
+import { extractGpsFromExif, estimateLocationFromContext } from '../../utils/exifGps';
 import { Location, Driver, TRANSLATIONS } from '../../types';
 import { getCollectionAmountWarnings } from '../../utils/collectionAmountLimits';
 
@@ -100,7 +100,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
   const { confirm } = useConfirm();
   const parsedCurrentScore = parseInt(currentScore, 10);
   const hasNumericScore = !isNaN(parsedCurrentScore);
-  const isScoreBelowLastReading = hasNumericScore && parsedCurrentScore < (selectedLocation?.lastScore ?? 0);
+  const isScoreNotHigher = hasNumericScore && parsedCurrentScore <= (selectedLocation?.lastScore ?? 0);
   // GPS-acquisition local state (distinct from the submission state machine)
   const [gpsResolving, setGpsResolving] = useState(false);
   const { state: submissionState, submit: submitCollection, reset: resetSubmissionState } = useCollectionSubmission();
@@ -310,16 +310,16 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       });
       return;
     }
-    if (isScoreBelowLastReading) {
+    if (isScoreNotHigher) {
       showToast(
         lang === 'zh'
-          ? `当前读数低于上次记录 (${selectedLocation.lastScore.toLocaleString()})，请返回核对读数或提交重置申请。`
-          : `Current reading is below the last recorded score (${selectedLocation.lastScore.toLocaleString()}). Go back to verify the reading or submit a reset request.`,
+          ? `当前读数未超过上次记录 (${selectedLocation.lastScore.toLocaleString()})，营业额为 0。请返回核对读数或提交重置申请。`
+          : `Current reading is not higher than the last recorded score (${selectedLocation.lastScore.toLocaleString()}). Revenue would be 0. Go back to verify or submit a reset request.`,
         'error',
       );
       onTelemetryEvent?.('submit_validation_error', {
         step: 'confirm',
-        errorCategory: 'score_below_last_reading',
+        errorCategory: 'score_not_higher_than_last_reading',
       });
       return;
     }
@@ -441,7 +441,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
     }
   };
 
-  const isSubmitBlocked = isProcessing || !currentScore || isScoreBelowLastReading || submissionBlockers.length > 0;
+  const isSubmitBlocked = isProcessing || !currentScore || isScoreNotHigher || submissionBlockers.length > 0;
 
   return (
     <div className={embedded ? 'space-y-2.5' : 'mx-auto max-w-md animate-in fade-in space-y-2.5'}>
@@ -526,13 +526,13 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
             )}
           </div>
 
-          {isScoreBelowLastReading && (
+          {isScoreNotHigher && (
             <div className="flex items-center gap-3 px-4 py-3 bg-rose-50 border border-rose-200 rounded-subcard">
               <AlertTriangle size={14} className="text-rose-500 flex-shrink-0" />
               <p className="text-caption font-black text-rose-700 uppercase">
                 {lang === 'zh'
-                  ? `当前读数低于上次记录 (${selectedLocation.lastScore.toLocaleString()})，不能按普通收款提交。`
-                  : `Current reading is below the last recorded score (${selectedLocation.lastScore.toLocaleString()}); normal collection submit is blocked.`}
+                  ? `当前读数未超过上次记录 (${selectedLocation.lastScore.toLocaleString()})，营业额为 0，不能按普通收款提交。`
+                  : `Current reading is not higher than the last recorded score (${selectedLocation.lastScore.toLocaleString()}). Revenue would be 0 — normal collection submit is blocked.`}
               </p>
             </div>
           )}

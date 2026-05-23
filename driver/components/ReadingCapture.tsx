@@ -66,7 +66,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
   const t = TRANSLATIONS[lang];
   const parsedCurrentScore = parseInt(currentScore, 10);
   const hasNumericScore = !isNaN(parsedCurrentScore);
-  const isScoreBelowLastReading = hasNumericScore && parsedCurrentScore < (selectedLocation?.lastScore ?? 0);
+  const isScoreNotHigher = hasNumericScore && parsedCurrentScore <= (selectedLocation?.lastScore ?? 0);
 
   // Derive GPS display state from parent props (no duplicate hook instantiation here)
   const isGpsGranted = !!gpsCoords;
@@ -181,12 +181,12 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
           </div>
         )}
 
-        {isScoreBelowLastReading && (
+        {isScoreNotHigher && (
           <div className="mt-3 p-3 rounded-card border border-rose-200 bg-rose-50">
             <p className="text-caption font-black uppercase text-rose-600">
               {lang === 'zh'
-                ? `当前读数低于上次记录 (${selectedLocation.lastScore.toLocaleString()})，请先确认是否应提交重置申请。`
-                : `Current reading is below the last recorded score (${selectedLocation.lastScore.toLocaleString()}). Confirm whether this should be a reset request instead.`}
+                ? `当前读数未超过上次记录 (${selectedLocation.lastScore.toLocaleString()})，营业额为 0，请先确认是否应提交重置申请。`
+                : `Current reading is not higher than the last recorded score (${selectedLocation.lastScore.toLocaleString()}). Revenue will be 0. Confirm whether this should be a reset request instead.`}
             </p>
           </div>
         )}
@@ -275,7 +275,7 @@ const ReadingCapture: React.FC<ReadingCaptureProps> = ({
         <div className="sticky bottom-[calc(var(--mobile-nav-height,4.75rem)+env(safe-area-inset-bottom))] z-20 mt-4 rounded-card border border-slate-200 bg-white/95 p-2 backdrop-blur md:bottom-0">
           <button type="button" aria-label={t.nextFinancialStep}
             onClick={onNext}
-            disabled={!currentScore || isScoreBelowLastReading}
+            disabled={!currentScore || isScoreNotHigher}
             data-testid="driver-capture-next"
             className="w-full py-4 bg-amber-600 text-white rounded-card font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-3 shadow-lg shadow-amber-200/40"
           >

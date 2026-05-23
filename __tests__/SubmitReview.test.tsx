@@ -1,7 +1,7 @@
 jest.mock('../hooks/useCollectionSubmission', () => ({
   useCollectionSubmission: jest.fn(),
 }));
-jest.mock('../offlineQueue', () => ({
+jest.mock('../utils/exifGps', () => ({
   extractGpsFromExif: jest.fn(),
   estimateLocationFromContext: jest.fn(),
 }));
@@ -29,7 +29,7 @@ import React from 'react';
 
 import { useCollectionSubmission } from '../hooks/useCollectionSubmission';
 import { useConfirm } from '../contexts/ConfirmContext';
-import { extractGpsFromExif, estimateLocationFromContext } from '../offlineQueue';
+import { extractGpsFromExif, estimateLocationFromContext } from '../utils/exifGps';
 
 import SubmitReview from '../driver/components/SubmitReview';
 import type { CompletionResult } from '../driver/components/SubmitReview';
@@ -191,7 +191,7 @@ describe('SubmitReview', () => {
     const btn = screen.getByTestId('driver-submit-button');
     expect(btn).toBeDisabled();
 
-    expect(screen.getByText(/当前读数低于上次记录/)).toBeInTheDocument();
+    expect(screen.getByText(/当前读数未超过上次记录/)).toBeInTheDocument();
   });
 
   it('shows photo-missing warning when draftTxId exists but no photoData', () => {

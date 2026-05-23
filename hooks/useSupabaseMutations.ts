@@ -112,7 +112,14 @@ export function useSupabaseMutations(
           queryClient.refetchQueries({ queryKey: ['drivers'] }),
           queryClient.refetchQueries({ queryKey: ['aiLogs'] }),
         ]),
-        new Promise((resolve) => setTimeout(resolve, 20_000)),
+        new Promise<void>((resolve) => {
+          const timer = setTimeout(() => {
+            console.warn('[syncOfflineData] refetchQueries timed out after 20s — data may be stale until next sync cycle');
+            resolve();
+          }, 20_000);
+          // Keep the timer reference so Node.js doesn't hold the process open in tests.
+          if (typeof timer === 'object' && 'unref' in timer) (timer as NodeJS.Timeout).unref();
+        }),
       ]);
     }
   });

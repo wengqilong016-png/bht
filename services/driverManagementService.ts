@@ -66,9 +66,16 @@ export async function createDriverAccount(params: {
 export async function deleteDriverAccount(driverId: string): Promise<DeleteDriverResult> {
   if (!supabase) return { success: false, code: 'CLIENT_UNAVAILABLE', message: 'Supabase client unavailable' };
 
-  const { data, error } = await supabase.functions.invoke('delete-driver', {
+  const invokePromise = supabase.functions.invoke('delete-driver', {
     body: { driver_id: driverId },
   });
+
+  const { data, error } = await Promise.race([
+    invokePromise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Edge Function 超时，请检查网络后重试 / Timeout — check network and retry')), INVOKE_TIMEOUT_MS),
+    ),
+  ]) as Awaited<typeof invokePromise>;
 
   if (error || !data?.success) {
     const message = data?.error ?? error?.message ?? 'Unknown error';
