@@ -181,6 +181,17 @@ offlineQueue (离线队列)
 
 ---
 
+## 核心业务常量
+
+| 常量 | 值 | 说明 |
+|------|-----|------|
+| `COIN_VALUE_TZS` | **200** | **每币 = 200 坦桑先令**，revenue = diff × 200 |
+| `DEFAULT_PROFIT_SHARE` | 0.15 | 默认佣金比例 15% |
+| `DEBT_RECOVERY_RATE` | 0.10 | 债务回收率 10% |
+| `ROLLOVER_THRESHOLD` | 10000 | 滚存阈值 |
+| `ANOMALY_SCORE_DIFF_THRESHOLD` | 50 | AI 异常检测分数差异阈值 |
+| `MAX_REASONABLE_SCORE` | 100000 | 客户端分数上限 |
+
 ## 核心设计原则
 
 1. **服务端权威财务模型**：客户端禁止预计算财务总额，所有金额写入通过 RPC `SECURITY DEFINER` 在 PostgreSQL 完成

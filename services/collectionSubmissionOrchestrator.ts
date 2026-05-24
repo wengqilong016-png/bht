@@ -170,8 +170,7 @@ async function enqueueOfflineTransaction(
 export function buildCollectionSubmissionInput(
   input: OrchestrateCollectionSubmissionInput,
 ): CollectionSubmissionInput {
-  // Expenses are intentionally 0 for collection transactions.
-  const expenseValue = 0;
+  const expenseValue = clampCollectionAmount('expenses', input.expenses);
   const trimmedScore = input.currentScore.trim();
   const cleanScore = trimmedScore.replace(/,/g, '');
   const numericScore = Number(cleanScore);
@@ -236,9 +235,9 @@ export function buildCollectionSubmissionInput(
     aiScore: recognizedScore ?? null,
     anomalyFlag: isAnomaly,
     notes,
-    expenseType: null,
-    expenseCategory: null,
-    expenseDescription: undefined,
+    expenseType: input.expenseType ?? null,
+    expenseCategory: input.expenseCategory ?? null,
+    expenseDescription: input.expenseDescription,
     reportedStatus,
   };
 }

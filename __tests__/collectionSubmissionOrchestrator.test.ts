@@ -100,10 +100,12 @@ describe('buildCollectionSubmissionInput', () => {
     expect(input.locationId).toBe('loc-1');
     expect(input.driverId).toBe('drv-1');
     expect(input.currentScore).toBe(150);
-    expect(input.expenses).toBe(0);
+    expect(input.expenses).toBe(20);
     expect(input.tip).toBe(10);
     expect(input.ownerRetention).toBe(12);
     expect(input.coinExchange).toBe(5);
+    expect(input.expenseType).toBe('public');
+    expect(input.expenseCategory).toBe('transport');
     expect(input.reportedStatus).toBe('active');
     expect(input.notes).toContain('Looks fine');
   });
@@ -135,25 +137,25 @@ describe('buildCollectionSubmissionInput', () => {
     expect(input.reportedStatus).toBe('maintenance');
   });
 
-  it('drops collection expense values and metadata but preserves the explicit tip at the submission boundary', () => {
+  it('passes through collection expense values, metadata, and description to server', () => {
     const input = buildCollectionSubmissionInput(
       makeInput({
         expenses: '7500',
         tip: '1000',
         expenseType: 'private',
         expenseCategory: 'fuel',
-        expenseDescription: 'should not persist',
+        expenseDescription: 'emergency fuel purchase',
       }),
     );
 
-    expect(input.expenses).toBe(0);
+    expect(input.expenses).toBe(7500);
     expect(input.tip).toBe(1000);
-    expect(input.expenseType).toBeNull();
-    expect(input.expenseCategory).toBeNull();
-    expect(input.expenseDescription).toBeUndefined();
+    expect(input.expenseType).toBe('private');
+    expect(input.expenseCategory).toBe('fuel');
+    expect(input.expenseDescription).toBe('emergency fuel purchase');
   });
 
-  it('uses explicit tip while still clearing legacy tip expense metadata', () => {
+  it('passes through expense metadata alongside explicit tip', () => {
     const input = buildCollectionSubmissionInput(
       makeInput({
         expenses: '',
@@ -165,12 +167,12 @@ describe('buildCollectionSubmissionInput', () => {
 
     expect(input.expenses).toBe(0);
     expect(input.tip).toBe(500);
-    expect(input.expenseType).toBeNull();
-    expect(input.expenseCategory).toBeNull();
+    expect(input.expenseType).toBe('public');
+    expect(input.expenseCategory).toBe('tip');
     expect(input.expenseDescription).toBeUndefined();
   });
 
-  it('does not persist legacy non-tip collection expense drafts', () => {
+  it('passes through non-tip collection expense values', () => {
     const input = buildCollectionSubmissionInput(
       makeInput({
         expenses: '300',
@@ -180,10 +182,10 @@ describe('buildCollectionSubmissionInput', () => {
       }),
     );
 
-    expect(input.expenses).toBe(0);
+    expect(input.expenses).toBe(300);
     expect(input.tip).toBe(50);
-    expect(input.expenseType).toBeNull();
-    expect(input.expenseCategory).toBeNull();
+    expect(input.expenseType).toBe('public');
+    expect(input.expenseCategory).toBe('fuel');
   });
 
   it('normalizes empty and non-numeric tip values to 0', () => {
@@ -267,7 +269,7 @@ describe('orchestrateCollectionSubmission', () => {
     expect(result.fallbackReason).toBe('rpc failed');
     expect(createCollectionTransaction).toHaveBeenCalledTimes(1);
     expect(createCollectionTransaction.mock.calls[0][4]).toEqual(
-      expect.objectContaining({ expenses: 0, tip: 10 }),
+      expect.objectContaining({ expenses: 20, tip: 10 }),
     );
     expect(enqueueTransaction).toHaveBeenCalledTimes(1);
     expect(logger.warn).toHaveBeenCalled();
@@ -313,10 +315,10 @@ describe('orchestrateCollectionSubmission', () => {
     } as any);
 
     expect(result.source).toBe('offline');
-    expect(offlineTransaction.expenseType).toBeUndefined();
-    expect(offlineTransaction.expenseCategory).toBeUndefined();
-    expect(offlineTransaction.expenseDescription).toBeUndefined();
-    expect(offlineTransaction.expenseStatus).toBeUndefined();
+    expect(offlineTransaction.expenseType).toBe('private');
+    expect(offlineTransaction.expenseCategory).toBe('transport');
+    expect(offlineTransaction.expenseDescription).toBe('Taxi fare');
+    expect(offlineTransaction.expenseStatus).toBe('pending');
     expect(offlineTransaction.paymentStatus).toBe('pending');
     expect(offlineTransaction.aiScore).toBe(149);
     expect(offlineTransaction.reportedStatus).toBe('maintenance');
