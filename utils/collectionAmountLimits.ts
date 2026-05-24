@@ -43,7 +43,7 @@ export function clampCollectionAmount(
     : parsed;
   const normalized = field === 'currentScore'
     ? Math.floor(normalizedBase)
-    : normalizedBase;
+    : Math.floor(normalizedBase); // TZS has 0 decimal places — all money fields must be integers
   return Math.min(Math.max(normalized, 0), COLLECTION_AMOUNT_LIMITS[field]);
 }
 
@@ -55,9 +55,7 @@ export function parseCollectionAmountForWarning(
   const normalizedBase = ABSOLUTE_VALUE_FIELDS.has(field)
     ? Math.abs(parsed)
     : parsed;
-  return field === 'currentScore'
-    ? Math.floor(normalizedBase)
-    : normalizedBase;
+  return Math.floor(normalizedBase); // TZS has 0 decimal places — all fields must be integers
 }
 
 export function getCollectionAmountWarnings(values: Partial<Record<CollectionAmountField, string>>): CollectionAmountWarning[] {

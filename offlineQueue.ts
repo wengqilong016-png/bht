@@ -1051,8 +1051,10 @@ async function recordRetryFailure(
   category: 'transient' | 'permanent' = 'transient',
 ): Promise<void> {
   // Auth errors should not consume retry budget — the user needs to re-login,
-  // not burn through exponential backoff cycles.  Keep retryCount at 0 but set
-  // a long backoff so these items don't spam the server on every flush pass.
+  // not burn through exponential backoff cycles.  Keep retryCount at 0 with a
+  // long 60s backoff so these items don't spam the server on every flush pass.
+  const authError = isAuthError(errorMessage);
+  const AUTH_BACKOFF_MS = 60_000;
   try {
     const db    = await openDB();
     const txDb  = db.transaction(STORE_TX, 'readwrite');
@@ -1063,8 +1065,10 @@ async function recordRetryFailure(
       r.onsuccess = () => {
         const item = r.result as (Transaction & Partial<QueueMeta>) | undefined;
         if (!item) return res();
-        const currentRetry = isAuthError(errorMessage) ? 0 : (item.retryCount ?? 0);
-        const { newRetry, backoffMs } = computeRetryState(currentRetry, category);
+        const currentRetry = authError ? 0 : (item.retryCount ?? 0);
+        const { newRetry, backoffMs } = authError
+          ? { newRetry: 0, backoffMs: AUTH_BACKOFF_MS }
+          : computeRetryState(currentRetry, category);
         const pr = store.put({
           ...item,
           retryCount: newRetry,
@@ -1096,8 +1100,10 @@ async function recordRetryFailure(
       const list = readLocalQueue();
       const updated = list.map(t => {
         if (t.id !== id) return t;
-        const currentRetry = isAuthError(errorMessage) ? 0 : (t.retryCount ?? 0);
-        const { newRetry, backoffMs } = computeRetryState(currentRetry, category);
+        const currentRetry = authError ? 0 : (t.retryCount ?? 0);
+        const { newRetry, backoffMs } = authError
+          ? { newRetry: 0, backoffMs: AUTH_BACKOFF_MS }
+          : computeRetryState(currentRetry, category);
         return {
           ...t,
           retryCount: newRetry,

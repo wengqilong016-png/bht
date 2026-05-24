@@ -74,6 +74,16 @@ function parseDecimal(s: string, decimals: number): bigint {
   return negative ? -subunit : subunit;
 }
 
+/**
+ * Convert a number to a decimal string WITHOUT scientific notation.
+ * (1e-5).toString() = "1e-5", but Number.prototype.toLocaleString with
+ * fixed options always produces a plain decimal form.
+ */
+function numberToDecimalString(n: number): string {
+  if (!Number.isFinite(n)) throw new Error(`Cannot convert non-finite number: ${n}`);
+  return n.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 });
+}
+
 // ── Money class ───────────────────────────────────────────────
 
 export class Money {
@@ -141,7 +151,7 @@ export class Money {
   }
 
   multiply(factor: number | string, mode: RoundingMode = 'round'): Money {
-    const factorStr = typeof factor === 'number' ? factor.toString() : factor;
+    const factorStr = typeof factor === 'number' ? numberToDecimalString(factor) : factor;
     const FACTOR_DECIMALS = 6;
     const factorSubunit = parseDecimal(factorStr, FACTOR_DECIMALS);
     const factorDenom = subunitFactor(FACTOR_DECIMALS);
@@ -153,7 +163,7 @@ export class Money {
 
   divide(divisor: number | string, mode: RoundingMode = 'round'): Money {
     const divisorStr =
-      typeof divisor === 'number' ? divisor.toString() : divisor;
+      typeof divisor === 'number' ? numberToDecimalString(divisor) : divisor;
     const DIVISOR_DECIMALS = 6;
     const divisorSubunit = parseDecimal(divisorStr, DIVISOR_DECIMALS);
 

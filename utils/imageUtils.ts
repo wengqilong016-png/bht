@@ -16,10 +16,14 @@ const JPEG_QUALITY = 0.6; // High compression for fast uploads
 export const compressAndResizeImage = (file: File): Promise<Blob> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.readAsDataURL(file);
     reader.onload = (event) => {
+      const result = event.target?.result;
+      if (typeof result !== 'string') {
+        return reject(new Error('Expected string result from readAsDataURL'));
+      }
       const img = new Image();
-      img.src = event.target?.result as string;
+      img.src = result;
+
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let width = img.width;
@@ -65,6 +69,7 @@ export const compressAndResizeImage = (file: File): Promise<Blob> => {
       img.onerror = (err) => reject(err);
     };
     reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
   });
 };
 

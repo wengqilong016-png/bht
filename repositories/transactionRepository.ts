@@ -4,23 +4,12 @@ import { supabase } from '../supabaseClient';
 
 import type { Transaction } from '../types/models';
 
-const DRIVER_TX_FIELDS = [
+const TX_FIELDS = [
   'id', 'timestamp', 'uploadTimestamp', 'locationId', 'locationName',
   'driverId', 'driverName', 'previousScore', 'currentScore', 'revenue',
   'commission', 'ownerRetention', 'isOwnerRetaining', 'debtDeduction', 'startupDebtDeduction',
   'expenses', 'coinExchange', 'extraIncome', 'netPayable', 'gps', 'gpsDeviation',
-  'photoUrl', 'dataUsageKB', 'aiScore', 'isAnomaly', 'notes', 'isClearance',
-  'isSynced', 'reportedStatus', 'paymentStatus', 'type', 'approvalStatus',
-  'expenseType', 'expenseCategory', 'expenseStatus', 'expenseDescription',
-  'payoutAmount',
-].join(', ');
-
-const ADMIN_TX_FIELDS = [
-  'id', 'timestamp', 'uploadTimestamp', 'locationId', 'locationName',
-  'driverId', 'driverName', 'previousScore', 'currentScore', 'revenue',
-  'commission', 'ownerRetention', 'isOwnerRetaining', 'debtDeduction', 'startupDebtDeduction',
-  'expenses', 'coinExchange', 'extraIncome', 'netPayable', 'gps', 'gpsDeviation',
-  'photoUrl', 'dataUsageKB', 'aiScore', 'isAnomaly', 'notes', 'isClearance',
+  'photoUrl', 'dataUsageKB', 'aiScore', 'isAnomaly', 'anomalyFlag', 'notes', 'isClearance',
   'isSynced', 'reportedStatus', 'paymentStatus', 'type', 'approvalStatus',
   'expenseType', 'expenseCategory', 'expenseStatus', 'expenseDescription',
   'payoutAmount',
@@ -35,7 +24,7 @@ export interface FetchTransactionsOptions {
 
 export async function fetchTransactions(opts: FetchTransactionsOptions): Promise<Transaction[]> {
   if (!supabase) throw new Error('Supabase client unavailable');
-  const fields = opts.isDriver ? DRIVER_TX_FIELDS : ADMIN_TX_FIELDS;
+  const fields = TX_FIELDS;
   let query = supabase
     .from('transactions')
     .select(fields)
