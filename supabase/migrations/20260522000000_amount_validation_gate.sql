@@ -274,7 +274,9 @@ BEGIN
     END IF;
     -- ─── END AMOUNT VALIDATION GATE ───────────────────────────────────────────
 
-    -- END AMOUNT VALIDATION GATE
+    -- Coerce expenses to 0 for collection transactions — expenses are
+    -- recorded as separate type='expense' transactions.
+    p_expenses := 0;
 
     SELECT id, name, "lastScore", "commissionRate", "machineId", "remainingStartupDebt" INTO v_location
     FROM public.locations WHERE id = p_location_id
