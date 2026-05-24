@@ -88,6 +88,10 @@ export type CollectionSubmissionResult =
   | { success: true; transaction: Transaction; source: 'server'; idempotentReplay?: boolean }
   | { success: false; error: string; kind?: CollectionSubmissionFailureKind };
 
+export interface CollectionSubmissionRequestOptions {
+  signal?: AbortSignal;
+}
+
 export function isFailure(
   result: CollectionSubmissionResult,
 ): result is { success: false; error: string; kind?: CollectionSubmissionFailureKind } {
@@ -120,6 +124,7 @@ function classifyRpcException(error: unknown): CollectionSubmissionFailureKind {
  */
 export async function submitCollectionV2(
   input: CollectionSubmissionInput,
+  options: CollectionSubmissionRequestOptions = {},
 ): Promise<CollectionSubmissionResult> {
   if (!supabase) {
     return { success: false, error: 'Supabase not configured', kind: 'config' };
@@ -175,7 +180,7 @@ export async function submitCollectionV2(
       p_expense_category:  input.expenseCategory,
       p_reported_status:   input.reportedStatus,
       p_expense_description: input.expenseDescription ?? null,
-    }).abortSignal(AbortSignal.timeout(30_000));
+    }).abortSignal(options.signal ?? AbortSignal.timeout(30_000));
     data = result.data;
     error = result.error as { message?: string } | null;
   } catch (e) {

@@ -1177,4 +1177,83 @@ describe('ADR-004 causal order replay', () => {
 
     jest.useRealTimers();
   });
+
+  it('aborts a hung collection replay after 30s and keeps later queue items moving', async () => {
+    jest.useFakeTimers();
+    const { enqueueTransaction, flushQueue, getAllQueuedTransactions } = await import('../offlineQueue');
+
+    await enqueueTransaction(makeTx({ id: 'tx-hung' }), makeRawInput('tx-hung'));
+    await enqueueTransaction(makeTx({ id: 'tx-next' }), makeRawInput('tx-next'));
+
+    let abortObserved = false;
+    const submitCollection = jest.fn(
+      async (input: CollectionSubmissionInput, context?: { signal?: AbortSignal }): Promise<CollectionSubmissionResult> => {
+        if (input.txId === 'tx-hung') {
+          return await new Promise<CollectionSubmissionResult>(() => {
+            context?.signal?.addEventListener('abort', () => {
+              abortObserved = true;
+            }, { once: true });
+          });
+        }
+        return {
+          success: true,
+          transaction: { ...makeTx({ id: input.txId }), isSynced: true } as any,
+          source: 'server',
+        };
+      },
+    );
+
+    const flushPromise = flushQueue(makeSupabaseStub(), { submitCollection });
+    await jest.advanceTimersByTimeAsync(60_000);
+    const flushed = await flushPromise;
+
+    expect(flushed).toBe(1);
+    expect(abortObserved).toBe(true);
+    expect(submitCollection.mock.calls.map(([input]) => input.txId)).toEqual(['tx-hung', 'tx-next']);
+
+    const all = await getAllQueuedTransactions();
+    const hung = all.find(t => t.id === 'tx-hung') as any;
+    const next = all.find(t => t.id === 'tx-next');
+
+    expect(hung?.isSynced).toBe(false);
+    expect(hung?.retryCount).toBe(1);
+    expect(hung?.lastErrorCategory).toBe('transient');
+    expect(hung?.lastError).toContain('timed out after 60000ms');
+    expect(next?.isSynced).toBe(true);
+
+    jest.useRealTimers();
+  });
+
+  it('allows a timed-out item to flush successfully on a later pass', async () => {
+    jest.useFakeTimers();
+    const { enqueueTransaction, flushQueue, getAllQueuedTransactions, resetRetryBackoff } = await import('../offlineQueue');
+
+    await enqueueTransaction(makeTx({ id: 'tx-retry' }), makeRawInput('tx-retry'));
+
+    const timedOutSubmit = jest.fn(
+      async (_input: CollectionSubmissionInput, context?: { signal?: AbortSignal }): Promise<CollectionSubmissionResult> =>
+        await new Promise<CollectionSubmissionResult>(() => {
+          context?.signal?.addEventListener('abort', () => undefined, { once: true });
+        }),
+    );
+
+    const firstFlush = flushQueue(makeSupabaseStub(), { submitCollection: timedOutSubmit });
+    await jest.advanceTimersByTimeAsync(60_000);
+    expect(await firstFlush).toBe(0);
+
+    await resetRetryBackoff();
+
+    const recoveredSubmit = jest.fn(async (input: CollectionSubmissionInput): Promise<CollectionSubmissionResult> => ({
+      success: true,
+      transaction: { ...makeTx({ id: input.txId }), isSynced: true } as any,
+      source: 'server',
+    }));
+
+    expect(await flushQueue(makeSupabaseStub(), { submitCollection: recoveredSubmit })).toBe(1);
+
+    const all = await getAllQueuedTransactions();
+    expect(all.find(t => t.id === 'tx-retry')?.isSynced).toBe(true);
+
+    jest.useRealTimers();
+  });
 });

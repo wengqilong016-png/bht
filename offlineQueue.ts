@@ -260,9 +260,12 @@ export interface FlushOptions {
    * Inject `submitCollectionV2` from `services/collectionSubmissionService`
    * at the call site.
    */
-  submitCollection?: (input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>;
-  submitResetRequest?: (tx: Transaction) => Promise<Transaction>;
-  submitPayoutRequest?: (tx: Transaction) => Promise<Transaction>;
+  submitCollection?: (
+    input: CollectionSubmissionInput,
+    context?: { signal?: AbortSignal },
+  ) => Promise<CollectionSubmissionResult>;
+  submitResetRequest?: (tx: Transaction, context?: { signal?: AbortSignal }) => Promise<Transaction>;
+  submitPayoutRequest?: (tx: Transaction, context?: { signal?: AbortSignal }) => Promise<Transaction>;
   /** Called after each successful individual flush. */
   onProgress?: (flushed: number, total: number) => void;
 }
@@ -704,6 +707,33 @@ async function flushSingleItem(
   supabaseClient: SupabaseClient,
   options: FlushOptions | undefined,
 ): Promise<'flushed' | 'skipped' | 'failed'> {
+  const NETWORK_REQUEST_TIMEOUT_MS = 60_000;
+
+  async function runWithRequestTimeout<T>(
+    label: string,
+    request: (context: { signal?: AbortSignal }) => Promise<T>,
+  ): Promise<T> {
+    const controller = typeof AbortController !== 'undefined'
+      ? new AbortController()
+      : undefined;
+    const timeoutMessage = `${label} timed out after ${NETWORK_REQUEST_TIMEOUT_MS}ms`;
+
+    let timerId: ReturnType<typeof setTimeout> | undefined;
+    const requestPromise = request({ signal: controller?.signal });
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timerId = setTimeout(() => {
+        controller?.abort();
+        reject(new Error(timeoutMessage));
+      }, NETWORK_REQUEST_TIMEOUT_MS);
+    });
+
+    try {
+      return await Promise.race([requestPromise, timeoutPromise]);
+    } finally {
+      if (timerId !== undefined) clearTimeout(timerId);
+    }
+  }
+
   try {
     // ── Collection replay path ───────────────────────────────────────────
     if (entry.rawInput) {
@@ -727,19 +757,10 @@ async function flushSingleItem(
         photoUrl: replayPhoto.photoUrl,
       };
 
-      // Individual submission timeout — prevents a single hung request
-      // from blocking the entire flushQueue beyond the global timeout.
-      const SUBMIT_TIMEOUT_MS = 90_000;
-      const submitPromise = options.submitCollection(replayInput);
-      let timerId: ReturnType<typeof setTimeout> | undefined;
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        timerId = setTimeout(
-          () => reject(new Error(`Collection replay timed out after ${SUBMIT_TIMEOUT_MS}ms`)),
-          SUBMIT_TIMEOUT_MS,
-        );
-      });
-      const result = await Promise.race([submitPromise, timeoutPromise]);
-      if (timerId !== undefined) clearTimeout(timerId);
+      const result = await runWithRequestTimeout(
+        'Collection replay',
+        ({ signal }) => options.submitCollection!(replayInput, { signal }),
+      );
 
       if (result.success) {
         appendCollectionSubmissionAudit({
@@ -791,7 +812,10 @@ async function flushSingleItem(
         );
         return 'failed';
       }
-      const result = await options.submitResetRequest(entry);
+      const result = await runWithRequestTimeout(
+        'Reset request replay',
+        ({ signal }) => options.submitResetRequest!(entry, { signal }),
+      );
       await markSynced(entry.id, result);
       return 'flushed';
     }
@@ -805,7 +829,10 @@ async function flushSingleItem(
         );
         return 'failed';
       }
-      const result = await options.submitPayoutRequest(entry);
+      const result = await runWithRequestTimeout(
+        'Payout request replay',
+        ({ signal }) => options.submitPayoutRequest!(entry, { signal }),
+      );
       await markSynced(entry.id, result);
       return 'flushed';
     }
@@ -814,9 +841,20 @@ async function flushSingleItem(
     // ⚠️  Legacy entries bypass the server-authoritative submit_collection_v2 RPC
     //     and its amount validation gate.  Database CHECK constraints (added in
     //     migration 20260522000000) are the last line of defense for this path.
-    const { error } = await supabaseClient
-      .from('transactions')
-      .upsert(toTransactionUpsertPayload(entry));
+    const { error } = await runWithRequestTimeout(
+      'Legacy transaction upsert',
+      async ({ signal }) => {
+        const request = supabaseClient
+          .from('transactions')
+          .upsert(toTransactionUpsertPayload(entry)) as {
+            abortSignal?: (signal: AbortSignal) => PromiseLike<{ error: { message: string } | null }>;
+          } & PromiseLike<{ error: { message: string } | null }>;
+        if (signal && typeof request.abortSignal === 'function') {
+          return request.abortSignal(signal);
+        }
+        return request;
+      },
+    );
     if (!error) {
       await markSynced(entry.id);
       return 'flushed';
