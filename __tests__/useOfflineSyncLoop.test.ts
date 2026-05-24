@@ -131,7 +131,7 @@ async function flushMicrotasks() {
 describe('useOfflineSyncLoop', () => {
   let restoreSw: () => void;
   let dispatchSwMessage: (data: any) => void;
-  let mockSupabaseFrom: jest.Mock;
+  let _mockSupabaseFrom: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -156,7 +156,7 @@ describe('useOfflineSyncLoop', () => {
     };
     mockSupabaseDefault.mockImplementation(() => mockSupabaseFromChain);
     mockSupabaseObj.from.mockReturnValue(mockSupabaseFromChain);
-    mockSupabaseFrom = mockSupabaseDefault;
+    _mockSupabaseFrom = mockSupabaseDefault;
 
     const sw = setupServiceWorker();
     restoreSw = sw.restore;

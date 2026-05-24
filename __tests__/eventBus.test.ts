@@ -41,7 +41,7 @@ function makeMockTx(overrides: Partial<Transaction> = {}): Transaction {
 }
 
 /** Create a typed mock handler matching EventHandler<'transaction_built'>. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function mockHandler(): (...args: any[]) => void {
   return jest.fn<(...args: any[]) => void>();
 }

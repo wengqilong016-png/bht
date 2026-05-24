@@ -194,7 +194,7 @@ describe('AuditConsumer', () => {
       const unsubscribe = jest.fn();
       mockOn.mockReturnValue(unsubscribe);
 
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
+       
       const { startAuditConsumer, stopAuditConsumer } = require('../utils/auditConsumer');
 
       startAuditConsumer();

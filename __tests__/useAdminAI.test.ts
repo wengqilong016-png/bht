@@ -13,7 +13,7 @@
  *  6. isLoading — transitions during sendMessage lifecycle
  */
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, waitFor as _waitFor } from '@testing-library/react';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -43,7 +43,7 @@ global.fetch = mockFetch as unknown as typeof fetch;
 
 // Polyfill Response for jsdom (not available in jsdom global scope)
 if (typeof global.Response === 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-extraneous-class
+   
   (global as any).Response = class {
     readonly body: string;
     readonly status: number;

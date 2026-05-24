@@ -9,7 +9,7 @@
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 
 // ── Mock dependencies ──────────────────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 
 const mockRpc = jest.fn<(...args: unknown[]) => Promise<unknown>>();
 const mockUpload = jest.fn<(...args: unknown[]) => Promise<unknown>>();
