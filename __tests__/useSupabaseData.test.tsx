@@ -65,6 +65,11 @@ function fakeAbortSignal(): AbortSignal {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.useRealTimers();
+  Object.defineProperty(window.navigator, 'onLine', {
+    configurable: true,
+    value: true,
+  });
   // AbortSignal.timeout is native in Node 22+; stubbed only for consistency.
   jest.spyOn(AbortSignal, 'timeout').mockReturnValue(fakeAbortSignal());
 });
@@ -86,6 +91,23 @@ describe('useSupabaseData()', () => {
     );
 
     expect(result.current.isOnline).toBe(true);
+    expect(queryClient.getQueryData(['dbHealth'])).toBe(true);
+  });
+
+  it('seeds dbHealth from navigator.onLine=false before the async health check resolves', () => {
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      value: false,
+    });
+    const queryClient = new QueryClient();
+
+    const { result } = renderHook(
+      () => useSupabaseData('admin'),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    expect(result.current.isOnline).toBe(false);
+    expect(queryClient.getQueryData(['dbHealth'])).toBe(false);
   });
 
   /* ---------------------------------------------------------------- */
@@ -260,6 +282,31 @@ describe('useSupabaseData()', () => {
     await waitFor(() => {
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['dbHealth'] });
     });
+  });
+
+  it('rechecks dbHealth every 5 seconds', async () => {
+    jest.useFakeTimers();
+    (checkDbHealth as jest.Mock).mockResolvedValue(true);
+    (fetchLocations as jest.Mock).mockResolvedValue([]);
+    (fetchDrivers as jest.Mock).mockResolvedValue([]);
+    const queryClient = new QueryClient();
+
+    renderHook(
+      () => useSupabaseData('admin'),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => {
+      expect(checkDbHealth).toHaveBeenCalledTimes(1);
+    });
+
+    await jest.advanceTimersByTimeAsync(30_000);
+
+    await waitFor(() => {
+      expect(checkDbHealth).toHaveBeenCalledTimes(2);
+    });
+
+    jest.useRealTimers();
   });
 
   /* ---------------------------------------------------------------- */

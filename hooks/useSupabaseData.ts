@@ -50,6 +50,7 @@ export function useSupabaseData(
   activeDriverId?: string,
 ) {
   const queryClient = useQueryClient();
+  const initialOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   const isDriver = userRole === 'driver';
   const transactionScope = getTransactionQueryScope(userRole, activeDriverId);
   const settlementScope = getSettlementQueryScope(userRole, activeDriverId);
@@ -65,14 +66,13 @@ export function useSupabaseData(
   const isAuthenticated = !!userRole;
 
   // 1. Health check - High priority
-  // Default to the browser's own connectivity knowledge so the UI never
-  // shows "offline" on cold start when the network is actually up. This
-  // prevents a 5-10s window where every quick submit silently falls back
-  // to the offline queue even though the server is reachable.
-  const { data: isOnline = (typeof navigator !== 'undefined' ? navigator.onLine : false), refetch: refetchHealth } = useQuery({
+  // Seed the query cache from navigator.onLine so the first render and any
+  // cache readers see a value immediately instead of waiting on the health fetch.
+  const { data: isOnline, refetch: refetchHealth } = useQuery({
     queryKey: ['dbHealth'],
     queryFn: async () => await checkDbHealth(),
-    refetchInterval: 30_000,  // ✅ 改为 30s（原 5s），降低轮询频率
+    initialData: initialOnline,
+    refetchInterval: 30_000,
     refetchOnWindowFocus: true,
   });
 
