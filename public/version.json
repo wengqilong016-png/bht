@@ -1,9 +1,9 @@
 {
   "version": "1.0.15",
   "versionCode": 1,
-  "gitSha": "94073da89da89c7bbd2b27048c715cacb0b76e9c",
+  "gitSha": "7a8e56e0b2e9dec91aad4fb981ae8d37429dac77",
   "tag": "main-latest",
-  "releasedAt": "2026-05-24T08:29:25Z",
+  "releasedAt": "2026-05-24T08:45:24Z",
   "apkUrl": "https://github.com/wengqilong016-png/bht/releases/latest/download/bahati-latest-release.apk",
-  "releaseNotes": "main build 1.0.15 (94073da)"
+  "releaseNotes": "main build 1.0.15 (7a8e56e)"
 }
