@@ -49,7 +49,7 @@ function buildSnapshot(
       driver: s.driverName ?? s.driverId ?? '—',
       date: s.date,
       amount: s.expectedTotal,
-      settlementExpenseAmount: s.settlementExpenseAmount ?? 0,
+      settlementExpenseAmount: (s.expenseItems ?? []).reduce((sum: number, i: any) => sum + (i.amount ?? 0), 0),
     }));
 
   const activeLocations = locations.filter((l) => l.status === 'active');

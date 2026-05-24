@@ -88,9 +88,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
   const { confirm } = useConfirm();
   const [actualCash, setActualCash] = useState<string>('');
   const [actualCoins, setActualCoins] = useState<string>('');
-  const [settlementExpenseAmount, setSettlementExpenseAmount] = useState<string>('');
-  const [settlementExpenseCategory, setSettlementExpenseCategory] = useState<NonNullable<DailySettlement['settlementExpenseCategory']>>('tip');
-  const [settlementExpenseNote, setSettlementExpenseNote] = useState<string>('');
+  const [expenseItems, setExpenseItems] = useState<Array<{ amount: string; category: string; note: string; photoUrl?: string }>>([]);
   const [pendingActionKey, setPendingActionKey] = useState<string | null>(null);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const scanResults = useAnomalyScanResults(isAdmin, anomalyTransactions, lang);
@@ -120,15 +118,14 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
 
   const cashAmount = parseInt(actualCash) || 0;
   const coinAmount = parseInt(actualCoins) || 0;
-  const settlementExpenseValue = parseInt(settlementExpenseAmount) || 0;
+  const settlementExpenseValue = expenseItems.reduce((sum, e) => sum + (parseInt(e.amount) || 0), 0);
   const totalRevenue = todayDriverTxs.reduce((sum, tx) => sum + tx.revenue, 0);
   const baseExpenses = todayDriverTxs.reduce((sum, tx) => sum + tx.expenses, 0);
   const totalNet = todayDriverTxs.reduce((sum, tx) => sum + tx.netPayable, 0);
   const expectedTotal = Math.max(0, totalNet - settlementExpenseValue);
   const submittedTotal = cashAmount + coinAmount;
   const varianceAmount = submittedTotal - expectedTotal;
-  const hasSettlementInput = actualCash.trim() !== '' || actualCoins.trim() !== '';
-  const requiresExpenseNote = settlementExpenseCategory === 'other' && settlementExpenseValue > 0;
+  const hasSettlementInput = actualCash.trim() !== '' || actualCoins.trim() !== '' || expenseItems.length > 0;
 
   const runApprovalAction = async (actionKey: string, action: () => Promise<void>) => {
     if (!isOnline) {
@@ -438,68 +435,48 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 space-y-3">
-              <div>
-                <p className="text-caption font-black uppercase tracking-[0.18em] text-rose-500">
-                  {t.settlementExpenseLabel}
-                </p>
-                <p className="mt-1 text-caption font-bold leading-relaxed text-rose-700">
-                  {t.settlementExpenseHint}
-                </p>
-              </div>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr]">
-                <label className="space-y-1">
-                  <span className="text-caption font-black uppercase text-rose-500">
-                    {t.settlementExpenseCategoryLabel}
-                  </span>
-                  <select
-                    value={settlementExpenseCategory}
-                    onChange={(event) =>
-                      setSettlementExpenseCategory(
-                        event.target.value as NonNullable<DailySettlement['settlementExpenseCategory']>,
-                      )
-                    }
-                    className="w-full rounded-btn border border-rose-200 bg-white px-3 py-2 text-[11px] font-black uppercase text-rose-700 outline-none"
-                  >
-                    <option value="tip">{t.tipLabel}</option>
-                    <option value="electricity">{t.electricityLabel}</option>
-                    <option value="other">{t.otherLabel}</option>
-                  </select>
-                </label>
-                <label className="space-y-1">
-                  <span className="text-caption font-black uppercase text-rose-500">
-                    {t.settlementExpenseAmountLabel}
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={settlementExpenseAmount}
-                    onChange={(event) => setSettlementExpenseAmount(event.target.value.replace(/[^0-9]/g, ''))}
-                    placeholder="0"
-                    className="w-full rounded-btn border border-rose-200 bg-white px-3 py-2 text-sm font-black text-rose-900 outline-none placeholder:text-rose-200"
-                  />
+            {expenseItems.map((item, idx) => (
+              <div key={idx} className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-caption font-black uppercase tracking-[0.18em] text-rose-500">
+                    {t.settlementExpenseLabel} #{idx + 1}
+                  </p>
+                  <button onClick={() => setExpenseItems(prev => prev.filter((_, i) => i !== idx))}
+                    className="text-caption font-black text-rose-400">×</button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="space-y-1">
+                    <span className="text-caption font-black uppercase text-rose-500">{t.settlementExpenseCategoryLabel}</span>
+                    <select value={item.category}
+                      onChange={e => setExpenseItems(prev => prev.map((it,i) => i===idx ? {...it, category: e.target.value} : it))}
+                      className="w-full rounded-btn border border-rose-200 bg-white px-3 py-2 text-[11px] font-black uppercase text-rose-700">
+                      <option value="fuel">{t.fuelLabel}</option>
+                      <option value="repair">{t.repairLabel}</option>
+                      <option value="electricity">{t.electricityLabel}</option>
+                      <option value="transport">{t.transportLabel}</option>
+                      <option value="allowance">{t.allowanceLabel}</option>
+                      <option value="other">{t.otherLabel}</option>
+                    </select>
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-caption font-black uppercase text-rose-500">{t.settlementExpenseAmountLabel}</span>
+                    <input type="number" min={0} value={item.amount}
+                      onChange={e => setExpenseItems(prev => prev.map((it,i) => i===idx ? {...it, amount: e.target.value.replace(/[^0-9]/g,'')} : it))}
+                      placeholder="0" className="w-full rounded-btn border border-rose-200 bg-white px-3 py-2 text-sm font-black text-rose-900" />
+                  </label>
+                </div>
+                <label className="block space-y-1">
+                  <span className="text-caption font-black uppercase text-rose-500">{t.settlementExpenseNoteLabel}</span>
+                  <textarea value={item.note} rows={2} maxLength={120}
+                    onChange={e => setExpenseItems(prev => prev.map((it,i) => i===idx ? {...it, note: e.target.value} : it))}
+                    className="w-full rounded-btn border border-rose-200 bg-white px-3 py-2 text-[11px] font-bold text-rose-900" />
                 </label>
               </div>
-              <label className="block space-y-1">
-                <span className="flex items-center justify-between gap-2 text-caption font-black uppercase text-rose-500">
-                  <span>{t.settlementExpenseNoteLabel}</span>
-                  <span className="text-rose-300">{t.settlementExpenseOptionalLabel}</span>
-                </span>
-                <textarea
-                  value={settlementExpenseNote}
-                  onChange={(event) => setSettlementExpenseNote(event.target.value)}
-                  rows={2}
-                  maxLength={120}
-                  placeholder={lang === 'zh' ? '例如：电费补贴 / 其他说明' : 'Example: electricity / other explanation'}
-                  className="w-full rounded-btn border border-rose-200 bg-white px-3 py-2 text-[11px] font-bold text-rose-900 outline-none placeholder:text-rose-200"
-                />
-              </label>
-              {requiresExpenseNote && !settlementExpenseNote.trim() && (
-                <p className="text-caption font-black uppercase text-rose-600">
-                  {t.settlementExpenseRequiredNote}
-                </p>
-              )}
-            </div>
+            ))}
+            <button onClick={() => setExpenseItems(prev => [...prev, { amount: '', category: 'fuel', note: '' }])}
+              className="w-full py-3 border-2 border-dashed border-rose-200 rounded-2xl text-caption font-black uppercase text-rose-400">
+              + {lang === 'zh' ? '添加支出' : 'Add Expense'}
+            </button>
 
             {hasSettlementInput && (
               <div className={`p-4 rounded-2xl flex justify-between items-center animate-in slide-in-from-top-4 border ${varianceAmount === 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
@@ -522,10 +499,6 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
             <button
               disabled={!hasSettlementInput || pendingActionKey === 'driver:settlement-submit'}
               onClick={async () => {
-                if (requiresExpenseNote && !settlementExpenseNote.trim()) {
-                  showToast(t.settlementExpenseRequiredNote, 'warning');
-                  return;
-                }
                 const ok = await confirm({
                   title: lang === 'zh' ? '确认提交日结' : 'Confirm Settlement',
                   message: lang === 'zh'
@@ -547,11 +520,12 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                   totalExpenses: baseExpenses + settlementExpenseValue,
                   driverFloat: myProfile?.dailyFloatingCoins || 0,
                   expectedTotal,
-                  settlementExpenseAmount: settlementExpenseValue || undefined,
-                  settlementExpenseCategory: settlementExpenseValue > 0 ? settlementExpenseCategory : undefined,
-                  settlementExpenseNote: settlementExpenseValue > 0 && settlementExpenseNote.trim()
-                    ? settlementExpenseNote.trim()
-                    : undefined,
+                  expenseItems: expenseItems.map(e => ({
+                    amount: parseInt(e.amount) || 0,
+                    category: e.category as any,
+                    note: e.note || undefined,
+                    photoUrl: e.photoUrl || undefined,
+                  })),
                   actualCash: cashAmount,
                   actualCoins: coinAmount,
                   shortage: actual - expectedTotal,
@@ -564,9 +538,7 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                   showToast(lang === 'zh' ? '结算已提交，等待审批。' : 'Settlement submitted. Waiting for approval.', 'success');
                   setActualCash('');
                   setActualCoins('');
-                  setSettlementExpenseAmount('');
-                  setSettlementExpenseCategory('tip');
-                  setSettlementExpenseNote('');
+                  setExpenseItems([]);
                 } catch (error) {
                   console.error('Settlement submission failed.', error);
                   showToast(t.settlementSubmitFailed, 'error');

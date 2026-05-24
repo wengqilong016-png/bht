@@ -134,6 +134,13 @@ export interface Driver {
   isSynced?: boolean;
 }
 
+export interface SettlementExpenseItem {
+  amount: number;
+  category: 'fuel' | 'repair' | 'electricity' | 'fine' | 'transport' | 'allowance' | 'salary_advance' | 'other';
+  note?: string;
+  photoUrl?: string;
+}
+
 export interface DailySettlement {
   id: string;
   date: string;
@@ -147,9 +154,7 @@ export interface DailySettlement {
   totalExpenses: number;
   driverFloat: number;
   expectedTotal: number;
-  settlementExpenseAmount?: number;
-  settlementExpenseCategory?: 'tip' | 'electricity' | 'other';
-  settlementExpenseNote?: string;
+  expenseItems?: SettlementExpenseItem[];
 
   actualCash: number;
   actualCoins: number;
