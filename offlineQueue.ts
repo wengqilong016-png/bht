@@ -470,17 +470,20 @@ export async function getAllQueuedTransactions(): Promise<Transaction[]> {
  * Throws on invalid data so callers can catch and handle malformed server responses.
  */
 function validateAuthoritativeData(data: Partial<Transaction>): void {
-  if (data.id && typeof data.id !== 'string') {
+  if (data.id !== undefined && typeof data.id !== 'string') {
     throw new Error(`Invalid authoritativeData: id must be string, got ${typeof data.id}`);
   }
-  if (data.currentScore !== undefined) {
-    if (typeof data.currentScore !== 'number' || !isFinite(data.currentScore)) {
-      throw new Error(`Invalid authoritativeData: currentScore must be finite number, got ${data.currentScore}`);
-    }
+  if (data.driverId !== undefined && typeof data.driverId !== 'string') {
+    throw new Error(`Invalid authoritativeData: driverId must be string, got ${typeof data.driverId}`);
   }
-  if (data.previousScore !== undefined) {
-    if (typeof data.previousScore !== 'number' || !isFinite(data.previousScore)) {
-      throw new Error(`Invalid authoritativeData: previousScore must be finite number, got ${data.previousScore}`);
+  if (data.locationId !== undefined && typeof data.locationId !== 'string') {
+    throw new Error(`Invalid authoritativeData: locationId must be string, got ${typeof data.locationId}`);
+  }
+  const numericFields = ['currentScore', 'previousScore', 'revenue', 'netPayable'] as const;
+  for (const field of numericFields) {
+    const val = data[field];
+    if (val !== undefined && (typeof val !== 'number' || !isFinite(val))) {
+      throw new Error(`Invalid authoritativeData: ${field} must be finite number, got ${val}`);
     }
   }
   if (data.timestamp !== undefined) {

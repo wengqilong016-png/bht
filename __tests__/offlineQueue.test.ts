@@ -295,4 +295,112 @@ describe('offlineQueue — pure functions', () => {
       expect(result).toBeNull();
     });
   });
+
+  describe('markSynced — authoritativeData 验证', () => {
+    it('合法数据应正常写入', async () => {
+      const { enqueueTransaction, markSynced, getAllQueuedTransactions } = await import('../offlineQueue');
+      const tx = makeTx();
+      await enqueueTransaction(tx);
+
+      await markSynced(tx.id, {
+        id: tx.id,
+        currentScore: 300,
+        previousScore: 100,
+        driverId: 'drv-1',
+        locationId: 'loc-1',
+        timestamp: new Date().toISOString(),
+      });
+
+      const all = await getAllQueuedTransactions();
+      const found = all.find(t => t.id === tx.id);
+      expect(found?.isSynced).toBe(true);
+      expect(found?.currentScore).toBe(300);
+    });
+
+    it('id 为非 string 时应抛出错误', async () => {
+      const { markSynced } = await import('../offlineQueue');
+      await expect(
+        markSynced('tx-1', { id: 123 as unknown as string })
+      ).rejects.toThrow('id must be string');
+    });
+
+    it('driverId 为非 string 时应抛出错误', async () => {
+      const { markSynced } = await import('../offlineQueue');
+      await expect(
+        markSynced('tx-1', { driverId: 999 as unknown as string })
+      ).rejects.toThrow('driverId must be string');
+    });
+
+    it('locationId 为非 string 时应抛出错误', async () => {
+      const { markSynced } = await import('../offlineQueue');
+      await expect(
+        markSynced('tx-1', { locationId: {} as unknown as string })
+      ).rejects.toThrow('locationId must be string');
+    });
+
+    it('currentScore 为 NaN 时应抛出错误', async () => {
+      const { markSynced } = await import('../offlineQueue');
+      await expect(
+        markSynced('tx-1', { currentScore: NaN })
+      ).rejects.toThrow('currentScore must be finite number');
+    });
+
+    it('currentScore 为 Infinity 时应抛出错误', async () => {
+      const { markSynced } = await import('../offlineQueue');
+      await expect(
+        markSynced('tx-1', { currentScore: Infinity })
+      ).rejects.toThrow('currentScore must be finite number');
+    });
+
+    it('previousScore 为非数字时应抛出错误', async () => {
+      const { markSynced } = await import('../offlineQueue');
+      await expect(
+        markSynced('tx-1', { previousScore: 'abc' as unknown as number })
+      ).rejects.toThrow('previousScore must be finite number');
+    });
+
+    it('revenue 为 NaN 时应抛出错误', async () => {
+      const { markSynced } = await import('../offlineQueue');
+      await expect(
+        markSynced('tx-1', { revenue: NaN })
+      ).rejects.toThrow('revenue must be finite number');
+    });
+
+    it('netPayable 为 Infinity 时应抛出错误', async () => {
+      const { markSynced } = await import('../offlineQueue');
+      await expect(
+        markSynced('tx-1', { netPayable: -Infinity })
+      ).rejects.toThrow('netPayable must be finite number');
+    });
+
+    it('timestamp 为无效字符串时应抛出错误', async () => {
+      const { markSynced } = await import('../offlineQueue');
+      await expect(
+        markSynced('tx-1', { timestamp: 'not-a-date' })
+      ).rejects.toThrow('timestamp must be valid ISO string');
+    });
+
+    it('photoUrl 为非 string 非 null 时应抛出错误', async () => {
+      const { markSynced } = await import('../offlineQueue');
+      await expect(
+        markSynced('tx-1', { photoUrl: 123 as unknown as string })
+      ).rejects.toThrow('photoUrl must be string or null');
+    });
+
+    it('photoUrl 为 null 时应正常通过', async () => {
+      const { enqueueTransaction, markSynced } = await import('../offlineQueue');
+      const tx = makeTx();
+      await enqueueTransaction(tx);
+      await expect(markSynced(tx.id, { photoUrl: null })).resolves.not.toThrow();
+    });
+
+    it('authoritativeData 为 undefined 时不做验证，正常标记同步', async () => {
+      const { enqueueTransaction, markSynced, getPendingTransactions } = await import('../offlineQueue');
+      const tx = makeTx();
+      await enqueueTransaction(tx);
+      await markSynced(tx.id);
+      const pending = await getPendingTransactions();
+      expect(pending).toHaveLength(0);
+    });
+  });
 });

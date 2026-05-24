@@ -225,4 +225,60 @@ describe('useRealtimeSubscription', () => {
       expect(mockRemoveChannel).toHaveBeenCalledWith(channel);
     });
   });
+
+  // ── Issue #7 regression: subscription cleanup on unmount ────────────
+
+  it('calls unsubscribe() on each channel before removeChannel on unmount', () => {
+    const queryClient = new QueryClient();
+    const wrapper = makeWrapper(queryClient);
+
+    // Attach unsubscribe spy to channels as they are created
+    const unsubscribeSpies = new Map<string, jest.Mock>();
+    const origChannel = (jest.requireMock('../supabaseClient') as any).supabase.channel;
+    const channelSpy = jest.fn((topic: string) => {
+      const ch = origChannel(topic);
+      const spy = jest.fn();
+      (ch as any).unsubscribe = spy;
+      unsubscribeSpies.set(topic, spy);
+      return ch;
+    });
+    (jest.requireMock('../supabaseClient') as any).supabase.channel = channelSpy;
+
+    const { unmount } = renderHook(() => useRealtimeSubscription('admin', true), { wrapper });
+    const createdTopics = Array.from(channelRegistry.keys());
+
+    unmount();
+
+    // unsubscribe() must have been called for every channel
+    createdTopics.forEach((topic) => {
+      expect(unsubscribeSpies.get(topic)).toHaveBeenCalledTimes(1);
+    });
+
+    // Restore original mock
+    (jest.requireMock('../supabaseClient') as any).supabase.channel = origChannel;
+  });
+
+  it('does not invalidate queries after unmount (no post-unmount cache leak)', async () => {
+    const queryClient = new QueryClient();
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+    const wrapper = makeWrapper(queryClient);
+
+    const { unmount } = renderHook(() => useRealtimeSubscription('admin', true), { wrapper });
+
+    // Wait for subscription to establish
+    await act(async () => {
+      channelRegistry.get('db:transactions')?.emitStatus('SUBSCRIBED');
+    });
+
+    unmount();
+    invalidateSpy.mockClear();
+
+    // Broadcast event fires AFTER unmount — must NOT trigger invalidation
+    await act(async () => {
+      channelRegistry.get('db:transactions')?.emitBroadcast('INSERT');
+      jest.advanceTimersByTime(REALTIME_INVALIDATE_DEBOUNCE_MS + 50);
+    });
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
 });

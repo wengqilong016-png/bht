@@ -18,6 +18,7 @@ const TABLE_TO_QUERY_KEY: Record<RealtimeTable, readonly [string]> = {
 export function createRealtimeInvalidator(queryClient: QueryClient, debounceMs = REALTIME_INVALIDATE_DEBOUNCE_MS) {
   const pendingKeys = new Set<string>();
   let flushTimer: ReturnType<typeof setTimeout> | null = null;
+  let destroyed = false;
 
   const flush = () => {
     flushTimer = null;
@@ -29,12 +30,14 @@ export function createRealtimeInvalidator(queryClient: QueryClient, debounceMs =
   };
 
   const queue = (table: RealtimeTable) => {
+    if (destroyed) return;
     pendingKeys.add(TABLE_TO_QUERY_KEY[table][0]);
     if (flushTimer) return;
     flushTimer = setTimeout(flush, debounceMs);
   };
 
   const cleanup = () => {
+    destroyed = true;
     if (flushTimer) {
       clearTimeout(flushTimer);
       flushTimer = null;

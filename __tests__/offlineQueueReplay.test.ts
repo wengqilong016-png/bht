@@ -351,6 +351,67 @@ describe('flushQueue — collection replay via submitCollection callback', () =>
     expect(entry?.lastErrorCategory).toBe('permanent');
   });
 
+  it('does not submit null photoUrl when Storage upload throws — entry stays retryable', async () => {
+    const { enqueueTransaction, flushQueue, getPendingTransactions } = await import('../offlineQueue');
+
+    const dataUrl = 'data:image/jpeg;base64,pending-photo';
+    const tx = makeTx({ photoUrl: dataUrl });
+    const rawInput = makeRawInput(tx.id);
+    await enqueueTransaction(tx, rawInput);
+
+    // 标记 photoPending=true 模拟离线时未上传
+    const stored = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
+    localStorage.setItem('bahati_offline_queue', JSON.stringify(stored.map((entry: any) => (
+      entry.id === tx.id
+        ? { ...entry, photoUrl: dataUrl, rawInput: { ...entry.rawInput, photoUrl: null }, photoPending: true }
+        : entry
+    ))));
+
+    // Storage 上传失败（网络错误 → transient）
+    mockPersistEvidencePhotoUrl.mockClear();
+    mockPersistEvidencePhotoUrl.mockRejectedValue(new Error('Network error uploading photo'));
+
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>();
+    const flushed = await flushQueue(makeSupabaseStub(), { submitCollection });
+
+    // submitCollection 不应被调用（不能用 null photoUrl 提交）
+    expect(flushed).toBe(0);
+    expect(submitCollection).not.toHaveBeenCalled();
+
+    // 条目应留在队列中（isSynced=false），等待重试
+    const pending = await getPendingTransactions();
+    expect(pending.some(p => p.id === tx.id)).toBe(true);
+  });
+
+  it('does not submit when Storage upload returns non-HTTP URL', async () => {
+    const { enqueueTransaction, flushQueue, getPendingTransactions } = await import('../offlineQueue');
+
+    const dataUrl = 'data:image/jpeg;base64,pending-photo';
+    const tx = makeTx({ photoUrl: dataUrl });
+    const rawInput = makeRawInput(tx.id);
+    await enqueueTransaction(tx, rawInput);
+
+    const stored = JSON.parse(localStorage.getItem('bahati_offline_queue')!);
+    localStorage.setItem('bahati_offline_queue', JSON.stringify(stored.map((entry: any) => (
+      entry.id === tx.id
+        ? { ...entry, photoUrl: dataUrl, rawInput: { ...entry.rawInput, photoUrl: null }, photoPending: true }
+        : entry
+    ))));
+
+    // Storage 返回无效 URL（不是 http/https）
+    mockPersistEvidencePhotoUrl.mockClear();
+    mockPersistEvidencePhotoUrl.mockResolvedValue('not-a-valid-url');
+
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>();
+    const flushed = await flushQueue(makeSupabaseStub(), { submitCollection });
+
+    expect(flushed).toBe(0);
+    expect(submitCollection).not.toHaveBeenCalled();
+    // 条目不应变为 isSynced=true
+    const pending = await getPendingTransactions();
+    expect(pending.some(p => p.id === tx.id)).toBe(true);
+  });
+
   it('routes reset requests through submitResetRequest callback', async () => {
     const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
 
@@ -1036,5 +1097,84 @@ describe('ADR-004 causal order replay', () => {
     // lamportTs sort verified: legacy (0) before tx-new (>0)
     expect(upsertOrder[0]).toBe('tx-old-legacy');
     expect(submissionOrder[0]).toBe('tx-new');
+  });
+
+  // ── flushQueue 整体超时保护（Issue #6）────────────────────────────────
+
+  it('stops processing when global timeout is exceeded', async () => {
+    jest.useFakeTimers();
+    const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
+
+    // 入队 3 个条目
+    const txA = makeTx({ id: 'tx-timeout-A' });
+    const txB = makeTx({ id: 'tx-timeout-B' });
+    const txC = makeTx({ id: 'tx-timeout-C' });
+    for (const tx of [txA, txB, txC]) {
+      const rawInput = makeRawInput(tx.id);
+      await enqueueTransaction(tx, rawInput);
+    }
+
+    let callCount = 0;
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>(
+      async (input) => {
+        callCount++;
+        // 第 2 次调用时推进假时钟，让全局超时生效
+        if (callCount === 2) {
+          jest.setSystemTime(Date.now() + 125_000);
+        }
+        return {
+          success: true,
+          transaction: { ...makeTx({ id: input.txId }), isSynced: true } as any,
+          source: 'server',
+        };
+      },
+    );
+
+    const flushed = await flushQueue(makeSupabaseStub(), { submitCollection });
+
+    // 超时前至少处理了 2 个，第 3 个被跳过
+    expect(flushed).toBe(2);
+    expect(submitCollection).toHaveBeenCalledTimes(2);
+
+    jest.useRealTimers();
+  });
+
+  it('already-flushed items are synced even when timeout stops remaining items', async () => {
+    jest.useFakeTimers();
+    const { enqueueTransaction, flushQueue, getAllQueuedTransactions } = await import('../offlineQueue');
+
+    const txA = makeTx({ id: 'tx-done' });
+    const txB = makeTx({ id: 'tx-skipped' });
+    for (const tx of [txA, txB]) {
+      await enqueueTransaction(tx, makeRawInput(tx.id));
+    }
+
+    let callCount = 0;
+    const submitCollection = jest.fn<(input: CollectionSubmissionInput) => Promise<CollectionSubmissionResult>>(
+      async (input) => {
+        callCount++;
+        if (callCount === 1) {
+          jest.setSystemTime(Date.now() + 125_000);
+        }
+        return {
+          success: true,
+          transaction: { ...makeTx({ id: input.txId }), isSynced: true } as any,
+          source: 'server',
+        };
+      },
+    );
+
+    await flushQueue(makeSupabaseStub(), { submitCollection });
+
+    const all = await getAllQueuedTransactions();
+    const done = all.find(t => t.id === 'tx-done');
+    const skipped = all.find(t => t.id === 'tx-skipped');
+
+    // 第 1 个已标记同步
+    expect(done?.isSynced).toBe(true);
+    // 第 2 个因超时未处理，仍留队列
+    expect(skipped?.isSynced).toBe(false);
+
+    jest.useRealTimers();
   });
 });

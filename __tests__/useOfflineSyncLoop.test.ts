@@ -504,4 +504,64 @@ describe('useOfflineSyncLoop', () => {
 
     expect(triggerSync).toHaveBeenCalled();
   });
+
+  // ── 16. No duplicate sync on offline→online (Issue #4 regression) ───
+
+  it('calls triggerSync exactly once on offline→online transition, not twice', async () => {
+    const triggerSync = jest.fn();
+    mockGetQueueHealthSummary.mockResolvedValue({ pending: 0, retryWaiting: 0 });
+
+    const { rerender } = renderHook(
+      ({ isOnline }: { isOnline: boolean }) =>
+        useOfflineSyncLoop(
+          makeOptions({
+            isOnline,
+            unsyncedCount: 3,
+            syncOfflineData: { mutate: triggerSync, isPending: false },
+          }),
+        ),
+      { initialProps: { isOnline: false } },
+    );
+
+    rerender({ isOnline: true });
+    // Use act(async () => {}) — flushes promises only, does NOT advance fake timers.
+    // flushMicrotasks() would fire the 60s auto-sync interval and add a second call.
+    await act(async () => {});
+
+    // Must fire exactly once — the offline→online React-state effect only
+    expect(triggerSync).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call triggerSync when window online event fires independently (no React state change)', async () => {
+    const triggerSync = jest.fn();
+    mockGetQueueHealthSummary.mockResolvedValue({ pending: 0, retryWaiting: 0 });
+
+    // Mount with isOnline=false so no transition fires, then stay offline
+    const { rerender } = renderHook(
+      ({ isOnline }: { isOnline: boolean }) =>
+        useOfflineSyncLoop(
+          makeOptions({
+            isOnline,
+            unsyncedCount: 3,
+            syncOfflineData: { mutate: triggerSync, isPending: false },
+          }),
+        ),
+      { initialProps: { isOnline: false } },
+    );
+
+    await act(async () => {});
+    expect(triggerSync).not.toHaveBeenCalled();
+
+    // Fire native window online event — React state stays false (not rerendered)
+    // The hook must NOT respond to this event directly (Issue #4 fix)
+    window.dispatchEvent(new Event('online'));
+    await act(async () => {});
+
+    expect(triggerSync).not.toHaveBeenCalled();
+
+    // Confirm that the React-state path still works: rerender with isOnline=true
+    rerender({ isOnline: true });
+    await act(async () => {});
+    expect(triggerSync).toHaveBeenCalledTimes(1);
+  });
 });
