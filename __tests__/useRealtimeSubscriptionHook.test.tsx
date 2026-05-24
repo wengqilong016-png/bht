@@ -10,6 +10,7 @@ type MockRealtimeChannel = {
   topic: string;
   on: (_type: string, filter: { event: string }, callback: BroadcastHandler) => MockRealtimeChannel;
   subscribe: (callback: StatusHandler) => MockRealtimeChannel;
+  unsubscribe: () => void;
   emitBroadcast: (event: string) => void;
   emitStatus: (status: string) => void;
 };
@@ -35,6 +36,7 @@ function makeRealtimeChannel(topic: string): MockRealtimeChannel {
       statusHandler = callback;
       return channel;
     }) as MockRealtimeChannel['subscribe'],
+    unsubscribe: jest.fn(),
     emitBroadcast: (event: string) => {
       for (const handler of broadcastHandlers.get(event) ?? []) handler();
     },
@@ -232,30 +234,14 @@ describe('useRealtimeSubscription', () => {
     const queryClient = new QueryClient();
     const wrapper = makeWrapper(queryClient);
 
-    // Attach unsubscribe spy to channels as they are created
-    const unsubscribeSpies = new Map<string, jest.Mock>();
-    const origChannel = (jest.requireMock('../supabaseClient') as any).supabase.channel;
-    const channelSpy = jest.fn((topic: string) => {
-      const ch = origChannel(topic);
-      const spy = jest.fn();
-      (ch as any).unsubscribe = spy;
-      unsubscribeSpies.set(topic, spy);
-      return ch;
-    });
-    (jest.requireMock('../supabaseClient') as any).supabase.channel = channelSpy;
-
     const { unmount } = renderHook(() => useRealtimeSubscription('admin', true), { wrapper });
-    const createdTopics = Array.from(channelRegistry.keys());
+    const createdChannels = Array.from(channelRegistry.values());
 
     unmount();
 
-    // unsubscribe() must have been called for every channel
-    createdTopics.forEach((topic) => {
-      expect(unsubscribeSpies.get(topic)).toHaveBeenCalledTimes(1);
+    createdChannels.forEach((channel) => {
+      expect(channel.unsubscribe).toHaveBeenCalledTimes(1);
     });
-
-    // Restore original mock
-    (jest.requireMock('../supabaseClient') as any).supabase.channel = origChannel;
   });
 
   it('does not invalidate queries after unmount (no post-unmount cache leak)', async () => {
@@ -280,5 +266,42 @@ describe('useRealtimeSubscription', () => {
     });
 
     expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  it('cleans up the previous driver channel before subscribing to a new driverId', () => {
+    const queryClient = new QueryClient();
+    const wrapper = makeWrapper(queryClient);
+    const { rerender } = renderHook(
+      ({ driverId }: { driverId?: string }) => useRealtimeSubscription('driver', true, driverId),
+      { initialProps: { driverId: 'drv-001' }, wrapper },
+    );
+
+    const previousChannel = channelRegistry.get('db:transactions:drv-001');
+    expect(previousChannel).toBeDefined();
+
+    rerender({ driverId: 'drv-002' });
+
+    expect(previousChannel?.unsubscribe).toHaveBeenCalledTimes(1);
+    expect(mockRemoveChannel).toHaveBeenCalledWith(previousChannel);
+    expect(channelRegistry.get('db:transactions:drv-002')).toBeDefined();
+  });
+
+  it('ignores late channel status events after unmount', () => {
+    const queryClient = new QueryClient();
+    const wrapper = makeWrapper(queryClient);
+    const { result, unmount } = renderHook(() => useRealtimeSubscription('driver', true, 'drv-001'), { wrapper });
+
+    act(() => {
+      channelRegistry.get('db:transactions:drv-001')?.emitStatus('SUBSCRIBED');
+    });
+    expect(result.current.realtimeStatus).toBe('connected');
+
+    unmount();
+
+    act(() => {
+      channelRegistry.get('db:transactions:drv-001')?.emitStatus('CHANNEL_ERROR');
+    });
+
+    expect(channelRegistry.get('db:transactions:drv-001')?.unsubscribe).toHaveBeenCalledTimes(1);
   });
 });

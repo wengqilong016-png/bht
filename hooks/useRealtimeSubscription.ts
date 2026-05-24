@@ -53,9 +53,12 @@ function getChannelConfigs(userRole: 'admin' | 'driver', driverId?: string): Rea
 function createStatusHandler(
   subscribedTopics: Set<string>,
   expectedChannelCount: number,
+  isActive: () => boolean,
   setRealtimeStatus: React.Dispatch<React.SetStateAction<RealtimeStatus>>,
 ) {
   return (topic: string) => (status: string) => {
+    if (!isActive()) return;
+
     if (status === 'SUBSCRIBED') {
       subscribedTopics.add(topic);
       if (subscribedTopics.size === expectedChannelCount) {
@@ -80,12 +83,14 @@ function subscribeToRealtimeChannels(
   client: NonNullable<typeof supabase>,
   channelConfigs: RealtimeChannelConfig[],
   queue: (table: RealtimeChannelConfig['table']) => void,
+  isActive: () => boolean,
   setRealtimeStatus: React.Dispatch<React.SetStateAction<RealtimeStatus>>,
 ) {
   const subscribedTopics = new Set<string>();
   const statusHandlerFactory = createStatusHandler(
     subscribedTopics,
     channelConfigs.length,
+    isActive,
     setRealtimeStatus,
   );
 
@@ -120,31 +125,28 @@ export function useRealtimeSubscription(userRole?: 'admin' | 'driver', isOnline?
     // Supabase client.
     const client = supabase;
     client.realtime.setAuth();
+    let isActive = true;
 
     const channelConfigs = getChannelConfigs(userRole, driverId);
-    const channels = subscribeToRealtimeChannels(client, channelConfigs, queue, setRealtimeStatus);
+    const channels = subscribeToRealtimeChannels(
+      client,
+      channelConfigs,
+      queue,
+      () => isActive,
+      setRealtimeStatus,
+    );
 
     return () => {
-      // ✅ 问题 7 修复：改进订阅清理逻辑
-      // 1. 显式调用 unsubscribe() 卸载每个订阅的事件监听器
-      // 2. 调用 removeChannel() 以释放 Channel 对象持有的资源
-      // 3. 清理 realtime invalidation 的待处理队列
-      // 
-      // 这确保了：
-      // - 事件监听器不会继续监听（即使 channel 被移除）
-      // - Supabase 客户端内部的 channel 注册表被清空
-      // - 缓冲的 invalidation 回调不会在卸载后触发
-      // - 用户切换角色或登出时，不会泄露来自旧订阅的数据更新
-      
+      isActive = false;
       channels.forEach((ch) => {
         if (typeof ch.unsubscribe === 'function') {
-          ch.unsubscribe();  // ← 显式卸载订阅
+          ch.unsubscribe();
         }
-        client.removeChannel(ch);  // ← 释放 channel 资源
+        client.removeChannel(ch);
       });
-      cleanup();  // ← 清理 invalidation 队列的待处理计时器
+      cleanup();
     };
-  }, [queryClient, userRole]);
+  }, [driverId, queryClient, userRole]);
 
   // Re-authenticate realtime when connectivity is restored.  The JWT may have
   // expired during the offline period; refreshing the auth session first ensures
