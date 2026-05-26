@@ -39,11 +39,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
 
-      # Check secrets BEFORE installing the CLI so we can skip everything
-      # quickly when the repo is not configured for remote DB validation.
-      - name: Check linked-project secrets
-        id: check-secrets
+      - name: Validate Supabase DB changes
         run: |
+          set +e
+
+          # ── 1. Verify secrets ────────────────────────────────────────────────
           missing=()
           [ -z "$SUPABASE_ACCESS_TOKEN" ] && missing+=("SUPABASE_ACCESS_TOKEN")
           [ -z "$SUPABASE_DB_PASSWORD"  ] && missing+=("SUPABASE_DB_PASSWORD")
@@ -51,7 +51,6 @@ jobs:
 
           if [ ${#missing[@]} -gt 0 ]; then
             echo "::warning::Remote DB validation skipped — secrets not configured: ${missing[*]}"
-            echo "has_secrets=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -60,56 +59,70 @@ jobs:
             exit 1
           fi
 
-          echo "has_secrets=true" >> "$GITHUB_OUTPUT"
+          # ── 2. Install Supabase CLI ──────────────────────────────────────────
+          echo "Fetching latest Supabase CLI version..."
+          LATEST="$(curl -fsSL --connect-timeout 15 \
+            'https://api.github.com/repos/supabase/cli/releases/latest' 2>/dev/null \
+            | grep '"tag_name"' | head -1 | cut -d'"' -f4)"
 
-      - name: Set up Supabase CLI
-        if: steps.check-secrets.outputs.has_secrets == 'true'
-        uses: supabase/setup-cli@v2
-        with:
-          version: latest
+          if [ -z "$LATEST" ]; then
+            echo "::warning::Could not determine latest Supabase CLI version — skipping DB validation"
+            exit 0
+          fi
 
-      - name: Run remote database validation
-        if: steps.check-secrets.outputs.has_secrets == 'true'
-        run: |
-          set +e
+          echo "Downloading Supabase CLI ${LATEST}..."
+          curl -fsSL --connect-timeout 60 \
+            "https://github.com/supabase/cli/releases/download/${LATEST}/supabase_linux_amd64.deb" \
+            -o /tmp/supabase.deb 2>/dev/null
 
-          # Add runner IP to Supabase network allowlist (best-effort)
+          if [ $? -ne 0 ]; then
+            echo "::warning::Could not download Supabase CLI — skipping DB validation"
+            exit 0
+          fi
+
+          sudo dpkg -i /tmp/supabase.deb > /dev/null 2>&1
+          if ! command -v supabase &> /dev/null; then
+            echo "::warning::Supabase CLI installation failed — skipping DB validation"
+            exit 0
+          fi
+
+          echo "Supabase CLI $(supabase --version) installed."
+
+          # ── 3. Add runner IP to Supabase network allowlist (best-effort) ────
           runner_ip="$(curl -fsS4 --connect-timeout 10 https://api.ipify.org 2>/dev/null)"
           if [ -n "$runner_ip" ]; then
             echo "Allowing runner IP: ${runner_ip}/32"
             supabase network-restrictions update \
               --project-ref "$SUPABASE_PROJECT_ID" \
-              --append \
-              --db-allow-cidr "${runner_ip}/32" \
-              --experimental 2>&1 \
-              || echo "::warning::network-restrictions update failed (non-fatal)"
+              --append --db-allow-cidr "${runner_ip}/32" \
+              --experimental 2>&1 || echo "::warning::network-restrictions update failed (non-fatal)"
           else
             echo "::warning::Could not determine runner IP"
           fi
 
-          # Link to the remote project; skip remaining steps if unreachable
+          # ── 4. Link project — skip if unreachable ───────────────────────────
           echo "Linking to Supabase project..."
           link_output="$(supabase link --project-ref "$SUPABASE_PROJECT_ID" 2>&1)"
           link_exit=$?
           echo "$link_output"
 
           if [ $link_exit -ne 0 ]; then
-            echo "::warning::Could not link to Supabase project (exit $link_exit) — skipping DB validation."
+            echo "::warning::Could not link to Supabase project (exit $link_exit) — skipping DB validation"
             exit 0
           fi
 
-          # Lint the linked schema — hard fail on real errors
+          # ── 5. Lint schema — hard fail on real errors ────────────────────────
           echo "Running db lint..."
           supabase db lint --linked --fail-on error
           lint_exit=$?
 
-          # Dry-run pending migrations — hard fail on SQL errors
+          # ── 6. Dry-run migrations — hard fail on SQL errors ──────────────────
           echo "Running db push dry-run..."
           supabase db push --dry-run --linked --yes
           push_exit=$?
 
           if [ $lint_exit -ne 0 ] || [ $push_exit -ne 0 ]; then
-            echo "::error::DB validation failed (lint=$lint_exit, push-dry-run=$push_exit)"
+            echo "::error::DB validation failed (lint=$lint_exit push-dry-run=$push_exit)"
             exit 1
           fi
 
