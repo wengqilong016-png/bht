@@ -1,5 +1,5 @@
 import {
-  LogOut, Globe, Type, Mail,
+  LogOut, Globe, Type, Mail, AlertTriangle,
 } from 'lucide-react';
 import React, { Suspense, useMemo, useState, useEffect } from 'react';
 
@@ -23,6 +23,7 @@ import { TRANSLATIONS } from '../types';
 import { getTodayLocalDate } from '../utils/dateUtils';
 
 import DriverAIAssistPanel from './components/DriverAIAssistPanel';
+import { isUsingMemoryFallback } from '../offlineQueue';
 import { DRIVER_NAV_ITEMS, type DriverView } from './driverShellConfig';
 import DriverShellViewRenderer from './renderDriverShellView';
 
@@ -197,6 +198,18 @@ const AppDriverShell: React.FC = () => {
             </>
           }
         />
+
+        {/* Private/incognito mode warning — queue is volatile, data lost on refresh */}
+        {isUsingMemoryFallback() && (
+          <div className="mx-4 mt-3 p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-3 shadow-sm">
+            <AlertTriangle size={16} className="text-rose-600 flex-shrink-0 mt-0.5" />
+            <p className="text-xs font-bold text-rose-700 leading-relaxed">
+              {lang === 'zh'
+                ? '⚠️ 您正在使用隐私模式或存储被禁用。离线队列仅保存在内存中，刷新页面后未同步的数据将永久丢失。请切换至普通浏览器窗口以确保数据安全。'
+                : '⚠️ Private/incognito mode detected — offline queue is in volatile memory only. Unsynced data will be permanently lost if you refresh. Switch to a normal browser window.'}
+            </p>
+          </div>
+        )}
 
         {/* Email bind reminder for auto-generated @bht.com accounts */}
         {showEmailBindReminder && (

@@ -84,18 +84,36 @@ const BASE_BACKOFF_MS = 2_000; // 2 s → 4 s → 8 s → 16 s → 32 s
 // 某些浏览器（隐私模式、cross-origin iframe）会禁用或限制 localStorage
 // 但直接 typeof 检查不足以检测实际的写入失败
 
-function isLocalStorageAvailable(): boolean {
-  if (typeof window === 'undefined') return false;  // Node.js 环境
-  if (typeof window.localStorage === 'undefined') return false;
+/** True when IndexedDB and localStorage are both unavailable (e.g. private mode). */
+let _localStorageChecked = false;
+let _localStorageAvailableCache = false;
 
+function isLocalStorageAvailable(): boolean {
+  if (_localStorageChecked) return _localStorageAvailableCache;
+  _localStorageChecked = true;
+  if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
+    _localStorageAvailableCache = false;
+    return false;
+  }
   try {
     const test = '__storage_test__';
     window.localStorage.setItem(test, test);
     window.localStorage.removeItem(test);
-    return true;  // ✓ 完全可用
+    _localStorageAvailableCache = true;
+    return true;
   } catch {
-    return false;  // ❌ 禁用或配额满
+    _localStorageAvailableCache = false;
+    return false;
   }
+}
+
+/**
+ * Returns true when both IndexedDB and localStorage are unavailable (e.g.
+ * private/incognito mode).  In this state the queue lives only in volatile
+ * memory and will be lost on page refresh.
+ */
+export function isUsingMemoryFallback(): boolean {
+  return !isLocalStorageAvailable();
 }
 
 const memoryQueueCache = new Map<string, Array<Transaction & Partial<QueueMeta>>>();
@@ -533,9 +551,24 @@ export async function markSynced(id: string, authoritativeData?: Partial<Transac
       r.onerror = () => rej(r.error);
     });
     db.close();
-  } catch {
+  } catch (idbErr) {
+    Sentry.captureMessage(
+      `[OfflineQueue] markSynced IDB write failed for entry ${id} — falling back to localStorage`,
+      'warning',
+    );
     const list = readLocalQueue().map(t => t.id === id ? { ...t, ...update } : t);
-    try { localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(list)); } catch (_) {}
+    try {
+      localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(list));
+    } catch (lsErr) {
+      // Both IDB and localStorage failed. The entry will be retried on the
+      // next flush. The server RPC is idempotent on tx_id so duplicate
+      // submissions are safe, but we log prominently so this does not go
+      // unnoticed.
+      Sentry.captureException(lsErr, {
+        tags: { context: 'mark_synced_storage_total_failure' },
+        extra: { entryId: id, idbError: String(idbErr) },
+      });
+    }
   }
 }
 

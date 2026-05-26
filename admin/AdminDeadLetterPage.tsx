@@ -33,6 +33,7 @@ const AdminDeadLetterPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [confirmDiscardId, setConfirmDiscardId] = useState<string | null>(null);
 
   const loadItems = useCallback(async () => {
     setIsLoading(true);
@@ -69,10 +70,17 @@ const AdminDeadLetterPage: React.FC = () => {
     await loadItems();
   };
 
-  const handleDiscard = async (entry: DeadLetterEntry) => {
-    setBusyId(entry.id);
+  const handleDiscardRequest = (entry: DeadLetterEntry) => {
+    setConfirmDiscardId(entry.id);
     setMessage(null);
-    const discarded = await discardDeadLetterItem(entry.id);
+  };
+
+  const handleDiscardConfirm = async () => {
+    if (!confirmDiscardId) return;
+    const id = confirmDiscardId;
+    setConfirmDiscardId(null);
+    setBusyId(id);
+    const discarded = await discardDeadLetterItem(id);
     setMessage(discarded ? '已丢弃 / Discarded' : '丢弃失败 / Discard failed');
     setBusyId(null);
     await loadItems();
@@ -116,6 +124,38 @@ const AdminDeadLetterPage: React.FC = () => {
       {message && (
         <div className="rounded-card border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
           {message}
+        </div>
+      )}
+
+      {confirmDiscardId && (
+        <div className="rounded-card border border-rose-200 bg-rose-50 px-4 py-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={18} className="text-rose-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-black text-rose-800">确认永久丢弃 / Confirm Permanent Discard</p>
+              <p className="mt-1 text-xs font-bold text-rose-700">
+                此操作不可撤销。若该条目从未同步至服务器，财务数据将永久丢失。<br />
+                This is irreversible. If this entry was never synced to Supabase, the transaction data will be permanently lost.
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmDiscardId(null)}
+              className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black uppercase text-slate-700"
+            >
+              取消 / Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleDiscardConfirm()}
+              className="inline-flex items-center gap-1 rounded-xl border border-rose-300 bg-rose-600 px-3 py-2 text-xs font-black uppercase text-white hover:bg-rose-700"
+            >
+              <Trash2 size={12} />
+              确认丢弃 / Discard
+            </button>
+          </div>
         </div>
       )}
 
@@ -176,7 +216,7 @@ const AdminDeadLetterPage: React.FC = () => {
                         <button
                           type="button"
                           disabled={busy}
-                          onClick={() => void handleDiscard(entry)}
+                          onClick={() => handleDiscardRequest(entry)}
                           className="inline-flex items-center gap-1 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-caption font-black uppercase text-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <Trash2 size={12} />

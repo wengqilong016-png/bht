@@ -68,6 +68,10 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
     if (!isOnline) { emailForm.setError(t.offlineWarning); return; }
     if (!newEmail.trim()) return;
     const target = newEmail.trim();
+    if (!isLikelyEmail(target)) {
+      emailForm.setError(lang === 'zh' ? '请输入有效的邮箱地址' : 'Please enter a valid email address');
+      return;
+    }
     emailForm.setLoading();
     const result = await updateUserEmail(target);
     if (result.success) {
