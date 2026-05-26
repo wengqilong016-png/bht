@@ -4,9 +4,10 @@
 //
 // Fully removes a driver account:
 //   1. Looks up the auth_user_id from public.profiles via driver_id.
-//   2. Deletes the Supabase Auth user.
-//   3. Unlinks historical/assigned records that must outlive the driver.
-//   4. Deletes any remaining public.profiles row and the public.drivers row.
+//   2. Deletes the Supabase Auth user (FIRST — irreversible; if this fails
+//      the driver is still fully active and the admin can safely retry).
+//   3. Calls delete_driver_cleanup_v1 RPC which atomically unlinks historical
+//      records and removes the profiles + drivers rows in one transaction.
 //
 // Security: only callers whose public.profiles.role = 'admin' may invoke this
 // endpoint.  The service_role key is used so RLS policies do not block writes.
@@ -36,40 +37,6 @@ function json(body: unknown, status = 200): Response {
 
 function errorJson(error: string, status: number, code: string): Response {
   return json({ success: false, error, code }, status);
-}
-
-async function unlinkDriverReferences(driverId: string): Promise<{ error: string; code: string } | null> {
-  const { error: transactionUnlinkError } = await supabaseAdmin
-    .from('transactions')
-    .update({ driverId: null })
-    .eq('driverId', driverId);
-
-  if (transactionUnlinkError) {
-    console.error('transaction unlink failed:', transactionUnlinkError.message);
-    return { error: 'Internal server error', code: 'TRANSACTION_UNLINK_FAILED' };
-  }
-
-  const { error: settlementUnlinkError } = await supabaseAdmin
-    .from('daily_settlements')
-    .update({ driverId: null })
-    .eq('driverId', driverId);
-
-  if (settlementUnlinkError) {
-    console.error('settlement unlink failed:', settlementUnlinkError.message);
-    return { error: 'Internal server error', code: 'SETTLEMENT_UNLINK_FAILED' };
-  }
-
-  const { error: locationUnlinkError } = await supabaseAdmin
-    .from('locations')
-    .update({ assignedDriverId: null })
-    .eq('assignedDriverId', driverId);
-
-  if (locationUnlinkError) {
-    console.error('location unlink failed:', locationUnlinkError.message);
-    return { error: 'Internal server error', code: 'LOCATION_UNLINK_FAILED' };
-  }
-
-  return null;
 }
 
 Deno.serve(async (req: Request) => {
@@ -113,22 +80,10 @@ Deno.serve(async (req: Request) => {
     return errorJson('Internal server error', 500, 'DRIVER_LOOKUP_FAILED');
   }
 
-  // ── 4. Unlink historical references (safe to repeat; preserves audit trail) ──
-  // Transactions and daily_settlements preserve historical financial records.
-  // Locations also need explicit unassignment so the UI does not show stale
-  // driver ownership after the account is gone.
-  const unlinkError = await unlinkDriverReferences(driverId);
-  if (unlinkError) {
-    return errorJson(unlinkError.error, 500, unlinkError.code);
-  }
-
-  // ── 5. Delete Supabase Auth user BEFORE DB rows ───────────────────────────
-  // Auth deletion must precede profile/driver row deletion.  If auth deletion
-  // fails here, the driver still has a valid profile and can continue working —
-  // the admin can simply retry the delete operation.  If we removed DB rows
-  // first and auth deletion then failed, the driver would be able to
-  // authenticate but receive "profile not found" on every subsequent request,
-  // which is a confusing broken state requiring manual SQL repair.
+  // ── 4. Delete Supabase Auth user FIRST ───────────────────────────────────
+  // Auth deletion precedes DB cleanup.  If it fails here the driver is still
+  // fully active (auth + profile intact) and the admin can safely retry the
+  // delete operation without any broken intermediate state.
   if (profileRow?.auth_user_id) {
     const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(
       profileRow.auth_user_id,
@@ -143,36 +98,28 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  // ── 6. Remove profile and driver rows ────────────────────────────────────
-  // Auth user is already gone at this point.  If either delete fails below,
-  // the rows are orphaned (no one can authenticate as this driver any more)
-  // and can be cleaned up with a targeted SQL DELETE.
-  const { error: profileDeleteError } = await supabaseAdmin
-    .from('profiles')
-    .delete()
-    .eq('driver_id', driverId);
+  // ── 5. Atomically clean up all DB rows via RPC ───────────────────────────
+  // delete_driver_cleanup_v1 unlinks historical records and removes the
+  // profiles + drivers rows in a single PostgreSQL transaction.
+  // Auth user is already gone at this point; if this RPC fails, DB rows are
+  // orphaned (harmless — no one can log in as this driver) and the operator
+  // can clean up with a manual SQL DELETE or by retrying this endpoint.
+  const { error: cleanupError } = await supabaseAdmin
+    .rpc('delete_driver_cleanup_v1', { p_driver_id: driverId });
 
-  if (profileDeleteError) {
-    console.error('profile delete failed:', profileDeleteError.message);
-    console.error(
-      `MANUAL CLEANUP: auth user ${profileRow?.auth_user_id} deleted but ` +
-      `profiles row for driver ${driverId} remains — remove via SQL.`,
+  if (cleanupError) {
+    console.error('DB cleanup RPC failed:', cleanupError.message);
+    if (profileRow?.auth_user_id) {
+      console.error(
+        `MANUAL CLEANUP: auth user ${profileRow.auth_user_id} deleted but DB rows ` +
+        `for driver ${driverId} remain — run: DELETE FROM drivers WHERE id = '${driverId}';`,
+      );
+    }
+    return errorJson(
+      'DB cleanup failed. Auth user deleted. Please retry or clean up manually.',
+      500,
+      'DB_CLEANUP_FAILED',
     );
-    return errorJson('Internal server error', 500, 'PROFILE_DELETE_FAILED');
-  }
-
-  const { error: driverDeleteError } = await supabaseAdmin
-    .from('drivers')
-    .delete()
-    .eq('id', driverId);
-
-  if (driverDeleteError) {
-    console.error('driver delete failed:', driverDeleteError.message);
-    console.error(
-      `MANUAL CLEANUP: auth user + profile deleted for driver ${driverId} ` +
-      `but drivers row remains — remove via SQL.`,
-    );
-    return errorJson('Internal server error', 500, 'DRIVER_DELETE_FAILED');
   }
 
   return json({ success: true, driver_id: driverId });
