@@ -552,21 +552,16 @@ export async function markSynced(id: string, authoritativeData?: Partial<Transac
     });
     db.close();
   } catch (idbErr) {
-    Sentry.captureMessage(
-      `[OfflineQueue] markSynced IDB write failed for entry ${id} — falling back to localStorage`,
-      'warning',
-    );
+    captureQueueMessage('offline_queue_mark_synced_idb_failed', { entryId: id, error: String(idbErr) });
     const list = readLocalQueue().map(t => t.id === id ? { ...t, ...update } : t);
     try {
       localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(list));
     } catch (lsErr) {
-      // Both IDB and localStorage failed. The entry will be retried on the
-      // next flush. The server RPC is idempotent on tx_id so duplicate
-      // submissions are safe, but we log prominently so this does not go
-      // unnoticed.
-      Sentry.captureException(lsErr, {
-        tags: { context: 'mark_synced_storage_total_failure' },
-        extra: { entryId: id, idbError: String(idbErr) },
+      // Both IDB and localStorage failed — entry will be retried on next flush.
+      // Server RPC is idempotent on tx_id so duplicate submissions are safe.
+      captureQueueException('offline_queue_mark_synced_storage_total_failure', lsErr, {
+        entryId: id,
+        idbError: String(idbErr),
       });
     }
   }
