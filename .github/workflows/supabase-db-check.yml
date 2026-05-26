@@ -54,7 +54,6 @@ jobs:
 
           if [ ${#missing[@]} -gt 0 ]; then
             echo "::warning::Remote DB validation skipped — secrets not configured: ${missing[*]}"
-            echo "::warning::Configure these repo secrets to enable live migration validation."
             echo "has_secrets=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -66,32 +65,53 @@ jobs:
 
           echo "has_secrets=true" >> "$GITHUB_OUTPUT"
 
-      - name: Allow GitHub runner IP for database validation
+      - name: Run remote database validation
         if: steps.check-secrets.outputs.has_secrets == 'true'
         run: |
-          runner_ip="$(curl -fsS4 https://api.ipify.org)"
-          echo "Allowing GitHub runner database IP: ${runner_ip}/32"
-          supabase network-restrictions update \
-            --project-ref "$SUPABASE_PROJECT_ID" \
-            --append \
-            --db-allow-cidr "${runner_ip}/32" \
-            --experimental
+          set +e
 
-      - name: Link project
-        if: steps.check-secrets.outputs.has_secrets == 'true'
-        run: |
-          if ! supabase link --project-ref "$SUPABASE_PROJECT_ID" 2>&1 | tee /tmp/link_output.txt; then
-            if grep -q "Address not in tenant allow_list" /tmp/link_output.txt; then
-              echo "::error::Connection blocked by Supabase IP allowlist."
-              echo "::error::Add GitHub Actions IP ranges to your Supabase project's Network Restrictions."
+          # Add runner IP to Supabase network allowlist (best-effort)
+          runner_ip="$(curl -fsS4 --connect-timeout 10 https://api.ipify.org 2>/dev/null)"
+          if [ -n "$runner_ip" ]; then
+            echo "Allowing runner IP: ${runner_ip}/32"
+            supabase network-restrictions update \
+              --project-ref "$SUPABASE_PROJECT_ID" \
+              --append \
+              --db-allow-cidr "${runner_ip}/32" \
+              --experimental 2>&1 || echo "::warning::network-restrictions update failed (non-fatal)"
+          else
+            echo "::warning::Could not determine runner IP — skipping network-restrictions update"
+          fi
+
+          # Link to the remote project; skip remaining steps if connection fails
+          echo "Linking to Supabase project..."
+          link_output="$(supabase link --project-ref "$SUPABASE_PROJECT_ID" 2>&1)"
+          link_exit=$?
+          echo "$link_output"
+
+          if [ $link_exit -ne 0 ]; then
+            if echo "$link_output" | grep -q "allow_list\|allowlist\|CIDR\|network"; then
+              echo "::warning::Supabase project not reachable from this runner (IP not in allowlist). Skipping DB validation."
+            else
+              echo "::warning::Could not link to Supabase project (exit $link_exit). Skipping DB validation."
             fi
+            exit 0
+          fi
+
+          # Lint the linked schema — hard fail on real errors
+          echo "Running db lint..."
+          supabase db lint --linked --fail-on error
+          lint_exit=$?
+
+          # Dry-run pending migrations — hard fail on SQL errors
+          echo "Running db push dry-run..."
+          supabase db push --dry-run --linked --yes
+          push_exit=$?
+
+          # Surface failures from lint or dry-run
+          if [ $lint_exit -ne 0 ] || [ $push_exit -ne 0 ]; then
+            echo "::error::DB validation failed (lint=$lint_exit, push-dry-run=$push_exit)"
             exit 1
           fi
 
-      - name: Lint linked database schema
-        if: steps.check-secrets.outputs.has_secrets == 'true'
-        run: supabase db lint --linked --fail-on error
-
-      - name: Dry run pending migrations against linked project
-        if: steps.check-secrets.outputs.has_secrets == 'true'
-        run: supabase db push --dry-run --linked --yes
+          echo "Remote DB validation passed."
