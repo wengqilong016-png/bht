@@ -4,7 +4,7 @@ type ProfileLookupResult = {
   data: { auth_user_id: string | null } | null;
   error: { message: string } | null;
 };
-type DeleteUserResult = { error: { message: string } | null };
+type DeleteUserResult = { error: { message: string; status?: number } | null };
 type RpcResult = { data: unknown; error: { message: string } | null };
 
 type ProfilesTableStub = {
@@ -179,6 +179,17 @@ describe('delete-driver edge function', () => {
     // RPC must NOT be called — driver DB rows should remain intact so the
     // driver can still log in and the admin can safely retry the delete.
     expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it('treats 404 auth-user-not-found as success and proceeds with cleanup', async () => {
+    mockDeleteUser.mockResolvedValueOnce({ error: { message: 'User not found', status: 404 } });
+    const handler = await loadDeleteDriverHandler();
+
+    const response = await handler(makeRequest({ driver_id: 'drv-5' }));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ success: true, driver_id: 'drv-5' });
+    expect(mockRpc).toHaveBeenCalledWith('delete_driver_cleanup_v1', { p_driver_id: 'drv-5' });
   });
 
   it('returns DB_CLEANUP_FAILED when the cleanup RPC fails after auth deletion', async () => {

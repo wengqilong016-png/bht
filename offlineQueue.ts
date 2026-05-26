@@ -113,7 +113,11 @@ function isLocalStorageAvailable(): boolean {
  * memory and will be lost on page refresh.
  */
 export function isUsingMemoryFallback(): boolean {
-  return !isLocalStorageAvailable();
+  const idbSupported =
+    typeof window !== 'undefined' &&
+    'indexedDB' in window &&
+    window.indexedDB !== null;
+  return !isLocalStorageAvailable() && !idbSupported;
 }
 
 const memoryQueueCache = new Map<string, Array<Transaction & Partial<QueueMeta>>>();
@@ -557,8 +561,10 @@ export async function markSynced(id: string, authoritativeData?: Partial<Transac
     try {
       localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(list));
     } catch (lsErr) {
-      // Both IDB and localStorage failed — entry will be retried on next flush.
-      // Server RPC is idempotent on tx_id so duplicate submissions are safe.
+      // Both IDB and localStorage failed — update in-memory cache so the entry
+      // is not retried in the current session. Server RPC is idempotent on
+      // tx_id so duplicate submissions are safe either way.
+      memoryQueueCache.set(QUEUE_STORAGE_KEY, list);
       captureQueueException('offline_queue_mark_synced_storage_total_failure', lsErr, {
         entryId: id,
         idbError: String(idbErr),

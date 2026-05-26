@@ -84,17 +84,25 @@ Deno.serve(async (req: Request) => {
   // Auth deletion precedes DB cleanup.  If it fails here the driver is still
   // fully active (auth + profile intact) and the admin can safely retry the
   // delete operation without any broken intermediate state.
+  // 404 "not found" is treated as success — it means the auth user was already
+  // deleted in a previous (partially failed) attempt, so cleanup can proceed.
   if (profileRow?.auth_user_id) {
     const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(
       profileRow.auth_user_id,
     );
     if (authDeleteError) {
-      console.error('auth user delete failed:', authDeleteError.message);
-      return errorJson(
-        'Auth account deletion failed — driver is still active. Please retry.',
-        500,
-        'AUTH_DELETE_FAILED',
-      );
+      const isAlreadyGone =
+        authDeleteError.status === 404 ||
+        /not found/i.test(authDeleteError.message);
+      if (!isAlreadyGone) {
+        console.error('auth user delete failed:', authDeleteError.message);
+        return errorJson(
+          'Auth account deletion failed — driver is still active. Please retry.',
+          500,
+          'AUTH_DELETE_FAILED',
+        );
+      }
+      console.info(`auth user ${profileRow.auth_user_id} already deleted; continuing cleanup`);
     }
   }
 
