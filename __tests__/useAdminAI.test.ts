@@ -13,7 +13,7 @@
  *  6. isLoading — transitions during sendMessage lifecycle
  */
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 

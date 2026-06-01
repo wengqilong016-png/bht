@@ -13,16 +13,13 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 
 import MachineRegistrationForm from '../components/MachineRegistrationForm';
-import { compressAndResizeImage } from '../utils/imageUtils';
-import { normalizeMachineId } from '../utils/locationWorkflow';
 
-import { makeDriver, makeLocation } from './helpers/fixtures';
+import { makeDriver } from './helpers/fixtures';
 import { renderWithProviders } from './helpers/test-utils';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────
 
 const mockShowToast = toastMock.showToast;
-const mockCompress = compressAndResizeImage as jest.MockedFunction<typeof compressAndResizeImage>;
 const mockOnSubmit = jest.fn<() => Promise<void>>();
 const mockOnCancel = jest.fn();
 const mockOnSuccessDone = jest.fn();
@@ -309,9 +306,6 @@ describe('MachineRegistrationForm', () => {
 
   it('calls onCancel when back arrow is clicked', () => {
     renderForm();
-    // The back button is the ArrowLeft icon — find by role
-    const backBtn = screen.getByRole('button', { name: '' });
-    // Actually the back button has an ArrowLeft icon. Let's find it differently.
     const buttons = screen.getAllByRole('button');
     // First button should be the back arrow (ArrowLeft)
     fireEvent.click(buttons[0]);

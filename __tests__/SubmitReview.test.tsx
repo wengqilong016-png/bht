@@ -32,10 +32,9 @@ import { useConfirm } from '../contexts/ConfirmContext';
 import { extractGpsFromExif, estimateLocationFromContext } from '../utils/exifGps';
 
 import SubmitReview from '../driver/components/SubmitReview';
-import type { CompletionResult } from '../driver/components/SubmitReview';
 
 import { makeDriver, makeLocation, makeTransaction, resetFixtureCounter } from './helpers/fixtures';
-import { act, fireEvent, renderWithProviders, screen, waitFor } from './helpers/test-utils';
+import { fireEvent, renderWithProviders, screen, waitFor } from './helpers/test-utils';
 
 const mockUseCollectionSubmission = useCollectionSubmission as jest.MockedFunction<typeof useCollectionSubmission>;
 const mockUseConfirm = useConfirm as jest.MockedFunction<typeof useConfirm>;

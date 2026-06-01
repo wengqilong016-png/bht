@@ -1,5 +1,4 @@
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { Mock } from 'jest-mock';
+import { describe, it, expect, jest } from '@jest/globals';
 import { mockCalc } from './helpers/fixtures';
 // Mock supabaseClient so import.meta.env is not evaluated in the Jest/Node environment
 jest.mock('../supabaseClient', () => ({ supabase: null }));

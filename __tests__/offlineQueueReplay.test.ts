@@ -931,7 +931,7 @@ describe('ADR-004 causal order replay', () => {
   });
 
   it('replays dependent items only after their dependencies are flushed', async () => {
-    const { enqueueTransaction, flushQueue, getPendingTransactions } = await import('../offlineQueue');
+    const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
 
     const txA = makeTx({ id: 'tx-dep-a' });
     await enqueueTransaction(txA, makeRawInput('tx-dep-a'));
@@ -977,7 +977,7 @@ describe('ADR-004 causal order replay', () => {
   });
 
   it('skips items whose dependencies failed (not flushed) and replay them on next pass when dep succeeds', async () => {
-    const { enqueueTransaction, flushQueue, getPendingTransactions } = await import('../offlineQueue');
+    const { enqueueTransaction, flushQueue } = await import('../offlineQueue');
 
     // Enqueue txA — it will fail with a transient error
     const txA = makeTx({ id: 'tx-fail-a' });

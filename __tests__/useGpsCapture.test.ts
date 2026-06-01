@@ -38,7 +38,6 @@ function restoreGeolocation() {
 
 // ── test helpers ────────────────────────────────────────────────────
 function makeSuccess(coords: GpsCoords) {
-  const successCb: (pos: { coords: { latitude: number; longitude: number } }) => void = (_pos) => {};
   return (
     success: (pos: { coords: { latitude: number; longitude: number } }) => void,
     _error: any,
