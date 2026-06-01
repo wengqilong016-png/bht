@@ -7,11 +7,6 @@
   - 根因分析（如已知）
   - 临时规避方案（如有）
 -->
-- [ ] **远端更新 manifest 指向的 APK 不是最新 Actions APK** — `.github/workflows/build-apk.yml` / `public/version.json` — P1 — 2026-06-01
-  - `main/public/version.json` 当前声明 `gitSha=892d098...`，但 `apkUrl=https://github.com/wengqilong016-png/bht/releases/latest/download/bahati-latest-release.apk` 实际下载到 2026-05-08 的 `v1.0.15` release asset。
-  - 最新 `Build Android APK` run `26746589657` 的 artifact 是 `892d098...`，但它只是 Actions artifact，未发布到上述公开 release URL。
-  - 影响：用户看到线上构建为最新，但点击更新会安装旧 release APK，可能更新后仍反复提示或业务代码不一致。
-  - 验证：release URL APK SHA256 `fc42c145...`，Actions artifact APK SHA256 `b4dc8d4...`，两者不同。
 
 ## 已知风险
 <!-- 不是 bug 但需要注意的技术风险 -->
@@ -26,6 +21,7 @@
 <!-- 格式：
 - [x] **问题描述** — 解决日期 — 解决方案简述
 -->
+- [x] **远端更新 manifest 指向旧 APK** — 2026-06-01 — 发布 `v2.0.0`，正式 release APK 与 `main-latest` rolling APK 均已上传；远端 `version.json` 已指向 `v2.0.0` APK URL。
 
 ## 最后更新
-2026-06-01 — 记录 APK 分发 URL 指向旧 release asset 问题
+2026-06-01 — Android 2.0.0 发布后关闭 APK 分发 URL 问题
