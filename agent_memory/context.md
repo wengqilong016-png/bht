@@ -218,6 +218,7 @@ offlineQueue (离线队列)
 
 - **默认最小改动**，不做无关重构
 - **push 前必须 `git pull --rebase origin main`**（多人推代码）
+- **数据库 schema 真相必须同时核对 `supabase/migrations/` 与 `supabase/schema.sql`**；只看其中一处可能误判 schema drift。
 - 代码保持英文，注释/文档用中文
 - `refetchInterval` 保持 30s（降低轮询频率），离线队列单条超时 60s
 - 网络超时考虑坦桑尼亚网络环境，不宜太短
@@ -237,4 +238,4 @@ offlineQueue (离线队列)
 
 ---
 
-最后更新：2026-05-24 — 项目全貌初次建立
+最后更新：2026-06-01 — 补充 schema 核对约定与 live 审计经验

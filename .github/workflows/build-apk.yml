@@ -209,7 +209,7 @@ jobs:
           npm version patch --no-git-tag-version
           NEW_VERSION=$(node -p 'require("./package.json").version')
           REPO="${{ github.repository }}"
-          APK_URL="https://github.com/${REPO}/releases/latest/download/bahati-latest-release.apk"
+          APK_URL="https://github.com/${REPO}/releases/download/main-latest/bahati-latest-release.apk"
           node -e "
             const fs = require('fs');
             fs.writeFileSync('public/version.json', JSON.stringify({
@@ -244,6 +244,37 @@ jobs:
             cp "$APK_PATH" "$DEST"
           fi
 
+      - name: Publish rolling APK release
+        if: github.ref == 'refs/heads/main' && steps.resolve_build_type.outputs.build_type == 'release'
+        run: |
+          TAG="main-latest"
+          VERSION="${{ steps.version.outputs.version }}"
+          SHORT_SHA="${{ steps.build_meta.outputs.short_sha }}"
+          APK_PATH="android/app/build/outputs/apk/bahati-latest-release.apk"
+
+          if [ ! -f "$APK_PATH" ]; then
+            echo "::error::Release APK not found: $APK_PATH"
+            exit 1
+          fi
+
+          git tag -f "$TAG" "$GITHUB_SHA"
+          git push -f origin "refs/tags/${TAG}"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" \
+              --title "Latest Android APK" \
+              --notes "main build ${VERSION} (${SHORT_SHA})" \
+              --prerelease
+            gh release upload "$TAG" "$APK_PATH" --clobber
+          else
+            gh release create "$TAG" "$APK_PATH" \
+              --title "Latest Android APK" \
+              --notes "main build ${VERSION} (${SHORT_SHA})" \
+              --prerelease
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Update remote update manifest
         id: update_manifest
         if: github.ref == 'refs/heads/main' && steps.resolve_build_type.outputs.build_type == 'release'
@@ -256,7 +287,7 @@ jobs:
           SHORT_SHA="${{ steps.build_meta.outputs.short_sha }}"
           RELEASED_AT="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
           REPO="${{ github.repository }}"
-          APK_URL="https://github.com/${REPO}/releases/latest/download/bahati-latest-release.apk"
+          APK_URL="https://github.com/${REPO}/releases/download/main-latest/bahati-latest-release.apk"
           node -e "
             const fs = require('fs');
             fs.writeFileSync('public/version.json', JSON.stringify({
