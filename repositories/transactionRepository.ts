@@ -9,7 +9,7 @@ const TX_FIELDS = [
   'driverId', 'driverName', 'previousScore', 'currentScore', 'revenue',
   'commission', 'ownerRetention', 'isOwnerRetaining', 'debtDeduction', 'startupDebtDeduction',
   'expenses', 'coinExchange', 'extraIncome', 'netPayable', 'gps', 'gpsDeviation',
-  'photoUrl', 'dataUsageKB', 'aiScore', 'isAnomaly', 'anomalyFlag', 'notes', 'isClearance',
+  'photoUrl', 'dataUsageKB', 'aiScore', 'isAnomaly', 'notes', 'isClearance',
   'isSynced', 'reportedStatus', 'paymentStatus', 'type', 'approvalStatus',
   'expenseType', 'expenseCategory', 'expenseStatus', 'expenseDescription',
   'payoutAmount',
@@ -66,7 +66,7 @@ const UPSERT_ALLOWED_FIELDS = new Set([
   'photoUrl', 'dataUsageKB', 'aiScore', 'isAnomaly', 'notes',
   'type', 'approvalStatus', 'paymentStatus', 'reportedStatus',
   'expenseType', 'expenseCategory', 'expenseStatus', 'expenseDescription',
-  'payoutAmount', 'anomalyFlag',
+  'payoutAmount',
 ]);
 
 function stripDisallowedFields(tx: Partial<Transaction>): Partial<Transaction> {
