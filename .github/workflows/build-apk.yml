@@ -38,6 +38,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # 全历史:versionCode 由 git rev-list --count HEAD 生成,浅克隆会恒为 1
 
       - name: Resolve build type
         id: resolve_build_type

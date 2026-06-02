@@ -3,12 +3,8 @@ apply plugin: 'com.android.application'
 // Read version from package.json and git commit count
 def packageJson = new groovy.json.JsonSlurper().parseText(file('../../package.json').text)
 def appVersionName = packageJson.version ?: "1.0.0"
+// versionCode = git 提交总数;与 CI 的 rev-list --count 及 __APP_VERSION_CODE__ 口径一致,勿加偏移
 def gitCommitCount = 1
-        try {
-            def proc = ['git', 'rev-list', '--count', 'HEAD'].execute(null, file('../..'))
-            proc.waitFor()
-            gitCommitCount = proc.text.trim().toInteger() + 1 // ensure monotonic increment even when tag alone
-        } catch (ignored) {}
 try {
     def proc = ['git', 'rev-list', '--count', 'HEAD'].execute(null, file('../..'))
     proc.waitFor()
