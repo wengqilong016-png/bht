@@ -66,11 +66,15 @@ jobs:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           PGSSLMODE: require
         run: |
-          psql \
-            --host="db.${SUPABASE_PROJECT_ID}.supabase.co" \
-            --port=5432 \
-            --username=postgres \
-            --dbname=postgres \
+          db_host="db.${SUPABASE_PROJECT_ID}.supabase.co"
+          db_hostaddr="$(getent ahostsv4 "$db_host" | awk '{ print $1; exit }')"
+          if [ -z "$db_hostaddr" ]; then
+            echo "::error::Could not resolve IPv4 address for ${db_host}"
+            exit 1
+          fi
+          echo "Using Supabase DB IPv4 address for psql connection."
+
+          psql "host=${db_host} hostaddr=${db_hostaddr} port=5432 user=postgres dbname=postgres sslmode=require" \
             --set=ON_ERROR_STOP=1 <<'SQL'
           BEGIN;
 
