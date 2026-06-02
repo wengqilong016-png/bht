@@ -23,6 +23,7 @@ import QuickCollect from '../driver/components/QuickCollect';
 import { useConfirm } from '../contexts/ConfirmContext';
 import { orchestrateCollectionSubmission } from '../services/collectionSubmissionOrchestrator';
 import { recordDriverFlowEvent } from '../services/driverFlowTelemetry';
+import { getTodayLocalDate } from '../utils/dateUtils';
 
 import { makeDriver, makeLocation } from './helpers/fixtures';
 import { fireEvent, renderWithProviders, screen, waitFor } from './helpers/test-utils';
@@ -336,8 +337,11 @@ describe('QuickCollect', () => {
   });
 
   it('shows stale warning badge when lastRevenueDate is old', async () => {
-    const oldDate = new Date();
-    oldDate.setDate(oldDate.getDate() - 10);
+    // 以组件相同的坦桑时区"今天"为基准倒推 10 天（组件 daysSinceDate 用 getTodayLocalDate
+    // 算 today）；直接用 new Date()/toISOString 会在 UTC 跨坦桑日界时漂移成 11 天而误判。
+    const today = getTodayLocalDate();
+    const oldDate = new Date(`${today}T00:00:00Z`);
+    oldDate.setUTCDate(oldDate.getUTCDate() - 10);
     const staleMachine = makeLocation({
       id: 'loc-stale', name: 'Stale Machine',
       lastRevenueDate: oldDate.toISOString().split('T')[0],
