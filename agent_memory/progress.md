@@ -1,29 +1,26 @@
 # 当前任务进度
 
 ## 当前目标
-发布 Android 2.0.0
+审查并推送 drivers RLS 泄露修复迁移
 
 ## 状态
 completed
 
 ## 已完成步骤
-- [x] 同步远端 `main` 到 bot manifest commit `ed12d64`
-- [x] 将 `package.json` / `package-lock.json` 版本升到 `2.0.0`
-- [x] 修改 `.github/workflows/build-apk.yml`：main release 构建后发布/覆盖 `main-latest` rolling release，并将 main update manifest 的 `apkUrl` 指向 `releases/download/main-latest/bahati-latest-release.apk`
-- [x] `main-latest` rolling release 标记为 prerelease，避免影响正式 GitHub Latest release
-- [x] 本地验证：workflow YAML 可解析；`npm run build` 通过
-- [x] 推送 release commit `b0423ec821665945d217a1b07c9c9504ad5ff974`
-- [x] 创建并推送 `v2.0.0` tag
-- [x] GitHub Actions 通过：`CI`、`Build Android APK`、`Release`、`Deploy to Vercel`
-- [x] 正式 release `v2.0.0` 已发布，APK asset `bahati-latest-release.apk` 大小 `4451631`
-- [x] rolling release `main-latest` 已发布为 prerelease，APK asset `bahati-latest-release.apk` 大小 `4451631`
-- [x] 远端 `public/version.json` 已回写到 `2.0.0`，`apkUrl` 指向 `https://github.com/wengqilong016-png/bht/releases/download/v2.0.0/bahati-latest-release.apk`
+- [x] 接手 Claude 暂存的 `supabase/migrations/20260601010000_fix_drivers_select_rls_leak.sql`
+- [x] 审查 staged diff，确认暂存区只包含新增 RLS 迁移
+- [x] 对照 `schema.sql`，确认迁移重建的 `drivers_select` 与快照限制性定义一致
+- [x] 确认 `public.is_admin()` / `public.get_my_driver_id()` 已定义并授权给 `authenticated`
+- [x] 执行 `git pull --rebase --autostash origin main`，已同步远端 main 后重新审查 diff
+- [x] 准备提交并推送：迁移 + 本次 agent_memory 审查记录
 
 ## 下一步
-- 有 Android SDK/adb 或真机后，补跑安装、启动、登录、覆盖更新验证。
+- 触发/执行 Supabase 生产迁移部署，并用 live DB 只读查询验证 `drivers_select` 当前策略。
+- 继续单独处理 Android `versionCode` 不递增问题。
+- 对司机更新 `drivers` 行的列级权限做真实 DB 验证，再决定是否收紧。
 
 ## 阻塞项
-- 本机缺少 Android SDK/adb/Java，无法本地执行 `apksigner` 或真机安装启动；签名与真机安装结论依赖 GitHub Actions 和后续设备验证。
+- 本机无 Supabase CLI/psql，且没有 live DB 查询授权；无法本地实跑迁移或确认生产策略状态。
 
 ## 最后更新
-2026-06-01 — Android 2.0.0 发布完成
+2026-06-02 — drivers RLS 迁移审查通过，准备提交推送
