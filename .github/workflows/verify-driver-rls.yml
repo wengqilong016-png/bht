@@ -1,0 +1,200 @@
+name: Verify Driver RLS
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Why are you verifying production driver RLS?'
+        required: true
+        default: 'Verify drivers self-update column guard'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+    steps:
+      - name: Verify required secrets
+        run: |
+          missing=()
+          [ -z "$SUPABASE_ACCESS_TOKEN" ] && missing+=("SUPABASE_ACCESS_TOKEN")
+          [ -z "$SUPABASE_DB_PASSWORD"  ] && missing+=("SUPABASE_DB_PASSWORD")
+          [ -z "$SUPABASE_PROJECT_ID"   ] && missing+=("SUPABASE_PROJECT_ID")
+
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets: ${missing[*]}"
+            exit 1
+          fi
+
+          if [[ ! "$SUPABASE_ACCESS_TOKEN" =~ ^sbp_ ]]; then
+            echo "::error::SUPABASE_ACCESS_TOKEN has invalid format; expected sbp_*"
+            exit 1
+          fi
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Allow GitHub runner IP for database verify
+        run: |
+          runner_ip="$(curl -fsS4 https://api.ipify.org)"
+          echo "Allowing GitHub runner database IP: ${runner_ip}/32"
+          supabase network-restrictions update \
+            --project-ref "$SUPABASE_PROJECT_ID" \
+            --append \
+            --db-allow-cidr "${runner_ip}/32" \
+            --experimental
+
+      - name: Verify driver RLS and column guard
+        env:
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          PGSSLMODE: require
+        run: |
+          psql \
+            --host="db.${SUPABASE_PROJECT_ID}.supabase.co" \
+            --port=5432 \
+            --username=postgres \
+            --dbname=postgres \
+            --set=ON_ERROR_STOP=1 <<'SQL'
+          BEGIN;
+
+          DO $$
+          DECLARE
+            v_auth_user_id uuid;
+            v_driver_id text;
+          BEGIN
+            IF NOT EXISTS (
+              SELECT 1
+              FROM pg_trigger t
+              JOIN pg_class c ON c.oid = t.tgrelid
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+              WHERE n.nspname = 'public'
+                AND c.relname = 'drivers'
+                AND t.tgname = 'trg_enforce_driver_self_update_columns'
+                AND NOT t.tgisinternal
+            ) THEN
+              RAISE EXCEPTION 'Missing trigger trg_enforce_driver_self_update_columns on public.drivers';
+            END IF;
+
+            IF NOT EXISTS (
+              SELECT 1
+              FROM pg_proc p
+              JOIN pg_namespace n ON n.oid = p.pronamespace
+              WHERE n.nspname = 'public'
+                AND p.proname = 'enforce_driver_self_update_columns'
+            ) THEN
+              RAISE EXCEPTION 'Missing function public.enforce_driver_self_update_columns';
+            END IF;
+
+            SELECT p.auth_user_id, p.driver_id
+              INTO v_auth_user_id, v_driver_id
+            FROM public.profiles p
+            JOIN public.drivers d ON d.id = p.driver_id
+            WHERE p.role = 'driver'
+              AND p.driver_id IS NOT NULL
+            ORDER BY p.created_at DESC
+            LIMIT 1;
+
+            IF v_auth_user_id IS NULL OR v_driver_id IS NULL THEN
+              RAISE EXCEPTION 'No driver profile with a linked drivers row is available for verification';
+            END IF;
+
+            PERFORM set_config('bht.verify.auth_user_id', v_auth_user_id::text, false);
+            PERFORM set_config('bht.verify.driver_id', v_driver_id, false);
+          END $$;
+
+          SELECT set_config('request.jwt.claim.sub', current_setting('bht.verify.auth_user_id'), true);
+          SELECT set_config('request.jwt.claim.role', 'authenticated', true);
+          SELECT set_config(
+            'request.jwt.claims',
+            json_build_object(
+              'sub', current_setting('bht.verify.auth_user_id'),
+              'role', 'authenticated'
+            )::text,
+            true
+          );
+
+          SET LOCAL ROLE authenticated;
+
+          DO $$
+          DECLARE
+            v_driver_id text := current_setting('bht.verify.driver_id');
+            v_role text;
+            v_helper_driver_id text;
+            v_visible_count integer;
+            v_updated_count integer;
+            v_cross_updated_count integer;
+            v_protected_blocked boolean := false;
+          BEGIN
+            SELECT public.get_my_role(), public.get_my_driver_id()
+              INTO v_role, v_helper_driver_id;
+
+            IF v_role IS DISTINCT FROM 'driver' THEN
+              RAISE EXCEPTION 'Expected get_my_role()=driver, got %', v_role;
+            END IF;
+
+            IF v_helper_driver_id IS DISTINCT FROM v_driver_id THEN
+              RAISE EXCEPTION 'Expected get_my_driver_id()=%, got %', v_driver_id, v_helper_driver_id;
+            END IF;
+
+            SELECT count(*) INTO v_visible_count FROM public.drivers;
+            IF v_visible_count <> 1 THEN
+              RAISE EXCEPTION 'Driver SELECT should see exactly one drivers row, saw %', v_visible_count;
+            END IF;
+
+            UPDATE public.drivers
+            SET "lastActive" = now()
+            WHERE id = v_driver_id;
+            GET DIAGNOSTICS v_updated_count = ROW_COUNT;
+            IF v_updated_count <> 1 THEN
+              RAISE EXCEPTION 'Allowed self update should affect one row, affected %', v_updated_count;
+            END IF;
+
+            BEGIN
+              UPDATE public.drivers
+              SET "baseSalary" = COALESCE("baseSalary", 0) + 1
+              WHERE id = v_driver_id;
+            EXCEPTION
+              WHEN insufficient_privilege THEN
+                v_protected_blocked := true;
+              WHEN OTHERS THEN
+                IF SQLSTATE = '42501' THEN
+                  v_protected_blocked := true;
+                ELSE
+                  RAISE;
+                END IF;
+            END;
+
+            IF NOT v_protected_blocked THEN
+              RAISE EXCEPTION 'Protected baseSalary update was not blocked for driver %', v_driver_id;
+            END IF;
+
+            UPDATE public.drivers
+            SET "lastActive" = now()
+            WHERE id <> v_driver_id;
+            GET DIAGNOSTICS v_cross_updated_count = ROW_COUNT;
+            IF v_cross_updated_count <> 0 THEN
+              RAISE EXCEPTION 'Cross-driver update should affect zero rows, affected %', v_cross_updated_count;
+            END IF;
+
+            RAISE NOTICE 'Driver RLS verified: own row visible, allowed lastActive update passed, baseSalary blocked, cross-driver update blocked.';
+          END $$;
+
+          ROLLBACK;
+          SQL
