@@ -66,15 +66,20 @@ jobs:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           PGSSLMODE: require
         run: |
-          db_host="db.${SUPABASE_PROJECT_ID}.supabase.co"
-          db_hostaddr="$(getent ahostsv4 "$db_host" | awk '{ print $1; exit }')"
-          if [ -z "$db_hostaddr" ]; then
-            echo "::error::Could not resolve IPv4 address for ${db_host}"
+          project_region="$(
+            curl -fsSL \
+              -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+              "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_ID}" \
+            | node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync(0,'utf8')); process.stdout.write(p.region || p.region_id || '')"
+          )"
+          if [ -z "$project_region" ]; then
+            echo "::error::Could not determine Supabase project region"
             exit 1
           fi
-          echo "Using Supabase DB IPv4 address for psql connection."
+          pooler_host="aws-0-${project_region}.pooler.supabase.com"
+          echo "Using Supabase pooler in region ${project_region} for psql connection."
 
-          psql "host=${db_host} hostaddr=${db_hostaddr} port=5432 user=postgres dbname=postgres sslmode=require" \
+          psql "host=${pooler_host} port=6543 user=postgres.${SUPABASE_PROJECT_ID} dbname=postgres sslmode=require" \
             --set=ON_ERROR_STOP=1 <<'SQL'
           BEGIN;
 
