@@ -13,7 +13,7 @@ import { upsertLocationsWithSignal, deleteLocations as repoDeleteLocations } fro
 import { createPayoutRequest, createResetRequest } from '../repositories/requestRepository';
 import { createSettlement as repoCreateSettlement, reviewSettlement as repoReviewSettlement } from '../repositories/settlementRepository';
 import { upsertTransaction } from '../repositories/transactionRepository';
-import { submitCollectionV2 } from '../services/collectionSubmissionService';
+import { submitCollectionV2, type CollectionSubmissionInput } from '../services/collectionSubmissionService';
 import { deleteDriverAccount } from '../services/driverManagementService';
 import { localDB } from '../services/localDB';
 import { getTransactionQueryScope, getSettlementQueryScope } from '../services/supabaseRoleScope';
@@ -380,6 +380,45 @@ export function useSupabaseMutations(
     }
   });
 
+  const submitManualCollection = useMutation({
+    mutationFn: async (input: CollectionSubmissionInput): Promise<Transaction> => {
+      if (!isOnline) {
+        throw new Error('管理员快速补录需要联网提交。/ Manual collection entry requires online mode.');
+      }
+
+      const result = await submitCollectionV2(input, { requireEvidencePhoto: false });
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.transaction;
+    },
+    onSuccess: (transaction) => {
+      queryClient.setQueryData(transactionQueryKey, (old: Transaction[] = []) => {
+        const withoutExisting = old.filter(existing => existing.id !== transaction.id);
+        return [{ ...transaction, isSynced: true }, ...withoutExisting];
+      });
+      persistQuerySnapshot<Transaction>(transactionQueryKey, transactionStorageKey);
+
+      queryClient.setQueryData(['locations'], (old: Location[] = []) =>
+        old.map(location =>
+          location.id === transaction.locationId && transaction.currentScore >= (location.lastScore ?? 0)
+            ? { ...location, lastScore: transaction.currentScore, isSynced: true }
+            : location
+        )
+      );
+    },
+    onError: (error) => {
+      onMutationError?.(error);
+    },
+    onSettled: () => {
+      if (isOnline) {
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        queryClient.invalidateQueries({ queryKey: ['locations'] });
+        queryClient.invalidateQueries({ queryKey: ['dailySettlements'] });
+      }
+    }
+  });
+
   const createSettlement = useMutation({
     onMutate: async (settlement: DailySettlement) => {
       await queryClient.cancelQueries({ queryKey: ['dailySettlements'] });
@@ -717,6 +756,7 @@ export function useSupabaseMutations(
     deleteDrivers,
     updateTransaction,
     submitTransaction,
+    submitManualCollection,
     createSettlement,
     reviewSettlement,
     approveExpenseRequest,

@@ -103,6 +103,7 @@ import { updateDrivers as repoUpdateDrivers } from '../../repositories/driverRep
 import { upsertLocationsWithSignal, deleteLocations as repoDeleteLocations } from '../../repositories/locationRepository';
 import { flushQueue, enqueueTransaction, resetRetryBackoff, reportQueueHealthToServer } from '../../offlineQueue';
 import { getSettlementQueryScope, getTransactionQueryScope } from '../../services/supabaseRoleScope';
+import { submitCollectionV2 } from '../../services/collectionSubmissionService';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -440,6 +441,73 @@ describe('useSupabaseMutations', () => {
     });
   });
 
+  // ── submitManualCollection ─────────────────────────────────────────────
+
+  describe('submitManualCollection', () => {
+    it('submits with optional evidence and caches the server transaction', async () => {
+      const { result, queryClient } = setupHook(true);
+      queryClient.setQueryData(['transactions', 'admin-all'], []);
+      queryClient.setQueryData(['locations'], [{ id: 'loc-1', lastScore: 100 }]);
+      const serverTx = {
+        id: 'tx-manual-1',
+        locationId: 'loc-1',
+        locationName: 'Shop',
+        driverId: 'drv-1',
+        previousScore: 100,
+        currentScore: 150,
+        isSynced: true,
+      };
+      (submitCollectionV2 as jest.Mock).mockResolvedValueOnce({
+        success: true,
+        transaction: serverTx,
+        source: 'server',
+      });
+
+      await act(async () => {
+        await result.current.submitManualCollection.mutateAsync({
+          txId: 'tx-manual-1',
+          locationId: 'loc-1',
+          driverId: 'drv-1',
+          currentScore: 150,
+          expenses: 0,
+          tip: 0,
+          startupDebtDeduction: 0,
+          isOwnerRetaining: false,
+          ownerRetention: null,
+          coinExchange: 0,
+          gps: null,
+          photoUrl: null,
+          aiScore: null,
+          anomalyFlag: false,
+          notes: '[admin_manual_entry]',
+          expenseType: null,
+          expenseCategory: null,
+          reportedStatus: 'active',
+        });
+      });
+
+      expect(submitCollectionV2).toHaveBeenCalledWith(
+        expect.objectContaining({ photoUrl: null, gps: null }),
+        { requireEvidencePhoto: false },
+      );
+      expect(queryClient.getQueryData(['transactions', 'admin-all'])).toEqual([
+        expect.objectContaining({ id: 'tx-manual-1', isSynced: true }),
+      ]);
+      expect(queryClient.getQueryData(['locations'])).toEqual([
+        expect.objectContaining({ id: 'loc-1', lastScore: 150 }),
+      ]);
+    });
+
+    it('throws when offline', async () => {
+      const { result } = setupHook(false);
+
+      await act(async () => {
+        const p = result.current.submitManualCollection.mutateAsync({ txId: 'tx-1' } as any);
+        await expect(p).rejects.toThrow(/online|联网/i);
+      });
+    });
+  });
+
   // ── createSettlement ───────────────────────────────────────────────────
 
   describe('createSettlement', () => {
@@ -629,7 +697,7 @@ describe('useSupabaseMutations', () => {
         'registerLocation', 'deleteLocations', 'deleteDrivers',
         'updateTransaction', 'submitTransaction', 'createSettlement',
         'reviewSettlement', 'approveExpenseRequest', 'reviewAnomalyTransaction',
-        'approveResetRequest', 'approvePayoutRequest', 'logAI',
+        'approveResetRequest', 'approvePayoutRequest', 'logAI', 'submitManualCollection',
       ];
       for (const key of keys) {
         expect(result.current).toHaveProperty(key);

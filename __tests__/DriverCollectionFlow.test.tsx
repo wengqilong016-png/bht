@@ -194,6 +194,7 @@ function renderFlow(options: {
     reviewAnomalyTransaction: noopMutation(),
     approveResetRequest: noopMutation(),
     approvePayoutRequest: noopMutation(),
+    submitManualCollection: noopMutation(),
     logAI: noopMutation(),
   };
 

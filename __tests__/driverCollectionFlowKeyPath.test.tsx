@@ -46,6 +46,7 @@ function renderFlow() {
             createSettlement: noopMutation, reviewSettlement: noopMutation,
             approveExpenseRequest: noopMutation, reviewAnomalyTransaction: noopMutation,
             approveResetRequest: noopMutation, approvePayoutRequest: noopMutation,
+            submitManualCollection: noopMutation,
             logAI: noopMutation,
           }}>
             <ConfirmProvider>

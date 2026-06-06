@@ -131,6 +131,7 @@ describe('App auth flow', () => {
       reviewAnomalyTransaction: { mutateAsync: jest.fn() },
       approveResetRequest: { mutateAsync: jest.fn() },
       approvePayoutRequest: { mutateAsync: jest.fn() },
+      submitManualCollection: { mutateAsync: jest.fn() },
       logAI: { mutateAsync: jest.fn() },
     });
   });

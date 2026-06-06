@@ -2,6 +2,7 @@ import React, { createContext, useContext } from 'react';
 
 import type { SyncMutationHandle } from '../hooks/useSyncStatus';
 import type { Location, Driver, Transaction, DailySettlement, AILog } from '../types';
+import type { CollectionSubmissionInput } from '../services/collectionSubmissionService';
 import type { UseMutationResult } from '@tanstack/react-query';
 
 interface MutationContextValue {
@@ -13,6 +14,7 @@ interface MutationContextValue {
   deleteDrivers: UseMutationResult<unknown, unknown, string[], unknown>;
   updateTransaction: UseMutationResult<unknown, unknown, { txId: string; updates: Partial<Transaction> }, unknown>;
   submitTransaction: UseMutationResult<unknown, unknown, Transaction, unknown>;
+  submitManualCollection: UseMutationResult<Transaction, unknown, CollectionSubmissionInput, unknown>;
   createSettlement: UseMutationResult<unknown, unknown, DailySettlement, unknown>;
   reviewSettlement: UseMutationResult<unknown, unknown, { settlementId: string; status: 'confirmed' | 'rejected'; note?: string }, unknown>;
   approveExpenseRequest: UseMutationResult<unknown, unknown, { txId: string; approve: boolean }, unknown>;

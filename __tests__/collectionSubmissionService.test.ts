@@ -181,6 +181,25 @@ describe('submitCollectionV2', () => {
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
+  it('allows admin manual submission without photo when evidence is explicitly optional', async () => {
+    mockRpc.mockResolvedValue({
+      data: { ...serverRow, photoUrl: null, gps: null, notes: '[admin_manual_entry]' },
+      error: null,
+    });
+
+    const result = await submitCollectionV2(
+      { ...baseInput, photoUrl: null, gps: null, notes: '[admin_manual_entry]' },
+      { requireEvidencePhoto: false },
+    );
+
+    expect(result.success).toBe(true);
+    expect(mockUpload).not.toHaveBeenCalled();
+    expect(mockRpc).toHaveBeenCalledTimes(1);
+    const [, rpcParams] = mockRpc.mock.calls[0] as [string, Record<string, unknown>];
+    expect(rpcParams['p_photo_url']).toBeNull();
+    expect(rpcParams['p_gps']).toBeNull();
+  });
+
   it('returns failure without RPC when required evidence upload fails', async () => {
     mockUpload.mockResolvedValue({ error: { message: 'Storage quota exceeded' } });
 

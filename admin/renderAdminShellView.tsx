@@ -1,15 +1,12 @@
 import React, { lazy } from 'react';
 
-import { useMutations } from '../contexts/MutationContext';
-
 import { mapAdminViewToDashboardTab } from './adminShellConfig';
 import { isDashboardBackedAdminView } from './adminShellViewState';
 
 import type { AdminView } from './adminShellConfig';
-import type { Location } from '../types';
 
 const Dashboard = lazy(() => import('../components/dashboard/DashboardPage'));
-const DriverCollectionFlow = lazy(() => import('../driver/pages/DriverCollectionFlow'));
+const ManualCollectionEntryPage = lazy(() => import('./ManualCollectionEntryPage'));
 const TransactionHistory = lazy(() => import('../components/TransactionHistory'));
 const DebtManager = lazy(() => import('../components/DebtManager'));
 const DriverManagement = lazy(() => import('../components/driver-management'));
@@ -26,8 +23,6 @@ const AdminShellViewRenderer: React.FC<AdminShellViewRendererProps> = ({
   view,
   onSetView,
 }) => {
-  const { registerLocation } = useMutations();
-
   if (isDashboardBackedAdminView(view)) {
     return (
       <Dashboard
@@ -42,17 +37,7 @@ const AdminShellViewRenderer: React.FC<AdminShellViewRendererProps> = ({
     case 'team':
       return <DriverManagement />;
     case 'collect':
-      return (
-        <DriverCollectionFlow
-          registrationDoneLabel="返回管理录入"
-          onRegisterMachine={async (location) => {
-            // Keep assignedDriverId set by MachineRegistrationForm — admin
-            // is intentionally registering FOR a specific driver.
-            const newLocation: Location = { ...location, isSynced: false };
-            await registerLocation.mutateAsync(newLocation);
-          }}
-        />
-      );
+      return <ManualCollectionEntryPage />;
     case 'history':
       return <TransactionHistory />;
     case 'debt':

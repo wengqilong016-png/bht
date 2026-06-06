@@ -90,6 +90,11 @@ export type CollectionSubmissionResult =
 
 export interface CollectionSubmissionRequestOptions {
   signal?: AbortSignal;
+  /**
+   * Driver submissions must keep evidence photos mandatory. Admin-only manual
+   * entry can set this false to submit an audited row without photo/GPS.
+   */
+  requireEvidencePhoto?: boolean;
 }
 
 export function isFailure(
@@ -130,28 +135,33 @@ export async function submitCollectionV2(
     return { success: false, error: 'Supabase not configured', kind: 'config' };
   }
 
-  if (!input.photoUrl?.trim()) {
+  const requireEvidencePhoto = options.requireEvidencePhoto ?? true;
+  const hasEvidencePhoto = !!input.photoUrl?.trim();
+
+  if (requireEvidencePhoto && !hasEvidencePhoto) {
     return { success: false, error: MISSING_COLLECTION_PHOTO_ERROR, kind: 'evidence' };
   }
 
-  if (!isDataImageUrl(input.photoUrl) && !isValidHttpUrl(input.photoUrl)) {
+  if (hasEvidencePhoto && !isDataImageUrl(input.photoUrl) && !isValidHttpUrl(input.photoUrl)) {
     return { success: false, error: INVALID_COLLECTION_PHOTO_ERROR, kind: 'evidence' };
   }
 
-  let persistedPhotoUrl: string | null;
+  let persistedPhotoUrl: string | null = null;
   try {
-    persistedPhotoUrl = await persistEvidencePhotoUrl(input.photoUrl, {
-      category: 'collection',
-      entityId: input.txId,
-      driverId: input.driverId,
-      required: true,
-    });
+    if (hasEvidencePhoto) {
+      persistedPhotoUrl = await persistEvidencePhotoUrl(input.photoUrl, {
+        category: 'collection',
+        entityId: input.txId,
+        driverId: input.driverId,
+        required: requireEvidencePhoto,
+      });
+    }
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e);
     return { success: false, error: `${FAILED_COLLECTION_PHOTO_PERSISTENCE_ERROR}: ${detail}`, kind: 'evidence' };
   }
 
-  if (!isValidHttpUrl(persistedPhotoUrl)) {
+  if (requireEvidencePhoto && !isValidHttpUrl(persistedPhotoUrl)) {
     return { success: false, error: FAILED_COLLECTION_PHOTO_PERSISTENCE_ERROR, kind: 'evidence' };
   }
 
@@ -238,7 +248,7 @@ export async function submitCollectionV2(
     gps:                   (isValidGps(row['gps']) ? (row['gps'] as { lat: number; lng: number }) : undefined) ?? input.gps ?? { lat: 0, lng: 0 },
     photoUrl:              isValidHttpUrl(row['photoUrl'] != null ? String(row['photoUrl']) : null)
                              ? String(row['photoUrl'])
-                             : persistedPhotoUrl,
+                             : persistedPhotoUrl ?? undefined,
     dataUsageKB:           safeNumber(row['dataUsageKB'], 120),
     aiScore:               row['aiScore'] != null ? safeNumber(row['aiScore']) : undefined,
     isAnomaly:             Boolean(row['isAnomaly']),
