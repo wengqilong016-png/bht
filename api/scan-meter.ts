@@ -10,6 +10,8 @@ const stripJsonFence = (value: string) =>
     .replace(/\s*```$/, '')
     .trim();
 
+export const config = { runtime: 'edge' };
+
 const jsonError = (status: number, code: string, error: string) =>
   Response.json(
     { error, code },
@@ -21,8 +23,7 @@ const jsonError = (status: number, code: string, error: string) =>
     },
   );
 
-export default {
-  async fetch(request: Request) {
+export default async function handler(request: Request) {
     if (request.method !== 'POST') {
       return jsonError(405, SCAN_METER_ERROR_CODES.METHOD_NOT_ALLOWED, 'Method Not Allowed');
     }
@@ -108,5 +109,4 @@ export default {
       const message = error instanceof Error ? error.message : 'Unknown AI error';
       return jsonError(502, SCAN_METER_ERROR_CODES.AI_UPSTREAM_ERROR, message);
     }
-  },
-};
+}

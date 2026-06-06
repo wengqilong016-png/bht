@@ -59,7 +59,8 @@
   ],
   "functions": {
     "api/*.ts": {
-      "regions": ["iad1"]
+      "regions": ["iad1"],
+      "runtime": "edge"
     }
   },
   "rewrites": [

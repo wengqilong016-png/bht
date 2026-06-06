@@ -125,8 +125,9 @@ ${(snapshot.blockedMachines?.length ?? 0) > 0 ? `**无法删除的机器**\n${sn
 营业额、收款次数、异常率等关键指标`;
 
 
-export default {
-  async fetch(request: Request) {
+export const config = { runtime: 'edge' };
+
+export default async function handler(request: Request) {
     if (request.method !== 'POST') {
       return new Response('Method Not Allowed', { status: 405 });
     }
@@ -193,5 +194,4 @@ export default {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-  },
-};
+}

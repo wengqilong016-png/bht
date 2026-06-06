@@ -2,8 +2,9 @@ import { createClient } from '@supabase/supabase-js';
 
 import { readEnv } from './_lib/readEnv.js';
 
-export default {
-  async fetch(request: Request) {
+export const config = { runtime: 'edge' };
+
+export default async function handler(request: Request) {
     if (request.method !== 'GET') {
       return new Response('Method Not Allowed', { status: 405 });
     }
@@ -43,5 +44,4 @@ export default {
       },
       { headers: { 'Cache-Control': 'private, max-age=300' } },
     );
-  },
-};
+}

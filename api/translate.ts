@@ -7,8 +7,9 @@ const LANG_NAMES: Record<string, string> = {
   en: 'English',
 };
 
-export default {
-  async fetch(request: Request) {
+export const config = { runtime: 'edge' };
+
+export default async function handler(request: Request) {
     if (request.method !== 'POST') {
       return new Response('Method Not Allowed', { status: 405 });
     }
@@ -69,5 +70,4 @@ export default {
       const message = error instanceof Error ? error.message : 'Unknown translation error';
       return Response.json({ error: message }, { status: 502 });
     }
-  },
-};
+}
