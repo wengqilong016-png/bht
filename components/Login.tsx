@@ -1,4 +1,4 @@
-import { User, Lock, ArrowRight, AlertCircle, Loader2, Languages, Crown, Settings, CheckCircle2, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { User, Lock, ArrowRight, AlertCircle, Loader2, Languages, Crown, Settings, CheckCircle2, Wifi, WifiOff, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
 import { fetchCurrentUserProfile, signInWithEmailPassword, signOutCurrentUser } from '../services/authService';
@@ -15,9 +15,16 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
   const [email, setEmail] = useState(() => {
-    try { return sessionStorage.getItem('bht-login-email') ?? ''; } catch { return ''; }
+    try {
+      const remembered = localStorage.getItem('bht-remember-me') === 'true';
+      return (remembered ? localStorage.getItem('bht-login-email') : sessionStorage.getItem('bht-login-email')) ?? '';
+    } catch { return ''; }
   });
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => {
+    try { return localStorage.getItem('bht-remember-me') === 'true'; } catch { return false; }
+  });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [dbStatus, setDbStatus] = useState<'checking' | 'online' | 'offline'>('checking');
@@ -118,7 +125,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
     }
     setSettingsSaved(true);
     // Preserve email so the user doesn't have to re-type it after reload
-    try { if (email.trim()) sessionStorage.setItem('bht-login-email', email.trim()); } catch {}
+    try {
+      const saveEmail = email.trim();
+      if (saveEmail) {
+        sessionStorage.setItem('bht-login-email', saveEmail);
+        if (rememberMe) localStorage.setItem('bht-login-email', saveEmail);
+      }
+    } catch {}
     // Brief delay so the "Saved" confirmation is visible before the page reloads
     setTimeout(() => window.location.reload(), 800);
   };
@@ -140,6 +153,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
       }
 
       const resolvedEmail = email.includes('@') ? email.trim() : `${email.trim()}@bht.com`;
+
+      // Persist email before login attempt
+      try {
+        const saveEmail = resolvedEmail;
+        sessionStorage.setItem('bht-login-email', saveEmail);
+        if (rememberMe) localStorage.setItem('bht-login-email', saveEmail);
+      } catch {}
 
       const loginResult = await signInWithEmailPassword(resolvedEmail, password);
       if (!loginResult.success) {
@@ -218,7 +238,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
               <label htmlFor="password-input" className="text-caption font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-1">
                  <Lock size={12} className="text-amber-500" /> {t.password}
               </label>
-              <input id="password-input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} className={`w-full bg-[#f0f2f5] border-none rounded-2xl py-3 px-4 font-black text-slate-700 shadow-silicone-pressed outline-none transition-all placeholder:text-slate-400 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`} placeholder="••••••••" required />
+              <div className="relative">
+                <input id="password-input" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} className={`w-full bg-[#f0f2f5] border-none rounded-2xl py-3 px-4 pr-11 font-black text-slate-700 shadow-silicone-pressed outline-none transition-all placeholder:text-slate-400 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`} placeholder="••••••••" required />
+                <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1" aria-label={showPassword ? 'Hide password' : 'Show password'} tabIndex={-1}>
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             {error && (
@@ -236,6 +261,21 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
                  )}
               </div>
             )}
+
+            <label className="flex items-center gap-2.5 cursor-pointer select-none px-1">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => {
+                  setRememberMe(e.target.checked);
+                  try { localStorage.setItem('bht-remember-me', String(e.target.checked)); } catch {}
+                }}
+                className="w-4 h-4 rounded-md border-slate-300 text-amber-500 focus:ring-amber-400 accent-amber-500"
+              />
+              <span className="text-xs font-bold text-slate-500">
+                {lang === 'zh' ? '保持登录状态' : 'Keep me signed in'}
+              </span>
+            </label>
 
             <button type="submit" aria-label={isLoading ? t.logging_in : t.login} aria-disabled={isLoading} disabled={isLoading || envVarsMissing} className="w-full bg-silicone-gradient text-amber-600 font-black py-3 rounded-2xl shadow-silicone hover:shadow-silicone-sm active:shadow-silicone-pressed border border-white/80 flex items-center justify-center gap-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
               {isLoading ? (
