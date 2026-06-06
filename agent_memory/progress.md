@@ -1,27 +1,33 @@
 # 当前任务进度
 
 ## 当前目标
-实现管理端司机工作信息快速补录
+维护与改进：修复生产缺陷 + 登录体验优化
 
 ## 状态
 completed
 
-## 已完成步骤
-- [x] 读取 `AGENTS.md`、`agent_memory/context.md`、`agent_memory/progress.md`、`agent_memory/bugs.md`
-- [x] 确认 `submit_collection_v2` RPC 已支持 admin 代任意司机提交，且 `p_gps`、`p_photo_url` 可为 `NULL`
-- [x] 保留司机端证据要求：`submitCollectionV2` 默认仍强制照片，仅显式 `requireEvidencePhoto: false` 时允许无照片
-- [x] 新增 `submitManualCollection` mutation：在线提交、复用同一 RPC、跳过照片/GPS、刷新交易/机器/结算缓存
-- [x] 将管理端“采集录入”从复用司机拍照流程改为专用 `ManualCollectionEntryPage`
-- [x] 表单支持司机、机器、当前读数、支出、零钱兑换、小费/现场扣款、商户债务扣回、店主留存、机器状态和备注
-- [x] 补录备注自动写入 `[admin_manual_entry]`、管理员姓名/ID、无照片/GPS验证说明，便于审计
-- [x] 补充服务层和 mutation hook 单测
+## 已完成步骤（2026-06-06）
+### 代码整理
+- [x] 16 个未提交文件（快速补录功能 + 迁移 + dula 报告）commit → push → Vercel 部署
+- [x] 确认 Supabase 迁移 `20260604000000_enforce_money_column_precision.sql` 已在生产环境执行
+- [x] `supabase migration list` 远程确认该迁移已记录
+
+### API 路由修复
+- [x] 根因：4 个 API 文件（`api/tz-pulse.ts`, `api/scan-meter.ts`, `api/translate.ts`, `api/admin-ai.ts`）使用 Cloudflare Workers 格式 `export default { async fetch }`，Vercel 不识别
+- [x] 转为 Vercel Edge Functions 格式：`export default async function handler` + `export const config = { runtime: 'edge' }`
+- [x] `vercel.json` 设 `framework: null` 绕过 Vite preset，使 API 函数被正确检测
+- [x] 验证：4 个端点全部返回预期响应（tz-pulse 200，其余 401 需认证）
+
+### 登录体验
+- [x] 密码可见/隐藏切换按钮（眼睛图标）
+- [x] 「保持登录状态」复选框 — 勾选后邮箱存 localStorage 持久化
 
 ## 下一步
-- 如需要进一步增强审计，可新增数据库字段或独立审计表记录 admin actor；当前版本通过交易 `notes` 标记。
-- 如需保留旧的管理端“完整司机流程/注册机器”入口，可另加二级入口；当前“采集录入”已切换为快速补录。
+- 管理端快速补录的审计字段结构化（目前通过备注标记）
+- 如需进一步增强审计，可新增数据库字段或独立审计表
 
 ## 阻塞项
 - 无
 
 ## 最后更新
-2026-06-02 — 管理端快速补录已实现并通过 typecheck、目标单测、lint、生产构建
+2026-06-06 — API 路由修复、登录体验优化、代码整理提交
