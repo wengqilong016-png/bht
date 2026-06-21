@@ -44,10 +44,13 @@ jobs:
       - name: Resolve build type
         id: resolve_build_type
         run: |
+          # Pushes to main build a debug artifact only — they never cut a
+          # release or touch the update manifest, so installed apps are not
+          # nagged on every commit. Real releases are owned by release.yml,
+          # triggered by pushing a v* tag. A release build here is available
+          # only as a manual fallback via workflow_dispatch.
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             BUILD_TYPE="${{ github.event.inputs.build_type }}"
-          elif [[ "${{ github.ref }}" == refs/tags/* || "${{ github.ref }}" == "refs/heads/main" ]]; then
-            BUILD_TYPE="release"
           else
             BUILD_TYPE="debug"
           fi
@@ -247,7 +250,7 @@ jobs:
           fi
 
       - name: Publish rolling APK release
-        if: github.ref == 'refs/heads/main' && steps.resolve_build_type.outputs.build_type == 'release'
+        if: steps.resolve_build_type.outputs.build_type == 'release'
         run: |
           TAG="main-latest"
           VERSION="${{ steps.version.outputs.version }}"
@@ -279,7 +282,7 @@ jobs:
 
       - name: Update remote update manifest
         id: update_manifest
-        if: github.ref == 'refs/heads/main' && steps.resolve_build_type.outputs.build_type == 'release'
+        if: steps.resolve_build_type.outputs.build_type == 'release'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -314,18 +317,18 @@ jobs:
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Install Vercel CLI
-        if: github.ref == 'refs/heads/main' && steps.resolve_build_type.outputs.build_type == 'release' && steps.update_manifest.outputs.changed == 'true'
+        if: steps.resolve_build_type.outputs.build_type == 'release' && steps.update_manifest.outputs.changed == 'true'
         run: npm install -g vercel@latest
 
       - name: Pull Vercel environment
-        if: github.ref == 'refs/heads/main' && steps.resolve_build_type.outputs.build_type == 'release' && steps.update_manifest.outputs.changed == 'true'
+        if: steps.resolve_build_type.outputs.build_type == 'release' && steps.update_manifest.outputs.changed == 'true'
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Deploy refreshed update manifest to Vercel
-        if: github.ref == 'refs/heads/main' && steps.resolve_build_type.outputs.build_type == 'release' && steps.update_manifest.outputs.changed == 'true'
+        if: steps.resolve_build_type.outputs.build_type == 'release' && steps.update_manifest.outputs.changed == 'true'
         run: |
           vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
           vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}

@@ -42,6 +42,7 @@ describe('AppUpdateModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     sessionStorage.clear();
+    localStorage.clear();
     (globalThis as GlobalWithBuildInfo).__APP_VERSION__ = '1.0.8';
     (globalThis as GlobalWithBuildInfo).__APP_VERSION_CODE__ = 41;
     (globalThis as GlobalWithBuildInfo).__APP_GIT_SHA__ = 'abc123456789';
@@ -60,16 +61,13 @@ describe('AppUpdateModal', () => {
     mockGetPlatform.mockReturnValue('android');
   });
 
-  it('shows clear installed and available Android build details', () => {
+  it('shows the new and current version in a compact prompt', () => {
     render(<AppUpdateModal lang="zh" />);
 
     expect(screen.getByText('发现新版本')).not.toBeNull();
-    expect(screen.getByText('当前构建')).not.toBeNull();
-    expect(screen.getByText('线上构建')).not.toBeNull();
-    expect(screen.getByText('#41 · abc1234')).not.toBeNull();
-    expect(screen.getByText('#42 · def9876')).not.toBeNull();
-    expect(screen.getByText(/来源：bahatiwin\.space/)).not.toBeNull();
-    expect(screen.getByText('安装完成后重新打开 App；不再提示更新就是成功。')).not.toBeNull();
+    expect(screen.getByText('v1.0.9')).not.toBeNull();
+    expect(screen.getByText('当前 v1.0.8')).not.toBeNull();
+    expect(screen.getByText('立即下载安装')).not.toBeNull();
   });
 
   it('starts Android APK installation and confirms handoff', async () => {
@@ -118,7 +116,7 @@ describe('AppUpdateModal', () => {
     fireEvent.click(screen.getByText('稍后提醒'));
 
     expect(screen.queryByText('发现新版本')).toBeNull();
-    expect(sessionStorage.getItem('update-dismissed-version')).toBe('1.0.9:42:def987654321');
+    expect(localStorage.getItem('update-dismissed-version')).toBe('1.0.9:42:def987654321');
   });
 
   it('opens the APK URL when using the browser fallback', () => {

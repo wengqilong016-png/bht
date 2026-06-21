@@ -208,7 +208,7 @@ jobs:
               tag: '${TAG}',
               releasedAt: '${RELEASED_AT}',
               apkUrl: '${APK_URL}',
-              releaseNotes: 'v${VERSION} — 正式发布'
+              releaseNotes: 'v${VERSION}'
             }, null, 2) + '\n');
           "
           node scripts/sync-pwa-cache-version.cjs
