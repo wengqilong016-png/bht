@@ -36,8 +36,8 @@ const ShellMobileNav: React.FC<ShellMobileNavProps> = ({
   const gridCols = hasOverflow ? items.length + 1 : items.length;
 
   const wrapperClass = position === 'bottom'
-    ? 'fixed inset-x-0 bottom-0 z-40 min-h-[var(--mobile-nav-height,4.75rem)] border-t border-slate-200 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden'
-    : 'md:hidden border-t border-slate-200 px-2 py-2';
+    ? 'fixed inset-x-0 bottom-0 z-40 min-h-[var(--mobile-nav-height,4.75rem)] border-t border-[#e0d8cc] bg-[#faf7f2]/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden'
+    : 'md:hidden border-t border-[#e0d8cc] px-2 py-2';
 
   return (
     <div className={wrapperClass}>
@@ -50,13 +50,13 @@ const ShellMobileNav: React.FC<ShellMobileNavProps> = ({
               key={item.id}
               onClick={() => onSelectView(item.id)}
               className={`relative flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 rounded-btn px-1.5 py-1.5 text-caption font-black transition-all ${
-                active ? 'bg-slate-900 text-white' : 'text-slate-400'
+                active ? 'bg-[#171310] text-white' : 'text-[#a09080]'
               }`}
             >
               {item.icon}
               <span className="max-w-full truncate text-[10px] leading-3">{item.label}</span>
               {showStat && (
-                <span className={`text-[10px] font-bold leading-3 normal-case ${active ? 'text-slate-300' : 'text-slate-500'}`}>
+                <span className={`text-[10px] font-bold leading-3 normal-case ${active ? 'text-[#c0b0a0]' : 'text-[#8c7e6d]'}`}>
                   {item.stat!.value}
                 </span>
               )}
@@ -74,7 +74,7 @@ const ShellMobileNav: React.FC<ShellMobileNavProps> = ({
             <button
               onClick={() => setShowOverflow(!showOverflow)}
               className={`flex min-h-[3.25rem] w-full flex-col items-center justify-center gap-0.5 rounded-btn px-1.5 py-1.5 text-caption font-black transition-all ${
-                isActiveInOverflow ? 'bg-slate-900 text-white' : showOverflow ? 'bg-slate-200 text-slate-700' : 'text-slate-400'
+                isActiveInOverflow ? 'bg-[#171310] text-white' : showOverflow ? 'bg-[#e8e0d8] text-[#3d3028]' : 'text-[#a09080]'
               }`}
             >
               {showOverflow ? <X size={16} /> : <MoreHorizontal size={16} />}
@@ -82,7 +82,7 @@ const ShellMobileNav: React.FC<ShellMobileNavProps> = ({
             </button>
 
             {showOverflow && (
-              <div className={`absolute z-50 ${position === 'bottom' ? 'bottom-full mb-2' : 'top-full mt-2'} right-0 min-w-[160px] rounded-card border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10`}>
+              <div className={`absolute z-50 ${position === 'bottom' ? 'bottom-full mb-2' : 'top-full mt-2'} right-0 min-w-[160px] rounded-card border border-[#e0d8cc] bg-white p-2 shadow-xl shadow-black/10`}>
                 {overflowItems.map((item) => {
                   const active = activeView === item.id;
                   return (
@@ -94,8 +94,8 @@ const ShellMobileNav: React.FC<ShellMobileNavProps> = ({
                       }}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-btn text-left transition-colors ${
                         active
-                          ? 'bg-slate-900 text-white'
-                          : 'text-slate-600 hover:bg-slate-100'
+                          ? 'bg-[#171310] text-white'
+                          : 'text-[#7a6e5e] hover:bg-[#f0ebe4]'
                       }`}
                     >
                       <span className="flex-shrink-0">{item.icon}</span>

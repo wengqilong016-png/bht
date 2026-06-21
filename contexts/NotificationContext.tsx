@@ -357,7 +357,7 @@ export function NotificationProvider({ children, currentUser }: NotificationProv
       >
         {/* Notification panel */}
         {panelOpen && (
-          <div className="w-[min(22rem,calc(100vw-2rem))] max-h-[min(24rem,55vh)] bg-slate-950/95 border border-cyan-400/15 rounded-2xl shadow-2xl shadow-slate-950/40 backdrop-blur flex flex-col overflow-hidden">
+          <div className="w-[min(22rem,calc(100vw-2rem))] max-h-[min(24rem,55vh)] bg-[#0f0d0a]/95 border border-cyan-400/15 rounded-2xl shadow-2xl shadow-[#0f0d0a]/40 backdrop-blur flex flex-col overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
               <span className="text-sm font-bold text-white">通知中心</span>
@@ -365,7 +365,7 @@ export function NotificationProvider({ children, currentUser }: NotificationProv
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllRead}
-                    className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors"
+                    className="flex items-center gap-1 text-xs text-[#a09080] hover:text-white transition-colors"
                     title="全部标为已读"
                   >
                     <CheckCheck size={13} />
@@ -374,14 +374,14 @@ export function NotificationProvider({ children, currentUser }: NotificationProv
                 )}
                 <button
                   onClick={clearAll}
-                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-red-400 transition-colors"
+                  className="flex items-center gap-1 text-xs text-[#a09080] hover:text-red-400 transition-colors"
                   title="清空通知"
                 >
                   <Trash2 size={13} />
                 </button>
                 <button
                   onClick={() => setPanelOpen(false)}
-                  className="text-slate-400 hover:text-white transition-colors"
+                  className="text-[#a09080] hover:text-white transition-colors"
                 >
                   <X size={15} />
                 </button>
@@ -391,7 +391,7 @@ export function NotificationProvider({ children, currentUser }: NotificationProv
             {/* List */}
             <div className="overflow-y-auto flex-1">
               {notifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-slate-500 text-sm">
+                <div className="flex flex-col items-center justify-center py-10 text-[#8c7e6d] text-sm">
                   <Bell size={28} className="mb-2 opacity-30" />
                   暂无通知
                 </div>
@@ -404,8 +404,8 @@ export function NotificationProvider({ children, currentUser }: NotificationProv
                     <div className="mt-0.5">{levelIcon(n.level)}</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-white truncate">{n.title}</p>
-                      <p className="text-xs text-slate-400 mt-0.5 leading-snug">{n.message}</p>
-                      <p className="text-[10px] text-slate-600 mt-1">{formatTime(n.createdAt)}</p>
+                      <p className="text-xs text-[#a09080] mt-0.5 leading-snug">{n.message}</p>
+                      <p className="text-[10px] text-[#7a6e5e] mt-1">{formatTime(n.createdAt)}</p>
                     </div>
                     {!n.isRead && (
                       <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0 mt-1" />
@@ -424,12 +424,12 @@ export function NotificationProvider({ children, currentUser }: NotificationProv
             setPanelOpen(opening);
             if (opening && unreadCount > 0) markAllRead();
           }}
-          className="w-11 h-11 rounded-2xl bg-cyan-500 border border-cyan-300/40 shadow-xl shadow-cyan-900/20 flex items-center justify-center text-slate-950 hover:bg-cyan-400 transition-colors relative md:w-12 md:h-12"
+          className="w-11 h-11 rounded-2xl bg-cyan-500 border border-cyan-300/40 shadow-xl shadow-cyan-900/20 flex items-center justify-center text-[#0f0d0a] hover:bg-cyan-400 transition-colors relative md:w-12 md:h-12"
           aria-label="通知"
         >
           <Bell size={20} />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center px-1 leading-none">
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 leading-none">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}

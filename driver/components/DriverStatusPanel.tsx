@@ -52,9 +52,9 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
 
   if (!driver) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+      <div className="flex flex-col items-center justify-center py-20 text-[#a09080]">
         <User size={40} className="mb-4 opacity-30" />
-        <p className="text-xs font-black uppercase tracking-widest">
+        <p className="text-xs font-bold uppercase tracking-widest">
           {t.driverProfileNotFound}
         </p>
       </div>
@@ -156,16 +156,16 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
 
   return (
     <div className="space-y-4 animate-in fade-in">
-      <div className="bg-white rounded-card border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-card border border-[#e0d8cc] shadow-sm overflow-hidden">
         <div className="bg-cover bg-center p-5 flex items-center gap-4" style={cardBackgroundStyle}>
-          <div className="w-16 h-16 rounded-subcard bg-slate-800 text-white flex items-center justify-center font-black text-2xl shadow-md flex-shrink-0">
+          <div className="w-16 h-16 rounded-subcard bg-[#2a2420] text-white flex items-center justify-center font-black text-2xl shadow-md flex-shrink-0">
             {driver.name.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className={`font-black text-base uppercase tracking-wide truncate ${driver.backgroundPhotoUrl ? 'text-white' : 'text-slate-900'}`}>{driver.name}</h2>
-            <p className={`text-caption font-bold uppercase truncate ${driver.backgroundPhotoUrl ? 'text-slate-200' : 'text-slate-400'}`}>{driver.username}</p>
+            <h2 className={`font-black text-base uppercase tracking-wide truncate ${driver.backgroundPhotoUrl ? 'text-white' : 'text-[#171310]'}`}>{driver.name}</h2>
+            <p className={`text-caption font-bold uppercase truncate ${driver.backgroundPhotoUrl ? 'text-[#e0d8cc]' : 'text-[#a09080]'}`}>{driver.username}</p>
             {driver.phone && (
-              <p className={`text-caption font-bold mt-0.5 ${driver.backgroundPhotoUrl ? 'text-slate-100' : 'text-slate-400'}`}>{driver.phone}</p>
+              <p className={`text-caption font-bold mt-0.5 ${driver.backgroundPhotoUrl ? 'text-[#ede6dc]' : 'text-[#a09080]'}`}>{driver.phone}</p>
             )}
           </div>
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-caption font-black uppercase flex-shrink-0 ${badge.color}`}>
@@ -173,20 +173,20 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
             {badge.label}
           </div>
         </div>
-        <div className="border-t border-slate-50 px-5 py-3 flex items-center gap-2 text-slate-400">
+        <div className="border-t border-[#f3efe8] px-5 py-3 flex items-center gap-2 text-[#a09080]">
           <Clock size={12} />
           <span className="text-caption font-bold uppercase">{t.lastActive}: {lastActiveDisplay}</span>
         </div>
       </div>
 
-      <div className="bg-white rounded-card border border-slate-200 shadow-sm p-5">
+      <div className="bg-white rounded-card border border-[#e0d8cc] shadow-sm p-5">
         <div className="flex items-center gap-2 mb-3">
           <Phone size={12} className="text-emerald-500" />
-          <p className="text-caption font-black text-slate-400 uppercase tracking-widest">{t.driverProfileDetails}</p>
+          <p className="text-caption font-black text-[#a09080] uppercase tracking-widest">{t.driverProfileDetails}</p>
         </div>
         <form onSubmit={handleSaveProfile} className="space-y-4">
           <div>
-            <label className="mb-1.5 flex items-center gap-2 text-caption font-black uppercase tracking-widest text-slate-500">
+            <label className="mb-1.5 flex items-center gap-2 text-caption font-bold uppercase tracking-widest text-[#8c7e6d]">
               <Phone size={10} className="text-emerald-500" />
               {t.currentPhoneLabel}
             </label>
@@ -199,20 +199,20 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
               }}
               placeholder="+255 6xx xxx xxxx"
               disabled={!isOnline}
-              className="w-full rounded-btn border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition placeholder:text-slate-400 disabled:opacity-60 focus:border-emerald-300"
+              className="w-full rounded-btn border border-[#e0d8cc] bg-[#f3efe8] px-4 py-3 text-sm font-bold text-[#3d3028] outline-none transition placeholder:text-[#a09080] disabled:opacity-60 focus:border-emerald-300"
             />
           </div>
 
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-caption font-black uppercase tracking-widest text-slate-500">
+            <label className="flex items-center gap-2 text-caption font-bold uppercase tracking-widest text-[#8c7e6d]">
               <Camera size={10} className="text-amber-500" />
               {t.driverBackgroundPhoto}
             </label>
-            <div className="overflow-hidden rounded-subcard border border-slate-200 bg-slate-50">
+            <div className="overflow-hidden rounded-subcard border border-[#e0d8cc] bg-[#f3efe8]">
               {backgroundPhotoDraft ? (
                 <img src={backgroundPhotoDraft} alt={t.driverBackgroundPhoto} className="h-40 w-full object-cover" />
               ) : (
-                <div className="flex h-40 flex-col items-center justify-center gap-2 text-slate-400">
+                <div className="flex h-40 flex-col items-center justify-center gap-2 text-[#a09080]">
                   <Camera size={20} />
                   <p className="text-caption font-bold">{t.driverBackgroundPhotoPlaceholder}</p>
                 </div>
@@ -223,7 +223,7 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
               {backgroundPhotoDraft ? t.replaceBackgroundPhoto : t.uploadBackgroundPhoto}
               <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} disabled={!isOnline} />
             </label>
-            <p className="text-caption font-bold text-slate-400">{t.driverProfileDetailsNote}</p>
+            <p className="text-caption font-bold text-[#a09080]">{t.driverProfileDetailsNote}</p>
           </div>
 
           {!profileForm.isIdle && (
@@ -237,7 +237,7 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
             aria-label={t.saveDriverProfile}
             type="submit"
             disabled={profileForm.isLoading || !isOnline}
-            className="inline-flex items-center justify-center gap-2 rounded-btn bg-emerald-600 px-4 py-2 text-caption font-black uppercase text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="inline-flex items-center justify-center gap-2 rounded-btn bg-emerald-600 px-4 py-2 text-caption font-black uppercase text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-[#c8beb0]"
           >
             {profileForm.isLoading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
             {t.saveDriverProfile}
@@ -246,11 +246,11 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-card border border-slate-200 shadow-sm p-4">
-          <p className="text-caption font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+        <div className="bg-white rounded-card border border-[#e0d8cc] shadow-sm p-4">
+          <p className="text-caption font-black text-[#a09080] uppercase tracking-widest mb-2 flex items-center gap-1">
             <Banknote size={11} /> {t.baseSalary}
           </p>
-          <p className="text-base font-black text-slate-900">
+          <p className="text-base font-black text-[#171310]">
             TZS {(driver.baseSalary ?? 300000).toLocaleString()}
           </p>
         </div>
@@ -273,54 +273,54 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
       </div>
 
       {driver.initialDebt > 0 && (
-        <div className="bg-white rounded-card border border-slate-200 shadow-sm p-5">
-          <p className="text-caption font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+        <div className="bg-white rounded-card border border-[#e0d8cc] shadow-sm p-5">
+          <p className="text-caption font-black text-[#a09080] uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <AlertCircle size={12} /> {t.debtStatus}
           </p>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-caption font-bold text-slate-500 uppercase">{t.remainingDebt}</span>
+            <span className="text-caption font-bold text-[#8c7e6d] uppercase">{t.remainingDebt}</span>
             <span className="text-sm font-black text-rose-600">TZS {(driver.remainingDebt ?? 0).toLocaleString()}</span>
           </div>
-          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
+          <div className="w-full h-2 bg-[#ede6dc] rounded-full overflow-hidden mb-2">
             <div
               className="h-full bg-amber-500 rounded-full transition-all"
               style={{ width: `${debtPct}%` }}
             />
           </div>
-          <div className="flex justify-between text-caption font-bold text-slate-400 uppercase">
+          <div className="flex justify-between text-caption font-bold text-[#a09080] uppercase">
             <span>{t.progress}: {debtPct}%</span>
             <span>{t.initialDebt}: TZS {(driver.initialDebt ?? 0).toLocaleString()}</span>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-card border border-slate-200 shadow-sm p-5">
-        <p className="text-caption font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+      <div className="bg-white rounded-card border border-[#e0d8cc] shadow-sm p-5">
+        <p className="text-caption font-black text-[#a09080] uppercase tracking-widest mb-3 flex items-center gap-1.5">
           <TrendingUp size={12} /> {t.totalRevenue}
         </p>
-        <p className="text-xl font-black text-slate-900">TZS {totalRevenue.toLocaleString()}</p>
-        <p className="text-caption font-bold text-slate-400 uppercase mt-1">
+        <p className="text-xl font-black text-[#171310]">TZS {totalRevenue.toLocaleString()}</p>
+        <p className="text-caption font-bold text-[#a09080] uppercase mt-1">
           {recentTx.length} {t.recentCollections}
         </p>
       </div>
 
-      <div className="bg-white rounded-card border border-slate-200 shadow-sm p-5">
-        <p className="text-caption font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+      <div className="bg-white rounded-card border border-[#e0d8cc] shadow-sm p-5">
+        <p className="text-caption font-black text-[#a09080] uppercase tracking-widest mb-3 flex items-center gap-1.5">
           <MapPin size={12} /> {t.assignedMachines} ({assignedMachines.length})
         </p>
         {assignedMachines.length > 0 ? (
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {assignedMachines.map((location) => (
-              <div key={location.id} className="flex items-center gap-3 p-2.5 bg-slate-50 rounded-subcard border border-slate-100">
+              <div key={location.id} className="flex items-center gap-3 p-2.5 bg-[#f3efe8] rounded-subcard border border-[#e8e0d4]">
                 <div className="w-8 h-8 rounded-btn bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
                   <MapPin size={14} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-black text-slate-800 truncate">{location.name || location.machineId}</p>
-                  <p className="text-caption font-bold text-slate-400 truncate">{location.area || '—'}</p>
+                  <p className="text-xs font-bold text-[#2a2420] truncate">{location.name || location.machineId}</p>
+                  <p className="text-caption font-bold text-[#a09080] truncate">{location.area || '—'}</p>
                 </div>
-                <span className={`text-caption font-black uppercase px-2 py-0.5 rounded-tag ${
-                  location.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                <span className={`text-caption font-bold uppercase px-2 py-0.5 rounded-tag ${
+                  location.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#ede6dc] text-[#a09080]'
                 }`}>
                   {location.status === 'active' ? '✓' : '—'}
                 </span>
@@ -328,26 +328,26 @@ const DriverStatusPanel: React.FC<DriverStatusPanelProps> = () => {
             ))}
           </div>
         ) : (
-          <p className="text-xs font-bold text-slate-400">{t.noAssignedMachines}</p>
+          <p className="text-xs font-bold text-[#a09080]">{t.noAssignedMachines}</p>
         )}
       </div>
 
-      <div className="bg-white rounded-card border border-slate-200 shadow-sm p-5">
-        <p className="text-caption font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+      <div className="bg-white rounded-card border border-[#e0d8cc] shadow-sm p-5">
+        <p className="text-caption font-black text-[#a09080] uppercase tracking-widest mb-3 flex items-center gap-1.5">
           <Truck size={12} /> {t.vehicleInfo}
         </p>
         {driver.vehicleInfo?.model || driver.vehicleInfo?.plate ? (
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-              <Truck size={16} className="text-slate-500" />
+            <div className="p-2.5 bg-[#f3efe8] rounded-xl border border-[#e8e0d4]">
+              <Truck size={16} className="text-[#8c7e6d]" />
             </div>
             <div>
-              <p className="text-sm font-black text-slate-800">{driver.vehicleInfo.model || '—'}</p>
-              <p className="text-caption font-bold text-slate-400 uppercase">{driver.vehicleInfo.plate || '—'}</p>
+              <p className="text-sm font-black text-[#2a2420]">{driver.vehicleInfo.model || '—'}</p>
+              <p className="text-caption font-bold text-[#a09080] uppercase">{driver.vehicleInfo.plate || '—'}</p>
             </div>
           </div>
         ) : (
-          <p className="text-xs font-bold text-slate-400">{t.noVehicleInfo}</p>
+          <p className="text-xs font-bold text-[#a09080]">{t.noVehicleInfo}</p>
         )}
       </div>
     </div>

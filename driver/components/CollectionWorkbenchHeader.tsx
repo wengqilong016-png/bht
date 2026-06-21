@@ -30,11 +30,11 @@ const CollectionWorkbenchHeader: React.FC<CollectionWorkbenchHeaderProps> = ({
         >
           <ArrowRight size={18} className="rotate-180" />
         </button>
-        <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-3 py-2">
+        <div className="min-w-0 flex-1 rounded-2xl border border-[#e0d8cc] bg-white px-3 py-2">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-caption font-black uppercase tracking-[0.18em] text-slate-400">{t.currentTask}</p>
-              <h2 className="truncate text-sm font-black text-slate-900 leading-tight">{selectedLocation.name}</h2>
+              <p className="text-caption font-black uppercase tracking-[0.18em] text-[#a09080]">{t.currentTask}</p>
+              <h2 className="truncate text-sm font-black text-[#171310] leading-tight">{selectedLocation.name}</h2>
               <p className="text-caption font-black text-amber-500 uppercase tracking-[0.15em]">
                 {selectedLocation.machineId} • {selectedLocation.area || '—'}
               </p>
@@ -47,7 +47,7 @@ const CollectionWorkbenchHeader: React.FC<CollectionWorkbenchHeaderProps> = ({
                   {t.switchMachine}
                 </button>
               )}
-              <span className="rounded-full bg-slate-100 px-2 py-1 text-caption font-black uppercase text-slate-500">
+              <span className="rounded-full bg-[#ede6dc] px-2 py-1 text-caption font-bold uppercase text-[#8c7e6d]">
                 {(selectedLocation.lastScore ?? 0).toLocaleString()} {lang === 'zh' ? '上次' : 'last'}
               </span>
             </div>

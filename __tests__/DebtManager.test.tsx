@@ -170,7 +170,7 @@ describe('DebtManager', () => {
     fireEvent.change(input, { target: { value: '50000' } });
 
     // Submit — use CSS class selector to avoid multiple icon-only buttons
-    const submitBtn = document.querySelector('.bg-slate-900 button.bg-amber-600') as HTMLButtonElement;
+    const submitBtn = document.querySelector('.bg-\\[\\#171310\\] button.bg-amber-600') as HTMLButtonElement;
     expect(submitBtn).toBeTruthy();
     fireEvent.click(submitBtn);
 

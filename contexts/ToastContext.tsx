@@ -25,7 +25,7 @@ const BG: Record<ToastType, string> = {
   success: 'bg-emerald-700',
   error: 'bg-red-700',
   warning: 'bg-amber-600',
-  info: 'bg-slate-700',
+  info: 'bg-[#3d3028]',
 };
 
 const DURATION_MS = 3500;

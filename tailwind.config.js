@@ -23,6 +23,8 @@ export default {
         'field': '0 1px 3px rgba(26, 24, 22, 0.08)',
         'field-md': '0 2px 8px rgba(26, 24, 22, 0.12)',
         'field-inset': 'inset 1px 2px 4px rgba(26, 24, 22, 0.06)',
+        'driver-card': '0 1px 3px rgba(0, 0, 0, 0.30)',
+        'driver-raised': '0 2px 8px rgba(0, 0, 0, 0.40)',
       },
       backgroundImage: {
         'warm-gradient': 'linear-gradient(135deg, #f3efe8 0%, #faf7f2 100%)',
@@ -43,9 +45,13 @@ export default {
         'sidebar': '240px',
       },
       fontSize: {
-        // Design system floor tokens
-        'caption': ['10px', { lineHeight: '14px', fontWeight: '800' }],
+        // Bahati Design System — 5-level typographic scale
+        'display': ['28px', { lineHeight: '36px', letterSpacing: '-0.01em' }],
+        'heading': ['20px', { lineHeight: '28px', letterSpacing: '-0.005em' }],
+        'title':   ['16px', { lineHeight: '22px' }],
+        'body':    ['14px', { lineHeight: '20px' }],
         'body-sm': ['12px', { lineHeight: '16px' }],
+        'caption': ['10px', { lineHeight: '14px' }],
       },
     },
   },

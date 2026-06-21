@@ -15,4 +15,6 @@
   --theme-border: rgba(255, 255, 255, 0.08);
   --theme-text: #f0ede6;
   --theme-accent: #d4835a;
+  --shadow-driver-card: 0 1px 3px rgba(0, 0, 0, 0.30);
+  --shadow-driver-raised: 0 2px 8px rgba(0, 0, 0, 0.40);
 }

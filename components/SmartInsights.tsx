@@ -94,7 +94,7 @@ const SmartInsights: React.FC<SmartInsightsProps> = ({ transactions, locations, 
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="rounded-card bg-gradient-to-br from-slate-950 to-amber-900 p-5 text-white shadow-xl relative overflow-hidden">
+      <div className="rounded-card bg-gradient-to-br from-[#0f0d0a] to-amber-900 p-5 text-white shadow-xl relative overflow-hidden">
         <div className="absolute right-4 top-4 opacity-10"><BrainCircuit size={72} /></div>
         <div className="relative z-10 flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
@@ -139,9 +139,9 @@ const SmartInsights: React.FC<SmartInsightsProps> = ({ transactions, locations, 
 
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3 px-1">
-          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.actionableInsights}</h3>
+          <h3 className="text-[10px] font-bold text-[#a09080] uppercase tracking-widest">{t.actionableInsights}</h3>
           {insights.length > 0 && (
-            <span className="text-[10px] font-black text-slate-500">{visibleInsights.length}/{insights.length}</span>
+            <span className="text-[10px] font-bold text-[#8c7e6d]">{visibleInsights.length}/{insights.length}</span>
           )}
         </div>
         
@@ -162,8 +162,8 @@ const SmartInsights: React.FC<SmartInsightsProps> = ({ transactions, locations, 
                >
                  <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h4 className="text-sm font-black text-slate-900">{insight.loc.name}</h4>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5">{insight.loc.area} • {insight.loc.machineId}</p>
+                      <h4 className="text-sm font-black text-[#171310]">{insight.loc.name}</h4>
+                      <p className="text-[10px] font-bold text-[#a09080] uppercase mt-0.5">{insight.loc.area} • {insight.loc.machineId}</p>
                     </div>
                     <div className={`rounded-xl p-2 ${insight.riskLevel === 'high' ? 'bg-rose-50 text-rose-500' : 'bg-amber-50 text-amber-500'}`}>
                        {insight.riskLevel === 'high' ? <AlertTriangle size={18} /> : <CalendarClock size={18} />}
@@ -174,23 +174,23 @@ const SmartInsights: React.FC<SmartInsightsProps> = ({ transactions, locations, 
                     <div className={`rounded-2xl p-3 flex items-start gap-3 ${insight.riskLevel === 'high' ? 'bg-rose-50' : 'bg-amber-50'}`}>
                        {insight.trend === 'down' ? <TrendingDown className="text-rose-500 mt-0.5" size={16}/> : insight.trend === 'up' ? <TrendingUp className="text-emerald-500 mt-0.5" size={16}/> : <Activity className="text-amber-500 mt-0.5" size={16}/>}
                        <div>
-                          <p className={`text-[10px] font-black uppercase mb-1 ${insight.riskLevel === 'high' ? 'text-rose-700' : 'text-amber-700'}`}>{t.anomalyDetected}</p>
+                          <p className={`text-[10px] font-bold uppercase mb-1 ${insight.riskLevel === 'high' ? 'text-rose-700' : 'text-amber-700'}`}>{t.anomalyDetected}</p>
                           <p className={`text-xs font-bold leading-relaxed ${insight.riskLevel === 'high' ? 'text-rose-600' : 'text-amber-600'}`}>{insight.warningMsg}</p>
                        </div>
                     </div>
                     
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 flex items-start gap-3">
+                    <div className="rounded-2xl border border-[#e8e0d4] bg-[#f3efe8] p-3 flex items-start gap-3">
                        <Zap className="text-amber-500 mt-0.5" size={16}/>
                        <div>
-                          <p className="text-[10px] font-black text-amber-700 uppercase mb-1">{t.aiDecisionSuggestion}</p>
-                          <p className="text-xs font-bold text-slate-600 leading-relaxed">{insight.actionSuggestion}</p>
+                          <p className="text-[10px] font-bold text-amber-700 uppercase mb-1">{t.aiDecisionSuggestion}</p>
+                          <p className="text-xs font-bold text-[#7a6e5e] leading-relaxed">{insight.actionSuggestion}</p>
                        </div>
                     </div>
                  </div>
 
-                 <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-[10px] font-black">
-                    <span className="text-slate-400 uppercase">{t.sevenDayRevenue}</span>
-                    <span className="text-slate-700 flex items-center gap-1"><DollarSign size={10}/> {insight.totalRevenue.toLocaleString()} TZS</span>
+                 <div className="mt-4 pt-4 border-t border-[#e8e0d4] flex justify-between items-center text-[10px] font-bold">
+                    <span className="text-[#a09080] uppercase">{t.sevenDayRevenue}</span>
+                    <span className="text-[#3d3028] flex items-center gap-1"><DollarSign size={10}/> {insight.totalRevenue.toLocaleString()} TZS</span>
                  </div>
                   {onNavigate && (
                     <div className="mt-3 text-right text-caption font-black text-amber-500 uppercase tracking-widest">→ 查看点位</div>

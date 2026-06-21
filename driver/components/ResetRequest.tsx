@@ -67,17 +67,17 @@ const ResetRequest: React.FC<ResetRequestProps> = ({
 
   return (
     <div className="max-w-md mx-auto py-6 px-4 animate-in fade-in">
-      <div className="bg-white rounded-card p-6 border border-slate-200 shadow-field-md space-y-5">
-        <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+      <div className="bg-white rounded-card p-6 border border-[#e0d8cc] shadow-field-md space-y-5">
+        <div className="flex justify-between items-center border-b border-[#e8e0d4] pb-4">
           <button
             onClick={onCancel}
-            className="p-2.5 bg-slate-100 rounded-subcard text-slate-500 hover:text-amber-600 transition-colors"
+            className="p-2.5 bg-[#ede6dc] rounded-subcard text-[#8c7e6d] hover:text-amber-600 transition-colors"
           >
             <ArrowRight size={18} className="rotate-180" />
           </button>
           <div className="text-center">
-            <h2 className="text-base font-black text-slate-900">{t.resetRequest}</h2>
-            <p className="text-[10px] font-black text-rose-500 uppercase mt-1">{location?.name} • {location?.machineId}</p>
+            <h2 className="text-base font-black text-[#171310]">{t.resetRequest}</h2>
+            <p className="text-[10px] font-bold text-rose-500 uppercase mt-1">{location?.name} • {location?.machineId}</p>
           </div>
           <div className="w-10" />
         </div>
@@ -86,7 +86,7 @@ const ResetRequest: React.FC<ResetRequestProps> = ({
           <div className="flex items-center gap-3">
             <div className="p-2 bg-rose-500 rounded-btn text-white flex-shrink-0"><RefreshCw size={16} /></div>
             <div>
-              <p className="text-xs font-black text-rose-800 uppercase">{t.resetRequestDesc}</p>
+              <p className="text-xs font-bold text-rose-800 uppercase">{t.resetRequestDesc}</p>
               <p className="text-caption font-bold text-rose-400 mt-0.5">
                 {lang === 'zh' ? `当前分数: ${location?.lastScore}` : `Current score: ${location?.lastScore}`}
               </p>
@@ -97,7 +97,7 @@ const ResetRequest: React.FC<ResetRequestProps> = ({
         {!isOnline && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-subcard bg-amber-50 border border-amber-200">
             <span className="text-amber-500 text-sm flex-shrink-0">📶</span>
-            <p className="text-[10px] font-black text-amber-700 leading-tight">
+            <p className="text-[10px] font-bold text-amber-700 leading-tight">
               {lang === 'zh'
                 ? '当前离线 — 申请将在联网后自动同步。'
                 : 'Currently offline — request will sync automatically when reconnected.'}
@@ -107,7 +107,7 @@ const ResetRequest: React.FC<ResetRequestProps> = ({
 
         <div
           onClick={() => resetFileRef.current?.click()}
-          className={`relative h-36 w-full rounded-subcard overflow-hidden border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all active:scale-95 ${resetPhotoData ? 'border-emerald-400' : 'border-slate-300 bg-white hover:bg-slate-50'}`}
+          className={`relative h-36 w-full rounded-subcard overflow-hidden border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all active:scale-95 ${resetPhotoData ? 'border-emerald-400' : 'border-[#c8beb0] bg-white hover:bg-[#f3efe8]'}`}
         >
           <input type="file" accept="image/*" ref={resetFileRef} onChange={handleResetPhotoCapture} className="hidden" />
           {resetPhotoData ? (
@@ -118,9 +118,9 @@ const ResetRequest: React.FC<ResetRequestProps> = ({
               </div>
             </>
           ) : (
-            <div className="text-center text-slate-400">
+            <div className="text-center text-[#a09080]">
               <Camera size={24} className="mx-auto mb-2" />
-              <span className="text-[10px] font-black uppercase tracking-widest">
+              <span className="text-[10px] font-bold uppercase tracking-widest">
                 {lang === 'zh' ? '拍摄当前分数照片 *' : 'Photo of current score *'}
               </span>
             </div>
@@ -130,7 +130,7 @@ const ResetRequest: React.FC<ResetRequestProps> = ({
         <button
           onClick={handleSubmitResetRequest}
           disabled={!resetPhotoData || isSubmitting}
-          className="w-full py-4 bg-rose-600 text-white rounded-btn font-black uppercase text-sm shadow-field-md disabled:bg-slate-300 active:scale-95 transition-all flex items-center justify-center gap-3"
+          className="w-full py-4 bg-rose-600 text-white rounded-btn font-black uppercase text-sm shadow-field-md disabled:bg-[#c8beb0] active:scale-95 transition-all flex items-center justify-center gap-3"
         >
           <RefreshCw size={18} />
           {isSubmitting

@@ -41,10 +41,10 @@ export default class PageErrorBoundary extends React.Component<PageErrorBoundary
       return (
         <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 px-6 text-center">
           <div className="text-4xl">⚠️</div>
-          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+          <p className="text-sm font-bold text-[#3d3028] dark:text-[#c0b0a0]">
             {this.props.name ? `${this.props.name} 页面出错了` : 'Something went wrong'}
           </p>
-          <p className="text-xs text-slate-400 max-w-xs">{this.state.error}</p>
+          <p className="text-xs text-[#a09080] max-w-xs">{this.state.error}</p>
           <button
             onClick={this.handleReset}
             className="px-5 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-bold"

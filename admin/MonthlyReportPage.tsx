@@ -252,9 +252,9 @@ const MonthlyReportPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CalendarDays size={20} className="text-amber-600" />
-          <h2 className="text-lg font-black text-slate-800 uppercase tracking-wide">月度报表</h2>
+          <h2 className="text-lg font-black text-[#2a2420] uppercase tracking-wide">月度报表</h2>
         </div>
-        <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+        <div className="flex items-center gap-1 bg-[#ede6dc] rounded-xl p-1">
           {MONTH_OPTIONS.map((n) => (
             <button
               key={n}
@@ -262,7 +262,7 @@ const MonthlyReportPage: React.FC = () => {
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
                 monthCount === n
                   ? 'bg-amber-600 text-white shadow'
-                  : 'text-slate-500 hover:text-amber-600'
+                  : 'text-[#8c7e6d] hover:text-amber-600'
               }`}
             >
               近{n}月
@@ -272,16 +272,16 @@ const MonthlyReportPage: React.FC = () => {
       </div>
 
       {/* Tab Toggle */}
-      <div className="flex items-center gap-1 bg-slate-100 rounded-2xl p-1">
+      <div className="flex items-center gap-1 bg-[#ede6dc] rounded-2xl p-1">
         <button
           onClick={() => setTab('fleet')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black uppercase transition-all ${tab === 'fleet' ? 'bg-white text-amber-700 shadow' : 'text-slate-500'}`}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold uppercase transition-all ${tab === 'fleet' ? 'bg-white text-amber-700 shadow' : 'text-[#8c7e6d]'}`}
         >
           <Building2 size={13} /> 总站汇总
         </button>
         <button
           onClick={() => setTab('driver')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black uppercase transition-all ${tab === 'driver' ? 'bg-white text-amber-700 shadow' : 'text-slate-500'}`}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold uppercase transition-all ${tab === 'driver' ? 'bg-white text-amber-700 shadow' : 'text-[#8c7e6d]'}`}
         >
           <Users size={13} /> 司机明细
         </button>
@@ -292,26 +292,26 @@ const MonthlyReportPage: React.FC = () => {
           {/* Summary Cards */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-amber-600" /><p className="text-[10px] font-black text-amber-500 uppercase">总营收</p></div>
+              <div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-amber-600" /><p className="text-[10px] font-bold text-amber-500 uppercase">总营收</p></div>
               <p className="text-xl font-black text-amber-800">TZS {fmt(fleetTotals.revenue)}</p>
             </div>
             <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-1"><DollarSign size={14} className="text-emerald-600" /><p className="text-[10px] font-black text-emerald-500 uppercase">净应付</p></div>
+              <div className="flex items-center gap-2 mb-1"><DollarSign size={14} className="text-emerald-600" /><p className="text-[10px] font-bold text-emerald-500 uppercase">净应付</p></div>
               <p className="text-xl font-black text-emerald-800">TZS {fmt(fleetTotals.netPayable)}</p>
             </div>
             <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-1"><Users size={14} className="text-amber-600" /><p className="text-[10px] font-black text-amber-500 uppercase">提成总额</p></div>
+              <div className="flex items-center gap-2 mb-1"><Users size={14} className="text-amber-600" /><p className="text-[10px] font-bold text-amber-500 uppercase">提成总额</p></div>
               <p className="text-xl font-black text-amber-800">TZS {fmt(fleetTotals.commission)}</p>
             </div>
             <div className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-1"><MapPin size={14} className="text-rose-600" /><p className="text-[10px] font-black text-rose-500 uppercase">总收款次数</p></div>
+              <div className="flex items-center gap-2 mb-1"><MapPin size={14} className="text-rose-600" /><p className="text-[10px] font-bold text-rose-500 uppercase">总收款次数</p></div>
               <p className="text-xl font-black text-rose-800">{fmt(fleetTotals.collections)}</p>
             </div>
           </div>
 
           {/* Revenue Chart */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-            <p className="text-xs font-black text-slate-600 uppercase mb-3">月度营收趋势</p>
+          <div className="bg-white rounded-2xl border border-[#e8e0d4] shadow-sm p-4">
+            <p className="text-xs font-bold text-[#7a6e5e] uppercase mb-3">月度营收趋势</p>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={fleetStats} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -327,8 +327,8 @@ const MonthlyReportPage: React.FC = () => {
           </div>
 
           {/* Active Drivers / Sites Chart */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-            <p className="text-xs font-black text-slate-600 uppercase mb-3">月度活跃司机 & 机器</p>
+          <div className="bg-white rounded-2xl border border-[#e8e0d4] shadow-sm p-4">
+            <p className="text-xs font-bold text-[#7a6e5e] uppercase mb-3">月度活跃司机 & 机器</p>
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={fleetStats} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -343,17 +343,17 @@ const MonthlyReportPage: React.FC = () => {
           </div>
 
           {/* Fleet Table + Export */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl border border-[#e8e0d4] shadow-sm overflow-hidden">
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
-              <p className="text-xs font-black text-slate-600 uppercase">总站明细数据</p>
-              <button onClick={exportFleetCSV} className="flex items-center gap-1 rounded-xl bg-amber-50 px-2.5 py-1.5 text-[10px] font-black text-amber-700 hover:bg-amber-100">
+              <p className="text-xs font-bold text-[#7a6e5e] uppercase">总站明细数据</p>
+              <button onClick={exportFleetCSV} className="flex items-center gap-1 rounded-xl bg-amber-50 px-2.5 py-1.5 text-[10px] font-bold text-amber-700 hover:bg-amber-100">
                 <Download size={11} /> 导出 CSV
               </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-[10px] font-bold">
                 <thead>
-                  <tr className="bg-slate-50 text-slate-500 uppercase">
+                  <tr className="bg-[#f3efe8] text-[#8c7e6d] uppercase">
                     <th className="px-3 py-2 text-left">月份</th>
                     <th className="px-3 py-2 text-right">营收</th>
                     <th className="px-3 py-2 text-right">提成</th>
@@ -365,14 +365,14 @@ const MonthlyReportPage: React.FC = () => {
                 </thead>
                 <tbody>
                   {fleetStats.map((m, i) => (
-                    <tr key={m.month} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}>
-                      <td className="px-3 py-2 font-black text-slate-700">{m.label}</td>
+                    <tr key={m.month} className={i % 2 === 0 ? 'bg-white' : 'bg-[#f3efe8]/60'}>
+                      <td className="px-3 py-2 font-black text-[#3d3028]">{m.label}</td>
                       <td className="px-3 py-2 text-right text-amber-700">{fmt(m.revenue)}</td>
                       <td className="px-3 py-2 text-right text-amber-700">{fmt(m.commission)}</td>
                       <td className="px-3 py-2 text-right text-emerald-700">{fmt(m.netPayable)}</td>
-                      <td className="px-3 py-2 text-right text-slate-600">{m.collections}</td>
-                      <td className="px-3 py-2 text-right text-slate-600">{m.activeDrivers}</td>
-                      <td className="px-3 py-2 text-right text-slate-600">{m.activeSites}</td>
+                      <td className="px-3 py-2 text-right text-[#7a6e5e]">{m.collections}</td>
+                      <td className="px-3 py-2 text-right text-[#7a6e5e]">{m.activeDrivers}</td>
+                      <td className="px-3 py-2 text-right text-[#7a6e5e]">{m.activeSites}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -390,7 +390,7 @@ const MonthlyReportPage: React.FC = () => {
             <select
               value={activeDriverId}
               onChange={e => setSelectedDriverId(e.target.value)}
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="flex-1 rounded-xl border border-[#e0d8cc] bg-white px-3 py-2 text-xs font-bold text-[#2a2420] focus:outline-none focus:ring-2 focus:ring-amber-400"
             >
               {drivers.map(d => (
                 <option key={d.id} value={d.id}>{d.name} ({d.id})</option>
@@ -401,26 +401,26 @@ const MonthlyReportPage: React.FC = () => {
           {/* Driver summary cards */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-amber-600" /><p className="text-[10px] font-black text-amber-500 uppercase">营收合计</p></div>
+              <div className="flex items-center gap-2 mb-1"><TrendingUp size={14} className="text-amber-600" /><p className="text-[10px] font-bold text-amber-500 uppercase">营收合计</p></div>
               <p className="text-xl font-black text-amber-800">TZS {fmt(driverTotals.revenue)}</p>
             </div>
             <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-1"><DollarSign size={14} className="text-emerald-600" /><p className="text-[10px] font-black text-emerald-500 uppercase">提成合计</p></div>
+              <div className="flex items-center gap-2 mb-1"><DollarSign size={14} className="text-emerald-600" /><p className="text-[10px] font-bold text-emerald-500 uppercase">提成合计</p></div>
               <p className="text-xl font-black text-emerald-800">TZS {fmt(driverTotals.commission)}</p>
             </div>
             <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-1"><MapPin size={14} className="text-amber-600" /><p className="text-[10px] font-black text-amber-500 uppercase">收款总次</p></div>
+              <div className="flex items-center gap-2 mb-1"><MapPin size={14} className="text-amber-600" /><p className="text-[10px] font-bold text-amber-500 uppercase">收款总次</p></div>
               <p className="text-xl font-black text-amber-800">{fmt(driverTotals.collections)}</p>
             </div>
             <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-1"><DollarSign size={14} className="text-amber-600" /><p className="text-[10px] font-black text-amber-500 uppercase">净应付</p></div>
+              <div className="flex items-center gap-2 mb-1"><DollarSign size={14} className="text-amber-600" /><p className="text-[10px] font-bold text-amber-500 uppercase">净应付</p></div>
               <p className="text-xl font-black text-amber-800">TZS {fmt(driverTotals.netPayable)}</p>
             </div>
           </div>
 
           {/* Driver revenue chart */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-            <p className="text-xs font-black text-slate-600 uppercase mb-3">{selectedDriver?.name ?? activeDriverId} — 月度营收</p>
+          <div className="bg-white rounded-2xl border border-[#e8e0d4] shadow-sm p-4">
+            <p className="text-xs font-bold text-[#7a6e5e] uppercase mb-3">{selectedDriver?.name ?? activeDriverId} — 月度营收</p>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={driverStats} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -435,17 +435,17 @@ const MonthlyReportPage: React.FC = () => {
           </div>
 
           {/* Driver monthly table + export */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl border border-[#e8e0d4] shadow-sm overflow-hidden">
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
-              <p className="text-xs font-black text-slate-600 uppercase">{selectedDriver?.name ?? activeDriverId} — 明细</p>
-              <button onClick={exportDriverCSV} className="flex items-center gap-1 rounded-xl bg-amber-50 px-2.5 py-1.5 text-[10px] font-black text-amber-700 hover:bg-amber-100">
+              <p className="text-xs font-bold text-[#7a6e5e] uppercase">{selectedDriver?.name ?? activeDriverId} — 明细</p>
+              <button onClick={exportDriverCSV} className="flex items-center gap-1 rounded-xl bg-amber-50 px-2.5 py-1.5 text-[10px] font-bold text-amber-700 hover:bg-amber-100">
                 <Download size={11} /> 导出 CSV
               </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-[10px] font-bold">
                 <thead>
-                  <tr className="bg-slate-50 text-slate-500 uppercase">
+                  <tr className="bg-[#f3efe8] text-[#8c7e6d] uppercase">
                     <th className="px-3 py-2 text-left">月份</th>
                     <th className="px-3 py-2 text-right">营收</th>
                     <th className="px-3 py-2 text-right">提成</th>
@@ -456,13 +456,13 @@ const MonthlyReportPage: React.FC = () => {
                 </thead>
                 <tbody>
                   {driverStats.map((m, i) => (
-                    <tr key={m.month} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}>
-                      <td className="px-3 py-2 font-black text-slate-700">{m.label}</td>
+                    <tr key={m.month} className={i % 2 === 0 ? 'bg-white' : 'bg-[#f3efe8]/60'}>
+                      <td className="px-3 py-2 font-black text-[#3d3028]">{m.label}</td>
                       <td className="px-3 py-2 text-right text-amber-700">{fmt(m.revenue)}</td>
                       <td className="px-3 py-2 text-right text-amber-700">{fmt(m.commission)}</td>
                       <td className="px-3 py-2 text-right text-emerald-700">{fmt(m.netPayable)}</td>
-                      <td className="px-3 py-2 text-right text-slate-600">{m.collections}</td>
-                      <td className="px-3 py-2 text-right text-slate-600">{m.activeSites}</td>
+                      <td className="px-3 py-2 text-right text-[#7a6e5e]">{m.collections}</td>
+                      <td className="px-3 py-2 text-right text-[#7a6e5e]">{m.activeSites}</td>
                     </tr>
                   ))}
                 </tbody>

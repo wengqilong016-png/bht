@@ -223,31 +223,31 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
             </div>
             <div className="min-w-0">
               <p className="text-caption font-black uppercase tracking-[0.18em] text-emerald-700">{completionTitle}</p>
-              <h2 className="truncate text-base font-black text-slate-900">{transaction.locationName}</h2>
-              <p className="text-caption font-black uppercase tracking-[0.15em] text-slate-500">
+              <h2 className="truncate text-base font-black text-[#171310]">{transaction.locationName}</h2>
+              <p className="text-caption font-black uppercase tracking-[0.15em] text-[#8c7e6d]">
                 {selectedLocation.machineId} · {sourceLabel}
               </p>
             </div>
           </div>
-          <p className="mt-3 text-sm font-medium text-slate-600">{completionSubtitle}</p>
+          <p className="mt-3 text-sm font-medium text-[#7a6e5e]">{completionSubtitle}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-card border border-slate-200 bg-white px-3 py-2.5">
-            <p className="text-caption font-black uppercase tracking-wide text-slate-400">{lang === 'zh' ? '机器读数' : 'Reading'}</p>
-            <p className="mt-1 text-sm font-black text-slate-900">{transaction.currentScore.toLocaleString()}</p>
+          <div className="rounded-card border border-[#e0d8cc] bg-white px-3 py-2.5">
+            <p className="text-caption font-bold uppercase tracking-wide text-[#a09080]">{lang === 'zh' ? '机器读数' : 'Reading'}</p>
+            <p className="mt-1 text-sm font-black text-[#171310]">{transaction.currentScore.toLocaleString()}</p>
           </div>
-          <div className="rounded-card border border-slate-200 bg-white px-3 py-2.5">
-            <p className="text-caption font-black uppercase tracking-wide text-slate-400">{t.net}</p>
-            <p className="mt-1 text-sm font-black text-slate-900">TZS {transaction.netPayable.toLocaleString()}</p>
+          <div className="rounded-card border border-[#e0d8cc] bg-white px-3 py-2.5">
+            <p className="text-caption font-bold uppercase tracking-wide text-[#a09080]">{t.net}</p>
+            <p className="mt-1 text-sm font-black text-[#171310]">TZS {transaction.netPayable.toLocaleString()}</p>
           </div>
-          <div className="rounded-card border border-slate-200 bg-white px-3 py-2.5">
-            <p className="text-caption font-black uppercase tracking-wide text-slate-400">{lang === 'zh' ? '提交状态' : 'Status'}</p>
-            <p className="mt-1 text-sm font-black text-slate-900">{sourceLabel}</p>
+          <div className="rounded-card border border-[#e0d8cc] bg-white px-3 py-2.5">
+            <p className="text-caption font-bold uppercase tracking-wide text-[#a09080]">{lang === 'zh' ? '提交状态' : 'Status'}</p>
+            <p className="mt-1 text-sm font-black text-[#171310]">{sourceLabel}</p>
           </div>
-          <div className="rounded-card border border-slate-200 bg-white px-3 py-2.5">
-            <p className="text-caption font-black uppercase tracking-wide text-slate-400">{lang === 'zh' ? '网点' : 'Site'}</p>
-            <p className="mt-1 text-sm font-black text-slate-900">{selectedLocation.area || transaction.locationName}</p>
+          <div className="rounded-card border border-[#e0d8cc] bg-white px-3 py-2.5">
+            <p className="text-caption font-bold uppercase tracking-wide text-[#a09080]">{lang === 'zh' ? '网点' : 'Site'}</p>
+            <p className="mt-1 text-sm font-black text-[#171310]">{selectedLocation.area || transaction.locationName}</p>
           </div>
         </div>
 
@@ -462,7 +462,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
 
       {!embedded && (
         <>
-          <div className="bg-slate-900 rounded-2xl px-4 py-3 text-white flex justify-between items-center">
+          <div className="bg-[#171310] rounded-2xl px-4 py-3 text-white flex justify-between items-center">
             <div>
               <p className="text-caption font-black uppercase opacity-60">{t.net}</p>
               <p className="text-caption font-bold opacity-40 uppercase mt-0.5">{t.cashToHandIn}</p>
@@ -471,7 +471,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           </div>
 
           {photoData && (
-            <div className="h-20 rounded-2xl overflow-hidden border border-slate-200 relative">
+            <div className="h-20 rounded-2xl overflow-hidden border border-[#e0d8cc] relative">
               <img src={photoData} className="w-full h-full object-cover grayscale brightness-110 contrast-125" alt={t.paymentProof} />
               <div className="absolute top-2 right-2 bg-emerald-500 text-white text-caption font-black uppercase px-2 py-0.5 rounded-tag flex items-center gap-1">
                 <CheckCircle2 size={9} /> {t.photoReady}
@@ -492,12 +492,12 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
           <div className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl border ${
             gpsPermission === 'denied' ? 'bg-rose-50 border-rose-200' :
             gpsCoords ? 'bg-emerald-50 border-emerald-200' :
-            'bg-slate-50 border-slate-200'
+            'bg-[#f3efe8] border-[#e0d8cc]'
           }`}>
             <div className={`p-1.5 rounded-btn flex-shrink-0 ${
               gpsPermission === 'denied' ? 'bg-rose-500 text-white animate-pulse' :
               gpsCoords ? 'bg-emerald-500 text-white' :
-              'bg-slate-400 text-white'
+              'bg-[#a09080] text-white'
             }`}>
               <Satellite size={13} />
             </div>
@@ -505,7 +505,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
               <p className={`text-caption font-black uppercase ${
                 gpsPermission === 'denied' ? 'text-rose-600' :
                 gpsCoords ? 'text-emerald-700' :
-                'text-slate-500'
+                'text-[#8c7e6d]'
               }`}>
                 {gpsPermission === 'denied'
                   ? t.gpsDenied
@@ -519,7 +519,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
                 type="button"
                 onClick={onRequestGps}
                 aria-label={t.gpsAcquiring}
-                className="p-1.5 bg-white rounded-xl border border-slate-200 text-amber-600 flex-shrink-0"
+                className="p-1.5 bg-white rounded-xl border border-[#e0d8cc] text-amber-600 flex-shrink-0"
               >
                 <RotateCcw size={12} />
               </button>
@@ -540,7 +540,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
       )}
 
       {embedded && (
-        <p className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-caption font-bold text-slate-500">
+        <p className="rounded-2xl border border-[#e0d8cc] bg-white px-4 py-3 text-caption font-bold text-[#8c7e6d]">
           {lang === 'zh' ? '提交后由管理员复核入账。' : 'Admin reviews and posts this collection after submit.'}
         </p>
       )}
@@ -560,9 +560,9 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
         </div>
       )}
 
-      <div className="sticky bottom-[calc(var(--mobile-nav-height,4.75rem)+env(safe-area-inset-bottom))] z-20 mt-4 rounded-card border border-slate-200 bg-white/95 p-2 backdrop-blur md:bottom-0">
+      <div className="sticky bottom-[calc(var(--mobile-nav-height,4.75rem)+env(safe-area-inset-bottom))] z-20 mt-4 rounded-card border border-[#e0d8cc] bg-white/95 p-2 backdrop-blur md:bottom-0">
         {embedded && (
-          <div className="mb-2 flex items-center justify-between rounded-2xl bg-slate-900 px-3 py-2 text-white">
+          <div className="mb-2 flex items-center justify-between rounded-2xl bg-[#171310] px-3 py-2 text-white">
             <div>
               <p className="text-caption font-black uppercase opacity-60">{t.net}</p>
               <p className="text-caption font-bold uppercase opacity-40">{t.cashToHandIn}</p>
@@ -575,7 +575,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
             <button
               type="button"
               onClick={onBack}
-              className="py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl font-black uppercase text-xs hover:text-amber-600 transition-colors flex items-center justify-center gap-2"
+              className="py-4 bg-white border border-[#e0d8cc] text-[#8c7e6d] rounded-2xl font-black uppercase text-xs hover:text-amber-600 transition-colors flex items-center justify-center gap-2"
             >
               <ArrowRight size={15} className="rotate-180" />
               {lang === 'zh' ? '返回上一步' : 'Back'}
@@ -588,7 +588,7 @@ const SubmitReview: React.FC<SubmitReviewProps> = ({
             onClick={handleSubmit}
             disabled={isSubmitBlocked}
             data-testid="driver-submit-button"
-            className="py-4 bg-amber-600 text-white rounded-2xl font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-200/40"
+            className="py-4 bg-amber-600 text-white rounded-2xl font-black uppercase text-sm disabled:bg-[#c8beb0] disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-200/40"
           >
             {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             {submissionState.status === 'submitting' ? t.saving :

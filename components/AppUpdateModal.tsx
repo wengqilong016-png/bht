@@ -117,28 +117,28 @@ const AppUpdateModal: React.FC<Props> = ({ lang }) => {
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 backdrop-blur-sm p-4 pb-8">
       <div className="w-full max-w-sm rounded-lg bg-white shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 px-5 pt-6 pb-5">
+        <div className="relative bg-gradient-to-br from-[#171310] to-[#2a2420] px-5 pt-6 pb-5">
           <button aria-label="Close" type="button" onClick={_handleDismiss}>
             <X size={16} />
           </button>
           <div className="flex items-center gap-3 mb-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-400 shadow-lg shadow-amber-500/30">
-              <Sparkles size={20} className="text-slate-900" fill="currentColor" />
+              <Sparkles size={20} className="text-[#171310]" fill="currentColor" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#a09080]">
                 {lang === 'zh' ? '发现新版本' : 'Update Available'}
               </p>
               <p className="text-lg font-black text-white">
                 v{update.latestVersion}
                 {typeof update.latestVersionCode === 'number' ? ` (${update.latestVersionCode})` : ''}
               </p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#8c7e6d]">
                 {lang === 'zh' ? '当前版本' : 'Current'} v{currentVersion}
                 {currentVersionCode ? ` (${currentVersionCode})` : ''}
               </p>
               {(update.latestTag || update.latestReleasedAt) && (
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a6e5e]">
                   {update.latestTag ? `${update.latestTag}` : ''}
                   {releasedAt ? ` · ${releasedAt}` : ''}
                 </p>
@@ -146,36 +146,36 @@ const AppUpdateModal: React.FC<Props> = ({ lang }) => {
             </div>
           </div>
           {update.releaseNotes && (
-            <p className="text-xs text-slate-400 leading-relaxed">{update.releaseNotes}</p>
+            <p className="text-xs text-[#a09080] leading-relaxed">{update.releaseNotes}</p>
           )}
         </div>
 
         {/* Body */}
         <div className="px-5 py-4 space-y-4">
-          <p className="text-xs font-bold text-slate-600 leading-relaxed">
+          <p className="text-xs font-bold text-[#7a6e5e] leading-relaxed">
             {lang === 'zh'
               ? '这是完整 APK 覆盖安装，不是热更新。安装完成后旧数据不会丢失；重新打开 App 后，如果这个提示消失，就说明已经更新成功。'
               : 'This is a full APK replacement, not a hot patch. Your data stays safe. After reopening the app, this prompt disappearing means the update succeeded.'}
           </p>
 
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+          <div className="rounded-lg border border-[#e0d8cc] bg-[#f3efe8] p-3 space-y-2">
             <div className="grid grid-cols-2 gap-2 text-[11px]">
               <div>
-                <p className="font-black text-slate-400 uppercase">{lang === 'zh' ? '当前构建' : 'Installed'}</p>
-                <p className="font-black text-slate-800">v{currentVersion}</p>
-                <p className="font-bold text-slate-500">
+                <p className="font-black text-[#a09080] uppercase">{lang === 'zh' ? '当前构建' : 'Installed'}</p>
+                <p className="font-black text-[#2a2420]">v{currentVersion}</p>
+                <p className="font-bold text-[#8c7e6d]">
                   {currentVersionCode ? `#${currentVersionCode}` : '#—'} · {shortCurrentSha}
                 </p>
               </div>
               <div>
-                <p className="font-black text-slate-400 uppercase">{lang === 'zh' ? '线上构建' : 'Available'}</p>
+                <p className="font-black text-[#a09080] uppercase">{lang === 'zh' ? '线上构建' : 'Available'}</p>
                 <p className="font-black text-emerald-700">v{update.latestVersion}</p>
-                <p className="font-bold text-slate-500">
+                <p className="font-bold text-[#8c7e6d]">
                   {typeof update.latestVersionCode === 'number' ? `#${update.latestVersionCode}` : '#—'} · {shortLatestSha}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-[11px] font-bold text-slate-600">
+            <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-[11px] font-bold text-[#7a6e5e]">
               <ShieldCheck size={14} className="text-emerald-600 shrink-0" />
               <span>
                 {lang === 'zh'
@@ -185,17 +185,17 @@ const AppUpdateModal: React.FC<Props> = ({ lang }) => {
             </div>
           </div>
 
-          <div className="space-y-2 text-xs font-bold text-slate-600">
+          <div className="space-y-2 text-xs font-bold text-[#7a6e5e]">
             <div className="flex gap-2">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-slate-900 text-[10px] text-white">1</span>
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#171310] text-[10px] text-white">1</span>
               <p>{lang === 'zh' ? '点击下面按钮下载完整 APK。' : 'Tap the button below to download the full APK.'}</p>
             </div>
             <div className="flex gap-2">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-slate-900 text-[10px] text-white">2</span>
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#171310] text-[10px] text-white">2</span>
               <p>{lang === 'zh' ? 'Android 弹出安装器后，选择“安装”。' : 'When Android opens the installer, choose Install.'}</p>
             </div>
             <div className="flex gap-2">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-slate-900 text-[10px] text-white">3</span>
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#171310] text-[10px] text-white">3</span>
               <p>{lang === 'zh' ? '安装完成后重新打开 App；不再提示更新就是成功。' : 'Reopen the app. No update prompt means it worked.'}</p>
             </div>
           </div>

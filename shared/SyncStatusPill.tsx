@@ -77,7 +77,7 @@ const SyncStatusPill: React.FC<SyncStatusPillProps> = ({
   // ─── Styling ───────────────────────────────────────────────────────────────
   const colorMap: Record<'light' | 'dark', Record<State, string>> = {
     light: {
-      syncing: 'bg-white border-slate-200 text-slate-400 shadow-silicone-sm',
+      syncing: 'bg-white border-[#e0d8cc] text-[#a09080] shadow-silicone-sm',
       offline:  'bg-rose-50 border-rose-200 text-rose-500',
       failed:   'bg-rose-50 border-rose-200 text-rose-600',
       queued:   'bg-amber-50 border-amber-200 text-amber-700 animate-pulse',
@@ -198,28 +198,28 @@ const SyncStatusPill: React.FC<SyncStatusPillProps> = ({
 
       {isOpen && (
         <div
-          className={`absolute z-50 mt-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/10 ${
+          className={`absolute z-50 mt-2 rounded-2xl border border-[#e0d8cc] bg-white p-3 shadow-xl shadow-[#171310]/10 ${
             fullWidth ? 'left-0 right-0' : 'right-0 min-w-[240px] max-w-[280px]'
           }`}
         >
           <div className="space-y-3">
             <div>
-              <p className="text-caption font-black uppercase text-slate-900">{label}</p>
-              <p className="mt-1 text-[10px] font-medium leading-relaxed text-slate-500">{hint}</p>
+              <p className="text-caption font-black uppercase text-[#171310]">{label}</p>
+              <p className="mt-1 text-[10px] font-medium leading-relaxed text-[#8c7e6d]">{hint}</p>
             </div>
 
             {queueBreakdown.length > 0 && (
               <div className="grid grid-cols-3 gap-2">
                 {queueBreakdown.map(item => (
-                  <div key={item.key} className="rounded-xl bg-slate-50 px-2 py-2 text-center">
-                    <p className="text-caption font-black uppercase text-slate-400">{item.label}</p>
-                    <p className="mt-1 text-[11px] font-black text-slate-900">{item.value}</p>
+                  <div key={item.key} className="rounded-xl bg-[#f3efe8] px-2 py-2 text-center">
+                    <p className="text-caption font-black uppercase text-[#a09080]">{item.label}</p>
+                    <p className="mt-1 text-[11px] font-bold text-[#171310]">{item.value}</p>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="rounded-xl bg-slate-50 px-3 py-2 text-[10px] font-medium text-slate-500">
+            <div className="rounded-xl bg-[#f3efe8] px-3 py-2 text-[10px] font-medium text-[#8c7e6d]">
               {lastSyncedAt
                 ? (isZh ? `最近同步：${lastSyncedAt.toLocaleString()}` : `Last synced: ${lastSyncedAt.toLocaleString()}`)
                 : (isZh ? '最近同步：尚无记录' : 'Last synced: not yet')}
@@ -233,7 +233,7 @@ const SyncStatusPill: React.FC<SyncStatusPillProps> = ({
                   forceRetry();
                   setIsOpen(false);
                 }}
-                className="w-full rounded-xl bg-slate-900 px-3 py-2 text-caption font-black uppercase text-white transition hover:bg-slate-800"
+                className="w-full rounded-xl bg-[#171310] px-3 py-2 text-caption font-black uppercase text-white transition hover:bg-[#2a2420]"
               >
                 {isZh ? '立即重试' : 'Retry Now'}
               </button>

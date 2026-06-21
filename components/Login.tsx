@@ -177,20 +177,20 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-[#faf7f2] flex flex-col items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 p-6 pt-12 flex justify-between items-start z-30">
          <div className="flex gap-4">
-            <button onClick={() => onSetLang('zh')} disabled={isLoading} className={`px-4 py-2 rounded-xl text-caption font-black uppercase flex items-center gap-1.5 transition-all shadow-silicone border border-white/60 ${lang === 'zh' ? 'bg-amber-600 text-white shadow-silicone-pressed' : 'bg-white text-slate-400'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}><Languages size={12}/> 中文</button>
-            <button onClick={() => onSetLang('sw')} disabled={isLoading} className={`px-4 py-2 rounded-xl text-caption font-black uppercase flex items-center gap-1.5 transition-all shadow-silicone border border-white/60 ${lang === 'sw' ? 'bg-amber-600 text-white shadow-silicone-pressed' : 'bg-white text-slate-400'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}><Languages size={12}/> EN</button>
+            <button onClick={() => onSetLang('zh')} disabled={isLoading} className={`px-4 py-2 rounded-xl text-caption font-black uppercase flex items-center gap-1.5 transition-all shadow-silicone border border-white/60 ${lang === 'zh' ? 'bg-amber-600 text-white shadow-silicone-pressed' : 'bg-white text-[#a09080]'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}><Languages size={12}/> 中文</button>
+            <button onClick={() => onSetLang('sw')} disabled={isLoading} className={`px-4 py-2 rounded-xl text-caption font-black uppercase flex items-center gap-1.5 transition-all shadow-silicone border border-white/60 ${lang === 'sw' ? 'bg-amber-600 text-white shadow-silicone-pressed' : 'bg-white text-[#a09080]'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}><Languages size={12}/> EN</button>
          </div>
          <div className="flex items-center gap-2">
             <div
-              className={`px-3 py-2 rounded-xl text-caption font-black uppercase tracking-widest transition-all shadow-silicone border border-white/60 flex items-center gap-1.5 ${
+              className={`px-3 py-2 rounded-xl text-caption font-bold uppercase tracking-widest transition-all shadow-silicone border border-white/60 flex items-center gap-1.5 ${
                 dbStatus === 'online'
                   ? 'bg-emerald-50 text-emerald-600'
                   : dbStatus === 'offline'
                   ? 'bg-rose-50 text-rose-600'
-                  : 'bg-slate-50 text-slate-400'
+                  : 'bg-[#f3efe8] text-[#a09080]'
               }`}
               title={SUPABASE_URL || 'No URL configured'}
             >
@@ -201,7 +201,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
             </div>
             <button
               onClick={() => setShowSettings(v => !v)}
-              className={`p-2 rounded-xl text-[10px] font-black transition-all shadow-silicone border border-white/60 ${showSettings ? 'bg-amber-600 text-white shadow-silicone-pressed' : 'bg-white text-slate-400'}`}
+              className={`p-2 rounded-xl text-[10px] font-bold transition-all shadow-silicone border border-white/60 ${showSettings ? 'bg-amber-600 text-white shadow-silicone-pressed' : 'bg-white text-[#a09080]'}`}
               title={lang === 'zh' ? '连接设置' : 'Connection Settings'}
             >
               <Settings size={14} />
@@ -220,27 +220,27 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
         </div>
 
         <div className="text-center mb-4 space-y-1">
-        <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">BAHATI <span className="text-amber-600">JACKPOTS</span></h1>
-          <p className="text-caption font-bold text-slate-400 uppercase tracking-[0.3em]">Field Operations System</p>
+        <h1 className="text-2xl font-black text-[#1a1816] tracking-tight uppercase">BAHATI <span className="text-amber-600">JACKPOTS</span></h1>
+          <p className="text-caption font-bold text-[#a09080] uppercase tracking-[0.3em]">Field Operations System</p>
         </div>
 
-        <div className="bg-[#f5f7fa] p-7 rounded-card shadow-silicone border border-white/60 w-full space-y-5">
+        <div className="bg-[#fffefb] p-7 rounded-card shadow-silicone border border-white/60 w-full space-y-5">
           {envVarsMissing && <EnvMissingErrorPage lang={lang} compact />}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email-input" className="text-caption font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-1">
+              <label htmlFor="email-input" className="text-caption font-black text-[#8c7e6d] uppercase tracking-widest flex items-center gap-2 px-1">
                  <User size={12} className="text-amber-500" /> {t.username}
               </label>
-              <input id="email-input" type="text" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} className={`w-full bg-[#f0f2f5] border-none rounded-2xl py-3 px-4 font-bold text-slate-700 shadow-silicone-pressed outline-none transition-all placeholder:text-slate-400 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`} placeholder={lang === 'zh' ? '用户名或邮箱' : 'Username or email'} required />
+              <input id="email-input" type="text" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} className={`w-full bg-[#f3efe8] border-none rounded-2xl py-3 px-4 font-bold text-[#3d3028] shadow-silicone-pressed outline-none transition-all placeholder:text-[#a09080] ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`} placeholder={lang === 'zh' ? '用户名或邮箱' : 'Username or email'} required />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password-input" className="text-caption font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-1">
+              <label htmlFor="password-input" className="text-caption font-black text-[#8c7e6d] uppercase tracking-widest flex items-center gap-2 px-1">
                  <Lock size={12} className="text-amber-500" /> {t.password}
               </label>
               <div className="relative">
-                <input id="password-input" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} className={`w-full bg-[#f0f2f5] border-none rounded-2xl py-3 px-4 pr-11 font-black text-slate-700 shadow-silicone-pressed outline-none transition-all placeholder:text-slate-400 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`} placeholder="••••••••" required />
-                <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1" aria-label={showPassword ? 'Hide password' : 'Show password'} tabIndex={-1}>
+                <input id="password-input" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} className={`w-full bg-[#f3efe8] border-none rounded-2xl py-3 px-4 pr-11 font-black text-[#3d3028] shadow-silicone-pressed outline-none transition-all placeholder:text-[#a09080] ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`} placeholder="••••••••" required />
+                <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a09080] hover:text-[#7a6e5e] transition-colors p-1" aria-label={showPassword ? 'Hide password' : 'Show password'} tabIndex={-1}>
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
@@ -253,7 +253,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
                    <span className="text-rose-600 text-xs font-bold leading-relaxed">{error}</span>
                  </div>
                  {error.includes('SQL') && (
-                   <p className="text-slate-400 text-[10px] pl-6 leading-relaxed">
+                   <p className="text-[#a09080] text-[10px] pl-6 leading-relaxed">
                      {lang === 'zh'
                        ? '请前往 Supabase Dashboard → SQL Editor，重新运行设置脚本'
                        : 'Go to Supabase Dashboard → SQL Editor and re-run the setup script.'}
@@ -270,9 +270,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
                   setRememberMe(e.target.checked);
                   try { localStorage.setItem('bht-remember-me', String(e.target.checked)); } catch {}
                 }}
-                className="w-4 h-4 rounded-md border-slate-300 text-amber-500 focus:ring-amber-400 accent-amber-500"
+                className="w-4 h-4 rounded-md border-[#d0c8b8] text-amber-500 focus:ring-amber-400 accent-amber-500"
               />
-              <span className="text-xs font-bold text-slate-500">
+              <span className="text-xs font-bold text-[#8c7e6d]">
                 {lang === 'zh' ? '保持登录状态' : 'Keep me signed in'}
               </span>
             </label>
@@ -289,7 +289,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
             </button>
 
             <div className="text-center">
-              <p className={`text-caption font-bold uppercase tracking-widest ${dbStatus === 'online' ? 'text-emerald-400' : dbStatus === 'offline' ? 'text-rose-400' : 'text-slate-300'}`}>
+              <p className={`text-caption font-bold uppercase tracking-widest ${dbStatus === 'online' ? 'text-emerald-400' : dbStatus === 'offline' ? 'text-rose-400' : 'text-[#c0b0a0]'}`}>
                 {envVarsMissing
                   ? (lang === 'zh'
                     ? '● 缺少配置 — 打开设置后填写 Supabase 连接信息'
@@ -300,7 +300,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
                   ? '● Cannot connect — open Settings to configure'
                   : '● Checking...'}
               </p>
-              <p className="mt-1 text-caption font-bold text-slate-600 tracking-widest">
+              <p className="mt-1 text-caption font-bold text-[#7a6e5e] tracking-widest">
                 v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '—'}
               </p>
             </div>
@@ -309,16 +309,16 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
 
         {/* ── Connection Settings Panel ─────────────────────────────────── */}
         {showSettings && (
-          <div className="w-full mt-4 bg-[#f5f7fa] rounded-card shadow-silicone border border-white/60 p-7 space-y-5">
+          <div className="w-full mt-4 bg-[#f3efe8] rounded-card shadow-silicone border border-white/60 p-7 space-y-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Settings size={14} className="text-amber-500" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#7a6e5e]">
                   {lang === 'zh' ? '连接设置' : 'Connection Settings'}
                 </span>
               </div>
               {usingRuntimeCredentials && (
-                <span className="text-caption font-black uppercase tracking-widest text-amber-500 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">
+                <span className="text-caption font-bold uppercase tracking-widest text-amber-500 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">
                   {lang === 'zh' ? '已使用本地配置' : 'Using local config'}
                 </span>
               )}
@@ -335,7 +335,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-1">
+              <label className="text-[10px] font-bold text-[#8c7e6d] uppercase tracking-widest flex items-center gap-2 px-1">
                 <Wifi size={11} className="text-amber-400" />
                 Supabase URL
               </label>
@@ -344,12 +344,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
                 value={settingsUrl}
                 onChange={e => setSettingsUrl(e.target.value)}
                 placeholder="https://your-project.supabase.co"
-                className="w-full bg-[#f0f2f5] border-none rounded-2xl py-3.5 px-4 font-bold text-slate-700 text-xs shadow-silicone-pressed outline-none placeholder:text-slate-400"
+                className="w-full bg-[#ede6dc] border-none rounded-2xl py-3.5 px-4 font-bold text-[#3d3028] text-xs shadow-silicone-pressed outline-none placeholder:text-[#a09080]"
               />
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-1">
+              <label className="text-[10px] font-bold text-[#8c7e6d] uppercase tracking-widest flex items-center gap-2 px-1">
                 <Lock size={11} className="text-amber-400" />
                 {lang === 'zh' ? 'Anon Key（公开密钥）' : 'Anon Key (public key)'}
               </label>
@@ -358,9 +358,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
                 value={settingsKey}
                 onChange={e => setSettingsKey(e.target.value)}
                 placeholder={lang === 'zh' ? '粘贴你的 anon key...' : 'Paste your anon key...'}
-                className="w-full bg-[#f0f2f5] border-none rounded-2xl py-3.5 px-4 font-bold text-slate-700 text-xs shadow-silicone-pressed outline-none placeholder:text-slate-400"
+                className="w-full bg-[#ede6dc] border-none rounded-2xl py-3.5 px-4 font-bold text-[#3d3028] text-xs shadow-silicone-pressed outline-none placeholder:text-[#a09080]"
               />
-              <p className="text-caption text-slate-400 px-1 leading-relaxed">
+              <p className="text-caption text-[#a09080] px-1 leading-relaxed">
                 {lang === 'zh'
                   ? 'Supabase 控制台 → Settings → API → Project API Keys → anon public'
                   : 'Supabase Dashboard → Settings → API → Project API Keys → anon public'}
@@ -386,7 +386,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, lang, onSetLang }) => {
               {usingRuntimeCredentials && (
                 <button
                   onClick={handleClearSettings}
-                  className="px-4 py-3 bg-[#f0f2f5] text-slate-500 font-black rounded-2xl text-[10px] uppercase shadow-silicone-pressed transition-all"
+                  className="px-4 py-3 bg-[#ede6dc] text-[#8c7e6d] font-black rounded-2xl text-[10px] uppercase shadow-silicone-pressed transition-all"
                   title={lang === 'zh' ? '清除本地配置，使用环境变量' : 'Clear local config, use env vars'}
                 >
                   {lang === 'zh' ? '清除' : 'Clear'}

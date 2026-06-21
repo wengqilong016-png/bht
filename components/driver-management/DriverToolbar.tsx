@@ -28,21 +28,21 @@ const DriverToolbar: React.FC<DriverToolbarProps> = ({
   <div className="space-y-4">
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{t.fleetManagement}</h2>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{t.fleetSubtitle}</p>
+        <h2 className="text-2xl font-black text-[#171310] uppercase tracking-tight">{t.fleetManagement}</h2>
+        <p className="text-[10px] font-bold text-[#a09080] uppercase tracking-widest mt-0.5">{t.fleetSubtitle}</p>
       </div>
 
       <div className="flex gap-2 flex-shrink-0">
-        <div className="flex bg-slate-100 p-1 rounded-2xl">
+        <div className="flex bg-[#ede6dc] p-1 rounded-2xl">
           <button
             onClick={() => setViewMode('grid')}
-            className={`px-3 py-2 rounded-xl text-caption font-black uppercase transition-all flex items-center gap-1.5 whitespace-nowrap ${viewMode === 'grid' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400'}`}
+            className={`px-3 py-2 rounded-xl text-caption font-black uppercase transition-all flex items-center gap-1.5 whitespace-nowrap ${viewMode === 'grid' ? 'bg-white text-amber-600 shadow-sm' : 'text-[#a09080]'}`}
           >
             <LayoutGrid size={12} /> {t.cardsViewLabel}
           </button>
           <button
             onClick={() => setViewMode('analytics')}
-            className={`px-3 py-2 rounded-xl text-caption font-black uppercase transition-all flex items-center gap-1.5 whitespace-nowrap ${viewMode === 'analytics' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400'}`}
+            className={`px-3 py-2 rounded-xl text-caption font-black uppercase transition-all flex items-center gap-1.5 whitespace-nowrap ${viewMode === 'analytics' ? 'bg-white text-amber-600 shadow-sm' : 'text-[#a09080]'}`}
           >
             <BarChart3 size={12} /> {t.analyticsViewLabel}
           </button>
@@ -58,22 +58,22 @@ const DriverToolbar: React.FC<DriverToolbarProps> = ({
 
     <div className="flex flex-col sm:flex-row gap-3">
       <div className="relative flex-1">
-        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#a09080]" />
         <input
           type="text"
           placeholder={t.searchDriver}
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          className="w-full bg-white border border-slate-200 rounded-card py-3 pl-11 pr-4 text-xs font-bold text-slate-900 outline-none focus:border-amber-500 transition-all shadow-sm"
+          className="w-full bg-white border border-[#e0d8cc] rounded-card py-3 pl-11 pr-4 text-xs font-bold text-[#171310] outline-none focus:border-amber-500 transition-all shadow-sm"
         />
       </div>
-      <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-card px-4 py-2 shadow-sm min-w-[200px]">
-        <SlidersHorizontal size={14} className="text-slate-400" />
-        <span className="text-[10px] font-bold text-slate-400 uppercase mr-2">{t.sortBy}:</span>
+      <div className="flex items-center gap-2 bg-white border border-[#e0d8cc] rounded-card px-4 py-2 shadow-sm min-w-[200px]">
+        <SlidersHorizontal size={14} className="text-[#a09080]" />
+        <span className="text-[10px] font-bold text-[#a09080] uppercase mr-2">{t.sortBy}:</span>
         <select
           value={sortBy}
           onChange={(e) => { setSortBy(e.target.value as SortField); setSortDir('desc'); }}
-          className="bg-transparent text-xs font-black text-slate-900 outline-none flex-1 uppercase"
+          className="bg-transparent text-xs font-bold text-[#171310] outline-none flex-1 uppercase"
         >
           <option value="revenue">总营收 Revenue</option>
           <option value="debt">欠款 Debt</option>
@@ -82,7 +82,7 @@ const DriverToolbar: React.FC<DriverToolbarProps> = ({
         </select>
         <button
           onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
-          className="p-1 rounded hover:bg-slate-100 text-amber-600"
+          className="p-1 rounded hover:bg-[#ede6dc] text-amber-600"
         >
           {sortDir === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
         </button>

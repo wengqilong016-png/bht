@@ -180,9 +180,9 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[80] bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in">
+    <div className="fixed inset-0 z-[80] bg-[#171310]/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in">
       <div className="bg-white w-full max-w-lg rounded-card overflow-hidden shadow-2xl relative">
-        <div className="bg-slate-900 p-6 text-white relative">
+        <div className="bg-[#171310] p-6 text-white relative">
           <button type="button" aria-label={t.close} disabled={isSubmitting || isUploading} onClick={onClose} className="absolute top-6 right-6 p-2 bg-white/10 rounded-full hover:bg-white/20 disabled:opacity-40">
             <X size={18} />
           </button>
@@ -190,23 +190,23 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
             <div className="p-2 bg-amber-500 rounded-xl">{copy.icon}</div>
             <h3 className="text-xl font-black uppercase">{title}</h3>
           </div>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+          <p className="text-[10px] font-bold text-[#a09080] uppercase tracking-[0.2em]">
             {driver.name} • {month}
           </p>
         </div>
 
         <div className="p-6 space-y-5">
-          <div className="grid grid-cols-2 gap-3 text-[10px] font-bold text-slate-500 uppercase">
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-              <p className="text-slate-400 mb-1">{t.baseSalaryLabel}</p>
-              <p className="text-sm font-black text-slate-900">TZS {driver.baseSalary.toLocaleString()}</p>
+          <div className="grid grid-cols-2 gap-3 text-[10px] font-bold text-[#8c7e6d] uppercase">
+            <div className="bg-[#f3efe8] rounded-2xl p-4 border border-[#e8e0d4]">
+              <p className="text-[#a09080] mb-1">{t.baseSalaryLabel}</p>
+              <p className="text-sm font-black text-[#171310]">TZS {driver.baseSalary.toLocaleString()}</p>
             </div>
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-              <p className="text-slate-400 mb-1">{t.commissionLabel}</p>
-              <p className="text-sm font-black text-slate-900">TZS {summary.commission.toLocaleString()}</p>
+            <div className="bg-[#f3efe8] rounded-2xl p-4 border border-[#e8e0d4]">
+              <p className="text-[#a09080] mb-1">{t.commissionLabel}</p>
+              <p className="text-sm font-black text-[#171310]">TZS {summary.commission.toLocaleString()}</p>
             </div>
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-              <p className="text-slate-400 mb-1">{t.loansAndShortage}</p>
+            <div className="bg-[#f3efe8] rounded-2xl p-4 border border-[#e8e0d4]">
+              <p className="text-[#a09080] mb-1">{t.loansAndShortage}</p>
               <p className="text-sm font-black text-rose-600">TZS {(summary.loans + summary.shortage).toLocaleString()}</p>
             </div>
             <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100">
@@ -215,25 +215,25 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 text-[10px] font-bold text-slate-400 uppercase">
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+          <div className="grid grid-cols-2 gap-3 text-[10px] font-bold text-[#a09080] uppercase">
+            <div className="bg-[#f3efe8] rounded-2xl p-4 border border-[#e8e0d4]">
               <p className="mb-1">{t.revenueLabel}</p>
-              <p className="text-sm font-black text-slate-900">TZS {summary.totalRevenue.toLocaleString()}</p>
+              <p className="text-sm font-black text-[#171310]">TZS {summary.totalRevenue.toLocaleString()}</p>
             </div>
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+            <div className="bg-[#f3efe8] rounded-2xl p-4 border border-[#e8e0d4]">
               <p className="mb-1">{t.collectionsLabel}</p>
-              <p className="text-sm font-black text-slate-900">{summary.collectionCount}</p>
+              <p className="text-sm font-black text-[#171310]">{summary.collectionCount}</p>
             </div>
           </div>
 
           {isPayMode && (
             <div className="space-y-3">
               <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">{t.paymentMethod}</label>
+                <label className="text-[10px] font-bold text-[#8c7e6d] uppercase block mb-2">{t.paymentMethod}</label>
                 <select
                   value={paymentMethod || 'bank_transfer'}
                   onChange={event => setPaymentMethod(event.target.value as MonthlyPayroll['paymentMethod'])}
-              className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-amber-500"
+              className="w-full bg-white border border-[#e0d8cc] rounded-2xl px-4 py-3 text-sm font-black text-[#171310] outline-none focus:border-amber-500"
                 >
                   <option value="bank_transfer">Bank Transfer</option>
                   <option value="cash">Cash</option>
@@ -243,14 +243,14 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">
+                <label className="text-[10px] font-bold text-[#8c7e6d] uppercase block mb-2">
                   {t.paymentProof} {requiresProof ? '*' : ''}
                 </label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={event => handleFileChange(event.target.files?.[0] || null)}
-                  className="block w-full text-xs font-bold text-slate-500"
+                  className="block w-full text-xs font-bold text-[#8c7e6d]"
                 />
                 {!proofPreview && (
                   <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase">
@@ -258,14 +258,14 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
                   </p>
                 )}
                 {proofPreview && (
-                  <img src={proofPreview} alt={t.paymentProof} className="mt-3 w-full h-44 object-cover rounded-2xl border border-slate-200" />
+                  <img src={proofPreview} alt={t.paymentProof} className="mt-3 w-full h-44 object-cover rounded-2xl border border-[#e0d8cc]" />
                 )}
               </div>
             </div>
           )}
 
           <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">
+            <label className="text-[10px] font-bold text-[#8c7e6d] uppercase block mb-2">
               {isCancelMode ? t.cancelNote : t.notes}
             </label>
             <textarea
@@ -273,7 +273,7 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
               onChange={event => setNote(event.target.value)}
               rows={4}
               placeholder={t.notesPlaceholder}
-              className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-amber-500 resize-none"
+              className="w-full bg-white border border-[#e0d8cc] rounded-2xl px-4 py-3 text-sm font-bold text-[#171310] outline-none focus:border-amber-500 resize-none"
             />
           </div>
 
@@ -281,7 +281,7 @@ const PayrollActionModal: React.FC<PayrollActionModalProps> = ({
             <button
               onClick={onClose}
               disabled={isSubmitting || isUploading}
-              className="flex-1 py-3 bg-slate-100 text-slate-500 rounded-2xl font-black uppercase text-xs disabled:opacity-50"
+              className="flex-1 py-3 bg-[#ede6dc] text-[#8c7e6d] rounded-2xl font-black uppercase text-xs disabled:opacity-50"
             >
               {t.close}
             </button>

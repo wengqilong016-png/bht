@@ -48,23 +48,23 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
           role="dialog"
         >
           <div
-            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-sm w-full flex flex-col max-h-[90vh] overflow-hidden"
+            className="bg-white dark:bg-[#2a2420] rounded-2xl shadow-2xl max-w-sm w-full flex flex-col max-h-[90vh] overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             <div className="p-6 flex flex-col gap-4 overflow-y-auto flex-1 min-h-0">
               {state.title && (
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                <h3 className="text-base font-bold text-[#171310] dark:text-white">
                   {state.title}
                 </h3>
               )}
-              <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">
+              <p className="text-sm text-[#7a6e5e] dark:text-[#c0b0a0] whitespace-pre-line leading-relaxed">
                 {state.message}
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex-shrink-0 bg-slate-50/80 dark:bg-slate-900/40">
+            <div className="grid grid-cols-2 gap-3 px-6 py-4 border-t border-[#e8e0d4] dark:border-[#3d3028] flex-shrink-0 bg-[#f3efe8]/80 dark:bg-[#171310]/40">
               <button
                 onClick={() => handleResult(false)}
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[#e0d8cc] bg-white px-4 py-3 text-sm font-bold text-[#3d3028] shadow-sm transition-colors hover:bg-[#ede6dc] dark:border-[#6b5d4e] dark:bg-[#3d3028] dark:text-[#ede6dc] dark:hover:bg-[#6b5d4e]"
               >
                 {state.cancelLabel ?? '取消 / Cancel'}
               </button>

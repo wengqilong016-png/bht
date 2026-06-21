@@ -51,35 +51,35 @@ const ForcePasswordChange: React.FC<ForcePasswordChangeProps> = ({ currentUser, 
           <div className="mx-auto w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center">
             <ShieldCheck size={24} className="text-amber-600" />
           </div>
-          <h1 className="text-base font-black text-slate-900 uppercase">{t.forcePasswordChangeTitle}</h1>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.forcePasswordChangeHint}</p>
-          <p className="text-[11px] font-bold text-slate-500">{currentUser.name} · {currentUser.username}</p>
+          <h1 className="text-base font-black text-[#171310] uppercase">{t.forcePasswordChangeTitle}</h1>
+          <p className="text-[10px] font-bold text-[#a09080] uppercase tracking-widest">{t.forcePasswordChangeHint}</p>
+          <p className="text-[11px] font-bold text-[#8c7e6d]">{currentUser.name} · {currentUser.username}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1 mb-1">
+            <label className="text-[10px] font-bold text-[#8c7e6d] uppercase tracking-widest flex items-center gap-1 mb-1">
               <Lock size={10} /> {t.newPassword}
             </label>
             <input
               type="password"
               value={newPwd}
               onChange={e => { setNewPwd(e.target.value); setError(''); }}
-              className="w-full bg-slate-100 rounded-xl py-3 px-4 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-slate-400"
+              className="w-full bg-[#ede6dc] rounded-xl py-3 px-4 text-sm font-bold text-[#3d3028] outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-[#a09080]"
               placeholder="••••••••"
               minLength={8}
               required
             />
           </div>
           <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1 mb-1">
+            <label className="text-[10px] font-bold text-[#8c7e6d] uppercase tracking-widest flex items-center gap-1 mb-1">
               <Lock size={10} /> {t.confirmPassword}
             </label>
             <input
               type="password"
               value={confirmPwd}
               onChange={e => { setConfirmPwd(e.target.value); setError(''); }}
-              className="w-full bg-slate-100 rounded-xl py-3 px-4 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-slate-400"
+              className="w-full bg-[#ede6dc] rounded-xl py-3 px-4 text-sm font-bold text-[#3d3028] outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-[#a09080]"
               placeholder="••••••••"
               minLength={8}
               required

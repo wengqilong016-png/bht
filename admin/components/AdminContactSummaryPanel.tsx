@@ -119,28 +119,28 @@ const ContactGroupCard: React.FC<ContactGroupCardProps> = ({ group, lang }) => {
   }, [group, lang]);
 
   return (
-    <div className="border border-slate-200 rounded-card overflow-hidden bg-white">
+    <div className="border border-[#e0d8cc] rounded-card overflow-hidden bg-white">
       {/* Group header */}
       <button
         onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f3efe8] transition-colors"
       >
-        <div className="w-9 h-9 rounded-subcard bg-gradient-to-br from-slate-800 to-amber-700 flex items-center justify-center flex-shrink-0">
+        <div className="w-9 h-9 rounded-subcard bg-gradient-to-br from-[#2a2420] to-amber-700 flex items-center justify-center flex-shrink-0">
           <Users size={14} className="text-white" />
         </div>
         <div className="flex-1 text-left min-w-0">
-          <p className="text-sm font-black text-slate-900 truncate">{group.driverName}</p>
-          <p className="text-caption text-slate-400 font-bold">
+          <p className="text-sm font-black text-[#171310] truncate">{group.driverName}</p>
+          <p className="text-caption text-[#a09080] font-bold">
             {group.locations.filter(l => l.phone).length} {lang === 'zh' ? '个联系人' : 'contacts'}
             {group.driverPhone && ` · ${group.driverPhone}`}
           </p>
         </div>
-        {expanded ? <ChevronUp size={14} className="text-slate-400 flex-shrink-0" /> : <ChevronDown size={14} className="text-slate-400 flex-shrink-0" />}
+        {expanded ? <ChevronUp size={14} className="text-[#a09080] flex-shrink-0" /> : <ChevronDown size={14} className="text-[#a09080] flex-shrink-0" />}
       </button>
 
       {/* Actions row */}
       {locationPhones.length > 0 && (
-        <div className="flex border-t border-slate-100">
+        <div className="flex border-t border-[#e8e0d4]">
           <button
             onClick={handleCopyPhones}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 text-caption font-black uppercase text-amber-700 hover:bg-amber-50 transition-colors"
@@ -148,10 +148,10 @@ const ContactGroupCard: React.FC<ContactGroupCardProps> = ({ group, lang }) => {
             {copied ? <CheckCheck size={12} /> : <Copy size={12} />}
             {lang === 'zh' ? '复制号码' : 'Copy'}
           </button>
-          <div className="w-px bg-slate-100" />
+          <div className="w-px bg-[#ede6dc]" />
           <button
             onClick={handleExport}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 text-caption font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 text-caption font-black uppercase text-[#7a6e5e] hover:bg-[#f3efe8] transition-colors"
           >
             <Download size={12} />
             {lang === 'zh' ? '导出' : 'Export'}
@@ -161,15 +161,15 @@ const ContactGroupCard: React.FC<ContactGroupCardProps> = ({ group, lang }) => {
 
       {/* Expanded location list */}
       {expanded && (
-        <div className="border-t border-slate-100 divide-y divide-slate-50">
+        <div className="border-t border-[#e8e0d4] divide-y divide-[#f3efe8]">
           {group.locations.map(loc => (
             <div key={loc.id} className="flex items-center gap-3 px-4 py-2.5">
-              <div className="w-7 h-7 rounded-tag bg-slate-100 flex items-center justify-center flex-shrink-0">
-                <Phone size={11} className="text-slate-500" />
+              <div className="w-7 h-7 rounded-tag bg-[#ede6dc] flex items-center justify-center flex-shrink-0">
+                <Phone size={11} className="text-[#8c7e6d]" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-slate-800 truncate">{loc.ownerName}</p>
-                <p className="text-caption text-slate-400 font-bold truncate">{loc.name}</p>
+                <p className="text-xs font-bold text-[#2a2420] truncate">{loc.ownerName}</p>
+                <p className="text-caption text-[#a09080] font-bold truncate">{loc.name}</p>
               </div>
               {loc.phone ? (
                 <a
@@ -180,7 +180,7 @@ const ContactGroupCard: React.FC<ContactGroupCardProps> = ({ group, lang }) => {
                   {loc.phone}
                 </a>
               ) : (
-                <span className="text-caption text-slate-300 font-bold">—</span>
+                <span className="text-caption text-[#c0b0a0] font-bold">—</span>
               )}
             </div>
           ))}
@@ -238,7 +238,7 @@ const AdminContactSummaryPanel: React.FC<AdminContactSummaryPanelProps> = ({
         <div className="fixed inset-0 z-50 flex items-end justify-end pointer-events-none">
           {/* Mobile backdrop */}
           <div
-            className="absolute inset-0 bg-slate-900/40 pointer-events-auto md:hidden"
+            className="absolute inset-0 bg-[#171310]/40 pointer-events-auto md:hidden"
             onClick={() => setIsOpen(false)}
           />
 
@@ -285,13 +285,13 @@ const AdminContactSummaryPanel: React.FC<AdminContactSummaryPanelProps> = ({
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {filteredGroups.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
+                <div className="flex flex-col items-center justify-center py-16 text-[#a09080] gap-3">
                   <Phone size={32} className="opacity-30" />
                   <p className="text-sm font-bold">
                     {search ? (lang === 'zh' ? '无匹配结果' : 'No results') : (lang === 'zh' ? '暂无联系人信息' : 'No contacts yet')}
                   </p>
                   {!search && (
-                    <p className="text-caption text-center text-slate-300 font-bold max-w-[200px]">
+                    <p className="text-caption text-center text-[#c0b0a0] font-bold max-w-[200px]">
                       {lang === 'zh' ? '请先在网点管理中填写店主电话' : 'Add owner phones in Site Management first'}
                     </p>
                   )}
@@ -305,8 +305,8 @@ const AdminContactSummaryPanel: React.FC<AdminContactSummaryPanelProps> = ({
 
             {/* Footer summary */}
             {totalContacts > 0 && (
-              <div className="flex-shrink-0 border-t border-slate-100 bg-slate-50 px-4 py-2.5 flex items-center justify-between">
-                <p className="text-caption text-slate-400 font-bold">
+              <div className="flex-shrink-0 border-t border-[#e8e0d4] bg-[#f3efe8] px-4 py-2.5 flex items-center justify-between">
+                <p className="text-caption text-[#a09080] font-bold">
                   {lang === 'zh' ? `共 ${totalContacts} 个业主号码` : `${totalContacts} owner phones total`}
                 </p>
               </div>

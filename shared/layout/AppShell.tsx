@@ -9,7 +9,7 @@ interface AppShellProps extends React.HTMLAttributes<HTMLDivElement> {
  * Provides the flex h-screen base structure.
  */
 const AppShell: React.FC<AppShellProps> = ({ children, className, ...rest }) => (
-  <div className={['flex h-screen overflow-hidden bg-slate-100', className].filter(Boolean).join(' ')} {...rest}>
+  <div className={['flex h-screen overflow-hidden bg-[#f3efe8]', className].filter(Boolean).join(' ')} {...rest}>
     {children}
   </div>
 );

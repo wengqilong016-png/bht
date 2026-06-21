@@ -205,13 +205,13 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
         </div>
       )}
 
-      <div className="flex items-start justify-between gap-3 rounded-card border border-slate-200 bg-white px-4 py-3 shadow-field">
+      <div className="flex items-start justify-between gap-3 rounded-card border border-[#e0d8cc] bg-white px-4 py-3 shadow-field">
         <div className="min-w-0">
-          <h2 className="flex items-center gap-2 text-lg font-black uppercase leading-tight text-slate-900">
+          <h2 className="flex items-center gap-2 text-lg font-black uppercase leading-tight text-[#171310]">
             <ScanLine className="text-amber-600" size={18} />
             {t.selectMachine}
           </h2>
-          <p className="mt-1 text-caption font-black uppercase tracking-wide text-slate-400">
+          <p className="mt-1 text-caption font-bold uppercase tracking-wide text-[#a09080]">
             {collectionOverview.totalMachines} {lang === 'zh' ? '台机器' : 'machines'} · {todayDriverTransactions.length} {t.todaysCollections}
           </p>
         </div>
@@ -220,7 +220,7 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
             <Coins size={12} />
             <span>{lang === 'zh' ? '流动硬币' : 'Float'}</span>
           </div>
-          <span className="mt-1 block text-right text-sm font-black text-slate-900">
+          <span className="mt-1 block text-right text-sm font-black text-[#171310]">
             {(currentDriver?.dailyFloatingCoins ?? 0).toLocaleString()}
           </span>
         </div>
@@ -236,15 +236,15 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
             <p className="text-caption font-black uppercase tracking-[0.22em] text-amber-500">
               {t.resumeCurrentTask}
             </p>
-            <p className="mt-1 truncate text-[11px] font-black uppercase text-slate-900">
+            <p className="mt-1 truncate text-[11px] font-bold uppercase text-[#171310]">
               {currentDraftLocation.machineId}{' '}
-              <span className="normal-case text-slate-500">{currentDraftLocation.name}</span>
+              <span className="normal-case text-[#8c7e6d]">{currentDraftLocation.name}</span>
             </p>
-            <p className="mt-1 truncate text-caption font-bold uppercase tracking-wide text-slate-400">
+            <p className="mt-1 truncate text-caption font-bold uppercase tracking-wide text-[#a09080]">
               {currentDraftLocation.area || '—'} · {t.score} {(currentDraftLocation.lastScore ?? 0).toLocaleString()}
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2 rounded-btn bg-white px-3 py-2 text-caption font-black uppercase tracking-wide text-amber-600">
+          <div className="flex shrink-0 items-center gap-2 rounded-btn bg-white px-3 py-2 text-caption font-bold uppercase tracking-wide text-amber-600">
             <ScanLine size={13} />
             {t.resumeEntry}
           </div>
@@ -277,9 +277,9 @@ const MachineSelector: React.FC<MachineSelectorProps> = ({
           </div>
         )}
         {locationCards.length === 0 && (
-          <div className="rounded-card border border-dashed border-slate-200 bg-white py-12 text-center">
-            <Layers size={36} className="mx-auto text-slate-200 mb-3" />
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.noMachinesAssigned}</p>
+          <div className="rounded-card border border-dashed border-[#e0d8cc] bg-white py-12 text-center">
+            <Layers size={36} className="mx-auto text-[#e0d8cc] mb-3" />
+            <p className="text-xs font-bold text-[#a09080] uppercase tracking-widest">{t.noMachinesAssigned}</p>
           </div>
         )}
         {locationCards.map((item) => (

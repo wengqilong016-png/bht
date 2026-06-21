@@ -50,13 +50,13 @@ export function RevenueSummary({
   const revenue = financeAmountToNumber(calculations.revenue);
 
   return (
-    <div className={`px-3 py-2.5 rounded-2xl text-white flex justify-between items-center ${revenue > 50000 ? 'bg-amber-600' : 'bg-slate-800'}`}>
+    <div className={`px-3 py-2.5 rounded-2xl text-white flex justify-between items-center ${revenue > 50000 ? 'bg-amber-600' : 'bg-[#2a2420]'}`}>
       <div>
         <p className="text-caption font-black uppercase opacity-60">{t.formula}</p>
         <p className="text-caption font-bold opacity-50">({currentScore} - {selectedLocation?.lastScore}) x 200</p>
         {previewSource && (
           <span
-            className={`inline-block mt-1 px-1.5 py-0.5 rounded text-caption font-black uppercase tracking-wide ${previewSource === 'server' ? 'bg-white/20 text-white' : 'bg-white/10 text-white/50'}`}
+            className={`inline-block mt-1 px-1.5 py-0.5 rounded text-caption font-bold uppercase tracking-wide ${previewSource === 'server' ? 'bg-white/20 text-white' : 'bg-white/10 text-white/50'}`}
             title={previewSource === 'server' ? 'Preview calculated by server' : 'Preview calculated locally'}
           >
             {previewSource === 'server' ? 'server' : 'local'}
@@ -87,21 +87,21 @@ export function FinanceMetricGrid({
 
   return (
     <div className="grid grid-cols-3 gap-2">
-      <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
-        <p className="text-caption font-black uppercase tracking-wide text-slate-400">
+      <div className="rounded-2xl border border-[#e0d8cc] bg-white px-3 py-2.5">
+        <p className="text-caption font-bold uppercase tracking-wide text-[#a09080]">
           {isOwnerRetaining
             ? (lang === 'zh' ? '计入余额' : 'Added to Balance')
             : (lang === 'zh' ? '支付分红' : 'Owner Payout')}
         </p>
-        <p className="mt-1 text-sm font-black text-slate-900">TZS {formatFinanceAmount(calculations.finalRetention)}</p>
+        <p className="mt-1 text-sm font-black text-[#171310]">TZS {formatFinanceAmount(calculations.finalRetention)}</p>
       </div>
-      <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
-        <p className="text-caption font-black uppercase tracking-wide text-slate-400">{t.expenses}</p>
-        <p className="mt-1 text-sm font-black text-slate-900">TZS 0</p>
+      <div className="rounded-2xl border border-[#e0d8cc] bg-white px-3 py-2.5">
+        <p className="text-caption font-bold uppercase tracking-wide text-[#a09080]">{t.expenses}</p>
+        <p className="mt-1 text-sm font-black text-[#171310]">TZS 0</p>
       </div>
-      <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
-        <p className="text-caption font-black uppercase tracking-wide text-slate-400">{t.net}</p>
-        <p className="mt-1 text-sm font-black text-slate-900">TZS {formatFinanceAmount(calculations.netPayable)}</p>
+      <div className="rounded-2xl border border-[#e0d8cc] bg-white px-3 py-2.5">
+        <p className="text-caption font-bold uppercase tracking-wide text-[#a09080]">{t.net}</p>
+        <p className="mt-1 text-sm font-black text-[#171310]">TZS {formatFinanceAmount(calculations.netPayable)}</p>
       </div>
     </div>
   );
@@ -151,7 +151,7 @@ export function OwnerRetentionSection({
       </div>
       <div className="space-y-2">
         <div className="flex items-baseline gap-1">
-          <span className={`text-xs font-black ${isOwnerRetaining ? 'text-amber-300' : 'text-emerald-300'}`}>TZS</span>
+          <span className={`text-xs font-bold ${isOwnerRetaining ? 'text-amber-300' : 'text-emerald-300'}`}>TZS</span>
           <input
             type="number"
             step="0.01"
@@ -184,26 +184,26 @@ export function OwnerRetentionSection({
         {isOwnerRetaining ? (
           <div className="grid grid-cols-2 gap-2 rounded-2xl border border-amber-200 bg-white/70 px-3 py-2">
             <div>
-              <p className="text-caption font-black text-slate-400">{lang === 'zh' ? '当前余额' : 'Current Balance'}</p>
-              <p className="mt-1 text-[11px] font-black text-slate-900">
+              <p className="text-caption font-black text-[#a09080]">{lang === 'zh' ? '当前余额' : 'Current Balance'}</p>
+              <p className="mt-1 text-[11px] font-bold text-[#171310]">
                 TZS {currentDividendBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <div>
-              <p className="text-caption font-black text-slate-400">{lang === 'zh' ? '本次计入' : 'Added This Run'}</p>
-              <p className="mt-1 text-[11px] font-black text-amber-700">
+              <p className="text-caption font-black text-[#a09080]">{lang === 'zh' ? '本次计入' : 'Added This Run'}</p>
+              <p className="mt-1 text-[11px] font-bold text-amber-700">
                 TZS {formatFinanceAmount(calculations.finalRetention, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <div>
-              <p className="text-caption font-black text-slate-400">{lang === 'zh' ? '提交后余额' : 'Balance After Submit'}</p>
-              <p className="mt-1 text-[11px] font-black text-amber-700">
+              <p className="text-caption font-black text-[#a09080]">{lang === 'zh' ? '提交后余额' : 'Balance After Submit'}</p>
+              <p className="mt-1 text-[11px] font-bold text-amber-700">
                 TZS {nextDividendBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <div>
-              <p className="text-caption font-black text-slate-400">{lang === 'zh' ? '可提取参考' : 'Withdrawable Reference'}</p>
-              <p className="mt-1 text-[11px] font-black text-amber-700">
+              <p className="text-caption font-black text-[#a09080]">{lang === 'zh' ? '可提取参考' : 'Withdrawable Reference'}</p>
+              <p className="mt-1 text-[11px] font-bold text-amber-700">
                 TZS {withdrawableReference.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
               <p className="mt-0.5 text-caption font-bold text-amber-500">
@@ -214,20 +214,20 @@ export function OwnerRetentionSection({
         ) : (
           <div className="grid grid-cols-3 gap-2 rounded-2xl border border-emerald-200 bg-white/70 px-3 py-2">
             <div>
-              <p className="text-caption font-black text-slate-400">{lang === 'zh' ? '理论分红' : 'Theoretical'}</p>
-              <p className="mt-1 text-[11px] font-black text-slate-900">
+              <p className="text-caption font-black text-[#a09080]">{lang === 'zh' ? '理论分红' : 'Theoretical'}</p>
+              <p className="mt-1 text-[11px] font-bold text-[#171310]">
                 TZS {formatFinanceAmount(calculations.commission, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <div>
-              <p className="text-caption font-black text-slate-400">{lang === 'zh' ? '本次支付' : 'Paid This Run'}</p>
-              <p className="mt-1 text-[11px] font-black text-emerald-700">
+              <p className="text-caption font-black text-[#a09080]">{lang === 'zh' ? '本次支付' : 'Paid This Run'}</p>
+              <p className="mt-1 text-[11px] font-bold text-emerald-700">
                 TZS {formatFinanceAmount(calculations.finalRetention, { maximumFractionDigits: 2 })}
               </p>
             </div>
             <div>
-              <p className="text-caption font-black text-slate-400">{lang === 'zh' ? '不计入余额' : 'Not Added'}</p>
-              <p className="mt-1 text-[11px] font-black text-emerald-700">TZS 0</p>
+              <p className="text-caption font-black text-[#a09080]">{lang === 'zh' ? '不计入余额' : 'Not Added'}</p>
+              <p className="mt-1 text-[11px] font-bold text-emerald-700">TZS 0</p>
             </div>
           </div>
         )}
@@ -260,7 +260,7 @@ export function TipPaymentSection({
         {lang === 'zh' ? '本次给员工/现场人员的小费' : 'Tip paid to staff or on-site personnel this run'}
       </p>
       <div className="flex items-baseline gap-1 border-b border-sky-200 px-1">
-        <span className="text-xs font-black text-sky-300">TZS</span>
+        <span className="text-xs font-bold text-sky-300">TZS</span>
         <input
           type="number"
           min="0"
@@ -330,7 +330,7 @@ export function StartupDebtDeductionSection({
       </div>
       <div className="flex items-center gap-3">
         <div className="flex items-baseline gap-1 border-b border-amber-200 px-1 flex-1">
-          <span className="text-xs font-black text-amber-300">TZS</span>
+          <span className="text-xs font-bold text-amber-300">TZS</span>
           <input
             type="number"
             min="0"
@@ -397,11 +397,11 @@ export function FinanceNavigation({
   onNext: () => void;
 }) {
   return (
-    <div className="sticky bottom-[calc(var(--mobile-nav-height,4.75rem)+env(safe-area-inset-bottom))] z-20 mt-4 rounded-card border border-slate-200 bg-white/95 p-2 backdrop-blur md:bottom-0">
+    <div className="sticky bottom-[calc(var(--mobile-nav-height,4.75rem)+env(safe-area-inset-bottom))] z-20 mt-4 rounded-card border border-[#e0d8cc] bg-white/95 p-2 backdrop-blur md:bottom-0">
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={onBack}
-          className="py-4 bg-white border border-slate-200 text-slate-500 rounded-btn font-black uppercase text-xs shadow-field hover:text-amber-600 transition-colors flex items-center justify-center gap-2"
+          className="py-4 bg-white border border-[#e0d8cc] text-[#8c7e6d] rounded-btn font-black uppercase text-xs shadow-field hover:text-amber-600 transition-colors flex items-center justify-center gap-2"
         >
           <ArrowRight size={15} className="rotate-180" />
           {lang === 'zh' ? '返回' : 'Back'}
@@ -410,7 +410,7 @@ export function FinanceNavigation({
           onClick={onNext}
           disabled={isScoreBelowLastReading}
           data-testid="driver-finance-next"
-          className="py-4 bg-amber-600 text-white rounded-btn font-black uppercase text-xs shadow-field-md active:scale-95 transition-all flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:cursor-not-allowed"
+          className="py-4 bg-amber-600 text-white rounded-btn font-black uppercase text-xs shadow-field-md active:scale-95 transition-all flex items-center justify-center gap-2 disabled:bg-[#c8beb0] disabled:cursor-not-allowed"
         >
           {lang === 'zh' ? '复核并提交' : 'Review & Submit'}
           <ChevronRight size={15} />

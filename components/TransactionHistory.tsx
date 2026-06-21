@@ -115,13 +115,13 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
               <p className="text-caption font-black uppercase tracking-[0.2em]">
                 {lang === 'zh' ? '同步状态' : 'Sync Status'}
               </p>
-              <p className="mt-1 text-xs font-black">{syncMeta.title}</p>
+              <p className="mt-1 text-xs font-bold">{syncMeta.title}</p>
             </div>
           </div>
           {syncStatus.isOnline && !syncStatus.isSyncing && (
             <button
               onClick={syncStatus.trigger}
-              className="rounded-xl bg-slate-900 px-3 py-2 text-caption font-black uppercase text-white transition hover:bg-slate-800"
+              className="rounded-xl bg-[#171310] px-3 py-2 text-caption font-black uppercase text-white transition hover:bg-[#2a2420]"
             >
               {lang === 'zh' ? '立即重试' : 'Retry Now'}
             </button>
@@ -129,25 +129,25 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
         </div>
       )}
 
-      <div className="flex flex-col gap-4 bg-white p-5 rounded-card border border-slate-200 shadow-sm">
+      <div className="flex flex-col gap-4 bg-white p-5 rounded-card border border-[#e0d8cc] shadow-sm">
         <div className="flex flex-wrap justify-between items-center gap-3">
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setShowUnsyncedOnly(!showUnsyncedOnly)}
-              className={`px-4 py-2 rounded-xl text-caption font-black uppercase transition-all flex items-center gap-2 border ${showUnsyncedOnly ? 'bg-amber-50 border-amber-200 text-amber-600 shadow-md shadow-amber-100' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'}`}
+              className={`px-4 py-2 rounded-xl text-caption font-black uppercase transition-all flex items-center gap-2 border ${showUnsyncedOnly ? 'bg-amber-50 border-amber-200 text-amber-600 shadow-md shadow-amber-100' : 'bg-white border-[#e0d8cc] text-[#a09080] hover:bg-[#f3efe8]'}`}
             >
               <WifiOff size={14} />
               <span className="hidden sm:inline">{t.unsyncedLabel}</span>
-              <span className={`px-1.5 py-0.5 rounded-md text-caption min-w-[20px] text-center ${showUnsyncedOnly ? 'bg-amber-200 text-amber-800' : 'bg-slate-100 text-slate-500'}`}>{unsyncedCount}</span>
+              <span className={`px-1.5 py-0.5 rounded-md text-caption min-w-[20px] text-center ${showUnsyncedOnly ? 'bg-amber-200 text-amber-800' : 'bg-[#ede6dc] text-[#8c7e6d]'}`}>{unsyncedCount}</span>
             </button>
           </div>
 
           <div className="relative">
-            <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a09080]" />
             <select 
               value={selectedLocation} 
               onChange={(e) => setSelectedLocation(e.target.value)} 
-              className="bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-caption font-black text-slate-700 outline-none uppercase appearance-none min-w-[150px] shadow-sm focus:ring-2 focus:ring-amber-500/20 transition-all"
+              className="bg-[#f3efe8] border border-[#e0d8cc] rounded-xl pl-9 pr-4 py-2.5 text-caption font-black text-[#3d3028] outline-none uppercase appearance-none min-w-[150px] shadow-sm focus:ring-2 focus:ring-amber-500/20 transition-all"
             >
               <option value="all">{lang === 'zh' ? '所有点位汇总' : 'All Sites'}</option>
               {locationNames.map(loc => <option key={loc} value={loc}>{loc}</option>)}
@@ -158,7 +158,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
 
       <div className="space-y-3">
           {filteredTransactions.map(tx => (
-            <div key={tx.id} className="bg-white rounded-3xl border border-slate-200 overflow-hidden hover:border-amber-300 transition-all group shadow-sm hover:shadow-md">
+            <div key={tx.id} className="bg-white rounded-3xl border border-[#e0d8cc] overflow-hidden hover:border-amber-300 transition-all group shadow-sm hover:shadow-md">
               <div className="p-5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 ${tx.isSynced ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-amber-50 border-amber-100 text-amber-600 shadow-inner animate-pulse'}`}>
@@ -166,20 +166,20 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-black text-slate-900 text-sm tracking-tight">{tx.locationName}</h4>
+                      <h4 className="font-black text-[#171310] text-sm tracking-tight">{tx.locationName}</h4>
                       {tx.type === 'payout_request' && (
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 text-caption font-black uppercase">{lang === 'zh' ? '提现' : 'Payout'}</span>
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 text-caption font-bold uppercase">{lang === 'zh' ? '提现' : 'Payout'}</span>
                       )}
                       {tx.type === 'reset_request' && (
-                        <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-caption font-black uppercase">{lang === 'zh' ? '重置' : 'Reset'}</span>
+                        <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-caption font-bold uppercase">{lang === 'zh' ? '重置' : 'Reset'}</span>
                       )}
                       {(tx.expenses > 0 && tx.expenseStatus === 'pending') && (
-                        <span className="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-caption font-black uppercase">{t.pendingApproval}</span>
+                        <span className="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-caption font-bold uppercase">{t.pendingApproval}</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-caption font-black text-slate-400 uppercase tracking-widest mt-1">
+                    <div className="flex items-center gap-3 text-caption font-black text-[#a09080] uppercase tracking-widest mt-1">
                       <div className="flex items-center gap-1"><Clock size={10} /> {new Date(tx.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
-                      <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
+                      <div className="w-1 h-1 bg-[#e0d8cc] rounded-full"></div>
                       <div className="flex items-center gap-1 text-amber-500"><Globe size={10} /> {tx.dataUsageKB} KB</div>
                     </div>
                   </div>
@@ -188,14 +188,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
                   <div className="text-right">
                     {tx.type === 'payout_request' ? (
                       <>
-                        <p className="text-xs font-black text-slate-400 uppercase mb-0.5">
+                        <p className="text-xs font-bold text-[#a09080] uppercase mb-0.5">
                           {lang === 'zh' ? '提现申请' : 'Payout Request'}
                         </p>
                         <p className="text-sm font-black text-emerald-600">TZS {(tx.payoutAmount || 0).toLocaleString()}</p>
                       </>
                     ) : tx.type === 'reset_request' ? (
                       <>
-                        <p className="text-xs font-black text-slate-400 uppercase mb-0.5">
+                        <p className="text-xs font-bold text-[#a09080] uppercase mb-0.5">
                           {lang === 'zh' ? '重置申请' : 'Reset Request'}
                         </p>
                         <p className="text-sm font-black text-amber-600">
@@ -208,14 +208,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
                       </>
                     ) : (
                       <>
-                        <p className="text-xs font-black text-slate-400 uppercase mb-0.5">
+                        <p className="text-xs font-bold text-[#a09080] uppercase mb-0.5">
                           {lang === 'zh' ? '净营收' : 'Net Cash'}
                         </p>
                         <p className="text-sm font-black text-amber-600">TZS {tx.netPayable.toLocaleString()}</p>
                       </>
                     )}
                   </div>
-                  <button onClick={() => setExpandedId(expandedId === tx.id ? null : tx.id)} className={`p-2 rounded-xl transition-all ${expandedId === tx.id ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
+                  <button onClick={() => setExpandedId(expandedId === tx.id ? null : tx.id)} className={`p-2 rounded-xl transition-all ${expandedId === tx.id ? 'bg-[#171310] text-white' : 'bg-[#f3efe8] text-[#a09080] hover:bg-[#ede6dc]'}`}>
                     <ChevronDown size={18} className={`transition-transform duration-300 ${expandedId === tx.id ? 'rotate-180' : ''}`} />
                   </button>
                 </div>
@@ -233,16 +233,16 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white p-3 rounded-subcard border border-emerald-100">
-                          <p className="text-caption font-black text-slate-400 uppercase mb-1">
+                          <p className="text-caption font-black text-[#a09080] uppercase mb-1">
                             {lang === 'zh' ? '申请金额' : 'Requested Amount'}
                           </p>
                           <p className="text-lg font-black text-emerald-700">TZS {(tx.payoutAmount || 0).toLocaleString()}</p>
                         </div>
                         <div className="bg-white p-3 rounded-subcard border border-emerald-100">
-                          <p className="text-caption font-black text-slate-400 uppercase mb-1">
+                          <p className="text-caption font-black text-[#a09080] uppercase mb-1">
                             {lang === 'zh' ? '审批状态' : 'Approval Status'}
                           </p>
-                          <p className={`text-xs font-black uppercase ${
+                          <p className={`text-xs font-bold uppercase ${
                             tx.approvalStatus === 'approved' ? 'text-emerald-600' :
                             tx.approvalStatus === 'rejected' ? 'text-rose-600' :
                             'text-amber-600'
@@ -257,18 +257,18 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
                       </div>
                       {tx.notes && (
                         <div className="bg-white p-3 rounded-subcard border border-emerald-100">
-                          <p className="text-caption font-black text-slate-400 uppercase mb-1">{lang === 'zh' ? '备注' : 'Notes'}</p>
-                          <p className="text-xs font-bold text-slate-600">{tx.notes}</p>
+                          <p className="text-caption font-black text-[#a09080] uppercase mb-1">{lang === 'zh' ? '备注' : 'Notes'}</p>
+                          <p className="text-xs font-bold text-[#7a6e5e]">{tx.notes}</p>
                         </div>
                       )}
                     </div>
                   ) : (
-                  <div className="bg-slate-50 p-6 rounded-card border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-[#f3efe8] p-6 rounded-card border border-[#e0d8cc] grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Calculator size={16} className="text-amber-600" />
-                          <h4 className="text-caption font-black text-slate-900 uppercase tracking-widest">收益清算明细</h4>
+                          <h4 className="text-caption font-black text-[#171310] uppercase tracking-widest">收益清算明细</h4>
                         </div>
                         {tx.aiScore && (
                            <div className="flex items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 animate-in zoom-in-95">
@@ -281,17 +281,17 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
                       {tx.aiScore && (
                         <div className="p-4 bg-white border-2 border-amber-100 rounded-2xl space-y-3 shadow-lg shadow-amber-50">
                            <div className="flex justify-between items-center border-b border-amber-50 pb-2">
-                              <span className="text-caption font-black text-slate-400 uppercase">AI 识别读数</span>
+                              <span className="text-caption font-black text-[#a09080] uppercase">AI 识别读数</span>
                               <span className="text-base font-black text-amber-600">{tx.aiScore}</span>
                            </div>
                            <div className="flex justify-between items-center">
-                              <span className="text-caption font-black text-slate-400 uppercase">数据吻合度</span>
-                              <span className={`px-2 py-0.5 rounded text-caption font-black uppercase ${tx.isAnomaly ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                              <span className="text-caption font-black text-[#a09080] uppercase">数据吻合度</span>
+                              <span className={`px-2 py-0.5 rounded text-caption font-bold uppercase ${tx.isAnomaly ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
                                  {tx.isAnomaly ? '⚠ 存在读数差异' : '✅ 读数完全吻合'}
                               </span>
                            </div>
-                           <div className="p-3 bg-slate-50 rounded-xl relative group">
-                              <p className="text-caption font-bold text-slate-600 leading-relaxed italic">“ {tx.notes || '现场情况正常，建议入库。'} ”</p>
+                           <div className="p-3 bg-[#f3efe8] rounded-xl relative group">
+                              <p className="text-caption font-bold text-[#7a6e5e] leading-relaxed italic">“ {tx.notes || '现场情况正常，建议入库。'} ”</p>
                               {tx.notes && (
                                 <button 
                                   onClick={async (e) => {
@@ -316,10 +316,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
                       )}
 
                       <div className="space-y-2">
-                        <div className="flex justify-between text-[11px] font-bold text-slate-500"><span>总收入 (Coins Value)</span><span>TZS {tx.revenue.toLocaleString()}</span></div>
+                        <div className="flex justify-between text-[11px] font-bold text-[#8c7e6d]"><span>总收入 (Coins Value)</span><span>TZS {tx.revenue.toLocaleString()}</span></div>
                         <div className="flex justify-between text-[11px] font-bold text-amber-600"><span>{lang === 'zh' ? '店主分红 (-)' : 'Owner Dividend (-)'}</span><span>- {tx.ownerRetention.toLocaleString()}</span></div>
                         {tx.type === 'collection' && tx.ownerRetention > 0 && (
-                          <div className={`flex justify-between text-[10px] font-black ${tx.isOwnerRetaining === true ? 'text-amber-600' : tx.isOwnerRetaining === false ? 'text-emerald-600' : 'text-slate-400'}`}>
+                          <div className={`flex justify-between text-[10px] font-bold ${tx.isOwnerRetaining === true ? 'text-amber-600' : tx.isOwnerRetaining === false ? 'text-emerald-600' : 'text-[#a09080]'}`}>
                             <span>{lang === 'zh' ? '分红模式' : 'Dividend Mode'}</span>
                             <span>
                               {tx.isOwnerRetaining === true
@@ -332,14 +332,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
                         )}
                         <div className="flex justify-between text-[11px] font-bold text-rose-500"><span>日常支出 (-)</span><span>- {tx.expenses.toLocaleString()}</span></div>
                         <div className="flex justify-between text-[11px] font-bold text-amber-600"><span>欠款回收 (-)</span><span>- {(tx.debtDeduction + tx.startupDebtDeduction).toLocaleString()}</span></div>
-                        <div className="h-px bg-slate-200 my-2"></div>
-                        <div className="flex justify-between text-sm font-black text-slate-900"><span>应缴库现金</span><span>TZS {tx.netPayable.toLocaleString()}</span></div>
+                        <div className="h-px bg-[#e0d8cc] my-2"></div>
+                        <div className="flex justify-between text-sm font-black text-[#171310]"><span>应缴库现金</span><span>TZS {tx.netPayable.toLocaleString()}</span></div>
                         {/* Show calculated commission when it differs from the actual deducted amount.
                             This happens when the driver manually overrode the owner retention or
                             when the owner chose to accumulate their share in the dividend balance
                             (isOwnerRetaining=true with a custom entry) vs the rate-based amount. */}
                         {tx.commission > 0 && tx.commission !== tx.ownerRetention && (
-                          <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                          <div className="flex justify-between text-[10px] font-bold text-[#a09080]">
                             <span>{lang === 'zh' ? '系统计提分红（参考）' : 'Rate-based Commission (ref)'}</span>
                             <span>TZS {tx.commission.toLocaleString()}</span>
                           </div>
@@ -356,16 +356,16 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
                             const isMedium = dist !== null && dist > 50 && dist <= 200;
 
                             return (
-                              <div className={`p-3 rounded-xl border flex flex-col justify-between transition-colors ${isFar ? 'bg-rose-50 border-rose-200' : isMedium ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-200'}`}>
+                              <div className={`p-3 rounded-xl border flex flex-col justify-between transition-colors ${isFar ? 'bg-rose-50 border-rose-200' : isMedium ? 'bg-amber-50 border-amber-200' : 'bg-white border-[#e0d8cc]'}`}>
                                 <div className="flex justify-between items-start">
-                                   <p className="text-caption font-black text-slate-400 uppercase">地理偏移量</p>
+                                   <p className="text-caption font-black text-[#a09080] uppercase">地理偏移量</p>
                                    {isFar && <ShieldAlert size={12} className="text-rose-500 animate-pulse" />}
                                 </div>
                                 <div className="flex items-baseline gap-1 mt-1">
-                                   <p className={`text-xs font-black ${isFar ? 'text-rose-600' : isMedium ? 'text-amber-600' : 'text-amber-700'}`}>
+                                   <p className={`text-xs font-bold ${isFar ? 'text-rose-600' : isMedium ? 'text-amber-600' : 'text-amber-700'}`}>
                                       {dist !== null ? `${Math.round(dist)} 米` : '无坐标数据'}
                                    </p>
-                                   <p className="text-caption font-bold text-slate-400 uppercase">Offset</p>
+                                   <p className="text-caption font-bold text-[#a09080] uppercase">Offset</p>
                                 </div>
                                 {isFar && (
                                    <p className="text-caption font-bold text-rose-400 uppercase mt-1 leading-tight">⚠ 疑似远程填报 (Remote Check-in)</p>
@@ -373,8 +373,8 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
                               </div>
                             );
                          })()}
-                         <div className="bg-white p-3 rounded-xl border border-slate-200 flex flex-col justify-between">
-                           <p className="text-caption font-black text-slate-400 uppercase">审计状态</p>
+                         <div className="bg-white p-3 rounded-xl border border-[#e0d8cc] flex flex-col justify-between">
+                           <p className="text-caption font-black text-[#a09080] uppercase">审计状态</p>
                            <div className="flex items-center gap-2 mt-1">
                               <Target size={12} className="text-emerald-500" />
                               <p className="text-caption font-black text-emerald-600 uppercase">Verified</p>
@@ -392,7 +392,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
                            </div>
                          </div>
                        ) : (
-                         <div className="h-48 rounded-2xl bg-slate-200 flex flex-col items-center justify-center text-slate-400">
+                         <div className="h-48 rounded-2xl bg-[#e0d8cc] flex flex-col items-center justify-center text-[#a09080]">
                            <AlertTriangle size={32} />
                            <p className="text-caption font-black uppercase mt-2">未上传现场照片</p>
                          </div>
@@ -405,11 +405,11 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onAnalyze: _onA
             </div>
           ))}
           {filteredTransactions.length === 0 && (
-            <div className="text-center py-20 bg-white rounded-card border border-dashed border-slate-200">
-              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+            <div className="text-center py-20 bg-white rounded-card border border-dashed border-[#e0d8cc]">
+              <div className="w-16 h-16 bg-[#f3efe8] rounded-full flex items-center justify-center mx-auto mb-4 text-[#c0b0a0]">
                 <Search size={32} />
               </div>
-              <p className="text-sm font-black text-slate-400 uppercase tracking-widest">未检索到匹配的审计记录</p>
+              <p className="text-sm font-black text-[#a09080] uppercase tracking-widest">未检索到匹配的审计记录</p>
             </div>
           )}
         </div>

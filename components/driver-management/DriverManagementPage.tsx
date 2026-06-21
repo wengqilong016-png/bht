@@ -408,17 +408,17 @@ const DriverManagementPage: React.FC<DriverManagementProps> = () => {
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="p-2 bg-white border border-slate-200 rounded-xl disabled:opacity-30 hover:bg-slate-50 transition-colors"
+            className="p-2 bg-white border border-[#e0d8cc] rounded-xl disabled:opacity-30 hover:bg-[#f3efe8] transition-colors"
           >
             <ChevronLeft size={16} />
           </button>
-          <span className="text-xs font-black text-slate-500 uppercase tracking-widest">
+          <span className="text-xs font-bold text-[#8c7e6d] uppercase tracking-widest">
             Page {page} of {totalPages}
           </span>
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="p-2 bg-white border border-slate-200 rounded-xl disabled:opacity-30 hover:bg-slate-50 transition-colors"
+            className="p-2 bg-white border border-[#e0d8cc] rounded-xl disabled:opacity-30 hover:bg-[#f3efe8] transition-colors"
           >
             <ChevronRight size={16} />
           </button>

@@ -58,43 +58,43 @@ const FinanceAuditPanel: React.FC<FinanceAuditPanelProps> = ({ lang }) => {
   }, [open]);
 
   return (
-    <div className="rounded-card border border-slate-200 bg-white overflow-hidden">
+    <div className="rounded-card border border-[#e0d8cc] bg-white overflow-hidden">
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#f3efe8] transition-colors"
       >
         <div className="flex items-center gap-2">
-          <History size={16} className="text-slate-500" />
-          <span className="text-xs font-black uppercase tracking-widest text-slate-600">{t.auditLog}</span>
+          <History size={16} className="text-[#8c7e6d]" />
+          <span className="text-xs font-bold uppercase tracking-widest text-[#7a6e5e]">{t.auditLog}</span>
         </div>
-        {open ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+        {open ? <ChevronUp size={16} className="text-[#a09080]" /> : <ChevronDown size={16} className="text-[#a09080]" />}
       </button>
 
       {open && (
-        <div className="border-t border-slate-100 max-h-72 overflow-y-auto">
+        <div className="border-t border-[#e8e0d4] max-h-72 overflow-y-auto">
           {loading ? (
-            <div className="py-6 text-center text-xs text-slate-400 font-bold">Loading…</div>
+            <div className="py-6 text-center text-xs text-[#a09080] font-bold">Loading…</div>
           ) : entries.length === 0 ? (
-            <div className="py-6 text-center text-xs text-slate-400 font-bold">{t.auditLogEmpty}</div>
+            <div className="py-6 text-center text-xs text-[#a09080] font-bold">{t.auditLogEmpty}</div>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-[#e8e0d4]">
               {entries.map(e => (
                 <li key={e.id} className="px-5 py-3 flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-caption font-black text-slate-700 truncate">
+                    <p className="text-caption font-black text-[#3d3028] truncate">
                       {EVENT_LABEL[e.event_type]?.[lang] ?? e.event_type}
                     </p>
-                    <p className="text-caption text-slate-400 truncate">
+                    <p className="text-caption text-[#a09080] truncate">
                       {e.entity_name ?? e.entity_id}
                     </p>
                   </div>
                   <div className="flex-shrink-0 text-right">
                     <p className="text-caption font-bold">
                       <span className="text-red-500">{formatValue(e.event_type, e.old_value)}</span>
-                      <span className="text-slate-300 mx-1">→</span>
+                      <span className="text-[#c0b0a0] mx-1">→</span>
                       <span className="text-emerald-600">{formatValue(e.event_type, e.new_value)}</span>
                     </p>
-                    <p className="text-caption text-slate-400">{timeAgo(e.created_at, lang)}</p>
+                    <p className="text-caption text-[#a09080]">{timeAgo(e.created_at, lang)}</p>
                   </div>
                 </li>
               ))}

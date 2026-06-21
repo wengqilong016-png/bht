@@ -66,19 +66,19 @@ const PayoutRequest: React.FC<PayoutRequestProps> = ({
 
   return (
     <div className="max-w-md mx-auto py-6 px-4 animate-in fade-in">
-      <div className="bg-white rounded-card p-6 border border-slate-200 shadow-field-md space-y-5">
-        <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+      <div className="bg-white rounded-card p-6 border border-[#e0d8cc] shadow-field-md space-y-5">
+        <div className="flex justify-between items-center border-b border-[#e8e0d4] pb-4">
           <button
             {...useAriaButton({
               onClick: onCancel,
               label: 'Back',
-              className: 'p-2.5 bg-slate-100 rounded-subcard text-slate-500 hover:text-amber-600 transition-colors',
+              className: 'p-2.5 bg-[#ede6dc] rounded-subcard text-[#8c7e6d] hover:text-amber-600 transition-colors',
             })}
           >
             <ArrowRight size={18} className="rotate-180" />
           </button>
           <div className="text-center">
-            <h2 className="text-base font-black text-slate-900">{t.payoutRequest}</h2>
+            <h2 className="text-base font-black text-[#171310]">{t.payoutRequest}</h2>
             <p className="text-caption font-black text-emerald-500 uppercase mt-1">{location?.name} • {location?.ownerName || '---'}</p>
           </div>
           <div className="w-10" />
@@ -88,7 +88,7 @@ const PayoutRequest: React.FC<PayoutRequestProps> = ({
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 bg-emerald-500 rounded-btn text-white flex-shrink-0"><Wallet size={16} /></div>
             <div>
-              <p className="text-xs font-black text-emerald-800 uppercase">{t.payoutRequestDesc}</p>
+              <p className="text-xs font-bold text-emerald-800 uppercase">{t.payoutRequestDesc}</p>
               <p className="text-caption font-bold text-emerald-400 mt-0.5">
                 {lang === 'zh' ? `店主: ${location?.ownerName || 'N/A'}` : `Owner: ${location?.ownerName || 'N/A'}`}
               </p>
@@ -118,15 +118,15 @@ const PayoutRequest: React.FC<PayoutRequestProps> = ({
           </div>
         )}
 
-        <div className="bg-slate-50 p-4 rounded-subcard border border-slate-200">
-          <label className="text-caption font-black text-slate-400 uppercase block mb-2">{t.payoutAmount}</label>
+        <div className="bg-[#f3efe8] p-4 rounded-subcard border border-[#e0d8cc]">
+          <label className="text-caption font-black text-[#a09080] uppercase block mb-2">{t.payoutAmount}</label>
           <div className="flex items-baseline gap-2">
-            <span className="text-base font-black text-slate-300">TZS</span>
+            <span className="text-base font-black text-[#c0b0a0]">TZS</span>
             <input
               type="number"
               value={payoutAmount}
               onChange={e => setPayoutAmount(e.target.value)}
-              className="w-full text-3xl font-black bg-transparent outline-none text-slate-900 placeholder:text-slate-200"
+              className="w-full text-3xl font-black bg-transparent outline-none text-[#171310] placeholder:text-[#e0d8cc]"
               placeholder="0"
             />
           </div>
@@ -140,7 +140,7 @@ const PayoutRequest: React.FC<PayoutRequestProps> = ({
         <button
           onClick={handleSubmitPayoutRequest}
           disabled={!isValidAmount || exceedsBalance || isSubmitting}
-          className="w-full py-4 bg-emerald-600 text-white rounded-btn font-black uppercase text-sm shadow-field-md disabled:bg-slate-300 active:scale-95 transition-all flex items-center justify-center gap-3"
+          className="w-full py-4 bg-emerald-600 text-white rounded-btn font-black uppercase text-sm shadow-field-md disabled:bg-[#c8beb0] active:scale-95 transition-all flex items-center justify-center gap-3"
         >
           <Wallet size={18} />
           {isSubmitting

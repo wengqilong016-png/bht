@@ -35,11 +35,11 @@ export class MapErrorBoundary extends React.Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
       return (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-xl bg-slate-100 border border-slate-200 p-8 text-center min-h-[200px]">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl bg-[#ede6dc] border border-[#e0d8cc] p-8 text-center min-h-[200px]">
           <AlertTriangle size={32} className="text-amber-400" />
           <div>
-            <p className="text-sm font-bold text-slate-700">地图暂不可用</p>
-            <p className="text-xs text-slate-400 mt-1">Map temporarily unavailable</p>
+            <p className="text-sm font-bold text-[#3d3028]">地图暂不可用</p>
+            <p className="text-xs text-[#a09080] mt-1">Map temporarily unavailable</p>
           </div>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
@@ -57,9 +57,9 @@ export class MapErrorBoundary extends React.Component<Props, State> {
 /** Skeleton placeholder shown while the map bundle loads. */
 export function MapLoadingFallback() {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-slate-100 border border-slate-200 p-8 text-center min-h-[200px] animate-pulse">
-      <MapPin size={28} className="text-slate-300" />
-      <p className="text-xs text-slate-400">Loading map…</p>
+    <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-[#ede6dc] border border-[#e0d8cc] p-8 text-center min-h-[200px] animate-pulse">
+      <MapPin size={28} className="text-[#c0b0a0]" />
+      <p className="text-xs text-[#a09080]">Loading map…</p>
     </div>
   );
 }

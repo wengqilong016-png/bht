@@ -100,7 +100,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         count: attentionSiteIds.size,
         subtitle: lang === 'zh' ? '异常点位' : 'Attention sites',
         detail: lang === 'zh' ? '异常、锁定、9999 风险和静默点位' : 'Abnormal, locked, near-9999 and silent locations',
-        tone: 'border-slate-200 bg-slate-100 text-slate-700',
+        tone: 'border-[#e0d8cc] bg-[#ede6dc] text-[#3d3028]',
         severity: 3,
         action: 'locations' as const,
       },
@@ -130,7 +130,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         count: unsyncedCount,
         subtitle: t.historyLog,
         detail: lang === 'zh' ? '待同步记录和轨迹审计异常' : 'Unsynced records and tracking audit issues',
-        tone: 'border-slate-200 bg-slate-100 text-slate-700',
+        tone: 'border-[#e0d8cc] bg-[#ede6dc] text-[#3d3028]',
         severity: 0,
         action: 'tracking' as const,
       },
@@ -150,34 +150,34 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
           <div className="grid grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr] gap-2">
             <button
               onClick={() => setRevDrilldown('drivers')}
-            className="col-span-2 lg:col-span-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition-all hover:border-amber-200 hover:bg-amber-50/40 group"
+            className="col-span-2 lg:col-span-1 rounded-2xl border border-[#e0d8cc] bg-white px-4 py-3 text-left shadow-sm transition-all hover:border-amber-200 hover:bg-amber-50/40 group"
             >
-              <p className="text-caption font-black uppercase text-slate-400 group-hover:text-amber-700 transition-colors">{t.todayRevenue} ↗</p>
-              <p className="mt-0.5 text-xl font-black text-slate-900">TZS {bossStats.todayRev.toLocaleString()}</p>
+              <p className="text-caption font-black uppercase text-[#a09080] group-hover:text-amber-700 transition-colors">{t.todayRevenue} ↗</p>
+              <p className="mt-0.5 text-xl font-black text-[#171310]">TZS {bossStats.todayRev.toLocaleString()}</p>
             </button>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-caption font-black uppercase text-slate-400">{t.attentionSites}</p>
-              <p className="mt-0.5 text-xl font-black text-slate-700">{bossStats.stagnantMachines.length}</p>
+            <div className="rounded-2xl border border-[#e0d8cc] bg-[#f3efe8] px-4 py-3">
+              <p className="text-caption font-black uppercase text-[#a09080]">{t.attentionSites}</p>
+              <p className="mt-0.5 text-xl font-black text-[#3d3028]">{bossStats.stagnantMachines.length}</p>
             </div>
             <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3">
               <p className="text-caption font-black uppercase text-amber-500">{t.highRiskAssets}</p>
               <p className="mt-0.5 text-xl font-black text-amber-700">{bossStats.riskyDrivers.length}</p>
             </div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="rounded-2xl border border-[#e0d8cc] bg-white p-3 shadow-sm">
             <div className="mb-2 flex items-center justify-between gap-3">
               <div>
-                <p className="text-caption font-black uppercase tracking-[0.25em] text-slate-400">{t.actionCenter}</p>
-                <h3 className="mt-0.5 text-sm font-black uppercase text-slate-900">{t.todayActionCenter}</h3>
+                <p className="text-caption font-black uppercase tracking-[0.25em] text-[#a09080]">{t.actionCenter}</p>
+                <h3 className="mt-0.5 text-sm font-black uppercase text-[#171310]">{t.todayActionCenter}</h3>
               </div>
-              <p className="text-caption font-bold uppercase tracking-wide text-slate-300">{t.reviewNow}</p>
+              <p className="text-caption font-bold uppercase tracking-wide text-[#c0b0a0]">{t.reviewNow}</p>
             </div>
             {primaryAction ? (
               <div className="space-y-2">
                 <button
                   type="button"
                   onClick={() => onOpenTab?.(primaryAction.action)}
-                  className="flex w-full items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-950 px-4 py-3 text-left text-white transition-colors hover:bg-slate-900"
+                  className="flex w-full items-start justify-between gap-3 rounded-2xl border border-[#e0d8cc] bg-[#0f0d0a] px-4 py-3 text-left text-white transition-colors hover:bg-[#171310]"
                 >
                   <div className="min-w-0">
                     <p className="text-caption font-black uppercase tracking-[0.22em] text-white/55">{t.reviewNow}</p>
@@ -186,7 +186,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                     <p className="mt-1 max-w-xl text-[11px] font-bold leading-relaxed text-white/80">{primaryAction.detail}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <span className="rounded-full bg-amber-400 px-3 py-1 text-caption font-black uppercase text-slate-950">
+                    <span className="rounded-full bg-amber-400 px-3 py-1 text-caption font-bold uppercase text-[#0f0d0a]">
                       {primaryAction.count}
                     </span>
                     <ArrowRight size={15} className="text-white/50" />
@@ -194,24 +194,24 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                 </button>
                 {queuedActions.length > 0 && (
                   <div className="space-y-1.5">
-                    <p className="px-1 text-caption font-black uppercase tracking-[0.22em] text-slate-400">{t.nextActionQueue}</p>
+                    <p className="px-1 text-caption font-black uppercase tracking-[0.22em] text-[#a09080]">{t.nextActionQueue}</p>
                     <div className="grid gap-1.5 md:grid-cols-2">
                       {queuedActions.map((item) => (
                         <button
                           key={item.key}
                           type="button"
                           onClick={() => onOpenTab?.(item.action)}
-                          className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:border-amber-200 hover:bg-amber-50"
+                          className="flex items-center justify-between gap-3 rounded-xl border border-[#e8e0d4] bg-[#f3efe8] px-3 py-2.5 text-left transition-colors hover:border-amber-200 hover:bg-amber-50"
                         >
                           <div className="min-w-0">
-                            <p className="truncate text-caption font-black uppercase tracking-wide text-slate-900">{item.title}</p>
-                            <p className="mt-0.5 truncate text-caption font-bold uppercase tracking-[0.18em] text-slate-400">{item.subtitle}</p>
+                            <p className="truncate text-caption font-bold uppercase tracking-wide text-[#171310]">{item.title}</p>
+                            <p className="mt-0.5 truncate text-caption font-bold uppercase tracking-[0.18em] text-[#a09080]">{item.subtitle}</p>
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
-                            <span className={`rounded-full border px-2.5 py-1 text-caption font-black uppercase ${item.tone}`}>
+                            <span className={`rounded-full border px-2.5 py-1 text-caption font-bold uppercase ${item.tone}`}>
                               {item.count}
                             </span>
-                            <ArrowRight size={14} className="text-slate-300" />
+                            <ArrowRight size={14} className="text-[#c0b0a0]" />
                           </div>
                         </button>
                       ))}
@@ -231,20 +231,20 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
               </div>
             )}
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-[#e0d8cc] bg-white shadow-sm overflow-hidden">
             <button
               type="button"
               onClick={() => setAiInsightsExpanded(p => !p)}
-              className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors"
+              className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#f3efe8] transition-colors"
             >
               <div className="flex items-center gap-2">
                 <BrainCircuit size={14} className="text-amber-500" />
-                <span className="text-caption font-black uppercase tracking-widest text-slate-600">AI 智能分析</span>
+                <span className="text-caption font-bold uppercase tracking-widest text-[#7a6e5e]">AI 智能分析</span>
               </div>
-              <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${aiInsightsExpanded ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} className={`text-[#a09080] transition-transform duration-200 ${aiInsightsExpanded ? 'rotate-180' : ''}`} />
             </button>
             {aiInsightsExpanded && (
-              <div className="px-4 pb-4 border-t border-slate-100">
+              <div className="px-4 pb-4 border-t border-[#e8e0d4]">
                 <SmartInsights transactions={transactions} locations={locations} drivers={drivers} lang={lang} onNavigate={onOpenTab} />
               </div>
             )}
@@ -253,31 +253,31 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
       ) : revDrilldown === 'drivers' ? (
         <div className="space-y-3 animate-in fade-in">
           <div className="flex items-center gap-3 mb-1">
-            <button type="button" aria-label={t.back} onClick={() => setRevDrilldown('none')} className="p-1.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50"><ArrowRight size={16} className="rotate-180" /></button>
+            <button type="button" aria-label={t.back} onClick={() => setRevDrilldown('none')} className="p-1.5 bg-white border border-[#e0d8cc] rounded-xl text-[#7a6e5e] hover:bg-[#f3efe8]"><ArrowRight size={16} className="rotate-180" /></button>
             <div>
-              <h3 className="text-sm font-black text-slate-900 uppercase">{t.revenue} — {t.byDriver}</h3>
-              <p className="text-[10px] text-slate-400 font-bold">{t.todayRevenueByDriver}</p>
+              <h3 className="text-sm font-black text-[#171310] uppercase">{t.revenue} — {t.byDriver}</h3>
+              <p className="text-[10px] text-[#a09080] font-bold">{t.todayRevenueByDriver}</p>
             </div>
           </div>
           {todayDriverStats.map(({ driver, driverTxs, driverRev, driverCommission, driverNet }) => (
-            <div key={driver.id} className="bg-white border border-slate-200 rounded-2xl p-4">
+            <div key={driver.id} className="bg-white border border-[#e0d8cc] rounded-2xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-sm">{driver.name.charAt(0)}</div>
+                  <div className="w-9 h-9 rounded-xl bg-[#171310] text-white flex items-center justify-center font-black text-sm">{driver.name.charAt(0)}</div>
                   <div>
-                    <p className="text-sm font-black text-slate-900">{driver.name}</p>
-                    <p className="text-caption font-bold text-slate-400 uppercase">{driver.phone} • {driverTxs.length} {t.collectionsShort}</p>
+                    <p className="text-sm font-black text-[#171310]">{driver.name}</p>
+                    <p className="text-caption font-bold text-[#a09080] uppercase">{driver.phone} • {driverTxs.length} {t.collectionsShort}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-black text-amber-600">TZS {driverRev.toLocaleString()}</p>
-                  <p className="text-caption font-bold text-slate-400 uppercase">{t.totalRevenue}</p>
+                  <p className="text-xs font-bold text-amber-600">TZS {driverRev.toLocaleString()}</p>
+                  <p className="text-caption font-bold text-[#a09080] uppercase">{t.totalRevenue}</p>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-1.5 mb-2">
-                <div className="bg-slate-50 p-2 rounded-xl border border-slate-100 text-center">
-                  <p className="text-caption font-black text-slate-400 uppercase">{t.revenue}</p>
-                  <p className="text-caption font-black text-slate-800">TZS {driverRev.toLocaleString()}</p>
+                <div className="bg-[#f3efe8] p-2 rounded-xl border border-[#e8e0d4] text-center">
+                  <p className="text-caption font-black text-[#a09080] uppercase">{t.revenue}</p>
+                  <p className="text-caption font-black text-[#2a2420]">TZS {driverRev.toLocaleString()}</p>
                 </div>
                 <div className="bg-amber-50 p-2 rounded-xl border border-amber-100 text-center">
                   <p className="text-caption font-black text-amber-400 uppercase">{t.ownerDivision}</p>
@@ -289,24 +289,24 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                 </div>
               </div>
               {driverTxs.length > 0 && (
-                <div className="space-y-1.5 border-t border-slate-50 pt-2">
+                <div className="space-y-1.5 border-t border-[#f3efe8] pt-2">
                   {driverTxs.map(tx => {
                     const loc = locationMap.get(tx.locationId);
                     return (
-                      <div key={tx.id} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2">
+                      <div key={tx.id} className="flex items-center justify-between bg-[#f3efe8] rounded-xl px-3 py-2">
                         <div className="flex items-center gap-2">
                           {loc?.machinePhotoUrl ? (
-                            <img src={getOptimizedImageUrl(loc.machinePhotoUrl, 100, 100)} alt="machine" className="w-6 h-6 rounded-lg object-cover border border-slate-200" />
+                            <img src={getOptimizedImageUrl(loc.machinePhotoUrl, 100, 100)} alt="machine" className="w-6 h-6 rounded-lg object-cover border border-[#e0d8cc]" />
                           ) : (
-                            <div className="w-6 h-6 rounded-lg bg-slate-200 flex items-center justify-center text-slate-400"><Store size={11} /></div>
+                            <div className="w-6 h-6 rounded-lg bg-[#e0d8cc] flex items-center justify-center text-[#a09080]"><Store size={11} /></div>
                           )}
                           <div>
-                            <p className="text-caption font-black text-slate-900">{tx.locationName}</p>
-                            <p className="text-caption font-bold text-slate-400 uppercase">{loc?.machineId || '-'} • {new Date(tx.timestamp).toLocaleTimeString()}</p>
+                            <p className="text-caption font-black text-[#171310]">{tx.locationName}</p>
+                            <p className="text-caption font-bold text-[#a09080] uppercase">{loc?.machineId || '-'} • {new Date(tx.timestamp).toLocaleTimeString()}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-caption font-black text-slate-900">TZS {tx.revenue.toLocaleString()}</p>
+                          <p className="text-caption font-black text-[#171310]">TZS {tx.revenue.toLocaleString()}</p>
                           <div className="flex gap-1 justify-end mt-0.5">
                             <span className="text-caption font-bold text-amber-500 bg-amber-50 px-1 py-0.5 rounded">div {tx.ownerRetention.toLocaleString()}</span>
                             <span className="text-caption font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded">net {tx.netPayable.toLocaleString()}</span>
@@ -324,28 +324,28 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
 
     {/* ── Owner Retention Summary (collapsible, overview only) ── */}
     {revDrilldown === 'none' && retentionSummary.byLocation.length > 0 && (
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-2xl border border-[#e0d8cc] bg-white shadow-sm overflow-hidden">
         <button
           type="button"
           onClick={() => setRetentionExpanded(p => !p)}
-          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#f3efe8] transition-colors"
         >
           <div className="flex items-center gap-2">
             <span className="text-sm">💰</span>
-            <span className="text-caption font-black uppercase tracking-widest text-slate-600">
+            <span className="text-caption font-bold uppercase tracking-widest text-[#7a6e5e]">
               {lang === 'zh' ? '当前留存余额' : 'Current Retained Balance'} — TZS {retentionSummary.grandTotal.toLocaleString()}
             </span>
           </div>
-          <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${retentionExpanded ? 'rotate-180' : ''}`} />
+          <ChevronDown size={14} className={`text-[#a09080] transition-transform duration-200 ${retentionExpanded ? 'rotate-180' : ''}`} />
         </button>
         {retentionExpanded && (
-          <div className="px-4 pb-4 border-t border-slate-100">
+          <div className="px-4 pb-4 border-t border-[#e8e0d4]">
             <div className="space-y-1.5 mt-3">
               {retentionSummary.byLocation.map(({ loc, total }) => (
-                <div key={loc.id} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2">
+                <div key={loc.id} className="flex items-center justify-between bg-[#f3efe8] rounded-xl px-3 py-2">
                   <div className="min-w-0 flex-1">
-                    <p className="text-caption font-black text-slate-900 truncate">{loc.name}</p>
-                    <p className="text-caption font-bold text-slate-400 uppercase">{loc.machineId || loc.area || '—'}</p>
+                    <p className="text-caption font-black text-[#171310] truncate">{loc.name}</p>
+                    <p className="text-caption font-bold text-[#a09080] uppercase">{loc.machineId || loc.area || '—'}</p>
                   </div>
                   <span className="text-caption font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex-shrink-0">
                     TZS {total.toLocaleString()}

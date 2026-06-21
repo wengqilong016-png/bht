@@ -202,11 +202,11 @@ const ManualCollectionEntryPage: React.FC = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-5">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+      <div className="bg-white border border-[#e0d8cc] rounded-xl p-5 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <h2 className="text-lg font-black text-slate-900">司机工作快速补录</h2>
-            <p className="text-sm text-slate-500 mt-1">管理员代录收款信息，跳过照片和 GPS，但保留服务端财务计算与备注审计。</p>
+            <h2 className="text-lg font-black text-[#171310]">司机工作快速补录</h2>
+            <p className="text-sm text-[#8c7e6d] mt-1">管理员代录收款信息，跳过照片和 GPS，但保留服务端财务计算与备注审计。</p>
           </div>
           <div className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold ${isOnline ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
             {isOnline ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
@@ -216,14 +216,14 @@ const ManualCollectionEntryPage: React.FC = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5">
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-5">
+        <div className="bg-white border border-[#e0d8cc] rounded-xl p-5 shadow-sm space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="space-y-2">
-              <span className="text-sm font-black text-slate-700">司机</span>
+              <span className="text-sm font-black text-[#3d3028]">司机</span>
               <select
                 value={driverId}
                 onChange={event => setDriverId(event.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#2a2420] focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="">选择司机</option>
                 {activeDrivers.map(driver => (
@@ -233,11 +233,11 @@ const ManualCollectionEntryPage: React.FC = () => {
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm font-black text-slate-700">机器/网点</span>
+              <span className="text-sm font-black text-[#3d3028]">机器/网点</span>
               <select
                 value={locationId}
                 onChange={event => handleLocationChange(event.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#2a2420] focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="">选择机器</option>
                 {sortedLocations.map(location => (
@@ -247,36 +247,36 @@ const ManualCollectionEntryPage: React.FC = () => {
                 ))}
               </select>
               {assignedDriverName && (
-                <p className="text-xs font-bold text-slate-500">当前分配司机：{assignedDriverName}</p>
+                <p className="text-xs font-bold text-[#8c7e6d]">当前分配司机：{assignedDriverName}</p>
               )}
             </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <label className="space-y-2">
-              <span className="text-sm font-black text-slate-700">上次读数</span>
+              <span className="text-sm font-black text-[#3d3028]">上次读数</span>
               <input
                 value={selectedLocation ? selectedLocation.lastScore.toLocaleString() : ''}
                 readOnly
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-600"
+                className="w-full rounded-lg border border-[#e0d8cc] bg-[#f3efe8] px-3 py-2 text-sm font-bold text-[#7a6e5e]"
               />
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-black text-slate-700">当前读数</span>
+              <span className="text-sm font-black text-[#3d3028]">当前读数</span>
               <input
                 inputMode="numeric"
                 value={currentScore}
                 onChange={event => setCurrentScore(event.target.value)}
                 placeholder="例如 12800"
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#171310] focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-black text-slate-700">机器状态</span>
+              <span className="text-sm font-black text-[#3d3028]">机器状态</span>
               <select
                 value={reportedStatus}
                 onChange={event => setReportedStatus(event.target.value as ReportedStatus)}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#2a2420] focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="active">正常</option>
                 <option value="maintenance">需维护</option>
@@ -287,33 +287,33 @@ const ManualCollectionEntryPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <label className="space-y-2">
-              <span className="text-sm font-black text-slate-700">支出</span>
+              <span className="text-sm font-black text-[#3d3028]">支出</span>
               <input
                 inputMode="numeric"
                 value={expenses}
                 onChange={event => setExpenses(event.target.value)}
                 placeholder="0"
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#171310] focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-black text-slate-700">零钱兑换</span>
+              <span className="text-sm font-black text-[#3d3028]">零钱兑换</span>
               <input
                 inputMode="numeric"
                 value={coinExchange}
                 onChange={event => setCoinExchange(event.target.value)}
                 placeholder="0"
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#171310] focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-black text-slate-700">小费/现场扣款</span>
+              <span className="text-sm font-black text-[#3d3028]">小费/现场扣款</span>
               <input
                 inputMode="numeric"
                 value={tip}
                 onChange={event => setTip(event.target.value)}
                 placeholder="0"
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#171310] focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </label>
           </div>
@@ -321,22 +321,22 @@ const ManualCollectionEntryPage: React.FC = () => {
           {preview.expenseAmount > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <label className="space-y-2">
-                <span className="text-sm font-black text-slate-700">支出类型</span>
+                <span className="text-sm font-black text-[#3d3028]">支出类型</span>
                 <select
                   value={expenseType}
                   onChange={event => setExpenseType(event.target.value as 'public' | 'private')}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#2a2420] focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   <option value="public">公司成本</option>
                   <option value="private">司机借支</option>
                 </select>
               </label>
               <label className="space-y-2">
-                <span className="text-sm font-black text-slate-700">支出分类</span>
+                <span className="text-sm font-black text-[#3d3028]">支出分类</span>
                 <select
                   value={expenseCategory}
                   onChange={event => setExpenseCategory(event.target.value as NonNullable<Transaction['expenseCategory']>)}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#2a2420] focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   {EXPENSE_CATEGORIES.map(category => (
                     <option key={category} value={category}>{category}</option>
@@ -344,12 +344,12 @@ const ManualCollectionEntryPage: React.FC = () => {
                 </select>
               </label>
               <label className="space-y-2">
-                <span className="text-sm font-black text-slate-700">支出说明</span>
+                <span className="text-sm font-black text-[#3d3028]">支出说明</span>
                 <input
                   value={expenseDescription}
                   onChange={event => setExpenseDescription(event.target.value)}
                   placeholder="可选"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#171310] focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </label>
             </div>
@@ -357,55 +357,55 @@ const ManualCollectionEntryPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <label className="space-y-2">
-              <span className="text-sm font-black text-slate-700">商户债务扣回</span>
+              <span className="text-sm font-black text-[#3d3028]">商户债务扣回</span>
               <input
                 inputMode="numeric"
                 value={startupDebtDeduction}
                 onChange={event => setStartupDebtDeduction(event.target.value)}
                 placeholder="0"
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#171310] focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-black text-slate-700">店主留存金额</span>
+              <span className="text-sm font-black text-[#3d3028]">店主留存金额</span>
               <input
                 inputMode="numeric"
                 value={ownerRetention}
                 onChange={event => setOwnerRetention(event.target.value)}
                 placeholder={`默认 ${money(preview.commission)}`}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#171310] focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </label>
-            <label className="flex items-end gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+            <label className="flex items-end gap-3 rounded-lg border border-[#e0d8cc] bg-[#f3efe8] px-3 py-3">
               <input
                 type="checkbox"
                 checked={isOwnerRetaining}
                 onChange={event => setIsOwnerRetaining(event.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                className="mt-1 h-4 w-4 rounded border-[#c8beb0] text-emerald-600 focus:ring-emerald-500"
               />
-              <span className="text-sm font-black text-slate-700">计入店主分红余额</span>
+              <span className="text-sm font-black text-[#3d3028]">计入店主分红余额</span>
             </label>
           </div>
 
           <label className="space-y-2 block">
-            <span className="text-sm font-black text-slate-700">备注</span>
+            <span className="text-sm font-black text-[#3d3028]">备注</span>
             <textarea
               value={notes}
               onChange={event => setNotes(event.target.value)}
               rows={3}
               placeholder="补录原因、纸质记录编号或异常说明"
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#171310] focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </label>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-slate-100 pt-4">
-            <p className="text-xs font-bold text-slate-500">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-[#e8e0d4] pt-4">
+            <p className="text-xs font-bold text-[#8c7e6d]">
               提交后会写入收款交易并更新机器 lastScore；该入口不会上传照片或 GPS。
             </p>
             <button
               type="submit"
               disabled={!isOnline || submitManualCollection.isPending}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-black text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-black text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-[#c8beb0]"
             >
               {submitManualCollection.isPending ? <Loader2 size={16} className="animate-spin" /> : <ReceiptText size={16} />}
               提交快速补录
@@ -413,20 +413,20 @@ const ManualCollectionEntryPage: React.FC = () => {
           </div>
         </div>
 
-        <aside className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm h-fit space-y-4">
+        <aside className="bg-white border border-[#e0d8cc] rounded-xl p-5 shadow-sm h-fit space-y-4">
           <div>
-            <h3 className="text-sm font-black text-slate-900">服务端计算预览</h3>
-            <p className="text-xs font-bold text-slate-500 mt-1">最终金额以 RPC 返回为准。</p>
+            <h3 className="text-sm font-black text-[#171310]">服务端计算预览</h3>
+            <p className="text-xs font-bold text-[#8c7e6d] mt-1">最终金额以 RPC 返回为准。</p>
           </div>
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between gap-3"><span className="text-slate-500">分数差</span><strong className="text-slate-900">{preview.diff.toLocaleString()}</strong></div>
-            <div className="flex justify-between gap-3"><span className="text-slate-500">营业额</span><strong className="text-slate-900">{money(preview.revenue)}</strong></div>
-            <div className="flex justify-between gap-3"><span className="text-slate-500">默认分成</span><strong className="text-slate-900">{money(preview.commission)}</strong></div>
-            <div className="flex justify-between gap-3"><span className="text-slate-500">店主留存</span><strong className="text-slate-900">{money(preview.finalOwnerRetention)}</strong></div>
-            <div className="flex justify-between gap-3"><span className="text-slate-500">支出</span><strong className="text-slate-900">{money(preview.expenseAmount)}</strong></div>
-            <div className="flex justify-between gap-3"><span className="text-slate-500">债务扣回</span><strong className="text-slate-900">{money(preview.debtDeduction)}</strong></div>
-            <div className="border-t border-slate-100 pt-3 flex justify-between gap-3">
-              <span className="text-slate-700 font-black">预计应交</span>
+            <div className="flex justify-between gap-3"><span className="text-[#8c7e6d]">分数差</span><strong className="text-[#171310]">{preview.diff.toLocaleString()}</strong></div>
+            <div className="flex justify-between gap-3"><span className="text-[#8c7e6d]">营业额</span><strong className="text-[#171310]">{money(preview.revenue)}</strong></div>
+            <div className="flex justify-between gap-3"><span className="text-[#8c7e6d]">默认分成</span><strong className="text-[#171310]">{money(preview.commission)}</strong></div>
+            <div className="flex justify-between gap-3"><span className="text-[#8c7e6d]">店主留存</span><strong className="text-[#171310]">{money(preview.finalOwnerRetention)}</strong></div>
+            <div className="flex justify-between gap-3"><span className="text-[#8c7e6d]">支出</span><strong className="text-[#171310]">{money(preview.expenseAmount)}</strong></div>
+            <div className="flex justify-between gap-3"><span className="text-[#8c7e6d]">债务扣回</span><strong className="text-[#171310]">{money(preview.debtDeduction)}</strong></div>
+            <div className="border-t border-[#e8e0d4] pt-3 flex justify-between gap-3">
+              <span className="text-[#3d3028] font-black">预计应交</span>
               <strong className="text-emerald-700">{money(preview.netPayable)}</strong>
             </div>
           </div>

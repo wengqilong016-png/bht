@@ -365,25 +365,25 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
         <div className="space-y-6 animate-in fade-in">
           <DriverManagement />
           {/* Payroll section merged into fleet tab */}
-          <div id="payroll-section" className="space-y-3 border-t border-slate-100 pt-5">
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-center gap-3">
+          <div id="payroll-section" className="space-y-3 border-t border-[#e8e0d4] pt-5">
+              <div className="bg-white p-4 rounded-2xl border border-[#e0d8cc] flex items-center gap-3">
                 <div className="p-2 bg-amber-50 text-amber-600 rounded-xl"><Receipt size={18} /></div>
                 <div>
-                  <h2 className="text-base font-black text-slate-900 uppercase">{t.payrollTitle}</h2>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t.payrollSubtitle}</p>
+                  <h2 className="text-base font-black text-[#171310] uppercase">{t.payrollTitle}</h2>
+                  <p className="text-[10px] text-[#a09080] font-bold uppercase tracking-widest">{t.payrollSubtitle}</p>
                 </div>
               </div>
             <div className="grid grid-cols-1 gap-3">
               {payrollStats.map(({ driver, monthlyBreakdown }) => (
-                <div key={driver.id} className="bg-white p-4 rounded-2xl border border-slate-200">
+                <div key={driver.id} className="bg-white p-4 rounded-2xl border border-[#e0d8cc]">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
-                      <h3 className="font-black text-slate-900 uppercase text-sm">{driver.name}</h3>
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                      <h3 className="font-black text-[#171310] uppercase text-sm">{driver.name}</h3>
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-[#a09080]">
                         {monthlyBreakdown.length} {t.payrollMonths}
                       </p>
                     </div>
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-caption font-black uppercase text-slate-500">
+                    <span className="rounded-full bg-[#ede6dc] px-2 py-1 text-caption font-bold uppercase text-[#8c7e6d]">
                       {t.baseShort} {driver.baseSalary?.toLocaleString() || 0}
                     </span>
                   </div>
@@ -411,22 +411,22 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                           };
 
                       return (
-                        <div key={i} className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                        <div key={i} className="bg-[#f3efe8] p-3 rounded-2xl border border-[#e8e0d4]">
                           <div className="flex justify-between items-start mb-2 gap-2">
                             <div>
-                              <span className="text-caption font-black text-slate-400 uppercase">{m.month}</span>
-                              <p className="text-caption font-bold uppercase tracking-wide text-slate-400">
+                              <span className="text-caption font-black text-[#a09080] uppercase">{m.month}</span>
+                              <p className="text-caption font-bold uppercase tracking-wide text-[#a09080]">
                                 {t.revenueShort} {summary.totalRevenue.toLocaleString()} · {summary.collectionCount} {t.collectionsShort}
                               </p>
                             </div>
                             <div className="flex flex-col items-end gap-1">
-                              <span className="text-xs font-black text-amber-700">TZS {summary.netPayable.toLocaleString()}</span>
+                              <span className="text-xs font-bold text-amber-700">TZS {summary.netPayable.toLocaleString()}</span>
                               {record && (
-                                <span className={`px-2 py-0.5 rounded text-caption font-black uppercase ${
+                                <span className={`px-2 py-0.5 rounded text-caption font-bold uppercase ${
                                   record.status === 'paid'
                                     ? 'bg-emerald-100 text-emerald-700'
                                     : record.status === 'cancelled'
-                                      ? 'bg-slate-200 text-slate-500'
+                                      ? 'bg-[#e0d8cc] text-[#8c7e6d]'
                                       : 'bg-amber-100 text-amber-700'
                                 }`}>
                                   {record.status}
@@ -434,7 +434,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                               )}
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-1 text-caption text-slate-400 mb-3">
+                          <div className="grid grid-cols-2 gap-1 text-caption text-[#a09080] mb-3">
                             <span>{t.baseShort}: {summary.baseSalary.toLocaleString()}</span>
                             <span>{t.commissionLabel}: {summary.commission.toLocaleString()}</span>
                             <span>{t.loansShort}: {summary.loans.toLocaleString()}</span>
@@ -449,13 +449,13 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                                 <img
                                   src={record.paymentProofUrl}
                                   alt="Payroll proof"
-                                  className="w-full h-24 object-cover rounded-xl border border-slate-200"
+                                  className="w-full h-24 object-cover rounded-xl border border-[#e0d8cc]"
                                 />
                               )}
                             </div>
                           )}
                           <div className="flex gap-2 flex-wrap">
-                            <button aria-label={t.print_payroll} type="button" onClick={() => window.print()} className="flex-1 py-2 bg-slate-900 text-white rounded-lg text-caption font-black uppercase">PDF</button>
+                            <button aria-label={t.print_payroll} type="button" onClick={() => window.print()} className="flex-1 py-2 bg-[#171310] text-white rounded-lg text-caption font-black uppercase">PDF</button>
                             <button
                               onClick={() => {
                                 const msg = `*PAYROLL ${m.month}*\nDriver: ${driver.name}\nBase: TZS ${summary.baseSalary.toLocaleString()}\nComm: TZS ${summary.commission.toLocaleString()}\nLoans: TZS ${summary.loans.toLocaleString()}\nShortage: TZS ${summary.shortage.toLocaleString()}\nNet: TZS ${summary.netPayable.toLocaleString()}`;
@@ -516,7 +516,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                                     summary,
                                     record,
                                   })}
-                                  className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-lg text-caption font-black uppercase disabled:opacity-50"
+                                  className="flex-1 py-2 bg-[#e0d8cc] text-[#3d3028] rounded-lg text-caption font-black uppercase disabled:opacity-50"
                                 >
                                   {t.cancelPayroll}
                                 </button>
@@ -526,7 +526,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
                         </div>
                       );
                     })}
-                    {monthlyBreakdown.length === 0 && <p className="col-span-2 text-center text-caption text-slate-300 font-black uppercase py-4">{t.noPayrollData}</p>}
+                    {monthlyBreakdown.length === 0 && <p className="col-span-2 text-center text-caption text-[#c0b0a0] font-black uppercase py-4">{t.noPayrollData}</p>}
                   </div>
                 </div>
               ))}

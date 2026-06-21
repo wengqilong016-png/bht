@@ -159,12 +159,12 @@ const AppAdminShell: React.FC = () => {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-caption font-black text-white truncate">{currentUser.name}</p>
-              <p className="text-caption font-bold text-slate-500 uppercase">{t.adminUser}</p>
+              <p className="text-caption font-bold text-[#8c7e6d] uppercase">{t.adminUser}</p>
             </div>
             <div className="flex flex-col gap-1">
-              <button onClick={() => setLang(lang === 'zh' ? 'sw' : 'zh')} className="p-1 bg-white/5 rounded-lg text-slate-300 hover:text-white transition-colors"><Globe size={12}/></button>
-              <button onClick={() => setShowAccountSettings(true)} className="p-1 bg-white/5 rounded-lg text-slate-300 hover:text-white transition-colors"><Settings size={12}/></button>
-              <button onClick={handleSwitchAccount} className="p-1 bg-white/5 rounded-lg text-slate-300 hover:text-white transition-colors" aria-label={lang === 'zh' ? '切换账号' : 'Switch Account'}><ArrowLeftRight size={12}/></button>
+              <button onClick={() => setLang(lang === 'zh' ? 'sw' : 'zh')} className="p-1 bg-white/5 rounded-lg text-[#c0b0a0] hover:text-white transition-colors"><Globe size={12}/></button>
+              <button onClick={() => setShowAccountSettings(true)} className="p-1 bg-white/5 rounded-lg text-[#c0b0a0] hover:text-white transition-colors"><Settings size={12}/></button>
+              <button onClick={handleSwitchAccount} className="p-1 bg-white/5 rounded-lg text-[#c0b0a0] hover:text-white transition-colors" aria-label={lang === 'zh' ? '切换账号' : 'Switch Account'}><ArrowLeftRight size={12}/></button>
               <button onClick={handleLogout} className="p-1 bg-rose-500/10 rounded-lg border border-rose-500/20 text-rose-300 hover:text-rose-200 transition-colors"><LogOut size={12}/></button>
             </div>
           </div>
@@ -181,12 +181,12 @@ const AppAdminShell: React.FC = () => {
           actions={
             <>
               {/* Mobile user avatar indicator */}
-              <div className="md:hidden w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-black text-xs flex-shrink-0">
+              <div className="md:hidden w-8 h-8 rounded-xl bg-[#ede6dc] text-[#7a6e5e] flex items-center justify-center font-black text-xs flex-shrink-0">
                 {currentUser.name.charAt(0).toUpperCase()}
               </div>
-              <button onClick={() => setLang(lang === 'zh' ? 'sw' : 'zh')} className="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-900"><Globe size={15}/></button>
-              <button onClick={() => setShowAccountSettings(true)} className="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-900"><Settings size={15}/></button>
-              <button onClick={handleSwitchAccount} className="p-2 rounded-xl border border-slate-200 bg-white text-amber-600 hover:text-amber-700 hover:border-amber-200" aria-label={lang === 'zh' ? '切换账号' : 'Switch Account'}><ArrowLeftRight size={15}/></button>
+              <button onClick={() => setLang(lang === 'zh' ? 'sw' : 'zh')} className="p-2 rounded-xl border border-[#e0d8cc] bg-white text-[#7a6e5e] hover:text-[#171310]"><Globe size={15}/></button>
+              <button onClick={() => setShowAccountSettings(true)} className="p-2 rounded-xl border border-[#e0d8cc] bg-white text-[#7a6e5e] hover:text-[#171310]"><Settings size={15}/></button>
+              <button onClick={handleSwitchAccount} className="p-2 rounded-xl border border-[#e0d8cc] bg-white text-amber-600 hover:text-amber-700 hover:border-amber-200" aria-label={lang === 'zh' ? '切换账号' : 'Switch Account'}><ArrowLeftRight size={15}/></button>
               <button onClick={handleLogout} className="p-2 rounded-xl bg-rose-50 border border-rose-100 text-rose-500 hover:text-rose-700"><LogOut size={15}/></button>
             </>
           }

@@ -49,26 +49,26 @@ const EnvMissingErrorPage: React.FC<EnvMissingErrorPageProps> = ({ lang, compact
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-xl font-black text-slate-800 uppercase tracking-wide">
+          <h1 className="text-xl font-black text-[#2a2420] uppercase tracking-wide">
             {copy.title}
           </h1>
-          <p className="text-sm font-bold text-slate-500 leading-relaxed">
+          <p className="text-sm font-bold text-[#8c7e6d] leading-relaxed">
             {copy.body}
           </p>
         </div>
 
         <div className="bg-white/70 rounded-3xl border border-white/70 shadow-silicone-sm p-5 text-left space-y-3">
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#8c7e6d]">
             {copy.stepsTitle}
           </p>
-          <ol className="space-y-2 text-xs font-bold text-slate-600 leading-relaxed list-decimal pl-5">
+          <ol className="space-y-2 text-xs font-bold text-[#7a6e5e] leading-relaxed list-decimal pl-5">
             {copy.steps.map((step) => (
               <li key={step}>{step}</li>
             ))}
           </ol>
         </div>
 
-        <p className="text-[11px] font-bold text-slate-400">{copy.footer}</p>
+        <p className="text-[11px] font-bold text-[#a09080]">{copy.footer}</p>
       </div>
     </div>
   );

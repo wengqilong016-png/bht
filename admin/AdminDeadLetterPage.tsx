@@ -88,19 +88,19 @@ const AdminDeadLetterPage: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 pb-10">
-      <div className="rounded-card border border-slate-200 bg-white px-5 py-4">
+      <div className="rounded-card border border-[#e0d8cc] bg-white px-5 py-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-caption font-black uppercase tracking-[0.22em] text-rose-600">Dead-letter queue</p>
-            <h2 className="mt-1 text-xl font-black text-slate-900">同步失败处理</h2>
-            <p className="mt-1 text-xs font-bold text-slate-500">
+            <h2 className="mt-1 text-xl font-black text-[#171310]">同步失败处理</h2>
+            <p className="mt-1 text-xs font-bold text-[#8c7e6d]">
               永久错误不能重放；修复源数据后可丢弃本机死信记录。
             </p>
           </div>
           <button
             type="button"
             onClick={() => void loadItems()}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black uppercase text-slate-700 hover:bg-slate-50"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#e0d8cc] bg-white px-3 py-2 text-xs font-bold uppercase text-[#3d3028] hover:bg-[#f3efe8]"
           >
             <RefreshCw size={14} />
             刷新
@@ -110,12 +110,12 @@ const AdminDeadLetterPage: React.FC = () => {
 
       <div className="grid gap-3 md:grid-cols-3">
         {[
-          { label: '总数', value: summary.total, tone: 'text-slate-900' },
+          { label: '总数', value: summary.total, tone: 'text-[#171310]' },
           { label: '无法重放', value: summary.permanent, tone: 'text-rose-600' },
           { label: '可重试', value: summary.replayable, tone: 'text-amber-600' },
         ].map(item => (
-          <div key={item.label} className="rounded-card border border-slate-200 bg-white px-4 py-3">
-            <p className="text-caption font-black uppercase tracking-wide text-slate-400">{item.label}</p>
+          <div key={item.label} className="rounded-card border border-[#e0d8cc] bg-white px-4 py-3">
+            <p className="text-caption font-bold uppercase tracking-wide text-[#a09080]">{item.label}</p>
             <p className={`mt-1 text-2xl font-black ${item.tone}`}>{item.value}</p>
           </div>
         ))}
@@ -143,14 +143,14 @@ const AdminDeadLetterPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setConfirmDiscardId(null)}
-              className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black uppercase text-slate-700"
+              className="inline-flex items-center gap-1 rounded-xl border border-[#e0d8cc] bg-white px-3 py-2 text-xs font-bold uppercase text-[#3d3028]"
             >
               取消 / Cancel
             </button>
             <button
               type="button"
               onClick={() => void handleDiscardConfirm()}
-              className="inline-flex items-center gap-1 rounded-xl border border-rose-300 bg-rose-600 px-3 py-2 text-xs font-black uppercase text-white hover:bg-rose-700"
+              className="inline-flex items-center gap-1 rounded-xl border border-rose-300 bg-rose-600 px-3 py-2 text-xs font-bold uppercase text-white hover:bg-rose-700"
             >
               <Trash2 size={12} />
               确认丢弃 / Discard
@@ -159,14 +159,14 @@ const AdminDeadLetterPage: React.FC = () => {
         </div>
       )}
 
-      <div className="rounded-card border border-slate-200 bg-white">
-        <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
+      <div className="rounded-card border border-[#e0d8cc] bg-white">
+        <div className="flex items-center gap-2 border-b border-[#e8e0d4] px-4 py-3">
           <AlertTriangle size={16} className="text-rose-600" />
-          <p className="text-sm font-black text-slate-900">待处理记录</p>
+          <p className="text-sm font-black text-[#171310]">待处理记录</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-left">
-            <thead className="bg-slate-50 text-caption font-black uppercase tracking-wide text-slate-400">
+            <thead className="bg-[#f3efe8] text-caption font-bold uppercase tracking-wide text-[#a09080]">
               <tr>
                 <th className="px-4 py-3">记录</th>
                 <th className="px-4 py-3">机器/司机</th>
@@ -176,25 +176,25 @@ const AdminDeadLetterPage: React.FC = () => {
                 <th className="px-4 py-3 text-right">操作</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[#e8e0d4]">
               {items.map(entry => {
                 const permanent = isPermanentlyBlocked(entry);
                 const busy = busyId === entry.id;
                 return (
-                  <tr key={entry.id} className="text-xs font-bold text-slate-600">
+                  <tr key={entry.id} className="text-xs font-bold text-[#7a6e5e]">
                     <td className="px-4 py-3">
-                      <p className="font-black text-slate-900">{entry.id}</p>
-                      <p className="mt-1 text-caption uppercase text-slate-400">{entry.type ?? 'collection'}</p>
+                      <p className="font-black text-[#171310]">{entry.id}</p>
+                      <p className="mt-1 text-caption uppercase text-[#a09080]">{entry.type ?? 'collection'}</p>
                     </td>
                     <td className="px-4 py-3">
                       <p>{entry.locationName || entry.locationId}</p>
-                      <p className="mt-1 text-caption uppercase text-slate-400">{entry.driverName || entry.driverId}</p>
+                      <p className="mt-1 text-caption uppercase text-[#a09080]">{entry.driverName || entry.driverId}</p>
                     </td>
                     <td className="max-w-sm px-4 py-3">
                       <p className="line-clamp-2">{entry.lastError || '-'}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-caption font-black uppercase ${
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-caption font-bold uppercase ${
                         permanent ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'
                       }`}>
                         {permanent && <XCircle size={12} />}
@@ -208,7 +208,7 @@ const AdminDeadLetterPage: React.FC = () => {
                           type="button"
                           disabled={busy || permanent || !supabase}
                           onClick={() => void handleReplay(entry)}
-                          className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-3 py-2 text-caption font-black uppercase text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                          className="inline-flex items-center gap-1 rounded-xl border border-[#e0d8cc] px-3 py-2 text-caption font-black uppercase text-[#3d3028] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <RefreshCw size={12} />
                           {permanent ? '无法重放' : 'Replay'}
@@ -229,14 +229,14 @@ const AdminDeadLetterPage: React.FC = () => {
               })}
               {!isLoading && items.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-xs font-black uppercase tracking-wide text-slate-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-xs font-bold uppercase tracking-wide text-[#a09080]">
                     当前没有 dead-letter 记录
                   </td>
                 </tr>
               )}
               {isLoading && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-xs font-black uppercase tracking-wide text-slate-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-xs font-bold uppercase tracking-wide text-[#a09080]">
                     Loading...
                   </td>
                 </tr>

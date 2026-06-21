@@ -199,46 +199,46 @@ const DriverFlowDiagnosticsPage: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 pb-10">
-      <div className="rounded-card border border-slate-200 bg-white px-5 py-4">
+      <div className="rounded-card border border-[#e0d8cc] bg-white px-5 py-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-caption font-black uppercase tracking-[0.22em] text-amber-600">Driver flow diagnostics</p>
-            <h2 className="mt-1 text-xl font-black text-slate-900">司机使用卡点</h2>
-            <p className="mt-1 text-xs font-bold text-slate-500">
+            <h2 className="mt-1 text-xl font-black text-[#171310]">司机使用卡点</h2>
+            <p className="mt-1 text-xs font-bold text-[#8c7e6d]">
               只统计流程事件，不记录照片内容、精确 GPS 或电话。
             </p>
           </div>
-          <div className="rounded-subcard bg-slate-50 px-3 py-2 text-right">
-            <p className="text-caption font-black uppercase text-slate-400">日期</p>
-            <p className="text-sm font-black text-slate-900">{today}</p>
+          <div className="rounded-subcard bg-[#f3efe8] px-3 py-2 text-right">
+            <p className="text-caption font-black uppercase text-[#a09080]">日期</p>
+            <p className="text-sm font-black text-[#171310]">{today}</p>
           </div>
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-5">
         {[
-          { label: '开始收款', value: totals.started, icon: <Route size={16} />, tone: 'text-slate-700' },
+          { label: '开始收款', value: totals.started, icon: <Route size={16} />, tone: 'text-[#3d3028]' },
           { label: '云端完成', value: totals.completed, icon: <CheckCircle2 size={16} />, tone: 'text-emerald-600' },
           { label: '离线待同步', value: totals.offlineQueued, icon: <DatabaseBackup size={16} />, tone: 'text-amber-600' },
           { label: '失败/校验拦截', value: totals.failed, icon: <AlertTriangle size={16} />, tone: 'text-rose-600' },
-          { label: '开始后未完成', value: totals.abandoned, icon: <Clock size={16} />, tone: 'text-slate-600' },
+          { label: '开始后未完成', value: totals.abandoned, icon: <Clock size={16} />, tone: 'text-[#7a6e5e]' },
         ].map(item => (
-          <div key={item.label} className="rounded-card border border-slate-200 bg-white px-4 py-3">
-            <div className={`mb-2 inline-flex rounded-subcard bg-slate-50 p-2 ${item.tone}`}>{item.icon}</div>
-            <p className="text-caption font-black uppercase tracking-wide text-slate-400">{item.label}</p>
-            <p className="mt-1 text-2xl font-black text-slate-900">{item.value}</p>
+          <div key={item.label} className="rounded-card border border-[#e0d8cc] bg-white px-4 py-3">
+            <div className={`mb-2 inline-flex rounded-subcard bg-[#f3efe8] p-2 ${item.tone}`}>{item.icon}</div>
+            <p className="text-caption font-bold uppercase tracking-wide text-[#a09080]">{item.label}</p>
+            <p className="mt-1 text-2xl font-black text-[#171310]">{item.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="rounded-card border border-slate-200 bg-white">
-        <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
+      <div className="rounded-card border border-[#e0d8cc] bg-white">
+        <div className="flex items-center gap-2 border-b border-[#e8e0d4] px-4 py-3">
           <Users size={16} className="text-amber-600" />
-          <p className="text-sm font-black text-slate-900">司机漏斗</p>
+          <p className="text-sm font-black text-[#171310]">司机漏斗</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left">
-            <thead className="bg-slate-50 text-caption font-black uppercase tracking-wide text-slate-400">
+            <thead className="bg-[#f3efe8] text-caption font-bold uppercase tracking-wide text-[#a09080]">
               <tr>
                 <th className="px-4 py-3">司机</th>
                 <th className="px-4 py-3">开始</th>
@@ -250,10 +250,10 @@ const DriverFlowDiagnosticsPage: React.FC = () => {
                 <th className="px-4 py-3">平均耗时</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[#e8e0d4]">
               {summaries.map(summary => (
-                <tr key={summary.driverId} className="text-xs font-bold text-slate-600">
-                  <td className="px-4 py-3 font-black text-slate-900">{summary.driverName}</td>
+                <tr key={summary.driverId} className="text-xs font-bold text-[#7a6e5e]">
+                  <td className="px-4 py-3 font-black text-[#171310]">{summary.driverName}</td>
                   <td className="px-4 py-3">{summary.started}</td>
                   <td className="px-4 py-3 text-emerald-600">{summary.completed}</td>
                   <td className="px-4 py-3 text-amber-600">{summary.offlineQueued}</td>
@@ -265,7 +265,7 @@ const DriverFlowDiagnosticsPage: React.FC = () => {
               ))}
               {!isLoading && summaries.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-xs font-black uppercase tracking-wide text-slate-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-xs font-bold uppercase tracking-wide text-[#a09080]">
                     今日暂无司机流程事件
                   </td>
                 </tr>
@@ -276,14 +276,14 @@ const DriverFlowDiagnosticsPage: React.FC = () => {
       </div>
 
       {recentSubmitEvents.length > 0 && (
-        <div className="rounded-card border border-slate-200 bg-white">
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <p className="text-sm font-black text-slate-900">最近提交明细</p>
-            <p className="text-caption font-black uppercase tracking-wide text-slate-400">success / offline / failed</p>
+        <div className="rounded-card border border-[#e0d8cc] bg-white">
+          <div className="flex items-center justify-between border-b border-[#e8e0d4] px-4 py-3">
+            <p className="text-sm font-black text-[#171310]">最近提交明细</p>
+            <p className="text-caption font-bold uppercase tracking-wide text-[#a09080]">success / offline / failed</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[860px] text-left">
-              <thead className="bg-slate-50 text-caption font-black uppercase tracking-wide text-slate-400">
+              <thead className="bg-[#f3efe8] text-caption font-bold uppercase tracking-wide text-[#a09080]">
                 <tr>
                   <th className="px-4 py-3">时间</th>
                   <th className="px-4 py-3">状态</th>
@@ -295,7 +295,7 @@ const DriverFlowDiagnosticsPage: React.FC = () => {
                   <th className="px-4 py-3">交易号/原因</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[#e8e0d4]">
                 {recentSubmitEvents.map(event => {
                   const payload = event.payload ?? {};
                   const statusTone = event.eventName === 'submit_success'
@@ -311,10 +311,10 @@ const DriverFlowDiagnosticsPage: React.FC = () => {
                         ? '零营业额异常'
                         : '失败';
                   return (
-                    <tr key={event.id} className="text-xs font-bold text-slate-600">
+                    <tr key={event.id} className="text-xs font-bold text-[#7a6e5e]">
                       <td className="px-4 py-3">{new Date(event.createdAt).toLocaleTimeString()}</td>
                       <td className="px-4 py-3"><span className={`rounded-full px-2 py-1 font-black ${statusTone}`}>{statusLabel}</span></td>
-                      <td className="px-4 py-3 font-black text-slate-900">{payloadText(payload, 'driverName', driverNameById.get(event.driverId) ?? event.driverId)}</td>
+                      <td className="px-4 py-3 font-black text-[#171310]">{payloadText(payload, 'driverName', driverNameById.get(event.driverId) ?? event.driverId)}</td>
                       <td className="px-4 py-3">{payloadText(payload, 'locationName', event.locationId ?? '—')}</td>
                       <td className="px-4 py-3">{formatScoreLine(payload)}</td>
                       <td className="px-4 py-3">{formatPayloadMoney(payload, 'revenue')}</td>
@@ -337,10 +337,10 @@ const DriverFlowDiagnosticsPage: React.FC = () => {
           <p className="text-caption font-black uppercase tracking-[0.2em] text-rose-600">Recent blockers</p>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             {recentFailures.map(event => (
-              <div key={event.id} className="rounded-subcard bg-white px-3 py-2 text-xs font-bold text-slate-600">
-                <p className="font-black text-slate-900">{driverNameById.get(event.driverId) ?? event.driverId}</p>
+              <div key={event.id} className="rounded-subcard bg-white px-3 py-2 text-xs font-bold text-[#7a6e5e]">
+                <p className="font-black text-[#171310]">{driverNameById.get(event.driverId) ?? event.driverId}</p>
                 <p className="mt-1">{STEP_LABELS[event.step]} · {event.errorCategory || event.eventName}</p>
-                <p className="mt-1 text-caption font-black uppercase text-slate-400">
+                <p className="mt-1 text-caption font-black uppercase text-[#a09080]">
                   {new Date(event.createdAt).toLocaleTimeString()}
                 </p>
               </div>

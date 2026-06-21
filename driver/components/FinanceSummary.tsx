@@ -95,17 +95,17 @@ export function FinanceSummaryContent({
 
       {showMetricGrid && <FinanceMetricGrid {...shared} isOwnerRetaining={isOwnerRetaining} />}
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-3">
+      <div className="rounded-2xl border border-[#e0d8cc] bg-white p-3">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div>
-            <p className="text-caption font-black uppercase tracking-widest text-slate-400">
+            <p className="text-caption font-bold uppercase tracking-widest text-[#a09080]">
               {lang === 'zh' ? '金额录入' : 'Cash Inputs'}
             </p>
-            <p className="mt-1 text-caption font-bold uppercase tracking-wide text-slate-300">
+            <p className="mt-1 text-caption font-bold uppercase tracking-wide text-[#c0b0a0]">
               {lang === 'zh' ? '分红、换币、小费、商家欠款' : 'Dividend, exchange, tip, merchant debt'}
             </p>
           </div>
-          <span className="rounded-full bg-slate-100 px-2 py-1 text-caption font-black uppercase text-slate-500">
+          <span className="rounded-full bg-[#ede6dc] px-2 py-1 text-caption font-bold uppercase text-[#8c7e6d]">
             {previewSource === 'server' ? (lang === 'zh' ? '服务器' : 'server') : (lang === 'zh' ? '本地' : 'local')}
           </span>
         </div>

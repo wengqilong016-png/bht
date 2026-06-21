@@ -27,25 +27,25 @@ const AiLogsTab: React.FC<AiLogsTabProps> = ({
   return (
     <div className="space-y-4 animate-in fade-in">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-card border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-center gap-3 rounded-card border border-[#e0d8cc] bg-white p-4 shadow-sm">
         {/* Search */}
-        <div className="flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-2 flex-1 min-w-[160px]">
-          <Search size={14} className="text-slate-400 shrink-0" />
+        <div className="flex items-center gap-2 bg-[#ede6dc] rounded-xl px-3 py-2 flex-1 min-w-[160px]">
+          <Search size={14} className="text-[#a09080] shrink-0" />
           <input
             type="text"
             value={aiLogSearch}
             onChange={e => setAiLogSearch(e.target.value)}
             placeholder={lang === 'zh' ? '搜索 AI 日志…' : 'Search AI logs...'}
-            className="bg-transparent text-[10px] font-bold text-slate-700 outline-none w-full placeholder:text-slate-400"
+            className="bg-transparent text-[10px] font-bold text-[#3d3028] outline-none w-full placeholder:text-[#a09080]"
           />
         </div>
         {/* Type filter */}
-        <div className="flex bg-slate-100 p-1 rounded-xl">
+        <div className="flex bg-[#ede6dc] p-1 rounded-xl">
           {(['all', 'image', 'text'] as const).map(f => (
             <button
               key={f}
               onClick={() => setAiLogTypeFilter(f)}
-              className={`flex items-center gap-1 px-3 py-2 rounded-lg text-caption font-black uppercase transition-all ${aiLogTypeFilter === f ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400'}`}
+              className={`flex items-center gap-1 px-3 py-2 rounded-lg text-caption font-black uppercase transition-all ${aiLogTypeFilter === f ? 'bg-white text-amber-600 shadow-sm' : 'text-[#a09080]'}`}
             >
               {f === 'all' && <LayoutList size={11} />}
               {f === 'image' && <ImageIcon size={11} />}
@@ -55,54 +55,54 @@ const AiLogsTab: React.FC<AiLogsTabProps> = ({
           ))}
         </div>
         {/* View mode */}
-        <div className="flex bg-slate-100 p-1 rounded-xl">
-          <button aria-label="list_view" type="button" onClick={() => setAiLogViewMode('list')} className={`px-4 py-2 rounded-lg text-caption font-black uppercase ${aiLogViewMode === 'list' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400'}`}>LIST</button>
-          <button aria-label="grid_view" type="button" onClick={() => setAiLogViewMode('grid')} className={`px-4 py-2 rounded-lg text-caption font-black uppercase ${aiLogViewMode === 'grid' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400'}`}>GRID</button>
+        <div className="flex bg-[#ede6dc] p-1 rounded-xl">
+          <button aria-label="list_view" type="button" onClick={() => setAiLogViewMode('list')} className={`px-4 py-2 rounded-lg text-caption font-black uppercase ${aiLogViewMode === 'list' ? 'bg-white text-amber-600 shadow-sm' : 'text-[#a09080]'}`}>LIST</button>
+          <button aria-label="grid_view" type="button" onClick={() => setAiLogViewMode('grid')} className={`px-4 py-2 rounded-lg text-caption font-black uppercase ${aiLogViewMode === 'grid' ? 'bg-white text-amber-600 shadow-sm' : 'text-[#a09080]'}`}>GRID</button>
         </div>
       </div>
 
       {/* Empty state */}
       {filteredAiLogs.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
-          <BrainCircuit size={48} className="text-slate-200" />
-          <p className="text-sm font-black text-slate-400">{lang === 'zh' ? '暂无 AI 日志记录' : 'No AI logs yet'}</p>
-          <p className="text-[10px] font-bold text-slate-300">{lang === 'zh' ? '后续 AI 使用记录会显示在这里' : 'New AI activity will appear here'}</p>
+        <div className="flex flex-col items-center justify-center py-20 text-[#a09080] gap-3">
+          <BrainCircuit size={48} className="text-[#e0d8cc]" />
+          <p className="text-sm font-black text-[#a09080]">{lang === 'zh' ? '暂无 AI 日志记录' : 'No AI logs yet'}</p>
+          <p className="text-[10px] font-bold text-[#c0b0a0]">{lang === 'zh' ? '后续 AI 使用记录会显示在这里' : 'New AI activity will appear here'}</p>
         </div>
       )}
 
       <div className={aiLogViewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-4 gap-4' : 'space-y-4'}>
         {filteredAiLogs.map(log => (
-          <button key={log.id} aria-label={t.view_details} type="button" className="bg-white p-3 rounded-card border border-slate-200 cursor-pointer hover:shadow-md transition-shadow text-left w-full" onClick={() => setViewingLog(log)}>
+          <button key={log.id} aria-label={t.view_details} type="button" className="bg-white p-3 rounded-card border border-[#e0d8cc] cursor-pointer hover:shadow-md transition-shadow text-left w-full" onClick={() => setViewingLog(log)}>
             {log.imageUrl && <img src={log.imageUrl} className="w-full aspect-square object-cover rounded-2xl mb-2" alt="Log" />}
-            <p className="text-caption font-black text-slate-900 truncate">{log.driverName}</p>
-            <p className="text-caption font-bold text-slate-400 uppercase">{new Date(log.timestamp).toLocaleDateString()}</p>
+            <p className="text-caption font-black text-[#171310] truncate">{log.driverName}</p>
+            <p className="text-caption font-bold text-[#a09080] uppercase">{new Date(log.timestamp).toLocaleDateString()}</p>
           </button>
         ))}
       </div>
 
       {/* Log detail modal */}
       {viewingLog && (
-        <div className="fixed inset-0 z-[80] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in" onClick={() => setViewingLog(null)}>
+        <div className="fixed inset-0 z-[80] bg-[#171310]/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in" onClick={() => setViewingLog(null)}>
           <div className="bg-white w-full max-w-lg rounded-card shadow-2xl overflow-hidden animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
-            <div className="p-6 border-b border-slate-100">
-              <p className="text-sm font-black text-slate-900">{viewingLog.driverName}</p>
-              <p className="text-caption font-bold text-slate-400 uppercase">{new Date(viewingLog.timestamp).toLocaleString()}</p>
+            <div className="p-6 border-b border-[#e8e0d4]">
+              <p className="text-sm font-black text-[#171310]">{viewingLog.driverName}</p>
+              <p className="text-caption font-bold text-[#a09080] uppercase">{new Date(viewingLog.timestamp).toLocaleString()}</p>
             </div>
             <div className="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
               {viewingLog.imageUrl && (
-                <img src={viewingLog.imageUrl} alt="Log" className="w-full rounded-2xl border border-slate-200" />
+                <img src={viewingLog.imageUrl} alt="Log" className="w-full rounded-2xl border border-[#e0d8cc]" />
               )}
               <div>
-                <p className="text-caption font-black text-slate-400 uppercase mb-1">{lang === 'zh' ? '输入' : 'Query'}</p>
-                <p className="text-xs text-slate-700">{viewingLog.query}</p>
+                <p className="text-caption font-black text-[#a09080] uppercase mb-1">{lang === 'zh' ? '输入' : 'Query'}</p>
+                <p className="text-xs text-[#3d3028]">{viewingLog.query}</p>
               </div>
               <div>
-                <p className="text-caption font-black text-slate-400 uppercase mb-1">{lang === 'zh' ? '输出' : 'Response'}</p>
-                <p className="text-xs text-slate-700">{viewingLog.response}</p>
+                <p className="text-caption font-black text-[#a09080] uppercase mb-1">{lang === 'zh' ? '输出' : 'Response'}</p>
+                <p className="text-xs text-[#3d3028]">{viewingLog.response}</p>
               </div>
             </div>
-            <div className="p-4 border-t border-slate-100 bg-slate-50">
-              <button aria-label={t.close} type="button" onClick={() => setViewingLog(null)} className="w-full py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase">{t.close}</button>
+            <div className="p-4 border-t border-[#e8e0d4] bg-[#f3efe8]">
+              <button aria-label={t.close} type="button" onClick={() => setViewingLog(null)} className="w-full py-3 bg-[#171310] text-white rounded-2xl text-xs font-bold uppercase">{t.close}</button>
             </div>
           </div>
         </div>

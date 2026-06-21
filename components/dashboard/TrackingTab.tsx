@@ -73,22 +73,22 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
 
   return (
     <div className="space-y-3 animate-in fade-in">
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-3 shadow-sm">
+      <div className="bg-white p-4 rounded-2xl border border-[#e0d8cc] space-y-3 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">{t.trackingTitle}</h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 mt-1">
+            <h2 className="text-lg font-black text-[#171310] uppercase tracking-tight">{t.trackingTitle}</h2>
+            <p className="text-[10px] font-bold text-[#a09080] uppercase tracking-widest flex items-center gap-1 mt-1">
               <Radio size={12} className="text-amber-600 animate-pulse" /> {t.trackingSubtitle}
             </p>
           </div>
           <div className="relative w-full lg:w-80">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#a09080]" />
             <input
               type="text"
               value={trackingSearch}
               onChange={(e) => setTrackingSearch(e.target.value)}
               placeholder={t.trackingSearch}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:border-amber-200"
+              className="w-full bg-[#f3efe8] border border-[#e0d8cc] rounded-2xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:border-amber-200"
             />
           </div>
         </div>
@@ -125,8 +125,8 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
               onClick={() => setTrackingStatusFilter(key)}
               className={`px-3 py-2 rounded-2xl text-caption font-black uppercase border transition-all ${
                 trackingStatusFilter === key
-                  ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-white text-slate-500 border-slate-200 hover:text-amber-600 hover:border-amber-200'
+                  ? 'bg-[#171310] text-white border-[#171310]'
+                  : 'bg-white text-[#8c7e6d] border-[#e0d8cc] hover:text-amber-600 hover:border-amber-200'
               }`}
             >
               {label}
@@ -137,9 +137,9 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
 
       <div className="space-y-2">
         {trackingDriverCards.length === 0 && (
-          <div className="py-8 text-center bg-white rounded-2xl border border-dashed border-slate-200">
-            <Search size={24} className="mx-auto text-slate-300 mb-3" />
-            <p className="text-caption font-black text-slate-400 uppercase tracking-widest">
+          <div className="py-8 text-center bg-white rounded-2xl border border-dashed border-[#e0d8cc]">
+            <Search size={24} className="mx-auto text-[#c0b0a0] mb-3" />
+            <p className="text-caption font-black text-[#a09080] uppercase tracking-widest">
               {t.noDriversFound}
             </p>
           </div>
@@ -150,13 +150,13 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
           const presenceBadge = {
             online: { color: 'bg-emerald-50 text-emerald-600', iconBg: 'bg-amber-600', label: t.driverOnline },
             away: { color: 'bg-amber-50 text-amber-600', iconBg: 'bg-amber-500', label: t.driverAway },
-            offline: { color: 'bg-slate-100 text-slate-400', iconBg: 'bg-slate-400', label: t.driverOffline },
+            offline: { color: 'bg-[#ede6dc] text-[#a09080]', iconBg: 'bg-[#a09080]', label: t.driverOffline },
           } as const;
           const badge = presenceBadge[presence.status];
           return (
-            <div key={driver.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div key={driver.id} className="bg-white border border-[#e0d8cc] rounded-2xl overflow-hidden shadow-sm">
               <button
-                className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-[#f3efe8] transition-colors"
                 onClick={() => { setExpandedDriverTracking(isExpanded ? null : driver.id); setTrackingEditLocId(null); }}
               >
                 <div className="flex items-center gap-3">
@@ -164,8 +164,8 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
                     {driver.name.charAt(0)}
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-black text-slate-900">{driver.name}</p>
-                    <p className="text-caption font-bold text-slate-400 uppercase">
+                    <p className="text-sm font-black text-[#171310]">{driver.name}</p>
+                    <p className="text-caption font-bold text-[#a09080] uppercase">
                       {driverLocs.length} locations • {presence.status === 'online'
                         ? (driver.lastActive ? formatRelativeTime(lastActiveMinutes) : t.liveNow)
                         : presence.status === 'away'
@@ -176,9 +176,9 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="hidden md:grid grid-cols-3 gap-2 text-left">
-                    <div className="bg-slate-50 rounded-xl px-3 py-2 min-w-[86px]">
-                      <p className="text-caption font-black text-slate-400 uppercase">{t.todaysCollections}</p>
-                      <p className="text-caption font-black text-slate-900 mt-1">{driverTxsToday.length}</p>
+                    <div className="bg-[#f3efe8] rounded-xl px-3 py-2 min-w-[86px]">
+                      <p className="text-caption font-black text-[#a09080] uppercase">{t.todaysCollections}</p>
+                      <p className="text-caption font-black text-[#171310] mt-1">{driverTxsToday.length}</p>
                     </div>
                     <div className="bg-amber-50 rounded-xl px-3 py-2 min-w-[86px] border border-amber-100">
                       <p className="text-caption font-black text-amber-400 uppercase">{t.todaysCash}</p>
@@ -189,19 +189,19 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
                       <p className={`text-caption font-black mt-1 ${attentionLocations.length > 0 || hasStaleGps ? 'text-rose-700' : 'text-emerald-700'}`}>{attentionLocations.length + (hasStaleGps ? 1 : 0)}</p>
                     </div>
                   </div>
-                  <span className={`px-2.5 py-1 rounded-lg text-caption font-black uppercase ${hasStaleGps ? 'bg-amber-50 text-amber-600' : badge.color}`}>
+                  <span className={`px-2.5 py-1 rounded-lg text-caption font-bold uppercase ${hasStaleGps ? 'bg-amber-50 text-amber-600' : badge.color}`}>
                     {hasStaleGps ? t.staleGps : badge.label}
                   </span>
-                  <ChevronRight size={16} className={`text-slate-300 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                  <ChevronRight size={16} className={`text-[#c0b0a0] transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                 </div>
               </button>
 
               {isExpanded && (
-                <div className="border-t border-slate-100 p-5 space-y-3 animate-in slide-in-from-top-2">
+                <div className="border-t border-[#e8e0d4] p-5 space-y-3 animate-in slide-in-from-top-2">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="bg-slate-50 rounded-2xl px-4 py-3 border border-slate-100">
-                      <p className="text-caption font-black text-slate-400 uppercase">{t.todaysCollections}</p>
-                      <p className="text-sm font-black text-slate-900 mt-1">{driverTxsToday.length}</p>
+                    <div className="bg-[#f3efe8] rounded-2xl px-4 py-3 border border-[#e8e0d4]">
+                      <p className="text-caption font-black text-[#a09080] uppercase">{t.todaysCollections}</p>
+                      <p className="text-sm font-black text-[#171310] mt-1">{driverTxsToday.length}</p>
                     </div>
                     <div className="bg-amber-50 rounded-2xl px-4 py-3 border border-amber-100">
                       <p className="text-caption font-black text-amber-400 uppercase">{t.todaysCash}</p>
@@ -217,16 +217,16 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
                     </div>
                   </div>
                   {driverLocs.length === 0 ? (
-                    <p className="text-center text-caption font-black text-slate-300 uppercase py-6">{t.noDriverLocations}</p>
+                    <p className="text-center text-caption font-black text-[#c0b0a0] uppercase py-6">{t.noDriverLocations}</p>
                   ) : (
                     driverLocs.map(loc => {
                       const isEditingThis = trackingEditLocId === loc.id;
                       return (
-                        <div key={loc.id} className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                        <div key={loc.id} className="bg-[#f3efe8] rounded-xl p-3 border border-[#e8e0d4]">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
                               <div className={`w-2 h-2 rounded-full ${loc.status === 'active' ? 'bg-emerald-500' : loc.status === 'maintenance' ? 'bg-amber-500' : 'bg-rose-500'}`}></div>
-                              <p className="text-xs font-black text-slate-900">{loc.name}</p>
+                              <p className="text-xs font-bold text-[#171310]">{loc.name}</p>
                             </div>
                             <button
                               onClick={() => {
@@ -237,57 +237,57 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
                                   setTrackingLocForm({ commissionRate: (loc.commissionRate * 100).toFixed(0), status: loc.status });
                                 }
                               }}
-                              className="p-1.5 text-slate-400 hover:text-amber-600 transition-colors"
+                              className="p-1.5 text-[#a09080] hover:text-amber-600 transition-colors"
                             >
                               <Pencil size={12} />
                             </button>
                           </div>
                           <div className="grid grid-cols-3 gap-2 text-caption">
-                            <div><span className="text-slate-400 font-bold uppercase block">{t.machineIdLabel}</span><span className="font-black text-slate-700">{loc.machineId}</span></div>
-                            <div><span className="text-slate-400 font-bold uppercase block">{t.lastScore}</span><span className="font-black text-slate-700">{loc.lastScore.toLocaleString()}</span></div>
-                            <div><span className="text-slate-400 font-bold uppercase block">{t.commissionLabel}</span><span className="font-black text-amber-600">{(loc.commissionRate * 100).toFixed(0)}%</span></div>
+                            <div><span className="text-[#a09080] font-bold uppercase block">{t.machineIdLabel}</span><span className="font-black text-[#3d3028]">{loc.machineId}</span></div>
+                            <div><span className="text-[#a09080] font-bold uppercase block">{t.lastScore}</span><span className="font-black text-[#3d3028]">{loc.lastScore.toLocaleString()}</span></div>
+                            <div><span className="text-[#a09080] font-bold uppercase block">{t.commissionLabel}</span><span className="font-black text-amber-600">{(loc.commissionRate * 100).toFixed(0)}%</span></div>
                           </div>
                           <div className="flex flex-wrap gap-1.5 mt-3">
                             {loc.status !== 'active' && (
-                              <span className="px-2 py-1 rounded-lg text-caption font-black uppercase bg-amber-50 text-amber-700 border border-amber-100">
+                              <span className="px-2 py-1 rounded-lg text-caption font-bold uppercase bg-amber-50 text-amber-700 border border-amber-100">
                                 {loc.status}
                               </span>
                             )}
                             {loc.resetLocked && (
-                              <span className="px-2 py-1 rounded-lg text-caption font-black uppercase bg-rose-50 text-rose-700 border border-rose-100">
+                              <span className="px-2 py-1 rounded-lg text-caption font-bold uppercase bg-rose-50 text-rose-700 border border-rose-100">
                                 {t.resetLocked}
                               </span>
                             )}
                             {loc.lastScore >= 9000 && (
-                              <span className="px-2 py-1 rounded-lg text-caption font-black uppercase bg-rose-50 text-rose-700 border border-rose-100">
+                              <span className="px-2 py-1 rounded-lg text-caption font-bold uppercase bg-rose-50 text-rose-700 border border-rose-100">
                                 {t.risk9999}
                               </span>
                             )}
                             {loc.area && (
-                              <span className="px-2 py-1 rounded-lg text-caption font-black uppercase bg-slate-100 text-slate-600 border border-slate-200">
+                              <span className="px-2 py-1 rounded-lg text-caption font-bold uppercase bg-[#ede6dc] text-[#7a6e5e] border border-[#e0d8cc]">
                                 {loc.area}
                               </span>
                             )}
                           </div>
                           {isEditingThis && (
-                            <div className="mt-3 border-t border-slate-200 pt-3 space-y-3 animate-in slide-in-from-top-2">
+                            <div className="mt-3 border-t border-[#e0d8cc] pt-3 space-y-3 animate-in slide-in-from-top-2">
                               <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                  <label className="text-caption font-black text-slate-400 uppercase mb-1 block">{t.commissionLabel} (%)</label>
+                                  <label className="text-caption font-black text-[#a09080] uppercase mb-1 block">{t.commissionLabel} (%)</label>
                                   <input
                                     type="number"
                                     value={trackingLocForm.commissionRate}
                                     onChange={e => setTrackingLocForm(f => ({ ...f, commissionRate: e.target.value }))}
-                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-black outline-none"
+                                    className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2 text-xs font-bold outline-none"
                                     placeholder="15"
                                   />
                                 </div>
                                 <div>
-                                  <label className="text-caption font-black text-slate-400 uppercase mb-1 block">{lang === 'zh' ? '状态' : 'Status'}</label>
+                                  <label className="text-caption font-black text-[#a09080] uppercase mb-1 block">{lang === 'zh' ? '状态' : 'Status'}</label>
                                   <select
                                     value={trackingLocForm.status}
                                     onChange={e => setTrackingLocForm(f => ({ ...f, status: e.target.value as Location['status'] }))}
-                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-black outline-none"
+                                    className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2 text-xs font-bold outline-none"
                                   >
                                     <option value="active">Active</option>
                                     <option value="maintenance">Maintenance</option>
@@ -332,13 +332,13 @@ const TrackingTab: React.FC<TrackingTabProps> = ({
       </div>
 
       <details className="group">
-        <summary className="cursor-pointer list-none flex items-center justify-between bg-white p-3 rounded-2xl border border-slate-200 shadow-sm select-none">
+        <summary className="cursor-pointer list-none flex items-center justify-between bg-white p-3 rounded-2xl border border-[#e0d8cc] shadow-sm select-none">
           <div className="flex items-center gap-3">
             <MapPin size={18} className="text-amber-500" />
-            <span className="text-sm font-black text-slate-900 uppercase">{t.liveMapTitle}</span>
+            <span className="text-sm font-black text-[#171310] uppercase">{t.liveMapTitle}</span>
           </div>
-          <span className="text-caption font-black text-slate-400 uppercase group-open:hidden">{t.mapExpand} ▼</span>
-          <span className="text-caption font-black text-slate-400 uppercase hidden group-open:block">{t.mapCollapse} ▲</span>
+          <span className="text-caption font-black text-[#a09080] uppercase group-open:hidden">{t.mapExpand} ▼</span>
+          <span className="text-caption font-black text-[#a09080] uppercase hidden group-open:block">{t.mapCollapse} ▲</span>
         </summary>
         <div className="mt-4">
           <MapErrorBoundary>

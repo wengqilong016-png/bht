@@ -85,27 +85,27 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
 
   const StatusIcon = StatusIconComponent;
 
-  const inputClass = "w-full bg-[#f0f2f5] border-none rounded-xl py-3 px-4 text-sm font-bold text-slate-700 shadow-silicone-pressed outline-none transition-all placeholder:text-slate-400 disabled:opacity-50";
-  const labelClass = "text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-1.5";
+  const inputClass = "w-full bg-[#f0f2f5] border-none rounded-xl py-3 px-4 text-sm font-bold text-[#3d3028] shadow-silicone-pressed outline-none transition-all placeholder:text-[#a09080] disabled:opacity-50";
+  const labelClass = "text-[10px] font-bold text-[#8c7e6d] uppercase tracking-widest flex items-center gap-2 mb-1.5";
   const sectionClass = "bg-[#f5f7fa] shadow-silicone rounded-2xl p-5 space-y-3";
-  const submitClass = "w-full bg-silicone-gradient text-slate-700 font-black py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-silicone hover:shadow-silicone-sm active:shadow-silicone-pressed transition-all disabled:opacity-50 border border-white/40";
+  const submitClass = "w-full bg-silicone-gradient text-[#3d3028] font-black py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-silicone hover:shadow-silicone-sm active:shadow-silicone-pressed transition-all disabled:opacity-50 border border-white/40";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-200/60 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-[#e0d8cc]/60 backdrop-blur-md" onClick={onClose} />
       <div className="relative w-full max-w-md bg-[#f5f7fa] rounded-card shadow-silicone overflow-hidden flex flex-col max-h-[90vh] border border-white/50">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-200 flex-shrink-0">
+        <div className="flex items-center justify-between p-5 border-b border-[#e0d8cc] flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-silicone-gradient shadow-silicone text-amber-600 flex items-center justify-center font-black text-sm border border-white/60">
               {currentUser.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-black text-slate-800">{currentUser.name}</p>
-              <p className="text-caption font-bold text-slate-400 uppercase">{currentUser.username} • {t.accountSettings}</p>
+              <p className="text-sm font-black text-[#2a2420]">{currentUser.name}</p>
+              <p className="text-caption font-bold text-[#a09080] uppercase">{currentUser.username} • {t.accountSettings}</p>
             </div>
           </div>
-          <button aria-label={t.close} type="button" onClick={onClose} className="p-2 bg-white/50 shadow-silicone-sm rounded-xl text-slate-400 hover:text-amber-600 transition-all border border-white/80">
+          <button aria-label={t.close} type="button" onClick={onClose} className="p-2 bg-white/50 shadow-silicone-sm rounded-xl text-[#a09080] hover:text-amber-600 transition-all border border-white/80">
             <X size={16} />
           </button>
         </div>
@@ -124,9 +124,9 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
             <div className={sectionClass}>
               <div className="flex items-center gap-2 mb-3">
                 <ShieldBan size={14} className="text-amber-500" />
-                <p className="text-xs font-black text-slate-700 uppercase tracking-widest">{t.driverSettingsManagedElsewhere}</p>
+                <p className="text-xs font-bold text-[#3d3028] uppercase tracking-widest">{t.driverSettingsManagedElsewhere}</p>
               </div>
-              <p className="text-xs font-bold text-slate-500 leading-relaxed">
+              <p className="text-xs font-bold text-[#8c7e6d] leading-relaxed">
                 {t.driverSettingsManagedElsewhereNote}
               </p>
             </div>
@@ -137,7 +137,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
               <div className={sectionClass}>
                 <div className="flex items-center gap-2 mb-3">
                   <KeyRound size={14} className="text-amber-500" />
-                  <p className="text-xs font-black text-slate-700 uppercase tracking-widest">{t.changePassword}</p>
+                  <p className="text-xs font-bold text-[#3d3028] uppercase tracking-widest">{t.changePassword}</p>
                 </div>
                 <form onSubmit={handleChangePassword} className="space-y-3">
                   <div>
@@ -182,13 +182,13 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
               <div className={sectionClass}>
                 <div className="flex items-center gap-2 mb-3">
                   <Mail size={14} className="text-amber-400" />
-                  <p className="text-xs font-black text-slate-700 uppercase tracking-widest">{t.changeEmail}</p>
+                  <p className="text-xs font-bold text-[#3d3028] uppercase tracking-widest">{t.changeEmail}</p>
                 </div>
 
                 <div className="mb-1">
-                  <label className={labelClass}><Mail size={10} className="text-slate-400" />{t.currentEmailLabel}</label>
+                  <label className={labelClass}><Mail size={10} className="text-[#a09080]" />{t.currentEmailLabel}</label>
                   <p
-                    className="w-full bg-[#e8eaed] rounded-xl py-2.5 px-4 text-sm font-bold text-slate-500 shadow-silicone-pressed border border-slate-200/60 truncate"
+                    className="w-full bg-[#e8eaed] rounded-xl py-2.5 px-4 text-sm font-bold text-[#8c7e6d] shadow-silicone-pressed border border-[#e0d8cc]/60 truncate"
                     title={currentEmail || undefined}
                   >
                     {currentEmail || '—'}
@@ -199,15 +199,15 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentUser, lang, is
                   <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-2.5">
                     <div className="flex items-center gap-2">
                       <Clock size={14} className="text-amber-500 flex-shrink-0" />
-                      <span className="text-xs font-black text-amber-700 uppercase tracking-wide">{t.emailPendingConfirmation}</span>
+                      <span className="text-xs font-bold text-amber-700 uppercase tracking-wide">{t.emailPendingConfirmation}</span>
                     </div>
-                    <p className="text-[11px] font-bold text-slate-600 leading-relaxed">
+                    <p className="text-[11px] font-bold text-[#7a6e5e] leading-relaxed">
                       {t.emailCheckNewInboxNote}
                       {submittedEmail ? (
                         <span className="block mt-1 text-amber-600 break-all">{submittedEmail}</span>
                       ) : null}
                     </p>
-                    <p className="text-caption text-slate-500 font-medium leading-relaxed">
+                    <p className="text-caption text-[#8c7e6d] font-medium leading-relaxed">
                       {t.emailOldRemainsActiveNote}
                     </p>
                     <button

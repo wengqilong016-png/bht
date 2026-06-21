@@ -26,13 +26,13 @@ const WizardStepBar: React.FC<WizardStepBarProps> = ({ current, lang }) => {
             <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-caption font-black uppercase transition-all ${
               active ? 'bg-amber-600 text-white' :
               done    ? 'bg-emerald-100 text-emerald-600' :
-                        'bg-slate-100 text-slate-400'
+                        'bg-[#ede6dc] text-[#a09080]'
             }`}>
               {done ? <CheckCircle2 size={10} /> : <span>{i + 2}</span>}
               {lang === 'sw' ? s.labelSw : s.labelZh}
             </div>
             {i < WIZARD_STEPS.length - 1 && (
-              <div className={`flex-1 h-px ${done ? 'bg-emerald-300' : 'bg-slate-200'}`} />
+              <div className={`flex-1 h-px ${done ? 'bg-emerald-300' : 'bg-[#e0d8cc]'}`} />
             )}
           </React.Fragment>
         );

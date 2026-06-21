@@ -105,20 +105,20 @@ const LiveMap: React.FC<LiveMapProps> = ({ drivers, locations, transactions, lan
           <span>{t.gpsUnavailableBanner}</span>
         </div>
       )}
-      <div className="bg-slate-900 rounded-card p-4 flex flex-wrap items-center justify-between gap-4 border border-white/10 shadow-xl">
+      <div className="bg-[#171310] rounded-card p-4 flex flex-wrap items-center justify-between gap-4 border border-white/10 shadow-xl">
          <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-3 border-r border-white/10">
                <ShieldCheck size={18} className="text-amber-400" />
-               <span className="text-[10px] font-black text-white uppercase tracking-widest">{t.trackingTitle}</span>
+               <span className="text-[10px] font-bold text-white uppercase tracking-widest">{t.trackingTitle}</span>
             </div>
             
             <select 
               value={auditDriverId || ''} 
               onChange={e => setAuditDriverId(e.target.value || null)}
-              className="bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-black text-white outline-none focus:border-amber-500"
+              className="bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-bold text-white outline-none focus:border-amber-500"
             >
-               <option value="" className="text-slate-900">实时模式 (Real-time)</option>
-               {drivers.map(d => <option key={d.id} value={d.id} className="text-slate-900">{d.name}</option>)}
+               <option value="" className="text-[#171310]">实时模式 (Real-time)</option>
+               {drivers.map(d => <option key={d.id} value={d.id} className="text-[#171310]">{d.name}</option>)}
             </select>
 
             {auditDriverId && (
@@ -126,11 +126,11 @@ const LiveMap: React.FC<LiveMapProps> = ({ drivers, locations, transactions, lan
                 type="date" 
                 value={auditDate} 
                 onChange={e => setAuditDate(e.target.value)}
-                className="bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-black text-white outline-none focus:border-amber-500"
+                className="bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-bold text-white outline-none focus:border-amber-500"
               />
             )}
          </div>
-         <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-caption font-black uppercase text-slate-300">
+         <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-caption font-black uppercase text-[#c0b0a0]">
            {activeDrivers.length} {t.liveNow} · {mappedLocations.length} {t.mappedSites}
          </div>
       </div>
@@ -169,8 +169,8 @@ const LiveMap: React.FC<LiveMapProps> = ({ drivers, locations, transactions, lan
               <Marker key={driver.id} position={[driver.currentGps!.lat, driver.currentGps!.lng]} icon={driver.status === 'active' ? driverIcon : inactiveDriverIcon}>
                 <Popup>
                   <div className="p-2 min-w-[160px]">
-                    <p className="text-xs font-black text-slate-900">{driver.name}</p>
-                    <p className="text-caption font-bold text-slate-400 uppercase">{driver.vehicleInfo.plate}</p>
+                    <p className="text-xs font-bold text-[#171310]">{driver.name}</p>
+                    <p className="text-caption font-bold text-[#a09080] uppercase">{driver.vehicleInfo.plate}</p>
                     <div className="mt-2 text-[10px] space-y-1">
                       <div className="flex justify-between"><span>{lang === 'zh' ? '上次活跃:' : 'Last active:'}</span><b>{getTimeAgo(driver.lastActive)}</b></div>
                     </div>
@@ -183,11 +183,11 @@ const LiveMap: React.FC<LiveMapProps> = ({ drivers, locations, transactions, lan
               <Marker key={loc.id} position={[loc.coords!.lat, loc.coords!.lng]} icon={loc.status === 'broken' ? brokenLocationIcon : locationIcon}>
                 <Popup>
                   <div className="p-1 min-w-[140px]">
-                    <p className="text-xs font-black text-slate-900">{loc.name}</p>
-                    <p className="text-caption text-slate-400 uppercase font-bold">{loc.machineId}</p>
+                    <p className="text-xs font-bold text-[#171310]">{loc.name}</p>
+                    <p className="text-caption text-[#a09080] uppercase font-bold">{loc.machineId}</p>
                     <button
                       onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${loc.coords!.lat},${loc.coords!.lng}`, '_blank')}
-                      className="mt-2 w-full flex items-center justify-center gap-1 rounded-lg bg-amber-600 px-2 py-1.5 text-[10px] font-black uppercase text-white hover:bg-amber-700 transition-colors"
+                      className="mt-2 w-full flex items-center justify-center gap-1 rounded-lg bg-amber-600 px-2 py-1.5 text-[10px] font-bold uppercase text-white hover:bg-amber-700 transition-colors"
                     >
                       <Navigation size={11} />
                       {t.navigateTo}
@@ -201,12 +201,12 @@ const LiveMap: React.FC<LiveMapProps> = ({ drivers, locations, transactions, lan
           <div className="absolute top-4 right-4 z-[1000] bg-white/90 backdrop-blur-md p-4 rounded-3xl border border-white/20 shadow-xl pointer-events-none">
              <div className="flex items-center gap-4">
                 <div className="flex flex-col items-center">
-                   <span className="text-[10px] font-black text-slate-400 uppercase leading-none">{t.liveNow}</span>
+                   <span className="text-[10px] font-bold text-[#a09080] uppercase leading-none">{t.liveNow}</span>
                    <span className="text-lg font-black text-amber-600">{activeDrivers.length}</span>
                 </div>
-                <div className="w-px h-8 bg-slate-200"></div>
+                <div className="w-px h-8 bg-[#e0d8cc]"></div>
                 <div className="flex flex-col items-center">
-                   <span className="text-[10px] font-black text-slate-400 uppercase leading-none">{t.trackedRoutes}</span>
+                   <span className="text-[10px] font-bold text-[#a09080] uppercase leading-none">{t.trackedRoutes}</span>
                    <span className="text-lg font-black text-amber-600 flex items-center gap-1"><Route size={16}/> {Object.keys(trajectories).length}</span>
                 </div>
              </div>

@@ -165,16 +165,16 @@ const AppDriverShell: React.FC = () => {
         syncStatus={syncStatus}
         lang={lang}
         bottomContent={
-          <div className="flex items-center gap-3 p-3 border-t border-slate-800">
+          <div className="flex items-center gap-3 p-3 border-t border-[#2a2420]">
             <div className="w-8 h-8 rounded-xl bg-white/10 text-white flex items-center justify-center font-black text-xs flex-shrink-0">
               {currentUser.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-caption font-black text-white truncate">{currentUser.name}</p>
-              <p className="text-caption font-bold text-slate-500 uppercase">{t.driverUser}</p>
+              <p className="text-caption font-bold text-[#8c7e6d] uppercase">{t.driverUser}</p>
             </div>
             <div className="flex flex-col gap-1">
-              <button onClick={() => setLang(lang === 'zh' ? 'sw' : 'zh')} className="p-1 bg-white/5 rounded-lg text-slate-300 hover:text-white transition-colors"><Globe size={12}/></button>
+              <button onClick={() => setLang(lang === 'zh' ? 'sw' : 'zh')} className="p-1 bg-white/5 rounded-lg text-[#c0b0a0] hover:text-white transition-colors"><Globe size={12}/></button>
               <button onClick={handleLogout} className="p-1 bg-rose-500/10 rounded-lg border border-rose-500/20 text-rose-300 hover:text-rose-200 transition-colors"><LogOut size={12}/></button>
             </div>
           </div>
@@ -190,10 +190,10 @@ const AppDriverShell: React.FC = () => {
           showMobileBrand={false}
           actions={
             <>
-              <button onClick={cycleFontSize} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:text-slate-900" title={fontSize}>
+              <button onClick={cycleFontSize} className="rounded-xl border border-[#e0d8cc] bg-white p-2 text-[#8c7e6d] hover:text-[#171310]" title={fontSize}>
                 <Type size={15} />
               </button>
-              <button onClick={() => setLang(lang === 'zh' ? 'sw' : 'zh')} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:text-slate-900"><Globe size={15}/></button>
+              <button onClick={() => setLang(lang === 'zh' ? 'sw' : 'zh')} className="rounded-xl border border-[#e0d8cc] bg-white p-2 text-[#8c7e6d] hover:text-[#171310]"><Globe size={15}/></button>
               <button onClick={handleLogout} className="p-2 rounded-xl bg-rose-50 border border-rose-100 text-rose-500 hover:text-rose-700"><LogOut size={15}/></button>
             </>
           }
@@ -229,7 +229,7 @@ const AppDriverShell: React.FC = () => {
             {!showEmailInput ? (
               <button
                 onClick={() => setShowEmailInput(true)}
-                className="w-full flex items-center justify-center gap-2 py-2 bg-amber-600 text-white rounded-xl text-xs font-black uppercase hover:bg-amber-700 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2 bg-amber-600 text-white rounded-xl text-xs font-bold uppercase hover:bg-amber-700 transition-colors"
               >
                 <Mail size={12} />
                 {lang === 'zh' ? '绑定真实邮箱' : 'Bind Real Email'}
@@ -247,7 +247,7 @@ const AppDriverShell: React.FC = () => {
                 <button
                   onClick={handleBindEmail}
                   disabled={isBindingEmail || !newEmail.trim()}
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-black uppercase disabled:opacity-50 hover:bg-emerald-700 transition-colors"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase disabled:opacity-50 hover:bg-emerald-700 transition-colors"
                 >
                   {isBindingEmail ? '...' : lang === 'zh' ? '确认' : 'OK'}
                 </button>

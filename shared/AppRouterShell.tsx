@@ -9,7 +9,7 @@ const AppDriverShell = React.lazy(() => import('../driver/AppDriverShell'));
 const ShellFallback = () => (
   <div className="min-h-screen flex flex-col items-center justify-center bg-[#f3f5f8]">
     <Loader2 size={48} className="text-indigo-500 animate-spin mb-4" />
-    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading...</p>
+    <p className="text-[10px] font-bold uppercase tracking-widest text-[#a09080]">Loading...</p>
   </div>
 );
 

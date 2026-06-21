@@ -26,20 +26,20 @@ const ShellHeader: React.FC<ShellHeaderProps> = ({
   actions,
   belowHeader,
 }) => (
-  <header className="border-b flex-shrink-0 z-30 bg-white/95 backdrop-blur border-slate-200 pt-[max(env(safe-area-inset-top),0px)]">
+  <header className="border-b flex-shrink-0 z-30 bg-white/95 backdrop-blur border-[#e0d8cc] pt-[max(env(safe-area-inset-top),0px)]">
     <div className="flex items-center justify-between px-4 py-2.5 sm:py-3">
       <div className="flex items-center gap-3">
         {showMobileBrand && (
           <div className="md:hidden flex items-center gap-2">
-            <div className="bg-slate-900 text-amber-400 p-1.5 rounded-xl">
+            <div className="bg-[#171310] text-amber-400 p-1.5 rounded-xl">
               <Crown size={14} fill="currentColor" />
             </div>
-            <span className="text-xs font-black text-slate-800">BAHATI</span>
+            <span className="text-xs font-bold text-[#1a1816]">BAHATI</span>
           </div>
         )}
         <div>
-          <p className="text-caption font-black text-slate-400 uppercase tracking-[0.2em]">{subtitle}</p>
-          <p className="text-sm font-black text-slate-900 uppercase leading-tight">{title}</p>
+          <p className="text-caption font-black text-[#a09080] uppercase tracking-[0.2em]">{subtitle}</p>
+          <p className="text-sm font-black text-[#1a1816] uppercase leading-tight">{title}</p>
         </div>
       </div>
       <div className="flex items-center gap-2">

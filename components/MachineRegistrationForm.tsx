@@ -234,7 +234,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
 
     return (
       <div className="max-w-md mx-auto py-12 px-6 animate-in zoom-in-95 duration-500">
-        <div className="bg-white rounded-card shadow-2xl border border-slate-100 overflow-hidden relative">
+        <div className="bg-white rounded-card shadow-2xl border border-[#e8e0d4] overflow-hidden relative">
            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-400 to-amber-500"></div>
            
            <div className="p-8 flex flex-col items-center text-center space-y-6">
@@ -243,24 +243,24 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
               </div>
               
               <div>
-                <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">
+                <h2 className="text-2xl font-black text-[#171310] uppercase tracking-tight">
                   {lang === 'zh' ? '入网成功！' : 'Usajili Umekamilika!'}
                 </h2>
-                <p className="text-xs text-slate-400 font-bold uppercase mt-1 tracking-widest">Successful Registration</p>
+                <p className="text-xs text-[#a09080] font-bold uppercase mt-1 tracking-widest">Successful Registration</p>
               </div>
 
-              <div className="w-full bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-3">
-                 <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                    <span className="text-caption font-black text-slate-400 uppercase">ID</span>
+              <div className="w-full bg-[#f3efe8] rounded-2xl p-6 border border-[#e8e0d4] space-y-3">
+                 <div className="flex justify-between items-center border-b border-[#e0d8cc] pb-2">
+                    <span className="text-caption font-black text-[#a09080] uppercase">ID</span>
                     <span className="text-base font-black text-amber-600">{lastRegisteredMachine.machineId}</span>
                  </div>
-                 <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                    <span className="text-caption font-black text-slate-400 uppercase">Shop</span>
-                    <span className="text-sm font-bold text-slate-700">{lastRegisteredMachine.name}</span>
+                 <div className="flex justify-between items-center border-b border-[#e0d8cc] pb-2">
+                    <span className="text-caption font-black text-[#a09080] uppercase">Shop</span>
+                    <span className="text-sm font-bold text-[#3d3028]">{lastRegisteredMachine.name}</span>
                  </div>
                  <div className="flex justify-between items-center">
-                    <span className="text-caption font-black text-slate-400 uppercase">Area</span>
-                    <span className="text-xs font-bold text-slate-500">{lastRegisteredMachine.area}</span>
+                    <span className="text-caption font-black text-[#a09080] uppercase">Area</span>
+                    <span className="text-xs font-bold text-[#8c7e6d]">{lastRegisteredMachine.area}</span>
                  </div>
               </div>
 
@@ -269,7 +269,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
                    <PlusButtonIcon />
                    {lang === 'zh' ? '继续注册下一台' : 'Sajili Mashine Nyingine'}
                  </button>
-                 <button onClick={handleDone} className="w-full py-4 bg-white text-slate-500 border border-slate-200 rounded-2xl font-black uppercase text-sm hover:bg-slate-50 active:scale-95 transition-all">
+                 <button onClick={handleDone} className="w-full py-4 bg-white text-[#8c7e6d] border border-[#e0d8cc] rounded-2xl font-black uppercase text-sm hover:bg-[#f3efe8] active:scale-95 transition-all">
                    {doneLabel}
                  </button>
               </div>
@@ -281,27 +281,27 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
 
   return (
     <div className="max-w-lg mx-auto pb-24 px-4 animate-in slide-in-from-bottom-4">
-      <div className="bg-white rounded-card p-8 shadow-2xl border border-slate-200 space-y-6 relative">
+      <div className="bg-white rounded-card p-8 shadow-2xl border border-[#e0d8cc] space-y-6 relative">
         {/* Header */}
-        <div className="border-b border-slate-100 pb-4 mb-2 flex items-center justify-between">
-           <button onClick={onCancel} className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-amber-600 transition-colors">
+        <div className="border-b border-[#e8e0d4] pb-4 mb-2 flex items-center justify-between">
+           <button onClick={onCancel} className="p-2 bg-[#f3efe8] rounded-full text-[#a09080] hover:text-amber-600 transition-colors">
               <ArrowLeft size={20} />
            </button>
            <div className="text-center">
-             <h2 className="text-xl font-black text-slate-900 uppercase">
+             <h2 className="text-xl font-black text-[#171310] uppercase">
                {lang === 'zh' ? '新机入网注册' : 'Sajili Mashine Mpya'}
              </h2>
-             <p className="text-caption text-slate-400 font-bold uppercase mt-1 tracking-widest">Site Onboarding</p>
+             <p className="text-caption text-[#a09080] font-bold uppercase mt-1 tracking-widest">Site Onboarding</p>
            </div>
            <div className="w-10"></div>
         </div>
 
         {/* Photo Upload */}
         <div className="space-y-2">
-          <label className="text-caption font-black text-slate-400 uppercase tracking-widest ml-1">{lang === 'zh' ? '现场存证 (机器 + 老板合影) *' : 'Picha ya Eneo *'}</label>
+          <label className="text-caption font-black text-[#a09080] uppercase tracking-widest ml-1">{lang === 'zh' ? '现场存证 (机器 + 老板合影) *' : 'Picha ya Eneo *'}</label>
           <div 
             onClick={() => fileInputRef.current?.click()}
-            className={`relative h-48 rounded-card border-2 border-dashed flex flex-col items-center justify-center overflow-hidden cursor-pointer transition-all active:scale-98 ${machinePhoto ? 'border-emerald-400 bg-emerald-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-amber-300'}`}
+            className={`relative h-48 rounded-card border-2 border-dashed flex flex-col items-center justify-center overflow-hidden cursor-pointer transition-all active:scale-98 ${machinePhoto ? 'border-emerald-400 bg-emerald-50' : 'border-[#c8beb0] bg-[#f3efe8] hover:bg-[#ede6dc] hover:border-amber-300'}`}
           >
              <input type="file" accept="image/*" ref={fileInputRef} onChange={handlePhotoCapture} className="hidden" />
              {machinePhoto ? (
@@ -313,8 +313,8 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
                </>
              ) : (
                <div className="text-center space-y-2">
-                 <ImagePlus size={32} className="text-slate-300 mx-auto" />
-                 <p className="text-caption font-black text-slate-400 uppercase">{lang === 'zh' ? '点击拍照' : 'Piga Picha'}</p>
+                 <ImagePlus size={32} className="text-[#c0b0a0] mx-auto" />
+                 <p className="text-caption font-black text-[#a09080] uppercase">{lang === 'zh' ? '点击拍照' : 'Piga Picha'}</p>
                </div>
              )}
           </div>
@@ -323,32 +323,32 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
         {/* Machine ID & Score */}
         <div className="grid grid-cols-2 gap-4">
            <div className="space-y-1">
-             <label className="text-caption font-black text-slate-400 uppercase ml-1">{lang === 'zh' ? '机器编号 *' : 'ID ya Mashine *'}</label>
-             <input type="text" value={machineId} onChange={e => setMachineId(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black text-slate-900 uppercase outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-slate-300" placeholder="M-00X" />
+             <label className="text-caption font-black text-[#a09080] uppercase ml-1">{lang === 'zh' ? '机器编号 *' : 'ID ya Mashine *'}</label>
+             <input type="text" value={machineId} onChange={e => setMachineId(e.target.value)} className="w-full bg-[#f3efe8] border border-[#e0d8cc] rounded-2xl p-4 font-black text-[#171310] uppercase outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-[#c0b0a0]" placeholder="M-00X" />
            </div>
            <div className="space-y-1">
-             <label className="text-caption font-black text-slate-400 uppercase ml-1">{lang === 'zh' ? '初始读数' : 'Namba ya Mwanzo'}</label>
-             <input type="number" value={initialScore} onChange={e => setInitialScore(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-slate-300" placeholder="0" />
+             <label className="text-caption font-black text-[#a09080] uppercase ml-1">{lang === 'zh' ? '初始读数' : 'Namba ya Mwanzo'}</label>
+             <input type="number" value={initialScore} onChange={e => setInitialScore(e.target.value)} className="w-full bg-[#f3efe8] border border-[#e0d8cc] rounded-2xl p-4 font-black text-[#171310] outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-[#c0b0a0]" placeholder="0" />
            </div>
         </div>
 
         {/* Shop Name */}
         <div className="space-y-1">
-          <label className="text-caption font-black text-slate-400 uppercase ml-1">{lang === 'zh' ? '店铺/点位名称 *' : 'Jina la Duka *'}</label>
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center gap-3 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-50 transition-all">
-             <Building2 size={16} className="text-slate-400" />
-             <input type="text" value={shopName} onChange={e => setShopName(e.target.value)} className="w-full bg-transparent font-black text-slate-900 outline-none placeholder:text-slate-300" placeholder="Shop Name" />
+          <label className="text-caption font-black text-[#a09080] uppercase ml-1">{lang === 'zh' ? '店铺/点位名称 *' : 'Jina la Duka *'}</label>
+          <div className="bg-[#f3efe8] p-4 rounded-2xl border border-[#e0d8cc] flex items-center gap-3 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-50 transition-all">
+             <Building2 size={16} className="text-[#a09080]" />
+             <input type="text" value={shopName} onChange={e => setShopName(e.target.value)} className="w-full bg-transparent font-black text-[#171310] outline-none placeholder:text-[#c0b0a0]" placeholder="Shop Name" />
           </div>
         </div>
 
         {/* Owner & Commission */}
         <div className="grid grid-cols-2 gap-4">
            <div className="space-y-1">
-             <label className="text-caption font-black text-slate-400 uppercase ml-1">{lang === 'zh' ? '店主姓名 *' : 'Jina la Tajiri *'}</label>
-             <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-slate-300" placeholder="Owner Name" />
+             <label className="text-caption font-black text-[#a09080] uppercase ml-1">{lang === 'zh' ? '店主姓名 *' : 'Jina la Tajiri *'}</label>
+             <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)} className="w-full bg-[#f3efe8] border border-[#e0d8cc] rounded-2xl p-4 font-black text-[#171310] outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-[#c0b0a0]" placeholder="Owner Name" />
            </div>
            <div className="space-y-1">
-             <label className="text-caption font-black text-slate-400 uppercase ml-1">{lang === 'zh' ? '分红比例 (%) *' : 'Komisheni % *'}</label>
+             <label className="text-caption font-black text-[#a09080] uppercase ml-1">{lang === 'zh' ? '分红比例 (%) *' : 'Komisheni % *'}</label>
              <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex items-center gap-2 focus-within:border-amber-400 transition-all">
                 <Percent size={14} className="text-amber-400" />
                 <input type="number" value={commissionRate} onChange={e => setCommissionRate(e.target.value)} className="w-full bg-transparent font-black text-amber-600 outline-none placeholder:text-amber-300" placeholder="15" />
@@ -359,56 +359,56 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
         {/* Area & GPS */}
         <div className="grid grid-cols-2 gap-4 items-end">
            <div className="space-y-1">
-             <label className="text-caption font-black text-slate-400 uppercase ml-1">{lang === 'zh' ? '区域 Area *' : 'Eneo *'}</label>
-             <input type="text" value={area} onChange={e => setArea(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-slate-300" placeholder="Kariakoo" />
+             <label className="text-caption font-black text-[#a09080] uppercase ml-1">{lang === 'zh' ? '区域 Area *' : 'Eneo *'}</label>
+             <input type="text" value={area} onChange={e => setArea(e.target.value)} className="w-full bg-[#f3efe8] border border-[#e0d8cc] rounded-2xl p-4 font-black text-[#171310] outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-[#c0b0a0]" placeholder="Kariakoo" />
            </div>
            <button 
              onClick={fetchGps} 
              disabled={isGpsLoading}
-             className={`h-[58px] rounded-2xl border flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md ${gps ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+             className={`h-[58px] rounded-2xl border flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md ${gps ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-[#171310] text-white hover:bg-[#2a2420]'}`}
            >
               {isGpsLoading ? <Loader2 size={18} className="animate-spin" /> : (gps ? <CheckCircle2 size={18} /> : <MapPinned size={18} />)}
-              <span className="text-caption font-black uppercase">{gps ? 'GPS OK' : 'Get GPS'}</span>
+              <span className="text-caption font-bold uppercase">{gps ? 'GPS OK' : 'Get GPS'}</span>
            </button>
         </div>
-        <div className="bg-slate-50 p-4 rounded-card border border-slate-200 space-y-3">
+        <div className="bg-[#f3efe8] p-4 rounded-card border border-[#e0d8cc] space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-caption font-black text-slate-500 uppercase">
+              <p className="text-caption font-black text-[#8c7e6d] uppercase">
                 {lang === 'zh' ? '手动输入 GPS 坐标' : 'Manual GPS Coordinates'}
               </p>
-              <p className="text-caption font-bold text-slate-400 uppercase">
+              <p className="text-caption font-bold text-[#a09080] uppercase">
                 {lang === 'zh' ? '可直接粘贴已有定位数据' : 'Paste existing coordinates directly'}
               </p>
             </div>
             {gps && (
-              <span className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-600 text-caption font-black uppercase">
+              <span className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-600 text-caption font-bold uppercase">
                 {gps.lat.toFixed(6)}, {gps.lng.toFixed(6)}
               </span>
             )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-caption font-black text-slate-400 uppercase ml-1">Latitude</label>
+              <label className="text-caption font-black text-[#a09080] uppercase ml-1">Latitude</label>
               <input
                 type="number"
                 inputMode="decimal"
                 step="0.000001"
                 value={manualLat}
                 onChange={e => setManualLat(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-slate-300"
+                className="w-full bg-white border border-[#e0d8cc] rounded-2xl p-4 font-black text-[#171310] outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-[#c0b0a0]"
                 placeholder="-6.823490"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-caption font-black text-slate-400 uppercase ml-1">Longitude</label>
+              <label className="text-caption font-black text-[#a09080] uppercase ml-1">Longitude</label>
               <input
                 type="number"
                 inputMode="decimal"
                 step="0.000001"
                 value={manualLng}
                 onChange={e => setManualLng(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-slate-300"
+                className="w-full bg-white border border-[#e0d8cc] rounded-2xl p-4 font-black text-[#171310] outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-[#c0b0a0]"
                 placeholder="39.269510"
               />
             </div>
@@ -416,7 +416,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
           <button
             type="button"
             onClick={applyManualGps}
-            className="w-full py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl text-caption font-black uppercase hover:bg-slate-100 transition-all active:scale-95"
+            className="w-full py-3 bg-white border border-[#e0d8cc] text-[#3d3028] rounded-2xl text-caption font-black uppercase hover:bg-[#ede6dc] transition-all active:scale-95"
           >
             {lang === 'zh' ? '使用手动坐标' : 'Use Manual Coordinates'}
           </button>
@@ -426,7 +426,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
         <div className="bg-amber-50 p-5 rounded-card border border-amber-100 focus-within:border-amber-300 transition-all">
            <label className="text-caption font-black text-amber-600 uppercase mb-2 flex items-center gap-1"><Coins size={12} /> {lang === 'zh' ? '初始铺货币 / 押金回收' : 'Mtaji wa Sarafu / Deni'}</label>
            <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-amber-400">TZS</span>
+              <span className="text-xs font-bold text-amber-400">TZS</span>
               <input type="number" value={startupDebt} onChange={e => setStartupDebt(e.target.value)} className="w-full bg-transparent font-black text-lg text-amber-900 outline-none placeholder:text-amber-300/50" placeholder="0" />
            </div>
         </div>
@@ -441,7 +441,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
           {isSubmitting ? (lang === 'zh' ? '正在注册...' : 'Inasajili...') : (lang === 'zh' ? '完成注册' : 'Hifadhi Sasa')}
         </button>
         {submitError && (
-          <p className="text-xs font-black text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
+          <p className="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
             {submitError}
           </p>
         )}

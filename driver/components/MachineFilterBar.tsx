@@ -28,16 +28,16 @@ const MachineFilterBar: React.FC<MachineFilterBarProps> = ({
   selectedArea, onAreaChange, availableAreas, counts,
   showRegisterButton, onStartRegister,
 }) => (
-  <div className="sticky top-2 z-20 space-y-2 rounded-card border border-slate-200 bg-white/92 p-2.5 shadow-[0_12px_28px_rgba(15,23,42,0.06)] backdrop-blur">
+  <div className="sticky top-2 z-20 space-y-2 rounded-card border border-[#e0d8cc] bg-white/92 p-2.5 shadow-[0_12px_28px_rgba(15,23,42,0.06)] backdrop-blur">
     {/* Search */}
     <div className="relative group">
-      <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
+      <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a09080] group-focus-within:text-amber-500 transition-colors" />
       <input
         type="text"
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={t.enterId}
-        className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-[13px] font-bold shadow-field outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-100 transition-all"
+        className="w-full bg-white border border-[#e0d8cc] rounded-2xl py-3 pl-10 pr-4 text-[13px] font-bold shadow-field outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-100 transition-all"
       />
     </div>
 
@@ -55,10 +55,10 @@ const MachineFilterBar: React.FC<MachineFilterBarProps> = ({
             aria-label={label + ' (' + count + ')'}
             aria-pressed={locationFilter === key}
             onClick={() => onFilterChange(key)}
-            className={`shrink-0 px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase transition-all border ${
+            className={`shrink-0 px-3 py-1.5 rounded-2xl text-[10px] font-bold uppercase transition-all border ${
               locationFilter === key
-                ? 'bg-slate-900 text-white border-slate-900 shadow-field'
-                : 'bg-white text-slate-500 border-slate-200 hover:border-amber-200 hover:text-amber-600'
+                ? 'bg-[#171310] text-white border-[#171310] shadow-field'
+                : 'bg-white text-[#8c7e6d] border-[#e0d8cc] hover:border-amber-200 hover:text-amber-600'
             }`}
           >
             {label} <span className="ml-1 opacity-60">{count}</span>
@@ -68,7 +68,7 @@ const MachineFilterBar: React.FC<MachineFilterBarProps> = ({
       <select
         value={selectedArea}
         onChange={(e) => onAreaChange(e.target.value)}
-        className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-[10px] font-black uppercase text-slate-600 outline-none shadow-field"
+        className="w-full bg-white border border-[#e0d8cc] rounded-2xl px-4 py-2.5 text-[10px] font-bold uppercase text-[#7a6e5e] outline-none shadow-field"
       >
         <option value="all">{t.allAreas}</option>
         {availableAreas.map(area => (

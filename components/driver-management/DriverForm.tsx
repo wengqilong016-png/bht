@@ -47,14 +47,14 @@ const DriverForm: React.FC<DriverFormProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-[#171310]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-lg rounded-card shadow-2xl overflow-hidden animate-in zoom-in-95">
-        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+        <div className="p-8 border-b border-[#e8e0d4] flex justify-between items-center bg-[#f3efe8]">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-amber-600 rounded-xl text-white"><User size={20} /></div>
-            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">{editingId ? 'Edit Driver' : 'New Driver'}</h3>
+            <h3 className="text-lg font-black text-[#171310] uppercase tracking-tight">{editingId ? 'Edit Driver' : 'New Driver'}</h3>
           </div>
-          <button onClick={onClose} className="p-2 bg-white rounded-full text-slate-400 shadow-sm hover:text-rose-500 transition-colors"><X size={18} /></button>
+          <button onClick={onClose} className="p-2 bg-white rounded-full text-[#a09080] shadow-sm hover:text-rose-500 transition-colors"><X size={18} /></button>
         </div>
 
         <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
@@ -74,14 +74,14 @@ const DriverForm: React.FC<DriverFormProps> = ({
           {!editingId && (
             <div className="p-5 bg-amber-50/50 rounded-card border border-amber-100 space-y-4">
               <p className="text-caption font-black text-amber-500 uppercase tracking-widest">登录账号配置 Login Credentials</p>
-              <p className="text-[10px] font-bold text-slate-500 ml-1">登录邮箱将自动生成：姓名@bht.com（司机首次登录后可绑定真实邮箱）</p>
+              <p className="text-[10px] font-bold text-[#8c7e6d] ml-1">登录邮箱将自动生成：姓名@bht.com（司机首次登录后可绑定真实邮箱）</p>
               <div className="space-y-1">
-                <label className="text-caption font-black text-slate-400 uppercase ml-1">初始密码 PASSWORD *</label>
+                <label className="text-caption font-black text-[#a09080] uppercase ml-1">初始密码 PASSWORD *</label>
                 <input
                   type="password"
                   value={form.password}
                   onChange={e => onChange({ password: e.target.value })}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:border-amber-400"
+                  className="w-full bg-white border border-[#e0d8cc] rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:border-amber-400"
                   placeholder="Min 8 characters"
                   autoComplete="new-password"
                 />
@@ -94,17 +94,17 @@ const DriverForm: React.FC<DriverFormProps> = ({
 
           {/* Status toggle — edit mode only */}
           {editingId && (
-            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-card border border-slate-200">
+            <div className="flex items-center justify-between p-4 bg-[#f3efe8] rounded-card border border-[#e0d8cc]">
               <div>
-                <p className="text-caption font-black text-slate-500 uppercase tracking-widest">账号状态 Account Status</p>
-                <p className="text-xs font-bold text-slate-700 mt-0.5">
+                <p className="text-caption font-black text-[#8c7e6d] uppercase tracking-widest">账号状态 Account Status</p>
+                <p className="text-xs font-bold text-[#3d3028] mt-0.5">
                   {form.status === 'active' ? '在职 Active' : '停职 Inactive'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => onChange({ status: form.status === 'active' ? 'inactive' : 'active' })}
-                className={`transition-colors ${form.status === 'active' ? 'text-emerald-500' : 'text-slate-300'}`}
+                className={`transition-colors ${form.status === 'active' ? 'text-emerald-500' : 'text-[#c0b0a0]'}`}
               >
                 {form.status === 'active'
                   ? <ToggleRight size={36} />
@@ -114,18 +114,18 @@ const DriverForm: React.FC<DriverFormProps> = ({
             </div>
           )}
 
-          <div className="p-5 bg-slate-50 rounded-card border border-slate-200 space-y-4">
-            <p className="text-caption font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <div className="p-5 bg-[#f3efe8] rounded-card border border-[#e0d8cc] space-y-4">
+            <p className="text-caption font-black text-[#a09080] uppercase tracking-widest flex items-center gap-2">
               <Truck size={14} /> Vehicle & Asset
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-caption font-black text-slate-400 uppercase ml-1">Vehicle Model</label>
-                <input type="text" value={form.model} onChange={e => onChange({ model: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold" placeholder="Bajaj / TVS" />
+                <label className="text-caption font-black text-[#a09080] uppercase ml-1">Vehicle Model</label>
+                <input type="text" value={form.model} onChange={e => onChange({ model: e.target.value })} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-4 py-2.5 text-xs font-bold" placeholder="Bajaj / TVS" />
               </div>
               <div className="space-y-1">
-                <label className="text-caption font-black text-slate-400 uppercase ml-1">License Plate</label>
-                <input type="text" value={form.plate} onChange={e => onChange({ plate: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold uppercase" placeholder="T 000 XXX" />
+                <label className="text-caption font-black text-[#a09080] uppercase ml-1">License Plate</label>
+                <input type="text" value={form.plate} onChange={e => onChange({ plate: e.target.value })} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-4 py-2.5 text-xs font-bold uppercase" placeholder="T 000 XXX" />
               </div>
             </div>
             <div className="space-y-1 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-4">
@@ -138,7 +138,7 @@ const DriverForm: React.FC<DriverFormProps> = ({
                 className="w-full bg-white border border-amber-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:border-amber-400"
                 placeholder="例如 / e.g. 10000"
               />
-              <p className="text-[10px] font-bold text-slate-400 ml-1">
+              <p className="text-[10px] font-bold text-[#a09080] ml-1">
                 司机随身携带的硬币数，每日结算确认后自动更新为该日实际硬币数。创建时预设初始值。
               </p>
             </div>
@@ -196,15 +196,15 @@ const DriverForm: React.FC<DriverFormProps> = ({
                       className={`w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition-all ${
                         isAssigned
                           ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                          : 'bg-white border-slate-200 text-slate-500 hover:border-emerald-200 hover:bg-emerald-50/30'
+                          : 'bg-white border-[#e0d8cc] text-[#8c7e6d] hover:border-emerald-200 hover:bg-emerald-50/30'
                       }`}
                     >
                       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                         loc.status === 'active' ? 'bg-emerald-500' :
                         loc.status === 'maintenance' ? 'bg-amber-500' : 'bg-rose-400'
                       }`} />
-                      <span className="text-caption font-black uppercase truncate flex-1">{loc.name}</span>
-                      <span className="text-caption font-bold text-slate-400 flex-shrink-0">{loc.area}</span>
+                      <span className="text-caption font-bold uppercase truncate flex-1">{loc.name}</span>
+                      <span className="text-caption font-bold text-[#a09080] flex-shrink-0">{loc.area}</span>
                       {isAssigned && <span className="text-caption font-black text-emerald-600 flex-shrink-0">✓</span>}
                     </button>
                   );
@@ -217,11 +217,11 @@ const DriverForm: React.FC<DriverFormProps> = ({
           )}
         </div>
 
-        <div className="p-6 border-t border-slate-100 bg-slate-50">
+        <div className="p-6 border-t border-[#e8e0d4] bg-[#f3efe8]">
           <button
             onClick={onSave}
             disabled={isSaving}
-            className="w-full bg-amber-600 text-white rounded-2xl font-black py-4 uppercase shadow-xl shadow-amber-100 flex items-center justify-center gap-2 disabled:bg-slate-300 transition-all active:scale-95"
+            className="w-full bg-amber-600 text-white rounded-2xl font-black py-4 uppercase shadow-xl shadow-amber-100 flex items-center justify-center gap-2 disabled:bg-[#c8beb0] transition-all active:scale-95"
           >
             {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             {isSaving ? 'Saving...' : 'Save Driver Profile'}

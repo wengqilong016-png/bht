@@ -12,7 +12,7 @@ import {
   buildApprovalTasks,
 } from './settlementApprovalTasks';
 
-const pill = 'inline-flex items-center rounded-full px-2 py-1 text-caption font-black uppercase tracking-wide';
+const pill = 'inline-flex items-center rounded-full px-2 py-1 text-caption font-bold uppercase tracking-wide';
 
 interface PayrollEntry {
   driver: Driver;
@@ -223,10 +223,10 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                     <div key={settlement.id} className="rounded-2xl border border-amber-200 bg-white/90 p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-[11px] font-black text-slate-900 uppercase">
+                          <p className="text-[11px] font-bold text-[#171310] uppercase">
                             {new Date(settlement.timestamp).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-GB')}
                           </p>
-                          <p className="text-caption font-bold text-slate-400 uppercase">
+                          <p className="text-caption font-bold text-[#a09080] uppercase">
                             {new Date(settlement.timestamp).toLocaleTimeString(lang === 'zh' ? 'zh-CN' : 'en-GB', {
                               hour: '2-digit',
                               minute: '2-digit',
@@ -238,9 +238,9 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                         </div>
                       </div>
                       <div className="mt-3 grid grid-cols-3 gap-2">
-                        <div className="rounded-xl bg-slate-50 p-2">
-                          <p className="text-caption font-black uppercase text-slate-400">{t.expectedTotalLabel}</p>
-                          <p className="text-caption font-black text-slate-900">TZS {settlement.expectedTotal.toLocaleString()}</p>
+                        <div className="rounded-xl bg-[#f3efe8] p-2">
+                          <p className="text-caption font-black uppercase text-[#a09080]">{t.expectedTotalLabel}</p>
+                          <p className="text-caption font-black text-[#171310]">TZS {settlement.expectedTotal.toLocaleString()}</p>
                         </div>
                         <div className="rounded-xl bg-amber-50 p-2">
                           <p className="text-caption font-black uppercase text-amber-400">
@@ -297,28 +297,28 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
             </div>
           )}
 
-          <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-200 space-y-4">
+          <div className="bg-white p-4 md:p-6 rounded-3xl border border-[#e0d8cc] space-y-4">
             {hasSubmittedToday ? (
               <div className="text-center py-6">
                 <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mx-auto mb-4 border border-emerald-100">
                   <CheckCircle2 size={32} />
                 </div>
-                <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">
+                <h2 className="text-xl font-black text-[#2a2420] uppercase tracking-tight">
                   {lang === 'zh' ? '今日已提交结算' : 'Settlement Submitted Today'}
                 </h2>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2">
+                <p className="text-[10px] font-bold text-[#a09080] uppercase tracking-[0.2em] mt-2">
                   {lang === 'zh' ? '等待主管审批，今日不可重复提交。' : 'Awaiting supervisor approval. No duplicate submission allowed today.'}
                 </p>
               </div>
             ) : todayDriverTxs.length === 0 ? (
               <div className="text-center py-8">
-                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mx-auto mb-4 border border-slate-200">
+                <div className="w-16 h-16 bg-[#f3efe8] rounded-2xl flex items-center justify-center text-[#c0b0a0] mx-auto mb-4 border border-[#e0d8cc]">
                   <Banknote size={32} />
                 </div>
-                <h2 className="text-lg font-black text-slate-500 uppercase tracking-tight">
+                <h2 className="text-lg font-black text-[#8c7e6d] uppercase tracking-tight">
                   {lang === 'zh' ? '今日暂无收款记录' : 'No Collections Today'}
                 </h2>
-                <p className="text-caption font-bold text-slate-400 mt-2 max-w-xs mx-auto">
+                <p className="text-caption font-bold text-[#a09080] mt-2 max-w-xs mx-auto">
                   {lang === 'zh'
                     ? '请先前往 HARAKA 或 COLLECT 完成机器收款，再回到此页进行日结。'
                     : 'Go to HARAKA or COLLECT first to submit machine readings, then come back here for settlement.'}
@@ -339,14 +339,14 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
             <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 mx-auto mb-4 border border-amber-100">
               <Banknote size={40} />
             </div>
-            <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">{t.dailySettlement}</h2>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2">{todayStr} • {todayDriverTxs.length} {t.collectionsCount}</p>
+            <h2 className="text-xl font-black text-[#2a2420] uppercase tracking-tight">{t.dailySettlement}</h2>
+                <p className="text-[10px] font-bold text-[#a09080] uppercase tracking-[0.2em] mt-2">{todayStr} • {todayDriverTxs.length} {t.collectionsCount}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                <p className="text-caption font-black text-slate-400 uppercase mb-1 tracking-widest">{t.revenue}</p>
-                <p className="text-xl font-black text-slate-800">TZS {totalRevenue.toLocaleString()}</p>
+              <div className="bg-[#f3efe8] p-4 rounded-2xl border border-[#e8e0d4]">
+                <p className="text-caption font-black text-[#a09080] uppercase mb-1 tracking-widest">{t.revenue}</p>
+                <p className="text-xl font-black text-[#2a2420]">TZS {totalRevenue.toLocaleString()}</p>
               </div>
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
                 <p className="text-caption font-black text-amber-400 uppercase mb-1 tracking-widest">{t.cashInHand}</p>
@@ -356,9 +356,9 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
 
             {/* ── 今日收款明细 ────────────────────── */}
             {todayDriverTxs.length > 0 && (
-              <div className="rounded-2xl border border-slate-200 bg-white divide-y divide-slate-100 overflow-hidden">
-                <div className="px-4 py-2.5 bg-slate-50">
-                  <p className="text-caption font-black uppercase tracking-widest text-slate-400">
+              <div className="rounded-2xl border border-[#e0d8cc] bg-white divide-y divide-[#e8e0d4] overflow-hidden">
+                <div className="px-4 py-2.5 bg-[#f3efe8]">
+                  <p className="text-caption font-bold uppercase tracking-widest text-[#a09080]">
                     {lang === 'zh' ? '今日收款明细' : "Today's Collections"}
                   </p>
                 </div>
@@ -368,10 +368,10 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                   return (
                     <div key={tx.id} className="px-4 py-2.5 flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className="text-caption font-black text-slate-700 uppercase truncate">
+                        <p className="text-caption font-black text-[#3d3028] uppercase truncate">
                           {loc?.name ?? tx.locationName ?? tx.locationId.slice(0, 8)}
                         </p>
-                        <p className="text-caption font-bold text-slate-400">
+                        <p className="text-caption font-bold text-[#a09080]">
                           {tx.previousScore ?? '?'} → {tx.currentScore ?? '?'}
                           {diff > 0 && (
                             <span className="text-emerald-600 ml-1">+{diff}</span>
@@ -387,11 +387,11 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
               </div>
             )}
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-caption font-black uppercase tracking-[0.18em] text-slate-500">
+            <div className="rounded-2xl border border-[#e0d8cc] bg-[#f3efe8] px-4 py-3">
+              <p className="text-caption font-black uppercase tracking-[0.18em] text-[#8c7e6d]">
                 {lang === 'zh' ? '日结提交后会发生什么' : 'What happens after settlement submit'}
               </p>
-              <div className="mt-2 space-y-1.5 text-caption font-bold leading-relaxed text-slate-600">
+              <div className="mt-2 space-y-1.5 text-caption font-bold leading-relaxed text-[#7a6e5e]">
                 <p>
                   {lang === 'zh'
                     ? '1. 今日普通收款仍先保持“待结清”。'
@@ -411,25 +411,25 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
             </div>
 
             <div className="space-y-3">
-              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                <label className="text-caption font-black text-slate-500 uppercase block mb-3 tracking-widest text-center">{t.inputCash} (TZS {t.notesUnit})</label>
+              <div className="bg-[#f3efe8] p-5 rounded-2xl border border-[#e8e0d4]">
+                <label className="text-caption font-black text-[#8c7e6d] uppercase block mb-3 tracking-widest text-center">{t.inputCash} (TZS {t.notesUnit})</label>
                 <input
                   type="number"
                   min={0}
                   value={actualCash}
                   onChange={e => setActualCash(e.target.value.replace(/[^0-9]/g, ''))}
-                  className="w-full text-4xl font-black bg-transparent text-center outline-none text-slate-800 placeholder:text-slate-300"
+                  className="w-full text-4xl font-black bg-transparent text-center outline-none text-[#2a2420] placeholder:text-[#c0b0a0]"
                   placeholder="0"
                 />
               </div>
-              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                <label className="text-caption font-black text-slate-500 uppercase block mb-3 tracking-widest text-center">{t.inputCoins} (TZS {t.coinsUnitLabel})</label>
+              <div className="bg-[#f3efe8] p-5 rounded-2xl border border-[#e8e0d4]">
+                <label className="text-caption font-black text-[#8c7e6d] uppercase block mb-3 tracking-widest text-center">{t.inputCoins} (TZS {t.coinsUnitLabel})</label>
                 <input
                   type="number"
                   min={0}
                   value={actualCoins}
                   onChange={e => setActualCoins(e.target.value.replace(/[^0-9]/g, ''))}
-                  className="w-full text-4xl font-black bg-transparent text-center outline-none text-slate-800 placeholder:text-slate-300"
+                  className="w-full text-4xl font-black bg-transparent text-center outline-none text-[#2a2420] placeholder:text-[#c0b0a0]"
                   placeholder="0"
                 />
               </div>
@@ -446,10 +446,10 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <label className="space-y-1">
-                    <span className="text-caption font-black uppercase text-rose-500">{t.settlementExpenseCategoryLabel}</span>
+                    <span className="text-caption font-bold uppercase text-rose-500">{t.settlementExpenseCategoryLabel}</span>
                     <select value={item.category}
                       onChange={e => setExpenseItems(prev => prev.map((it,i) => i===idx ? {...it, category: e.target.value} : it))}
-                      className="w-full rounded-btn border border-rose-200 bg-white px-3 py-2 text-[11px] font-black uppercase text-rose-700">
+                      className="w-full rounded-btn border border-rose-200 bg-white px-3 py-2 text-[11px] font-bold uppercase text-rose-700">
                       <option value="fuel">{t.fuelLabel}</option>
                       <option value="repair">{t.repairLabel}</option>
                       <option value="electricity">{t.electricityLabel}</option>
@@ -459,14 +459,14 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                     </select>
                   </label>
                   <label className="space-y-1">
-                    <span className="text-caption font-black uppercase text-rose-500">{t.settlementExpenseAmountLabel}</span>
+                    <span className="text-caption font-bold uppercase text-rose-500">{t.settlementExpenseAmountLabel}</span>
                     <input type="number" min={0} value={item.amount}
                       onChange={e => setExpenseItems(prev => prev.map((it,i) => i===idx ? {...it, amount: e.target.value.replace(/[^0-9]/g,'')} : it))}
                       placeholder="0" className="w-full rounded-btn border border-rose-200 bg-white px-3 py-2 text-sm font-black text-rose-900" />
                   </label>
                 </div>
                 <label className="block space-y-1">
-                  <span className="text-caption font-black uppercase text-rose-500">{t.settlementExpenseNoteLabel}</span>
+                  <span className="text-caption font-bold uppercase text-rose-500">{t.settlementExpenseNoteLabel}</span>
                   <textarea value={item.note} rows={2} maxLength={120}
                     onChange={e => setExpenseItems(prev => prev.map((it,i) => i===idx ? {...it, note: e.target.value} : it))}
                     className="w-full rounded-btn border border-rose-200 bg-white px-3 py-2 text-[11px] font-bold text-rose-900" />
@@ -485,10 +485,10 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                   <p className={`text-2xl font-black ${varianceAmount === 0 ? 'text-emerald-600' : 'text-rose-600'}`}>TZS {varianceAmount.toLocaleString()}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-caption font-black uppercase text-slate-400">
+                  <p className="text-caption font-black uppercase text-[#a09080]">
                     {t.expectedTotalLabel}
                   </p>
-                  <p className="text-sm font-black text-slate-900">TZS {expectedTotal.toLocaleString()}</p>
+                  <p className="text-sm font-black text-[#171310]">TZS {expectedTotal.toLocaleString()}</p>
                 </div>
                 <div className={`p-3 rounded-2xl bg-white ${varianceAmount === 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                   {varianceAmount === 0 ? <ThumbsUp size={32} /> : <AlertTriangle size={32} />}

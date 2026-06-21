@@ -144,11 +144,11 @@ const DriverAIAssistPanel: React.FC<Props> = (props) => {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-36 right-4 z-50 w-72 rounded-2xl border border-slate-200 bg-white shadow-xl lg:bottom-20">
+        <div className="fixed bottom-36 right-4 z-50 w-72 rounded-2xl border border-[#e0d8cc] bg-white shadow-xl lg:bottom-20">
           <div className="flex items-center justify-between rounded-t-2xl bg-amber-600 px-3 py-2.5">
             <div className="flex items-center gap-2">
               <BotMessageSquare size={15} className="text-white" />
-              <p className="text-[11px] font-black uppercase tracking-wide text-white">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-white">
                 {props.lang === 'zh' ? 'AI 状态助手' : 'Msaidizi wa AI'}
               </p>
             </div>
@@ -160,12 +160,12 @@ const DriverAIAssistPanel: React.FC<Props> = (props) => {
           </div>
           <div className="space-y-1.5 p-3">
             {checks.map(check => (
-              <div key={check.id} className="flex items-start gap-2 rounded-xl bg-slate-50 px-2.5 py-2">
+              <div key={check.id} className="flex items-start gap-2 rounded-xl bg-[#f3efe8] px-2.5 py-2">
                 {LEVEL_ICON[check.level]}
-                <p className="text-[11px] font-semibold leading-tight text-slate-700">{check.message}</p>
+                <p className="text-[11px] font-semibold leading-tight text-[#3d3028]">{check.message}</p>
               </div>
             ))}
-            <div className="flex items-center gap-1.5 pt-1 text-caption font-bold uppercase text-slate-400">
+            <div className="flex items-center gap-1.5 pt-1 text-caption font-bold uppercase text-[#a09080]">
               <Clock size={9} />
               <span>{props.lang === 'zh' ? '实时检测 · 本地运算' : 'Ukaguzi wa wakati halisi'}</span>
             </div>

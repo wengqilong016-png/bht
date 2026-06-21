@@ -72,7 +72,7 @@ const STATUS_COLORS: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700',
   maintenance: 'bg-amber-100 text-amber-700',
   broken: 'bg-rose-100 text-rose-700',
-  inactive: 'bg-slate-200 text-slate-600',
+  inactive: 'bg-[#e0d8cc] text-[#7a6e5e]',
 };
 const STATUS_LABEL: Record<string, Record<string, string>> = {
   zh: { active: '正常', maintenance: '维护', broken: '故障', inactive: '停用' },
@@ -472,18 +472,18 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
       {sortedMachines.length > 0 && (
         <div className="px-1">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-caption font-black uppercase text-slate-400">
+            <span className="text-caption font-bold uppercase text-[#a09080]">
               {lang === 'zh'
                 ? `已收 ${completedCount}/${sortedMachines.length}`
                 : `Done ${completedCount}/${sortedMachines.length}`}
             </span>
             {completedCount === sortedMachines.length && (
-              <span className="text-caption font-black uppercase text-amber-600">
+              <span className="text-caption font-bold uppercase text-amber-600">
                 {lang === 'zh' ? '全部完成 ✓' : 'All done ✓'}
               </span>
             )}
           </div>
-          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-[#ede6dc] rounded-full overflow-hidden">
             <div
               className="h-full bg-amber-500 rounded-full transition-all duration-500"
               style={{ width: `${(completedCount / sortedMachines.length) * 100}%` }}
@@ -495,7 +495,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
       {/* ── Empty state ────────────────────────────────────────────── */}
       {sortedMachines.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-slate-400 font-bold text-sm">
+          <p className="text-[#a09080] font-bold text-sm">
             {lang === 'zh' ? '未分配机器' : 'No assigned machines'}
           </p>
         </div>
@@ -514,7 +514,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
           const isNear9999 = (machine.lastScore ?? 0) >= 9000;
           const fin = financePreviews[machine.id];
 
-          const statusColor = STATUS_COLORS[machine.status] || 'bg-slate-200 text-slate-600';
+          const statusColor = STATUS_COLORS[machine.status] || 'bg-[#e0d8cc] text-[#7a6e5e]';
           const statusText = (STATUS_LABEL[lang] || STATUS_LABEL.zh)[machine.status] || machine.status;
 
           return (
@@ -525,7 +525,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                   ? 'border-emerald-300 bg-emerald-50/30'
                   : isExpanded
                     ? 'border-amber-300 shadow-field-md'
-                    : 'border-slate-200 shadow-field'
+                    : 'border-[#e0d8cc] shadow-field'
               }`}
             >
               {/* ── Machine row ──────────────────────────────────────── */}
@@ -551,7 +551,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-body-sm font-black text-slate-800 truncate">{machine.name}</p>
+                    <p className="text-body-sm font-bold text-[#2a2420] truncate">{machine.name}</p>
                     {/* Status badge */}
                     <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-black uppercase ${statusColor}`}>
                       {statusText}
@@ -563,7 +563,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                       </span>
                     )}
                   </div>
-                  <p className="text-caption text-slate-400">
+                  <p className="text-caption text-[#a09080]">
                     {lang === 'zh' ? `上次: ${lastScore.toLocaleString()}` : `Last: ${lastScore.toLocaleString()}`}
                     {dist !== null && (
                       <span className="ml-2 text-emerald-600 inline-flex items-center gap-0.5">
@@ -588,12 +588,12 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                     )}
                   </p>
                 </div>
-                <ChevronRight size={16} className={`text-slate-300 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                <ChevronRight size={16} className={`text-[#c0b0a0] transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
               </button>
 
               {/* ── Expanded panel ──────────────────────────────────── */}
               {isExpanded && (
-                <div className="px-4 pb-4 space-y-3 border-t border-slate-100 pt-3">
+                <div className="px-4 pb-4 space-y-3 border-t border-[#e8e0d4] pt-3">
                   {/* Big score input */}
                   <div>
                     <input
@@ -604,7 +604,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                       inputMode="numeric"
                       autoFocus
                       disabled={entry.submitting || entry.submitted}
-                      className="w-full rounded-subcard border border-slate-200 bg-slate-50 px-4 py-3 text-[28px] font-black text-slate-900 outline-none placeholder:text-slate-300 focus:border-amber-400 focus:bg-white transition-colors"
+                      className="w-full rounded-subcard border border-[#e0d8cc] bg-[#f3efe8] px-4 py-3 text-[28px] font-black text-[#171310] outline-none placeholder:text-[#c0b0a0] focus:border-amber-400 focus:bg-white transition-colors"
                     />
                   </div>
 
@@ -636,41 +636,41 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                     <div className="space-y-2">
                       {/* Primary: diff + revenue */}
                       <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-slate-50 rounded-subcard px-3 py-2">
-                          <span className="text-caption text-slate-400">{t.diff}</span>
+                        <div className="bg-[#f3efe8] rounded-subcard px-3 py-2">
+                          <span className="text-caption text-[#a09080]">{t.diff}</span>
                           <span className={`ml-2 text-sm font-black ${fin.diff.toNumber() >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                             {fin.diff.toNumber() >= 0 ? '+' : ''}{fin.diff.toNumber().toLocaleString()}
                           </span>
                         </div>
                         <div className="bg-amber-50 rounded-subcard px-3 py-2">
-                          <span className="text-caption text-slate-400">{t.revenue}</span>
+                          <span className="text-caption text-[#a09080]">{t.revenue}</span>
                           <span className="ml-2 text-sm font-black text-amber-700">TZS {fin.revenue.toNumber().toLocaleString()}</span>
                         </div>
                       </div>
 
                       {/* Secondary: commission + netPayable */}
                       <div className="grid grid-cols-3 gap-2">
-                        <div className="bg-slate-50 rounded-subcard px-2 py-1.5 text-center">
-                          <span className="text-caption text-slate-400 block">
+                        <div className="bg-[#f3efe8] rounded-subcard px-2 py-1.5 text-center">
+                          <span className="text-caption text-[#a09080] block">
                             {lang === 'zh' ? '佣金' : 'Comm'}
                           </span>
-                          <span className="text-xs font-black text-slate-700">TZS {fin.commission.toNumber().toLocaleString()}</span>
+                          <span className="text-xs font-bold text-[#3d3028]">TZS {fin.commission.toNumber().toLocaleString()}</span>
                         </div>
-                        <div className="bg-slate-50 rounded-subcard px-2 py-1.5 text-center">
-                          <span className="text-caption text-slate-400 block">
+                        <div className="bg-[#f3efe8] rounded-subcard px-2 py-1.5 text-center">
+                          <span className="text-caption text-[#a09080] block">
                             {lang === 'zh' ? '留存' : 'Retention'}
                           </span>
-                          <span className="text-xs font-black text-slate-700">TZS {fin.finalRetention.toNumber().toLocaleString()}</span>
+                          <span className="text-xs font-bold text-[#3d3028]">TZS {fin.finalRetention.toNumber().toLocaleString()}</span>
                         </div>
                         <div
                           className={`rounded-subcard px-2 py-1.5 text-center ${
                             fin.netPayable.toNumber() >= 0 ? 'bg-amber-50' : 'bg-rose-50'
                           }`}
                         >
-                          <span className="text-caption text-slate-400 block">
+                          <span className="text-caption text-[#a09080] block">
                             {lang === 'zh' ? '应付' : 'Net'}
                           </span>
-                          <span className={`text-xs font-black ${fin.netPayable.toNumber() >= 0 ? 'text-amber-700' : 'text-rose-600'}`}>
+                          <span className={`text-xs font-bold ${fin.netPayable.toNumber() >= 0 ? 'text-amber-700' : 'text-rose-600'}`}>
                             TZS {fin.netPayable.toNumber().toLocaleString()}
                           </span>
                           {fin.isCoinStockNegative && (
@@ -687,7 +687,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                   <div className="grid grid-cols-2 gap-2">
                     {/* Coin exchange */}
                     <div>
-                      <label className="text-[10px] font-black uppercase text-slate-400 mb-0.5 block">
+                      <label className="text-[10px] font-bold uppercase text-[#a09080] mb-0.5 block">
                         <Coins size={10} className="inline mr-0.5" />
                         {lang === 'zh' ? '换币 (TZS)' : 'Coin ex (TZS)'}
                       </label>
@@ -701,12 +701,12 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                         placeholder="0"
                         inputMode="numeric"
                         disabled={entry.submitting || entry.submitted}
-                        className="w-full rounded-subcard border border-slate-200 bg-white px-2.5 py-2 text-xs font-bold text-slate-800 placeholder:text-slate-300 focus:border-amber-300 outline-none disabled:opacity-50"
+                        className="w-full rounded-subcard border border-[#e0d8cc] bg-white px-2.5 py-2 text-xs font-bold text-[#2a2420] placeholder:text-[#c0b0a0] focus:border-amber-300 outline-none disabled:opacity-50"
                       />
                     </div>
                     {/* Tip */}
                     <div>
-                      <label className="text-[10px] font-black uppercase text-slate-400 mb-0.5 block">
+                      <label className="text-[10px] font-bold uppercase text-[#a09080] mb-0.5 block">
                         <Banknote size={10} className="inline mr-0.5" />
                         {lang === 'zh' ? '小费 (TZS)' : 'Tip (TZS)'}
                       </label>
@@ -720,14 +720,14 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                         placeholder="0"
                         inputMode="numeric"
                         disabled={entry.submitting || entry.submitted}
-                        className="w-full rounded-subcard border border-slate-200 bg-white px-2.5 py-2 text-xs font-bold text-slate-800 placeholder:text-slate-300 focus:border-amber-300 outline-none disabled:opacity-50"
+                        className="w-full rounded-subcard border border-[#e0d8cc] bg-white px-2.5 py-2 text-xs font-bold text-[#2a2420] placeholder:text-[#c0b0a0] focus:border-amber-300 outline-none disabled:opacity-50"
                       />
                     </div>
                   </div>
 
                   {/* Startup debt deduction */}
                   <div>
-                    <label className="text-[10px] font-black uppercase text-slate-400 mb-0.5 block">
+                    <label className="text-[10px] font-bold uppercase text-[#a09080] mb-0.5 block">
                       <Banknote size={10} className="inline mr-0.5" />
                       {lang === 'zh' ? '欠款还款 (TZS)' : 'Debt repay (TZS)'}
                     </label>
@@ -741,7 +741,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                       placeholder="0"
                       inputMode="numeric"
                       disabled={entry.submitting || entry.submitted}
-                      className="w-full rounded-subcard border border-slate-200 bg-white px-2.5 py-2 text-xs font-bold text-slate-800 placeholder:text-slate-300 focus:border-amber-300 outline-none disabled:opacity-50"
+                      className="w-full rounded-subcard border border-[#e0d8cc] bg-white px-2.5 py-2 text-xs font-bold text-[#2a2420] placeholder:text-[#c0b0a0] focus:border-amber-300 outline-none disabled:opacity-50"
                     />
                   </div>
 
@@ -752,7 +752,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                       onClick={() => updateEntry(machine.id, { isOwnerRetaining: !entry.isOwnerRetaining, ownerRetention: '' })}
                       disabled={entry.submitting || entry.submitted}
                       className={`shrink-0 w-8 h-5 rounded-full transition-colors relative ${
-                        entry.isOwnerRetaining ? 'bg-amber-500' : 'bg-slate-300'
+                        entry.isOwnerRetaining ? 'bg-amber-500' : 'bg-[#c8beb0]'
                       } disabled:opacity-50`}
                       role="switch"
                       aria-checked={entry.isOwnerRetaining}
@@ -763,11 +763,11 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                         }`}
                       />
                     </button>
-                    <span className="text-[10px] font-black uppercase text-slate-400">
+                    <span className="text-[10px] font-bold uppercase text-[#a09080]">
                       {lang === 'zh' ? '店主留存' : 'Owner retain'}
                     </span>
                     {entry.isOwnerRetaining && fin && (
-                      <span className="text-xs font-black text-amber-600">
+                      <span className="text-xs font-bold text-amber-600">
                         TZS {fin.finalRetention.toNumber().toLocaleString()}
                       </span>
                     )}
@@ -780,7 +780,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
                       onClick={() => handleSubmit(machine.id)}
                       disabled={!entry.score || entry.submitting || entry.submitted || !currentDriver}
                       aria-label={lang === 'zh' ? '提交' : 'Submit'}
-                      className="flex-1 py-3 bg-amber-600 text-white rounded-subcard font-black uppercase text-sm disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2"
+                      className="flex-1 py-3 bg-amber-600 text-white rounded-subcard font-black uppercase text-sm disabled:bg-[#c8beb0] disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2"
                     >
                       {entry.submitting ? (
                         <><Loader2 size={16} className="animate-spin" /> {lang === 'zh' ? '提交中…' : 'Sending…'}</>
@@ -828,7 +828,7 @@ const QuickCollect: React.FC<QuickCollectProps> = ({ gpsCoords, currentDriver })
 
                   {/* Photo preview */}
                   {entry.photo && (
-                    <div className="h-16 rounded-subcard overflow-hidden border border-slate-200">
+                    <div className="h-16 rounded-subcard overflow-hidden border border-[#e0d8cc]">
                       <img src={entry.photo} className="w-full h-full object-cover" alt="Proof" />
                     </div>
                   )}

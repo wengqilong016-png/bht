@@ -31,7 +31,7 @@
 
     <section class="mt-10">
       <h2 class="text-xl font-semibold mb-4 text-gray-300">📊 近7日热点趋势</h2>
-      <div id="trend" class="bg-slate-800/50 rounded-xl p-6 min-h-[120px] text-gray-400 text-sm"></div>
+      <div id="trend" class="bg-[#2a2420]/50 rounded-xl p-6 min-h-[120px] text-gray-400 text-sm"></div>
     </section>
 
     <footer class="mt-12 text-center text-gray-600 text-xs">
@@ -72,13 +72,13 @@ async function load() {
   let catsHtml = '';
   for (const [key, meta] of Object.entries(CATS)) {
     const items = grouped[key] || [];
-    catsHtml += `<div class="card bg-slate-800/60 rounded-xl p-5 ${meta.cls}">
+    catsHtml += `<div class="card bg-[#2a2420]/60 rounded-xl p-5 ${meta.cls}">
       <h3 class="text-lg font-bold mb-3 ${meta.color}">${meta.emoji} ${meta.label} <span class="text-sm font-normal text-gray-500">(${items.length})</span></h3>`;
     if (items.length === 0) {
       catsHtml += '<p class="text-gray-500 text-sm">暂无数据</p>';
     } else {
       for (const a of items.slice(0,5)) {
-        catsHtml += `<div class="mb-3 pb-3 border-b border-slate-700/50 last:border-0 last:mb-0 last:pb-0">
+        catsHtml += `<div class="mb-3 pb-3 border-b border-[#3d3028]/50 last:border-0 last:mb-0 last:pb-0">
           <a href="${a.url || '#'}" target="_blank" class="font-medium hover:underline text-gray-200 text-sm">${a.title}</a>
           <p class="text-gray-400 text-xs mt-1 line-clamp-2">${a.summary || ''}</p>
         </div>`;
@@ -93,7 +93,7 @@ async function load() {
     let trendHtml = '<div class="flex gap-3 flex-wrap">';
     for (const d of weekData) {
       const h = d.highlights || [];
-      trendHtml += `<div class="bg-slate-700/50 rounded-lg px-4 py-3 text-center min-w-[90px]">
+      trendHtml += `<div class="bg-[#3d3028]/50 rounded-lg px-4 py-3 text-center min-w-[90px]">
         <div class="text-xs text-gray-400">${d.date.slice(5)}</div>
         <div class="text-lg font-bold mt-1">${h.length}</div>
         <div class="text-xs text-gray-500">条热点</div>

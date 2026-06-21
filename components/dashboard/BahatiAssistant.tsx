@@ -60,7 +60,7 @@ const BahatiAssistant: React.FC<BahatiAssistantProps> = ({ lang }) => {
   const onlineDrivers = drivers.filter(d => isDriverOnline(d.lastActive)).length;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-[#e0d8cc] shadow-sm overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
@@ -71,10 +71,10 @@ const BahatiAssistant: React.FC<BahatiAssistantProps> = ({ lang }) => {
             <Sparkles size={18} className="text-amber-600" />
           </div>
           <div className="text-left">
-            <p className="text-sm font-black text-slate-900">
+            <p className="text-sm font-black text-[#171310]">
               {t ? '小 Bahati 助手' : 'Bahati Assistant'}
             </p>
-            <p className="text-caption font-bold text-slate-400">
+            <p className="text-caption font-bold text-[#a09080]">
               {t ? '智能分析 · 群发短信 · 问答' : 'AI · SMS · Q&A'}
             </p>
           </div>
@@ -87,12 +87,12 @@ const BahatiAssistant: React.FC<BahatiAssistantProps> = ({ lang }) => {
       </button>
 
       {expanded && (
-        <div className="border-t border-slate-100">
+        <div className="border-t border-[#e8e0d4]">
           {/* Quick Stats Row */}
           <div className="grid grid-cols-3 gap-2 p-4 pb-2">
-            <div className="bg-slate-50 rounded-xl p-2.5 text-center">
-              <p className="text-caption font-black text-slate-400">{t ? '今日收款' : 'Today'}</p>
-              <p className="text-sm font-black text-slate-900 mt-0.5">{todayTxs.length}</p>
+            <div className="bg-[#f3efe8] rounded-xl p-2.5 text-center">
+              <p className="text-caption font-black text-[#a09080]">{t ? '今日收款' : 'Today'}</p>
+              <p className="text-sm font-black text-[#171310] mt-0.5">{todayTxs.length}</p>
             </div>
             <div className="bg-amber-50 rounded-xl p-2.5 text-center">
               <p className="text-caption font-black text-amber-500">{t ? '今日收入' : 'Revenue'}</p>
@@ -131,7 +131,7 @@ const BahatiAssistant: React.FC<BahatiAssistantProps> = ({ lang }) => {
                   key={i}
                   onClick={() => handleSend(p.text)}
                   disabled={isLoading}
-                  className="px-2.5 py-1.5 rounded-lg bg-slate-50 text-slate-600 text-caption font-bold hover:bg-amber-50 hover:text-amber-700 transition-colors disabled:opacity-50"
+                  className="px-2.5 py-1.5 rounded-lg bg-[#f3efe8] text-[#7a6e5e] text-caption font-bold hover:bg-amber-50 hover:text-amber-700 transition-colors disabled:opacity-50"
                 >
                   {p.label}
                 </button>
@@ -141,13 +141,13 @@ const BahatiAssistant: React.FC<BahatiAssistantProps> = ({ lang }) => {
 
           {/* Chat Messages */}
           {messages.length > 0 && (
-            <div className="border-t border-slate-100 px-4 py-3 max-h-64 overflow-y-auto space-y-2.5">
+            <div className="border-t border-[#e8e0d4] px-4 py-3 max-h-64 overflow-y-auto space-y-2.5">
               {messages.map((m, i) => (
                 <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] rounded-xl px-3 py-2 text-xs ${
                     m.role === 'user'
                       ? 'bg-amber-600 text-white rounded-br-sm'
-                      : 'bg-slate-50 text-slate-700 rounded-bl-sm'
+                      : 'bg-[#f3efe8] text-[#3d3028] rounded-bl-sm'
                   }`}>
                     <p className="whitespace-pre-wrap">{m.content}</p>
                   </div>
@@ -155,7 +155,7 @@ const BahatiAssistant: React.FC<BahatiAssistantProps> = ({ lang }) => {
               ))}
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-slate-50 rounded-xl px-3 py-2 text-xs text-slate-400">
+                  <div className="bg-[#f3efe8] rounded-xl px-3 py-2 text-xs text-[#a09080]">
                     {t ? '思考中...' : 'Thinking...'}
                   </div>
                 </div>
@@ -165,14 +165,14 @@ const BahatiAssistant: React.FC<BahatiAssistantProps> = ({ lang }) => {
           )}
 
           {/* Input */}
-          <div className="flex items-center gap-2 p-3 border-t border-slate-100">
+          <div className="flex items-center gap-2 p-3 border-t border-[#e8e0d4]">
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSend()}
               placeholder={t ? '问 Bahati 任何问题...' : 'Ask Bahati anything...'}
               disabled={isLoading}
-              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-amber-300 disabled:opacity-50"
+              className="flex-1 bg-[#f3efe8] border border-[#e0d8cc] rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-amber-300 disabled:opacity-50"
             />
             <button
               onClick={() => handleSend()}

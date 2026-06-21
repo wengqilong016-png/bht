@@ -48,14 +48,14 @@ const UpdatePrompt: React.FC<UpdatePromptProps> = ({ lang }) => {
     >
       <div className="flex items-center gap-2 min-w-0">
         <RefreshCw size={15} className="flex-shrink-0" />
-        <p className="text-[11px] font-black uppercase tracking-wide truncate">
+        <p className="text-[11px] font-bold uppercase tracking-wide truncate">
           {lang === 'zh' ? '检测到新版本，点击刷新以更新' : 'New version available — tap to refresh'}
         </p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <button
           onClick={handleRefresh}
-          className="rounded-xl bg-white text-indigo-600 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-indigo-50 transition-colors"
+          className="rounded-xl bg-white text-indigo-600 px-3 py-1.5 text-[10px] font-bold uppercase hover:bg-indigo-50 transition-colors"
         >
           {lang === 'zh' ? '立即刷新' : 'Refresh'}
         </button>
