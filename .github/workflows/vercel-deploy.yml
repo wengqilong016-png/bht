@@ -1,7 +1,12 @@
 name: Deploy to Vercel
 
+# Deploy only after the CI workflow has succeeded on main, so a commit that
+# fails typecheck/lint/tests can never reach production. Manual dispatch stays
+# available as an escape hatch.
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -17,8 +22,18 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Gate on a successful, push-triggered CI run (skip CI runs from PRs);
+    # always allow manual dispatch.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Deploy the exact commit that passed CI (empty for manual dispatch,
+          # which falls back to the default branch tip).
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - uses: ./.github/actions/setup-node-deps
         with:
