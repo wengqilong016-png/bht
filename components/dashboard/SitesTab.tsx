@@ -1,4 +1,4 @@
-import { Search, Pencil, Trash2, Save, Loader2, Store, X, Image as ImageIcon, ToggleLeft, ToggleRight, AlertTriangle } from 'lucide-react';
+import { Search, Pencil, Trash2, Save, Loader2, Store, X, Image as ImageIcon, ToggleLeft, ToggleRight, AlertTriangle, User, Users } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import { useConfirm } from '../../contexts/ConfirmContext';
@@ -11,12 +11,9 @@ import { getLocationDeletionDiagnostics, normalizeMachineId } from '../../utils/
 
 interface SitesTabProps {
   managedLocations: Location[];
-  allAreas: string[];
   siteSearch: string;
   setSiteSearch: (v: string) => void;
   isAdmin: boolean;
-  siteFilterArea: string;
-  setSiteFilterArea: (v: string) => void;
   driverMap: Map<string, Driver>;
   drivers: Driver[];
   locations: Location[];
@@ -33,12 +30,9 @@ interface SitesTabProps {
 
 const SitesTab: React.FC<SitesTabProps> = ({
   managedLocations,
-  allAreas,
   siteSearch,
   setSiteSearch,
   isAdmin,
-  siteFilterArea,
-  setSiteFilterArea,
   driverMap,
   drivers,
   locations,
@@ -75,6 +69,35 @@ const SitesTab: React.FC<SitesTabProps> = ({
   });
   const [isSavingLoc, setIsSavingLoc] = useState(false);
   const [statusIssueFilter, setStatusIssueFilter] = useState<'all' | 'issue' | 'maintenance' | 'broken'>('all');
+  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null); // null=all, '__unassigned__'=unassigned
+
+  /** Driver → machine count for chip badges */
+  const driverMachineCounts = useMemo(() => {
+    const map = new Map<string, { driver: Driver; count: number }>();
+    for (const loc of managedLocations) {
+      if (loc.assignedDriverId) {
+        const d = driverMap.get(loc.assignedDriverId);
+        if (d) {
+          const entry = map.get(d.id) || { driver: d, count: 0 };
+          entry.count++;
+          map.set(d.id, entry);
+        }
+      }
+    }
+    return [...map.values()].sort((a, b) => b.count - a.count);
+  }, [managedLocations, driverMap]);
+
+  const unassignedMachineCount = useMemo(
+    () => managedLocations.filter(l => !l.assignedDriverId).length,
+    [managedLocations],
+  );
+
+  /** Filter by selected driver first, then by status */
+  const filteredByDriver = useMemo(() => {
+    if (!selectedDriverId) return managedLocations;
+    if (selectedDriverId === '__unassigned__') return managedLocations.filter(l => !l.assignedDriverId);
+    return managedLocations.filter(l => l.assignedDriverId === selectedDriverId);
+  }, [managedLocations, selectedDriverId]);
   const deletionDiagnosticsById = useMemo(() => {
     return new Map(
       managedLocations.map((loc) => [
@@ -104,16 +127,16 @@ const SitesTab: React.FC<SitesTabProps> = ({
     return map;
   }, [transactions]);
 
-  /** Filter managedLocations by status issue filter */
+  /** Filter by status issue on top of driver selection */
   const filteredByStatusIssue = useMemo(() => {
-    if (statusIssueFilter === 'all') return managedLocations;
-    return managedLocations.filter((loc) => {
+    if (statusIssueFilter === 'all') return filteredByDriver;
+    return filteredByDriver.filter((loc) => {
       const report = locationReportMap.get(loc.id);
       if (!report) return false;
-      if (statusIssueFilter === 'issue') return true; // any non-active
+      if (statusIssueFilter === 'issue') return true;
       return report.status === statusIssueFilter;
     });
-  }, [managedLocations, locationReportMap, statusIssueFilter]);
+  }, [filteredByDriver, locationReportMap, statusIssueFilter]);
 
   const handleEditLocation = (loc: Location) => {
     setEditingLoc(loc);
@@ -430,21 +453,85 @@ const SitesTab: React.FC<SitesTabProps> = ({
   return (
     <>
       <div className="space-y-3 animate-in fade-in">
-        <div className="flex flex-col md:flex-row gap-3 items-center justify-between bg-white p-3 rounded-2xl border border-[#e0d8cc] shadow-sm">
-          <div className="relative flex-1 w-full md:w-64">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#a09080]" />
-            <input type="text" placeholder="Search machines..." value={siteSearch} onChange={e => setSiteSearch(e.target.value)} className="w-full bg-[#f3efe8] border border-[#e0d8cc] rounded-xl py-2.5 pl-11 pr-4 text-xs font-bold" />
+        {/* ── Driver Chip Selector ──────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-[#e0d8cc] shadow-sm p-3">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {/* All */}
+            <button
+              onClick={() => setSelectedDriverId(null)}
+              className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase transition-all ${
+                !selectedDriverId
+                  ? 'bg-[#171310] text-white shadow-md'
+                  : 'bg-[#f3efe8] text-[#8c7e6d] hover:bg-[#ede6dc]'
+              }`}
+            >
+              <Users size={14} />
+              <span>{lang === 'zh' ? '全部' : 'All'}</span>
+              <span className={`rounded-full px-1.5 py-0.5 text-caption font-black ${!selectedDriverId ? 'bg-white/20 text-white' : 'bg-[#e0d8cc] text-[#7a6e5e]'}`}>
+                {managedLocations.length}
+              </span>
+            </button>
+
+            {/* Unassigned */}
+            {unassignedMachineCount > 0 && (
+              <button
+                onClick={() => setSelectedDriverId('__unassigned__')}
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase transition-all ${
+                  selectedDriverId === '__unassigned__'
+                    ? 'bg-amber-600 text-white shadow-md'
+                    : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                }`}
+              >
+                <User size={14} />
+                <span>{lang === 'zh' ? '未分配' : 'Unassigned'}</span>
+                <span className={`rounded-full px-1.5 py-0.5 text-caption font-black ${selectedDriverId === '__unassigned__' ? 'bg-white/20 text-white' : 'bg-amber-200 text-amber-700'}`}>
+                  {unassignedMachineCount}
+                </span>
+              </button>
+            )}
+
+            {/* Driver chips */}
+            {driverMachineCounts.map(({ driver, count }) => (
+              <button
+                key={driver.id}
+                onClick={() => setSelectedDriverId(driver.id)}
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase transition-all ${
+                  selectedDriverId === driver.id
+                    ? 'bg-[#171310] text-white shadow-md'
+                    : 'bg-[#f3efe8] text-[#8c7e6d] hover:bg-[#ede6dc]'
+                }`}
+              >
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-caption font-black ${
+                  selectedDriverId === driver.id ? 'bg-white/20 text-white' : 'bg-[#e0d8cc] text-[#7a6e5e]'
+                }`}>
+                  {driver.name.charAt(0)}
+                </span>
+                <span className="max-w-[100px] truncate">{driver.name}</span>
+                <span className={`rounded-full px-1.5 py-0.5 text-caption font-black ${selectedDriverId === driver.id ? 'bg-white/20 text-white' : 'bg-[#e0d8cc] text-[#7a6e5e]'}`}>
+                  {count}
+                </span>
+              </button>
+            ))}
           </div>
-          <select value={siteFilterArea} onChange={e => setSiteFilterArea(e.target.value)} className="bg-[#f3efe8] border border-[#e0d8cc] rounded-xl py-2.5 px-4 text-xs font-bold uppercase outline-none">
-            <option value="all">ALL AREAS</option>
-            {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
-          </select>
-          <select value={statusIssueFilter} onChange={e => { setStatusIssueFilter(e.target.value as 'all' | 'issue' | 'maintenance' | 'broken'); setSiteSearch(''); }} className="bg-[#f3efe8] border border-[#e0d8cc] rounded-xl py-2.5 px-4 text-xs font-bold uppercase outline-none">
-            <option value="all">{lang === 'zh' ? '全部状态' : 'All Status'}</option>
-            <option value="issue">⚠️ {lang === 'zh' ? '有异常报告' : 'Has Issue'}</option>
-            <option value="maintenance">🔧 {lang === 'zh' ? '维护中' : 'Maintenance'}</option>
-            <option value="broken">💔 {lang === 'zh' ? '故障' : 'Broken'}</option>
-          </select>
+        </div>
+
+        {/* ── Search + Status Filter ────────────────────────────── */}
+        <div className="flex flex-col md:flex-row gap-3 items-center justify-between bg-white p-3 rounded-2xl border border-[#e0d8cc] shadow-sm">
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="relative flex-1 w-full md:w-64">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#a09080]" />
+              <input type="text" placeholder="Search machines..." value={siteSearch} onChange={e => setSiteSearch(e.target.value)} className="w-full bg-[#f3efe8] border border-[#e0d8cc] rounded-xl py-2.5 pl-11 pr-4 text-xs font-bold" />
+            </div>
+            <select value={statusIssueFilter} onChange={e => { setStatusIssueFilter(e.target.value as 'all' | 'issue' | 'maintenance' | 'broken'); setSiteSearch(''); }} className="bg-[#f3efe8] border border-[#e0d8cc] rounded-xl py-2.5 px-4 text-xs font-bold uppercase outline-none flex-shrink-0">
+              <option value="all">{lang === 'zh' ? '全部状态' : 'All Status'}</option>
+              <option value="issue">⚠️ {lang === 'zh' ? '有异常报告' : 'Has Issue'}</option>
+              <option value="maintenance">🔧 {lang === 'zh' ? '维护中' : 'Maintenance'}</option>
+              <option value="broken">💔 {lang === 'zh' ? '故障' : 'Broken'}</option>
+            </select>
+          </div>
+          <p className="text-caption font-bold text-[#a09080] flex-shrink-0">
+            {filteredByStatusIssue.length} / {managedLocations.length} {lang === 'zh' ? '台机器' : 'machines'}
+          </p>
         </div>
         {isLoadingLocations && managedLocations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3 text-[#a09080]">

@@ -118,7 +118,7 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
   const [trackingSearch, setTrackingSearch] = useState('');
   const [trackingStatusFilter, setTrackingStatusFilter] = useState<'all' | 'attention' | 'active' | 'stale'>('all');
   const [siteSearch, setSiteSearch] = useState('');
-  const [siteFilterArea, setSiteFilterArea] = useState<string>('all');
+  const [siteFilterArea] = useState<string>('all');
   const [siteSort] = useState<{ key: 'name' | 'status' | 'lastScore' | 'commission'; direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
   const [aiLogSearch, setAiLogSearch] = useState('');
   const [aiLogTypeFilter, setAiLogTypeFilter] = useState<'all' | 'image' | 'text'>('all');
@@ -144,7 +144,6 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
     pendingPayoutRequests,
     todayDriverStats,
     payrollStats,
-    allAreas,
     managedLocations,
     filteredAiLogs,
     bossStats,
@@ -338,13 +337,10 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
         <PageErrorBoundary name="机器管理">
                 <SitesTab
                   managedLocations={managedLocations}
-                  allAreas={allAreas}
                   siteSearch={siteSearch}
                   setSiteSearch={setSiteSearch}
                   isAdmin={isAdmin}
-          siteFilterArea={siteFilterArea}
-          setSiteFilterArea={setSiteFilterArea}
-          driverMap={driverMap}
+                  driverMap={driverMap}
                   drivers={drivers}
                   locations={locations}
                   onUpdateLocations={onUpdateLocations}
