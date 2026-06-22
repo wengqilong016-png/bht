@@ -11,6 +11,11 @@ import {
   type CollectionSubmissionInput,
   type CollectionSubmissionResult,
 } from './collectionSubmissionService';
+import {
+  DIVIDEND_TIER_LABELS,
+  classifyDividendDeviation,
+  formatDeviationPercent,
+} from './dividendDeviation';
 
 import type { Driver, Location, Transaction } from '../types';
 
@@ -199,10 +204,22 @@ export function buildCollectionSubmissionInput(
     const parsed = parseInt(input.aiReviewData.score, 10);
     return Number.isNaN(parsed) ? undefined : parsed;
   })();
-  const isAnomaly =
+  const scoreIsAnomaly =
     recognizedScore !== undefined
       ? Math.abs(userScore - recognizedScore) > CONSTANTS.ANOMALY_SCORE_DIFF_THRESHOLD
       : false;
+
+  // Classify how far the (possibly hand-edited) dividend is from the theoretical
+  // dividend. reminder/review tiers route the collection into the admin queue.
+  const dividendDeviation = classifyDividendDeviation(
+    input.calculations.commission.toNumber(),
+    input.calculations.finalRetention.toNumber(),
+  );
+  const dividendNote = DIVIDEND_TIER_LABELS.zh[dividendDeviation.tier].note(
+    formatDeviationPercent(dividendDeviation.ratio),
+  );
+
+  const isAnomaly = scoreIsAnomaly || dividendDeviation.tier !== 'normal';
   const reportedStatus = normalizeReportedStatus(
     input.aiReviewData?.condition,
     input.selectedLocation?.status,
@@ -210,6 +227,7 @@ export function buildCollectionSubmissionInput(
 
   const notes = [
     input.aiReviewData?.notes,
+    dividendNote || null,
     input.gpsSourceType !== 'live' ? `[GPS: ${input.gpsSourceType}]` : null,
   ]
     .filter(Boolean)

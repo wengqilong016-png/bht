@@ -2,6 +2,11 @@ import { ArrowRight, Banknote, ChevronRight, Coins, HandCoins, ShieldAlert, Trop
 
 import type { FinanceCalculationSource } from '../../../services/financeCalculator';
 import type { Location } from '../../../types';
+import {
+  DIVIDEND_TIER_LABELS,
+  classifyDividendDeviation,
+  formatDeviationPercent,
+} from '../../../services/dividendDeviation';
 import { COLLECTION_AMOUNT_LIMITS } from '../../../utils/collectionAmountLimits';
 import { Money } from '../../../utils/money';
 
@@ -126,6 +131,22 @@ export function OwnerRetentionSection({
   const { lang, calculations } = shared;
   const withdrawableReference = Math.floor(nextDividendBalance / 200) * 200;
 
+  // Classify the hand-entered dividend vs the theoretical dividend so the driver
+  // sees, before submitting, whether it will be flagged for admin review.
+  const theoreticalDividend = financeAmountToNumber(calculations.commission);
+  const enteredDividend =
+    displayedOwnerAmount.trim() === '' ? theoreticalDividend : Number(displayedOwnerAmount);
+  const deviation = classifyDividendDeviation(
+    theoreticalDividend,
+    Number.isFinite(enteredDividend) ? enteredDividend : theoreticalDividend,
+  );
+  const deviationLabel = DIVIDEND_TIER_LABELS[lang][deviation.tier].badge;
+  const deviationStyles: Record<typeof deviation.tier, string> = {
+    normal: 'bg-emerald-100 text-emerald-700',
+    reminder: 'bg-amber-100 text-amber-700',
+    review: 'bg-red-100 text-red-700',
+  };
+
   return (
     <div className={`p-3 rounded-2xl border transition-all ${isOwnerRetaining ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'}`}>
       <div className="flex justify-between items-center mb-3">
@@ -172,6 +193,21 @@ export function OwnerRetentionSection({
                 ? `理论分红 TZS ${formatFinanceAmount(calculations.commission)}，本次直接支付给商家`
                 : `Theoretical dividend TZS ${formatFinanceAmount(calculations.commission)}, paid to owner this run`)}
         </p>
+        <div className="flex items-center gap-2">
+          <span className={`rounded-full px-2 py-0.5 text-caption font-black ${deviationStyles[deviation.tier]}`}>
+            {deviationLabel}{deviation.tier !== 'normal' ? ` ${formatDeviationPercent(deviation.ratio)}` : ''}
+          </span>
+          {deviation.tier === 'reminder' && (
+            <span className="text-caption font-bold text-amber-600">
+              {lang === 'zh' ? '偏差较大，会提醒管理员' : 'Large deviation — admin will be notified'}
+            </span>
+          )}
+          {deviation.tier === 'review' && (
+            <span className="text-caption font-bold text-red-600">
+              {lang === 'zh' ? '偏差过大，需管理员审批' : 'Too large — needs admin approval'}
+            </span>
+          )}
+        </div>
         <p className={`text-caption font-bold leading-relaxed ${isOwnerRetaining ? 'text-amber-700' : 'text-emerald-700'}`}>
           {isOwnerRetaining
             ? (lang === 'zh'

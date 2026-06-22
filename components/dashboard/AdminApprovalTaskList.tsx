@@ -1,6 +1,11 @@
 import { Calculator, CheckCircle2, AlertTriangle, ShieldAlert, RefreshCw, Wallet, ChevronDown, ChevronUp, ScanEye, Loader2 } from 'lucide-react';
 import React from 'react';
 
+import {
+  DIVIDEND_TIER_LABELS,
+  classifyDividendDeviation,
+  formatDeviationPercent,
+} from '../../services/dividendDeviation';
 import { DailySettlement, Location, Transaction, TRANSLATIONS } from '../../types';
 import { getOptimizedImageUrl } from '../../utils/imageUtils';
 
@@ -252,8 +257,31 @@ const AdminApprovalTaskList: React.FC<AdminApprovalTaskListProps> = ({
                       const tx = (task.extra as { tx: Transaction }).tx;
                       const scan = scanResults.get(tx.id);
                       const showThumbnail = scan?.status === 'matched';
+                      const dividendDev = classifyDividendDeviation(tx.commission, tx.ownerRetention);
                       return (
                         <>
+                          {dividendDev.tier !== 'normal' && (
+                            <div className={`rounded-xl p-2.5 ${dividendDev.tier === 'review' ? 'bg-red-50' : 'bg-amber-50'}`}>
+                              <div className="flex items-center justify-between">
+                                <p className={`text-caption font-black uppercase ${dividendDev.tier === 'review' ? 'text-red-600' : 'text-amber-600'}`}>
+                                  {lang === 'zh' ? '分红偏差' : 'Dividend Deviation'}
+                                </p>
+                                <span className={`rounded-full px-2 py-0.5 text-caption font-black ${dividendDev.tier === 'review' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                                  {DIVIDEND_TIER_LABELS[lang][dividendDev.tier].badge} {formatDeviationPercent(dividendDev.ratio)}
+                                </span>
+                              </div>
+                              <div className="mt-1.5 grid grid-cols-2 gap-2">
+                                <div>
+                                  <p className="text-caption font-black text-[#a09080] uppercase">{lang === 'zh' ? '理论分红' : 'Theoretical'}</p>
+                                  <p className="text-xs font-bold text-[#171310]">TZS {tx.commission.toLocaleString()}</p>
+                                </div>
+                                <div>
+                                  <p className="text-caption font-black text-[#a09080] uppercase">{lang === 'zh' ? '司机手写' : 'Driver Entered'}</p>
+                                  <p className={`text-xs font-bold ${dividendDev.tier === 'review' ? 'text-red-700' : 'text-amber-700'}`}>TZS {tx.ownerRetention.toLocaleString()}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                           <div className="grid grid-cols-2 gap-2">
                             <div className="bg-[#f3efe8] p-2 rounded-xl">
                               <p className="text-caption font-black text-[#a09080] uppercase">{lang === 'zh' ? '司机输入' : 'Driver Input'}</p>
