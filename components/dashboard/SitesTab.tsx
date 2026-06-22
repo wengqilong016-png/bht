@@ -823,7 +823,9 @@ const SitesTab: React.FC<SitesTabProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-caption font-black text-[#a09080] uppercase ml-1">分红比例 Commission (%)</label>
-                  <input type="number" value={locEditForm.commissionRate} onChange={e => setLocEditForm(f => ({ ...f, commissionRate: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400" />
+                  {/* type=text + inputMode=decimal: a controlled type=number input mangles decimals
+                      like 16.66 (trailing-dot reads back empty), silently reverting on save. */}
+                  <input type="text" inputMode="decimal" value={locEditForm.commissionRate} onChange={e => setLocEditForm(f => ({ ...f, commissionRate: e.target.value.replace(/[^0-9.]/g, '') }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-caption font-black text-[#a09080] uppercase ml-1">状态 Status</label>

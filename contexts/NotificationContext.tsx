@@ -352,7 +352,7 @@ export function NotificationProvider({ children, currentUser }: NotificationProv
       {/* Floating bell button */}
       <div
         ref={panelRef}
-        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] right-4 z-[9999] flex flex-col items-end gap-2 md:bottom-6 md:right-6"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] right-4 z-[55] flex flex-col items-end gap-2 md:bottom-6 md:right-6"
         style={{ pointerEvents: 'auto' }}
       >
         {/* Notification panel */}

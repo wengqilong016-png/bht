@@ -351,7 +351,7 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
              <label className="text-caption font-black text-[#a09080] uppercase ml-1">{lang === 'zh' ? '分红比例 (%) *' : 'Komisheni % *'}</label>
              <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex items-center gap-2 focus-within:border-amber-400 transition-all">
                 <Percent size={14} className="text-amber-400" />
-                <input type="number" value={commissionRate} onChange={e => setCommissionRate(e.target.value)} className="w-full bg-transparent font-black text-amber-600 outline-none placeholder:text-amber-300" placeholder="15" />
+                <input type="text" inputMode="decimal" value={commissionRate} onChange={e => setCommissionRate(e.target.value.replace(/[^0-9.]/g, ''))} className="w-full bg-transparent font-black text-amber-600 outline-none placeholder:text-amber-300" placeholder="15" />
              </div>
            </div>
         </div>
