@@ -20,11 +20,17 @@ const EVENT_LABEL: Record<FinanceAuditEventType, { zh: string; sw: string }> = {
   driver_commission_change:  { zh: '调整司机佣金率', sw: 'Driver Commission Change' },
   driver_debt_edit:          { zh: '编辑司机债务', sw: 'Driver Debt Edit' },
   driver_status_change:      { zh: '变更司机状态', sw: 'Driver Status Change' },
+  dividend_balance_edit:     { zh: '编辑分红余额', sw: 'Dividend Balance Edit' },
+  last_score_edit:           { zh: '编辑机器读数', sw: 'Last Reading Edit' },
+  location_status_change:    { zh: '变更机器状态', sw: 'Machine Status Change' },
+  admin_machine_note:        { zh: '管理员备注', sw: 'Admin Note' },
+  admin_override_entry:      { zh: '管理员覆写补录', sw: 'Admin Override Entry' },
 };
 
 function formatValue(eventType: FinanceAuditEventType, val: number | null): string {
   if (val == null) return '—';
   if (eventType === 'commission_rate_change' || eventType === 'driver_commission_change') return `${(val * 100).toFixed(1)}%`;
+  if (eventType === 'last_score_edit' || eventType === 'admin_override_entry') return val.toLocaleString();
   return `TZS ${val.toLocaleString()}`;
 }
 
