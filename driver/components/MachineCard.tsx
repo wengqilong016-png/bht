@@ -228,10 +228,21 @@ const MachineCard: React.FC<MachineCardProps> = ({
               )}
               {/* Expand toggle — shown when there are hidden tags */}
               {(hasDividendBalance || isUrgent) && (
-                <button
-                  type="button"
+                {/* role=button span (not <button>) so it does not nest an
+                    interactive control inside the card's outer <button>, which
+                    triggers an invalid-DOM-nesting hydration error. */}
+                <span
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => { e.stopPropagation(); setShowAllTags(v => !v); }}
-                  className={`rounded-full px-2 py-1 text-caption font-bold uppercase transition-colors ${
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowAllTags(v => !v);
+                    }
+                  }}
+                  className={`cursor-pointer rounded-full px-2 py-1 text-caption font-bold uppercase transition-colors ${
                     showAllTags
                       ? 'bg-[#171310] text-white'
                       : 'bg-[#ede6dc] text-[#8c7e6d] hover:bg-[#e0d8cc]'
@@ -240,7 +251,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
                   {showAllTags
                     ? (lang === 'zh' ? '收起 ▲' : 'Less ▲')
                     : (lang === 'zh' ? '更多 ▼' : 'More ▼')}
-                </button>
+                </span>
               )}
             </div>
 
