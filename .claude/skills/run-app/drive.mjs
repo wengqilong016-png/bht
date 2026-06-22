@@ -6,15 +6,35 @@
 //   BHT_OUT    截图输出目录，默认 /tmp/bht-screenshots
 import pw from '@playwright/test'; // 在项目根运行时裸标识符可正确解析到 ESM 入口
 const { chromium } = pw;
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync } from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
 
 const url = process.env.BHT_URL || 'http://localhost:3000/';
 const outDir = process.env.BHT_OUT || '/tmp/bht-screenshots';
 if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
 
-// 关键：Android chroot 下 Playwright 自带的 chromium 启动即崩，必须用 system chromium。
+// chromium 解析:优先环境变量,其次系统 chromium,最后从 Playwright 缓存里挑一个真实存在的
+// full chromium 二进制(直接给 executablePath,绕开 Playwright 对版本号 pin 的解析——
+// 装的 @playwright/test 想要的 build 号常和缓存里的对不上)。
+function resolveChromium() {
+  const explicit = [process.env.BHT_CHROMIUM, '/usr/local/bin/chromium', '/usr/bin/chromium', '/usr/bin/chromium-browser'].filter(Boolean);
+  for (const c of explicit) if (existsSync(c)) return c;
+  const cache = join(homedir(), '.cache', 'ms-playwright');
+  if (existsSync(cache)) {
+    for (const d of readdirSync(cache)) {
+      if (!d.startsWith('chromium-')) continue; // full chromium,不用 headless_shell
+      const p = join(cache, d, 'chrome-linux', 'chrome');
+      if (existsSync(p)) return p;
+    }
+  }
+  return undefined; // 实在找不到 ⇒ 交给 Playwright 默认解析(可能需 npx playwright install）
+}
+const executablePath = resolveChromium();
+console.log('→ chromium:', executablePath || 'Playwright 自带');
+
 const browser = await chromium.launch({
-  executablePath: '/usr/local/bin/chromium',
+  ...(executablePath ? { executablePath } : {}),
   args: [
     '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',
     '--disable-gpu', '--use-gl=swiftshader', '--disable-software-rasterizer',
