@@ -160,7 +160,9 @@ const DriverForm: React.FC<DriverFormProps> = ({
                 <label className="text-caption font-black text-amber-400 uppercase ml-1">提成比例 (%)</label>
                 <div className="relative">
                   <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-300" />
-                  <input type="number" value={form.commissionRate} onChange={e => onChange({ commissionRate: e.target.value })} className="w-full bg-white border border-amber-100 rounded-xl pl-9 pr-4 py-3 text-sm font-black text-amber-600 outline-none" placeholder="5" />
+                  {/* type=text + inputMode=decimal: controlled type=number mangles decimals
+                      (e.g. 5.5) on the trailing dot, silently reverting the rate on save. */}
+                  <input type="text" inputMode="decimal" value={form.commissionRate} onChange={e => onChange({ commissionRate: e.target.value.replace(/[^0-9.]/g, '') })} className="w-full bg-white border border-amber-100 rounded-xl pl-9 pr-4 py-3 text-sm font-black text-amber-600 outline-none" placeholder="5" />
                 </div>
               </div>
             </div>

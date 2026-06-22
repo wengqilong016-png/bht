@@ -391,11 +391,10 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
             <div className="space-y-1">
               <label className="text-caption font-black text-[#a09080] uppercase ml-1">Latitude</label>
               <input
-                type="number"
+                type="text"
                 inputMode="decimal"
-                step="0.000001"
                 value={manualLat}
-                onChange={e => setManualLat(e.target.value)}
+                onChange={e => setManualLat(e.target.value.replace(/[^0-9.-]/g, ''))}
                 className="w-full bg-white border border-[#e0d8cc] rounded-2xl p-4 font-black text-[#171310] outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-[#c0b0a0]"
                 placeholder="-6.823490"
               />
@@ -403,11 +402,10 @@ const MachineRegistrationForm: React.FC<MachineRegistrationFormProps> = ({
             <div className="space-y-1">
               <label className="text-caption font-black text-[#a09080] uppercase ml-1">Longitude</label>
               <input
-                type="number"
+                type="text"
                 inputMode="decimal"
-                step="0.000001"
                 value={manualLng}
-                onChange={e => setManualLng(e.target.value)}
+                onChange={e => setManualLng(e.target.value.replace(/[^0-9.-]/g, ''))}
                 className="w-full bg-white border border-[#e0d8cc] rounded-2xl p-4 font-black text-[#171310] outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all placeholder:text-[#c0b0a0]"
                 placeholder="39.269510"
               />
