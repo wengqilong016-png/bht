@@ -756,146 +756,183 @@ const SitesTab: React.FC<SitesTabProps> = ({
       {editingLoc && (
         <div className="fixed inset-0 z-[80] bg-[#171310]/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white w-full max-w-lg rounded-card shadow-2xl overflow-hidden animate-in zoom-in-95">
-            <div className="flex items-center justify-between p-6 border-b border-[#e8e0d4] bg-[#f3efe8]">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-600 rounded-xl text-white"><Store size={18} /></div>
-                <div>
-                  <h3 className="text-base font-black text-[#171310] uppercase">Edit Location</h3>
-                  <p className="text-caption font-bold text-[#a09080] uppercase">{editingLoc.machineId}</p>
+            <div className="flex items-center justify-between p-5 border-b border-[#e8e0d4] bg-[#f3efe8]">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 bg-amber-600 rounded-xl text-white shrink-0"><Store size={18} /></div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-black text-[#171310] truncate">编辑点位 · Edit Location</h3>
+                  <p className="text-caption font-bold text-[#a09080] uppercase truncate">{editingLoc.name} · {editingLoc.machineId}</p>
                 </div>
               </div>
-              <button onClick={() => setEditingLoc(null)} className="p-2 bg-white rounded-full text-[#a09080] shadow-sm hover:text-rose-500 transition-colors"><X size={18} /></button>
+              <button aria-label="Close" onClick={() => setEditingLoc(null)} className="p-2 bg-white rounded-full text-[#a09080] shadow-sm hover:text-rose-500 transition-colors shrink-0"><X size={18} /></button>
             </div>
 
-            <div className="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-caption font-black text-[#a09080] uppercase ml-1">点位名称 Name</label>
-                  <input value={locEditForm.name} onChange={e => setLocEditForm(f => ({ ...f, name: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-caption font-black text-[#a09080] uppercase ml-1">区域 Area</label>
-                  <input value={locEditForm.area} onChange={e => setLocEditForm(f => ({ ...f, area: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-caption font-black text-[#a09080] uppercase ml-1">机器编号 Machine ID</label>
-                  <input value={locEditForm.machineId} onChange={e => setLocEditForm(f => ({ ...f, machineId: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-caption font-black text-[#a09080] uppercase ml-1">上次读数 Last Score</label>
-                  <input type="number" value={locEditForm.lastScore} onChange={e => setLocEditForm(f => ({ ...f, lastScore: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400" />
-                </div>
-              </div>
-              <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-3">
-                <div>
-                  <p className="text-caption font-black text-sky-600 uppercase">GPS Coordinates</p>
-                  <p className="text-caption font-bold text-[#a09080] uppercase">管理端可手动粘贴定位数据 / Paste coordinates manually</p>
+            <div className="p-5 space-y-5 max-h-[68vh] overflow-y-auto">
+              {/* ── 基本信息 Basics ── */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#171310]">基本信息</span>
+                  <span className="text-caption font-bold text-[#a09080] uppercase">Basics</span>
+                  <div className="flex-1 h-px bg-[#e8e0d4]" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-caption font-black text-[#a09080] uppercase ml-1">Latitude</label>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.000001"
-                      value={locEditForm.latitude}
-                      onChange={e => setLocEditForm(f => ({ ...f, latitude: e.target.value }))}
-                      className="w-full bg-white border border-sky-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-sky-400"
-                      placeholder="-6.823490"
-                    />
+                    <label className="text-caption font-black text-[#a09080] uppercase ml-1">点位名称 Name</label>
+                    <input value={locEditForm.name} onChange={e => setLocEditForm(f => ({ ...f, name: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 transition-colors" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-caption font-black text-[#a09080] uppercase ml-1">Longitude</label>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.000001"
-                      value={locEditForm.longitude}
-                      onChange={e => setLocEditForm(f => ({ ...f, longitude: e.target.value }))}
-                      className="w-full bg-white border border-sky-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-sky-400"
-                      placeholder="39.269510"
-                    />
+                    <label className="text-caption font-black text-[#a09080] uppercase ml-1">区域 Area</label>
+                    <input value={locEditForm.area} onChange={e => setLocEditForm(f => ({ ...f, area: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 transition-colors" />
                   </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-caption font-black text-[#a09080] uppercase ml-1">分红比例 Commission (%)</label>
-                  {/* type=text + inputMode=decimal: a controlled type=number input mangles decimals
-                      like 16.66 (trailing-dot reads back empty), silently reverting on save. */}
-                  <input type="text" inputMode="decimal" value={locEditForm.commissionRate} onChange={e => setLocEditForm(f => ({ ...f, commissionRate: e.target.value.replace(/[^0-9.]/g, '') }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-caption font-black text-[#a09080] uppercase ml-1">机器编号 Machine ID</label>
+                    <input value={locEditForm.machineId} onChange={e => setLocEditForm(f => ({ ...f, machineId: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 transition-colors" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-caption font-black text-[#a09080] uppercase ml-1">状态 Status</label>
+                    <select value={locEditForm.status} onChange={e => setLocEditForm(f => ({ ...f, status: e.target.value as Location['status'] }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 transition-colors">
+                      <option value="active">🟢 正常 Active</option>
+                      <option value="maintenance">🔧 维护 Maintenance</option>
+                      <option value="broken">💔 故障 Broken</option>
+                      <option value="inactive">⏸️ 停用 Inactive</option>
+                    </select>
+                  </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-caption font-black text-[#a09080] uppercase ml-1">状态 Status</label>
-                  <select value={locEditForm.status} onChange={e => setLocEditForm(f => ({ ...f, status: e.target.value as Location['status'] }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400">
-                    <option value="active">Active 正常</option>
-                    <option value="maintenance">Maintenance 维护</option>
-                    <option value="broken">Broken 故障</option>
+                  <label className="text-caption font-black text-[#a09080] uppercase ml-1">分配司机 Assigned Driver</label>
+                  <select value={locEditForm.assignedDriverId} onChange={e => setLocEditForm(f => ({ ...f, assignedDriverId: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 transition-colors">
+                    <option value="">-- 未分配 Unassigned --</option>
+                    {drivers.map(d => (
+                      <option key={d.id} value={d.id}>{d.name} ({d.id})</option>
+                    ))}
                   </select>
                 </div>
-              </div>
-              <div className="flex items-center gap-4 p-3 bg-[#f3efe8] rounded-xl border border-[#e0d8cc]">
-                <label className="text-caption font-black text-[#a09080] uppercase">新点位 New Office</label>
                 <button
                   type="button"
+                  aria-pressed={locEditForm.isNewOffice}
                   onClick={() => setLocEditForm(f => ({ ...f, isNewOffice: !f.isNewOffice }))}
-                  className={`transition-colors ${locEditForm.isNewOffice ? 'text-sky-500' : 'text-[#c0b0a0]'}`}
+                  className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border transition-colors ${locEditForm.isNewOffice ? 'bg-sky-50 border-sky-200' : 'bg-[#f3efe8] border-[#e0d8cc]'}`}
                 >
-                  {locEditForm.isNewOffice ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                  <span className="text-caption font-black text-[#a09080] uppercase">新点位 New Office</span>
+                  {locEditForm.isNewOffice ? <ToggleRight size={28} className="text-sky-500" /> : <ToggleLeft size={28} className="text-[#c0b0a0]" />}
                 </button>
               </div>
-              <div className="space-y-1">
-                <label className="text-caption font-black text-[#a09080] uppercase ml-1">最近营收日 Last Revenue Date</label>
-                <input value={locEditForm.lastRevenueDate} onChange={e => setLocEditForm(f => ({ ...f, lastRevenueDate: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400" placeholder="e.g. 2026-05-09" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-caption font-black text-[#a09080] uppercase ml-1">分配司机 Assigned Driver</label>
-                <select value={locEditForm.assignedDriverId} onChange={e => setLocEditForm(f => ({ ...f, assignedDriverId: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400">
-                  <option value="">-- 未分配 Unassigned --</option>
-                  {drivers.map(d => (
-                    <option key={d.id} value={d.id}>{d.name} ({d.id})</option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-caption font-black text-[#a09080] uppercase ml-1">店主 Owner Name</label>
-                  <input value={locEditForm.ownerName} onChange={e => setLocEditForm(f => ({ ...f, ownerName: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400" />
+
+              {/* ── 读数与位置 Reading & Location ── */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#171310]">读数与位置</span>
+                  <span className="text-caption font-bold text-[#a09080] uppercase">Reading & Location</span>
+                  <div className="flex-1 h-px bg-[#e8e0d4]" />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-caption font-black text-[#a09080] uppercase ml-1">店主电话 Owner Phone</label>
-                  <input value={locEditForm.shopOwnerPhone} onChange={e => setLocEditForm(f => ({ ...f, shopOwnerPhone: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400" />
-                </div>
-              </div>
-              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 space-y-3">
-                <p className="text-caption font-black text-amber-600 uppercase">启动押金 Startup Capital</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-caption font-black text-[#a09080] uppercase ml-1">初始启动债务 Initial</label>
-                    <input type="number" value={locEditForm.initialStartupDebt} onChange={e => setLocEditForm(f => ({ ...f, initialStartupDebt: e.target.value }))} className="w-full bg-white border border-amber-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none" />
+                    <label className="text-caption font-black text-[#a09080] uppercase ml-1">上次读数 Last Score</label>
+                    <input type="number" inputMode="numeric" value={locEditForm.lastScore} onChange={e => setLocEditForm(f => ({ ...f, lastScore: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 transition-colors" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-caption font-black text-[#a09080] uppercase ml-1">剩余启动债务 Remaining</label>
-                    <input type="number" value={locEditForm.remainingStartupDebt} onChange={e => setLocEditForm(f => ({ ...f, remainingStartupDebt: e.target.value }))} className="w-full bg-white border border-amber-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none" />
+                    <label className="text-caption font-black text-[#a09080] uppercase ml-1">最近营收日 Last Revenue</label>
+                    <input value={locEditForm.lastRevenueDate} onChange={e => setLocEditForm(f => ({ ...f, lastRevenueDate: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 transition-colors" placeholder="e.g. 2026-05-09" />
+                  </div>
+                </div>
+                <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-3">
+                  <div>
+                    <p className="text-caption font-black text-sky-600 uppercase">GPS 坐标 Coordinates</p>
+                    <p className="text-caption font-bold text-[#a09080]">管理端可手动粘贴定位 / paste coordinates</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-caption font-black text-[#a09080] uppercase ml-1">Latitude</label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={locEditForm.latitude}
+                        onChange={e => setLocEditForm(f => ({ ...f, latitude: e.target.value.replace(/[^0-9.-]/g, '') }))}
+                        className="w-full bg-white border border-sky-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-sky-400 transition-colors"
+                        placeholder="-6.823490"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-caption font-black text-[#a09080] uppercase ml-1">Longitude</label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={locEditForm.longitude}
+                        onChange={e => setLocEditForm(f => ({ ...f, longitude: e.target.value.replace(/[^0-9.-]/g, '') }))}
+                        className="w-full bg-white border border-sky-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-sky-400 transition-colors"
+                        placeholder="39.269510"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="p-4 bg-teal-50 rounded-2xl border border-teal-100 space-y-1">
-                <label className="text-caption font-black text-teal-600 uppercase ml-1">分红余额 Dividend Balance</label>
-                <input type="number" value={locEditForm.dividendBalance} onChange={e => setLocEditForm(f => ({ ...f, dividendBalance: e.target.value }))} className="w-full bg-white border border-teal-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none" />
-                <p className="text-caption font-bold text-teal-500/80">管理员可直接调整站点分红余额 · 改动会记入审计</p>
+
+              {/* ── 财务设置 Finance（敏感字段，改动均记入审计） ── */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-amber-700">财务设置</span>
+                  <span className="text-caption font-bold text-amber-500/80 uppercase">Finance · audited</span>
+                  <div className="flex-1 h-px bg-amber-200/70" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-caption font-black text-[#a09080] uppercase ml-1">分红比例 Commission</label>
+                  {/* type=text + inputMode=decimal: a controlled type=number input mangles decimals
+                      like 16.66 (trailing-dot reads back empty), silently reverting on save. */}
+                  <div className="flex items-center bg-white border border-[#e0d8cc] rounded-xl pl-3 pr-2 focus-within:border-amber-400 transition-colors">
+                    <input type="text" inputMode="decimal" value={locEditForm.commissionRate} onChange={e => setLocEditForm(f => ({ ...f, commissionRate: e.target.value.replace(/[^0-9.]/g, '') }))} className="flex-1 min-w-0 bg-transparent py-2.5 text-xs font-bold outline-none" />
+                    <span className="text-xs font-black text-amber-500 shrink-0">%</span>
+                  </div>
+                  <p className="text-caption font-bold text-[#a09080] ml-1">司机收款时按此比例计算店主理论分红 · 支持小数(如 16.66)</p>
+                </div>
+                <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 space-y-3">
+                  <p className="text-caption font-black text-amber-600 uppercase">启动押金 Startup Capital · TZS</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-caption font-black text-[#a09080] uppercase ml-1">初始 Initial</label>
+                      <input type="number" inputMode="numeric" value={locEditForm.initialStartupDebt} onChange={e => setLocEditForm(f => ({ ...f, initialStartupDebt: e.target.value }))} className="w-full bg-white border border-amber-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 transition-colors" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-caption font-black text-[#a09080] uppercase ml-1">剩余 Remaining</label>
+                      <input type="number" inputMode="numeric" value={locEditForm.remainingStartupDebt} onChange={e => setLocEditForm(f => ({ ...f, remainingStartupDebt: e.target.value }))} className="w-full bg-white border border-amber-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 transition-colors" />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 bg-teal-50 rounded-2xl border border-teal-100 space-y-1">
+                  <label className="text-caption font-black text-teal-600 uppercase ml-1">分红余额 Dividend Balance · TZS</label>
+                  <input type="number" inputMode="numeric" value={locEditForm.dividendBalance} onChange={e => setLocEditForm(f => ({ ...f, dividendBalance: e.target.value }))} className="w-full bg-white border border-teal-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-teal-400 transition-colors" />
+                  <p className="text-caption font-bold text-teal-500/80 ml-1">管理员可直接调整站点分红余额 · 改动会记入审计</p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-caption font-black text-[#a09080] uppercase ml-1">管理员备注 Admin Note（自由填写）</label>
-                <textarea
-                  value={locEditForm.adminNote}
-                  onChange={e => setLocEditForm(f => ({ ...f, adminNote: e.target.value }))}
-                  rows={2}
-                  placeholder="写一点信息（保存后记入该机器的审计记录）"
-                  className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 resize-y"
-                />
+
+              {/* ── 店主与备注 Owner & Note ── */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#171310]">店主与备注</span>
+                  <span className="text-caption font-bold text-[#a09080] uppercase">Owner & Note</span>
+                  <div className="flex-1 h-px bg-[#e8e0d4]" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-caption font-black text-[#a09080] uppercase ml-1">店主 Owner Name</label>
+                    <input value={locEditForm.ownerName} onChange={e => setLocEditForm(f => ({ ...f, ownerName: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 transition-colors" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-caption font-black text-[#a09080] uppercase ml-1">店主电话 Owner Phone</label>
+                    <input value={locEditForm.shopOwnerPhone} onChange={e => setLocEditForm(f => ({ ...f, shopOwnerPhone: e.target.value }))} className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 transition-colors" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-caption font-black text-[#a09080] uppercase ml-1">管理员备注 Admin Note（自由填写）</label>
+                  <textarea
+                    value={locEditForm.adminNote}
+                    onChange={e => setLocEditForm(f => ({ ...f, adminNote: e.target.value }))}
+                    rows={2}
+                    placeholder="写一点信息（保存后记入该机器的审计记录）"
+                    className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 resize-y transition-colors"
+                  />
+                </div>
               </div>
             </div>
 
