@@ -6,6 +6,7 @@ import { useAppData } from '../contexts/DataContext';
 import { useMutations } from '../contexts/MutationContext';
 import { useToast } from '../contexts/ToastContext';
 import type { CollectionSubmissionInput } from '../services/collectionSubmissionService';
+import { logFinanceAudit } from '../services/financeAuditService';
 import { CONSTANTS, safeRandomUUID, type Location, type Transaction } from '../types';
 import { clampCollectionAmount } from '../utils/collectionAmountLimits';
 
@@ -32,6 +33,12 @@ function parseAmount(field: Parameters<typeof clampCollectionAmount>[0], value: 
   return clampCollectionAmount(field, value);
 }
 
+/** Unclamped numeric parse — used in admin override mode to lift driver safety caps. */
+function rawAmount(value: string): number {
+  const n = Number(value.replace(/,/g, ''));
+  return Number.isFinite(n) ? n : 0;
+}
+
 const ManualCollectionEntryPage: React.FC = () => {
   const { currentUser } = useAuth();
   const { drivers, locations, isOnline } = useAppData();
@@ -52,6 +59,7 @@ const ManualCollectionEntryPage: React.FC = () => {
   const [ownerRetention, setOwnerRetention] = useState('');
   const [reportedStatus, setReportedStatus] = useState<ReportedStatus>('active');
   const [notes, setNotes] = useState('');
+  const [adminOverride, setAdminOverride] = useState(false);
   const [lastSubmittedTxId, setLastSubmittedTxId] = useState<string | null>(null);
 
   const activeDrivers = useMemo(
@@ -84,21 +92,26 @@ const ManualCollectionEntryPage: React.FC = () => {
   }, [drivers, selectedLocation]);
 
   const preview = useMemo(() => {
+    const amount = (field: Parameters<typeof clampCollectionAmount>[0], value: string) =>
+      adminOverride ? rawAmount(value) : parseAmount(field, value);
     const previousScore = selectedLocation?.lastScore ?? 0;
-    const nextScore = parseAmount('currentScore', currentScore);
-    const diff = Math.max(0, nextScore - previousScore);
+    const nextScore = amount('currentScore', currentScore);
+    // Override lets the reading fall below the previous one (back-entry/correction).
+    const diff = adminOverride ? nextScore - previousScore : Math.max(0, nextScore - previousScore);
     const revenue = diff * CONSTANTS.COIN_VALUE_TZS;
     const commission = Math.floor(revenue * (selectedLocation?.commissionRate ?? CONSTANTS.DEFAULT_PROFIT_SHARE));
     const finalOwnerRetention = ownerRetention.trim()
-      ? parseAmount('ownerRetention', ownerRetention)
+      ? amount('ownerRetention', ownerRetention)
       : commission;
-    const expenseAmount = parseAmount('expenses', expenses);
-    const tipAmount = parseAmount('tip', tip);
-    const debtDeduction = Math.min(
-      parseAmount('startupDebtDeduction', startupDebtDeduction),
-      Math.max(0, selectedLocation?.remainingStartupDebt ?? 0),
-    );
-    const netPayable = Math.max(0, revenue - finalOwnerRetention - expenseAmount - tipAmount + debtDeduction);
+    const expenseAmount = amount('expenses', expenses);
+    const tipAmount = amount('tip', tip);
+    const debtDeduction = adminOverride
+      ? amount('startupDebtDeduction', startupDebtDeduction)
+      : Math.min(
+          parseAmount('startupDebtDeduction', startupDebtDeduction),
+          Math.max(0, selectedLocation?.remainingStartupDebt ?? 0),
+        );
+    const netPayable = revenue - finalOwnerRetention - expenseAmount - tipAmount + debtDeduction;
     return {
       previousScore,
       nextScore,
@@ -109,9 +122,9 @@ const ManualCollectionEntryPage: React.FC = () => {
       expenseAmount,
       tipAmount,
       debtDeduction,
-      netPayable,
+      netPayable: adminOverride ? netPayable : Math.max(0, netPayable),
     };
-  }, [currentScore, expenses, ownerRetention, selectedLocation, startupDebtDeduction, tip]);
+  }, [adminOverride, currentScore, expenses, ownerRetention, selectedLocation, startupDebtDeduction, tip]);
 
   const resetFormAfterSuccess = (location: Location) => {
     setCurrentScore('');
@@ -157,13 +170,15 @@ const ManualCollectionEntryPage: React.FC = () => {
       showToast('请输入有效当前读数。', 'warning');
       return;
     }
-    if (preview.nextScore < preview.previousScore) {
-      showToast('当前读数低于机器上次读数，请先走清零/异常处理流程。', 'error');
+    if (!adminOverride && preview.nextScore < preview.previousScore) {
+      showToast('当前读数低于机器上次读数，请先走清零/异常处理流程，或开启管理员覆写。', 'error');
       return;
     }
 
     const manualNote = [
-      `[admin_manual_entry] 管理员 ${currentUser.name}(${currentUser.id}) 快速补录；无照片/GPS验证。`,
+      adminOverride
+        ? `[admin_override] 管理员 ${currentUser.name}(${currentUser.id}) 覆写补录；放松司机规则（读数/金额上限），无照片/GPS验证。`
+        : `[admin_manual_entry] 管理员 ${currentUser.name}(${currentUser.id}) 快速补录；无照片/GPS验证。`,
       notes.trim() || null,
     ].filter(Boolean).join(' ');
 
@@ -177,7 +192,7 @@ const ManualCollectionEntryPage: React.FC = () => {
       startupDebtDeduction: preview.debtDeduction,
       isOwnerRetaining,
       ownerRetention: ownerRetention.trim() ? preview.finalOwnerRetention : null,
-      coinExchange: parseAmount('coinExchange', coinExchange),
+      coinExchange: adminOverride ? rawAmount(coinExchange) : parseAmount('coinExchange', coinExchange),
       gps: null,
       photoUrl: null,
       aiScore: null,
@@ -192,7 +207,25 @@ const ManualCollectionEntryPage: React.FC = () => {
     try {
       const transaction = await submitManualCollection.mutateAsync(input);
       setLastSubmittedTxId(transaction.id);
-      showToast('快速补录已提交。', 'success');
+      if (adminOverride) {
+        logFinanceAudit({
+          event_type: 'admin_override_entry',
+          entity_type: 'location',
+          entity_id: selectedLocation.id,
+          entity_name: selectedLocation.name,
+          actor_id: currentUser.id,
+          old_value: selectedLocation.lastScore,
+          new_value: preview.nextScore,
+          payload: {
+            txId: transaction.id,
+            driverId: selectedDriver.id,
+            revenue: preview.revenue,
+            ownerRetention: preview.finalOwnerRetention,
+            note: notes.trim() || undefined,
+          },
+        });
+      }
+      showToast(adminOverride ? '管理员覆写补录已提交。' : '快速补录已提交。', 'success');
       resetFormAfterSuccess(selectedLocation);
     } catch (error) {
       const message = error instanceof Error ? error.message : '快速补录失败';
@@ -212,6 +245,22 @@ const ManualCollectionEntryPage: React.FC = () => {
             {isOnline ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
             {isOnline ? '在线可提交' : '离线不可补录'}
           </div>
+        </div>
+        <div className={`mt-4 flex items-start justify-between gap-3 rounded-xl border p-3 ${adminOverride ? 'border-rose-200 bg-rose-50' : 'border-[#e0d8cc] bg-[#f3efe8]'}`}>
+          <div>
+            <p className={`text-sm font-black ${adminOverride ? 'text-rose-700' : 'text-[#3d3028]'}`}>管理员覆写 Admin Override</p>
+            <p className="text-xs text-[#8c7e6d] mt-0.5">
+              开启后放松司机规则：允许读数低于上次、取消金额上限。每笔覆写都会记入审计。服务端财务仍按机器配置重新计算。
+            </p>
+          </div>
+          <button
+            type="button"
+            aria-pressed={adminOverride}
+            onClick={() => setAdminOverride(v => !v)}
+            className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors ${adminOverride ? 'bg-rose-500' : 'bg-[#c0b0a0]'}`}
+          >
+            <span className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-all ${adminOverride ? 'left-6' : 'left-1'}`} />
+          </button>
         </div>
       </div>
 

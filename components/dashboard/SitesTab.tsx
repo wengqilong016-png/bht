@@ -64,8 +64,10 @@ const SitesTab: React.FC<SitesTabProps> = ({
     assignedDriverId: '',
     initialStartupDebt: '',
     remainingStartupDebt: '',
+    dividendBalance: '',
     isNewOffice: false,
     lastRevenueDate: '',
+    adminNote: '',
   });
   const [isSavingLoc, setIsSavingLoc] = useState(false);
   const [statusIssueFilter, setStatusIssueFilter] = useState<'all' | 'issue' | 'maintenance' | 'broken'>('all');
@@ -154,8 +156,10 @@ const SitesTab: React.FC<SitesTabProps> = ({
       assignedDriverId: loc.assignedDriverId || '',
       initialStartupDebt: loc.initialStartupDebt.toString(),
       remainingStartupDebt: loc.remainingStartupDebt.toString(),
+      dividendBalance: (loc.dividendBalance ?? 0).toString(),
       isNewOffice: loc.isNewOffice || false,
       lastRevenueDate: loc.lastRevenueDate || '',
+      adminNote: '',
     });
   };
 
@@ -213,6 +217,7 @@ const SitesTab: React.FC<SitesTabProps> = ({
       assignedDriverId: locEditForm.assignedDriverId || undefined,
       initialStartupDebt: parseInt(locEditForm.initialStartupDebt) || 0,
       remainingStartupDebt: parseInt(locEditForm.remainingStartupDebt) || 0,
+      dividendBalance: (v => Number.isNaN(v) ? (editingLoc.dividendBalance ?? 0) : v)(parseInt(locEditForm.dividendBalance, 10)),
       isNewOffice: locEditForm.isNewOffice,
       lastRevenueDate: locEditForm.lastRevenueDate.trim() || undefined,
       isSynced: false,
@@ -242,6 +247,53 @@ const SitesTab: React.FC<SitesTabProps> = ({
           actor_id: actorId ?? 'unknown',
           old_value: Money.tzs(editingLoc.remainingStartupDebt ?? 0),
           new_value: Money.tzs(updated.remainingStartupDebt ?? 0),
+        });
+      }
+      if ((editingLoc.dividendBalance ?? 0) !== (updated.dividendBalance ?? 0)) {
+        auditEntries.push({
+          event_type: 'dividend_balance_edit',
+          entity_type: 'location',
+          entity_id: updated.id,
+          entity_name: updated.name,
+          actor_id: actorId ?? 'unknown',
+          old_value: Money.tzs(editingLoc.dividendBalance ?? 0),
+          new_value: Money.tzs(updated.dividendBalance ?? 0),
+        });
+      }
+      if (editingLoc.lastScore !== updated.lastScore) {
+        auditEntries.push({
+          event_type: 'last_score_edit',
+          entity_type: 'location',
+          entity_id: updated.id,
+          entity_name: updated.name,
+          actor_id: actorId ?? 'unknown',
+          old_value: editingLoc.lastScore,
+          new_value: updated.lastScore,
+        });
+      }
+      if (editingLoc.status !== updated.status) {
+        auditEntries.push({
+          event_type: 'location_status_change',
+          entity_type: 'location',
+          entity_id: updated.id,
+          entity_name: updated.name,
+          actor_id: actorId ?? 'unknown',
+          old_value: null,
+          new_value: null,
+          payload: { from: editingLoc.status, to: updated.status },
+        });
+      }
+      const trimmedNote = locEditForm.adminNote.trim();
+      if (trimmedNote) {
+        auditEntries.push({
+          event_type: 'admin_machine_note',
+          entity_type: 'location',
+          entity_id: updated.id,
+          entity_name: updated.name,
+          actor_id: actorId ?? 'unknown',
+          old_value: null,
+          new_value: null,
+          payload: { note: trimmedNote },
         });
       }
       if (auditEntries.length > 0) logFinanceAuditBatch(auditEntries);
@@ -827,6 +879,21 @@ const SitesTab: React.FC<SitesTabProps> = ({
                     <input type="number" value={locEditForm.remainingStartupDebt} onChange={e => setLocEditForm(f => ({ ...f, remainingStartupDebt: e.target.value }))} className="w-full bg-white border border-amber-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none" />
                   </div>
                 </div>
+              </div>
+              <div className="p-4 bg-teal-50 rounded-2xl border border-teal-100 space-y-1">
+                <label className="text-caption font-black text-teal-600 uppercase ml-1">分红余额 Dividend Balance</label>
+                <input type="number" value={locEditForm.dividendBalance} onChange={e => setLocEditForm(f => ({ ...f, dividendBalance: e.target.value }))} className="w-full bg-white border border-teal-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none" />
+                <p className="text-caption font-bold text-teal-500/80">管理员可直接调整站点分红余额 · 改动会记入审计</p>
+              </div>
+              <div className="space-y-1">
+                <label className="text-caption font-black text-[#a09080] uppercase ml-1">管理员备注 Admin Note（自由填写）</label>
+                <textarea
+                  value={locEditForm.adminNote}
+                  onChange={e => setLocEditForm(f => ({ ...f, adminNote: e.target.value }))}
+                  rows={2}
+                  placeholder="写一点信息（保存后记入该机器的审计记录）"
+                  className="w-full bg-white border border-[#e0d8cc] rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-400 resize-y"
+                />
               </div>
             </div>
 

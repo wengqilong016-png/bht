@@ -244,7 +244,12 @@ export type FinanceAuditEventType =
   | 'driver_salary_change'
   | 'driver_commission_change'
   | 'driver_debt_edit'
-  | 'driver_status_change';
+  | 'driver_status_change'
+  | 'dividend_balance_edit'
+  | 'last_score_edit'
+  | 'location_status_change'
+  | 'admin_machine_note'
+  | 'admin_override_entry';
 
 export interface FinanceAuditLog {
   id: string;
