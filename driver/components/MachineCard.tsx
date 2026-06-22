@@ -226,11 +226,13 @@ const MachineCard: React.FC<MachineCardProps> = ({
                   {t.distanceWaiting}
                 </span>
               )}
-              {/* Expand toggle — shown when there are hidden tags */}
+              {/*
+                Expand toggle — shown when there are hidden tags.
+                Uses role=button span (not <button>) so it does not nest an
+                interactive control inside the card's outer <button>, which
+                triggers an invalid-DOM-nesting hydration error.
+              */}
               {(hasDividendBalance || isUrgent) && (
-                {/* role=button span (not <button>) so it does not nest an
-                    interactive control inside the card's outer <button>, which
-                    triggers an invalid-DOM-nesting hydration error. */}
                 <span
                   role="button"
                   tabIndex={0}
