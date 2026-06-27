@@ -1,9 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { useToast } from '../contexts/ToastContext';
-import { useConfirm } from '../contexts/ConfirmContext';
 import SettlementTab from '../components/dashboard/SettlementTab';
-import { Transaction, DailySettlement, Driver, Location, User } from '../types';
+import { Transaction, Location, User } from '../types';
 
 // Mock contexts
 jest.mock('../contexts/ToastContext', () => ({
