@@ -81,9 +81,18 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
     reviewAnomalyTransaction,
     approveResetRequest,
     approvePayoutRequest,
+    updateTransaction,
   } = useMutations();
 
   const onUpdateLocations = (locationsToSave: Location[]) => updateLocations.mutateAsync(locationsToSave).then(() => {});
+  const onUpdateLocationStatus = async (locationId: string, status: Location['status']) => {
+    const target = locationMap.get(locationId);
+    if (!target || target.status === status) return;
+    await updateLocations.mutateAsync([{ ...target, status }]);
+  };
+  const onUpdateTransactionNotes = async (txId: string, notes: string) => {
+    await updateTransaction.mutateAsync({ txId, updates: { notes } });
+  };
   const onDeleteLocations = async (ids: string[]) => {
     await deleteLocations.mutateAsync(ids);
   };
@@ -560,6 +569,8 @@ const DashboardPage: React.FC<DashboardProps> = React.memo(({
           onApprovePayoutRequest={onApprovePayoutRequest}
           isOnline={isOnline}
           onNavigate={_onNavigate}
+          onUpdateLocationStatus={onUpdateLocationStatus}
+          onUpdateTransactionNotes={onUpdateTransactionNotes}
           lang={lang}
         />
         </PageErrorBoundary>

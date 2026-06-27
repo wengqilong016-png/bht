@@ -98,4 +98,29 @@ describe('Driver Daily Invoice Test Suite', () => {
     expect(screen.getByText(/\+350 币/i)).toBeInTheDocument();
     expect(screen.getByText(/Spot 12/i)).toBeInTheDocument();
   });
+
+  it('fires onUpdateLocationStatus when machine status dropdown changes', () => {
+    const onUpdateLocationStatus = jest.fn().mockResolvedValue(undefined);
+    render(<SettlementTab {...defaultProps} onUpdateLocationStatus={onUpdateLocationStatus} />);
+
+    fireEvent.click(screen.getByText(/每日收款对账单/i));
+    const statusSelect = screen.getByLabelText(/机器实体状态/i);
+    fireEvent.change(statusSelect, { target: { value: 'broken' } });
+
+    expect(onUpdateLocationStatus).toHaveBeenCalledWith('loc-123', 'broken');
+  });
+
+  it('fires onUpdateTransactionNotes when saving edited notes', () => {
+    const onUpdateTransactionNotes = jest.fn().mockResolvedValue(undefined);
+    render(<SettlementTab {...defaultProps} onUpdateTransactionNotes={onUpdateTransactionNotes} />);
+
+    fireEvent.click(screen.getByText(/每日收款对账单/i));
+    fireEvent.click(screen.getByText(/补写日结备注/i));
+
+    const textarea = screen.getByPlaceholderText(/在此输入补写备注/i);
+    fireEvent.change(textarea, { target: { value: '机器卡币已修好' } });
+    fireEvent.click(screen.getByText(/^保存$/i));
+
+    expect(onUpdateTransactionNotes).toHaveBeenCalledWith('tx-456', '机器卡币已修好');
+  });
 });

@@ -53,6 +53,8 @@ interface SettlementTabProps {
   isOnline: boolean;
   lang: 'zh' | 'sw';
   onNavigate?: (view: string) => void;
+  onUpdateLocationStatus?: (locationId: string, status: Location['status']) => Promise<void>;
+  onUpdateTransactionNotes?: (txId: string, notes: string) => Promise<void>;
 }
 
 const SettlementTab: React.FC<SettlementTabProps> = ({
@@ -82,6 +84,8 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
   isOnline,
   lang,
   onNavigate,
+  onUpdateLocationStatus,
+  onUpdateTransactionNotes,
 }) => {
   const t = TRANSLATIONS[lang];
   const { showToast } = useToast();
@@ -407,7 +411,11 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                             <select
                               aria-label={t.machineStatus}
                               value={status}
-                              onChange={() => { /* wired to updateLocations in Task 4 */ }}
+                              onChange={(e) => {
+                                const nextStatus = e.target.value as Location['status'];
+                                if (!loc || nextStatus === status) return;
+                                void onUpdateLocationStatus?.(loc.id, nextStatus);
+                              }}
                               className={`text-[10px] font-bold px-2 py-1 rounded-xl border focus:outline-none flex-shrink-0 ${statusColor}`}
                             >
                               <option value="active">{lang === 'zh' ? '🟢 运行中' : '🟢 Active'}</option>
@@ -460,7 +468,14 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => { setEditingTxId(null); }}
+                                    onClick={() => {
+                                      const txId = tx.id;
+                                      const value = tempNotes;
+                                      setEditingTxId(null);
+                                      Promise.resolve(onUpdateTransactionNotes?.(txId, value)).catch(() => {
+                                        showToast(t.updateError, 'error');
+                                      });
+                                    }}
                                     className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg uppercase"
                                   >
                                     {t.saveChanges}
