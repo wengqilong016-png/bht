@@ -60,7 +60,7 @@ jobs:
           echo "✓ All required secrets are set and valid"
 
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v2
