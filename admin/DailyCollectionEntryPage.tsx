@@ -111,6 +111,11 @@ const DailyCollectionEntryPage: React.FC = () => {
   const { showToast } = useToast();
 
   const todayStr = getTodayLocalDate();
+  const minDate = useMemo(() => {
+    const d = new Date(todayStr + 'T00:00:00+03:00');
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().slice(0, 10);
+  }, [todayStr]);
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const [draft, setDraft] = useState<EntryDraft>(emptyDraft());
   const [isAdding, setIsAdding] = useState(false);
@@ -123,6 +128,7 @@ const DailyCollectionEntryPage: React.FC = () => {
   const [isGeneratingSettlement, setIsGeneratingSettlement] = useState(false);
 
   const isToday = selectedDate === todayStr;
+  const isBackdate = !isToday;
 
   // Filter transactions for selected date
   const dayTransactions = useMemo(() => {
@@ -200,10 +206,6 @@ const DailyCollectionEntryPage: React.FC = () => {
   const handleSubmitEntry = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!isToday) {
-      showToast('非当日不可新增采集记录。请选择今天日期。', 'warning');
-      return;
-    }
     if (!isOnline) {
       showToast('快速补录需要联网提交。', 'warning');
       return;
@@ -225,9 +227,11 @@ const DailyCollectionEntryPage: React.FC = () => {
 
     const preview = draftPreview;
     const manualNote = [
-      draft.adminOverride
-        ? `[admin_override] ${currentUser.name} 覆写补录`
-        : `[admin_manual_entry] ${currentUser.name} 快速补录`,
+      isBackdate
+        ? `[admin_backdate: ${selectedDate}] ${currentUser.name} 历史补录`
+        : draft.adminOverride
+          ? `[admin_override] ${currentUser.name} 覆写补录`
+          : `[admin_manual_entry] ${currentUser.name} 快速补录`,
       draft.notes.trim() || null,
     ].filter(Boolean).join(' ');
 
@@ -251,6 +255,7 @@ const DailyCollectionEntryPage: React.FC = () => {
       expenseCategory: preview.expenseAmount > 0 ? draft.expenseCategory : null,
       expenseDescription: preview.expenseAmount > 0 ? draft.expenseDescription.trim() || undefined : undefined,
       reportedStatus: draft.reportedStatus,
+      timestamp: isBackdate ? `${selectedDate}T12:00:00+03:00` : undefined,
     };
 
     try {
@@ -274,7 +279,11 @@ const DailyCollectionEntryPage: React.FC = () => {
           },
         });
       }
-      showToast(draft.adminOverride ? '覆写补录已提交。' : '补录已提交。', 'success');
+      showToast(
+        isBackdate ? `历史补录已提交（${selectedDate}）。` :
+        draft.adminOverride ? '覆写补录已提交。' : '补录已提交。',
+        'success'
+      );
       resetDraft();
     } catch (error) {
       const message = error instanceof Error ? error.message : '补录失败';
@@ -355,12 +364,13 @@ const DailyCollectionEntryPage: React.FC = () => {
             value={selectedDate}
             onChange={e => setSelectedDate(e.target.value)}
             max={todayStr}
+            min={minDate}
             className="rounded-lg border border-[#e0d8cc] bg-white px-3 py-2 text-sm font-bold text-[#2a2420] focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
           {isToday ? (
             <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">今天</span>
           ) : (
-            <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">历史日期（只读）</span>
+            <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">历史补录（{selectedDate}）</span>
           )}
           <span className="text-xs text-[#8c7e6d] ml-auto">
             {dayTransactions.length} 笔采集记录
@@ -372,7 +382,7 @@ const DailyCollectionEntryPage: React.FC = () => {
         {/* ── Left Column: Add Form + Entry List ── */}
         <div className="space-y-5">
           {/* Inline Add Form */}
-          {isToday && isOnline && (
+          {isOnline && (
             <div className="bg-white border border-[#e0d8cc] rounded-xl shadow-sm overflow-hidden">
               {!isAdding ? (
                 <button
@@ -627,7 +637,7 @@ const DailyCollectionEntryPage: React.FC = () => {
                   <ReceiptText size={24} />
                 </div>
                 <p className="text-sm font-bold text-[#8c7e6d]">
-                  {isToday ? '当日暂无采集记录，点击上方按钮添加。' : '该日期无采集记录。'}
+                  {isToday ? '当日暂无采集记录，点击上方按钮添加。' : '该日期无采集记录。点击上方按钮添加历史补录。'}
                 </p>
               </div>
             ) : (

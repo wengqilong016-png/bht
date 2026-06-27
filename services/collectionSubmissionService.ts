@@ -79,6 +79,8 @@ export interface CollectionSubmissionInput {
   expenseCategory: Transaction['expenseCategory'] | null;
   expenseDescription?: string;
   reportedStatus: 'active' | 'maintenance' | 'broken';
+  /** Optional ISO timestamp for admin back-dating. When set, the server uses this instead of now(). */
+  timestamp?: string;
 }
 
 /** Discriminated result so callers can branch on success / source. */
@@ -190,6 +192,7 @@ export async function submitCollectionV2(
       p_expense_category:  input.expenseCategory,
       p_reported_status:   input.reportedStatus,
       p_expense_description: input.expenseDescription ?? null,
+      p_timestamp:          input.timestamp ?? null,
     }).abortSignal(options.signal ?? AbortSignal.timeout(30_000));
     data = result.data;
     error = result.error as { message?: string } | null;
