@@ -92,6 +92,9 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
   const [pendingActionKey, setPendingActionKey] = useState<string | null>(null);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const scanResults = useAnomalyScanResults(isAdmin, anomalyTransactions, lang);
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+  const [editingTxId, setEditingTxId] = useState<string | null>(null);
+  const [tempNotes, setTempNotes] = useState<string>('');
   const myPendingSettlements = pendingSettlements
     .filter(settlement => settlement.driverId === activeDriverId && settlement.status === 'pending')
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -354,36 +357,136 @@ const SettlementTab: React.FC<SettlementTabProps> = ({
               </div>
             </div>
 
-            {/* ── 今日收款明细 ────────────────────── */}
+            {/* ── 每日收款对账单 (Daily Invoice) ────────────────────── */}
             {todayDriverTxs.length > 0 && (
-              <div className="rounded-2xl border border-[#e0d8cc] bg-white divide-y divide-[#e8e0d4] overflow-hidden">
-                <div className="px-4 py-2.5 bg-[#f3efe8]">
-                  <p className="text-caption font-bold uppercase tracking-widest text-[#a09080]">
-                    {lang === 'zh' ? '今日收款明细' : "Today's Collections"}
-                  </p>
-                </div>
-                {todayDriverTxs.map((tx) => {
-                  const loc = locationMap.get(tx.locationId);
-                  const diff = tx.currentScore - tx.previousScore;
-                  return (
-                    <div key={tx.id} className="px-4 py-2.5 flex items-center justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-caption font-black text-[#3d3028] uppercase truncate">
-                          {loc?.name ?? tx.locationName ?? tx.locationId.slice(0, 8)}
-                        </p>
-                        <p className="text-caption font-bold text-[#a09080]">
-                          {tx.previousScore ?? '?'} → {tx.currentScore ?? '?'}
-                          {diff > 0 && (
-                            <span className="text-emerald-600 ml-1">+{diff}</span>
-                          )}
-                        </p>
-                      </div>
-                      <p className="text-sm font-black text-amber-700 flex-shrink-0">
-                        TZS {(tx.revenue ?? 0).toLocaleString()}
+              <div className="rounded-2xl border border-[#e0d8cc] bg-[#fbf9f5] overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setIsInvoiceOpen(open => !open)}
+                  className="w-full flex items-center justify-between gap-3 p-4 bg-[#f3efe8] hover:bg-[#ebdcc8] transition-colors text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg" aria-hidden="true">🧾</span>
+                    <div>
+                      <h3 className="text-sm font-black text-[#2a2420] uppercase tracking-tight">
+                        {t.dailyInvoiceTitle}
+                      </h3>
+                      <p className="text-[10px] font-bold uppercase text-[#a09080] tracking-wide">
+                        {t.dailyInvoiceDesc} ({todayDriverTxs.length})
                       </p>
                     </div>
-                  );
-                })}
+                  </div>
+                  <span className="text-[#a09080] font-black text-sm flex-shrink-0">
+                    {isInvoiceOpen ? '▲' : '▼'}
+                  </span>
+                </button>
+
+                {isInvoiceOpen && (
+                  <div className="p-3 space-y-3 animate-in slide-in-from-top-2">
+                    {todayDriverTxs.map((tx) => {
+                      const loc = locationMap.get(tx.locationId);
+                      const diff = (tx.currentScore ?? 0) - (tx.previousScore ?? 0);
+                      const status = loc?.status ?? 'active';
+                      const statusColor =
+                        status === 'active'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : status === 'broken'
+                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                          : status === 'maintenance'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : 'bg-gray-100 text-gray-600 border-gray-200';
+                      const isEditing = editingTxId === tx.id;
+                      return (
+                        <div key={tx.id} className="rounded-2xl border border-[#e0d8cc] bg-white p-3 space-y-2">
+                          {/* Header: machine name + status switch */}
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-black text-[#2a2420] min-w-0 truncate">
+                              {loc?.name ?? tx.locationName ?? tx.locationId.slice(0, 8)}
+                              {loc?.machineId ? ` • ${loc.machineId}` : ''}
+                            </p>
+                            <select
+                              aria-label={t.machineStatus}
+                              value={status}
+                              onChange={() => { /* wired to updateLocations in Task 4 */ }}
+                              className={`text-[10px] font-bold px-2 py-1 rounded-xl border focus:outline-none flex-shrink-0 ${statusColor}`}
+                            >
+                              <option value="active">{lang === 'zh' ? '🟢 运行中' : '🟢 Active'}</option>
+                              <option value="maintenance">{lang === 'zh' ? '🟡 维护中' : '🟡 Matengenezo'}</option>
+                              <option value="broken">{lang === 'zh' ? '🔴 故障中' : '🔴 Imeharibika'}</option>
+                              <option value="inactive">{lang === 'zh' ? '⚫ 未启用' : '⚫ Imefungwa'}</option>
+                            </select>
+                          </div>
+
+                          {/* Meter comparison */}
+                          <div className="grid grid-cols-2 gap-2 bg-[#fdfcfb] rounded-xl p-2 border border-[#f3efe8] text-caption font-bold text-[#8c7e6d]">
+                            <div>
+                              {t.previousMetra}: <span className="font-extrabold text-[#2a2420]">{tx.previousScore ?? 0}</span>
+                            </div>
+                            <div>
+                              {t.currentMetra}: <span className="font-extrabold text-[#2a2420]">{tx.currentScore ?? 0}</span>
+                            </div>
+                            <div className="col-span-2 border-t border-[#f3efe8] pt-1 flex justify-between items-center">
+                              <span>
+                                {t.metraDiff}:{' '}
+                                <span className="font-black text-amber-700">
+                                  {diff >= 0 ? '+' : ''}{diff} {lang === 'zh' ? '币' : 'sarafu'}
+                                </span>
+                              </span>
+                              <span className="font-black text-[#171310]">
+                                TZS {(tx.revenue ?? 0).toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Notes block */}
+                          <div className="border-t border-dashed border-[#e0d8cc] pt-2">
+                            {isEditing ? (
+                              <div className="space-y-2">
+                                <textarea
+                                  value={tempNotes}
+                                  onChange={e => setTempNotes(e.target.value)}
+                                  rows={2}
+                                  maxLength={200}
+                                  placeholder={t.writeNotesPlaceholder}
+                                  className="w-full text-xs p-2 border border-[#ebdcc8] rounded-xl outline-none focus:ring-1 focus:ring-amber-500 bg-amber-50/20 font-bold"
+                                />
+                                <div className="flex justify-end gap-2 text-[10px]">
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingTxId(null)}
+                                    className="px-2.5 py-1 text-gray-500 font-bold uppercase"
+                                  >
+                                    {lang === 'zh' ? '取消' : 'Futa'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => { setEditingTxId(null); }}
+                                    className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg uppercase"
+                                  >
+                                    {t.saveChanges}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-start justify-between gap-3 text-caption font-bold">
+                                <p className="text-gray-500 leading-relaxed italic pr-4 min-w-0">
+                                  {tx.notes ? `"${tx.notes}"` : (lang === 'zh' ? '无工作备注' : 'Bila maelezo')}
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => { setEditingTxId(tx.id); setTempNotes(tx.notes ?? ''); }}
+                                  className="text-amber-700 hover:text-amber-800 flex-shrink-0 font-extrabold flex items-center gap-1"
+                                >
+                                  <span aria-hidden="true">✍️</span> {t.editDailyNotes}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
