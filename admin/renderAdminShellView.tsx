@@ -6,7 +6,7 @@ import { isDashboardBackedAdminView } from './adminShellViewState';
 import type { AdminView } from './adminShellConfig';
 
 const Dashboard = lazy(() => import('../components/dashboard/DashboardPage'));
-const ManualCollectionEntryPage = lazy(() => import('./ManualCollectionEntryPage'));
+const DailyCollectionEntryPage = lazy(() => import('./DailyCollectionEntryPage'));
 const TransactionHistory = lazy(() => import('../components/TransactionHistory'));
 const DebtManager = lazy(() => import('../components/DebtManager'));
 const DriverManagement = lazy(() => import('../components/driver-management'));
@@ -37,7 +37,7 @@ const AdminShellViewRenderer: React.FC<AdminShellViewRendererProps> = ({
     case 'team':
       return <DriverManagement />;
     case 'collect':
-      return <ManualCollectionEntryPage />;
+      return <DailyCollectionEntryPage />;
     case 'history':
       return <TransactionHistory />;
     case 'debt':

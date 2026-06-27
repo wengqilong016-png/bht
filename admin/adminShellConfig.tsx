@@ -45,7 +45,7 @@ export function buildAdminPrimaryNav(totalApprovalBadge: number): AdminNavItem[]
 }
 
 export const ADMIN_SECONDARY_NAV: AdminNavItem[] = [
-  { id: 'collect', icon: <PlusCircle size={18} />, label: '采集录入', labelEn: 'Collection Entry' },
+  { id: 'collect', icon: <PlusCircle size={18} />, label: '每日采集', labelEn: 'Daily Entry' },
   { id: 'debt', icon: <CreditCard size={18} />, label: '债务管理', labelEn: 'Debt Management' },
   { id: 'driver-flow', icon: <Gauge size={18} />, label: '司机卡点', labelEn: 'Driver Flow' },
   { id: 'dead-letter', icon: <DatabaseBackup size={18} />, label: '同步故障', labelEn: 'Sync Failures' },
@@ -59,7 +59,7 @@ export const ADMIN_PAGE_TITLES: Record<AdminView, string> = {
   map: '地图与轨迹',
   sites: '网点管理',
   team: '车队与薪资',
-  collect: '采集录入',
+  collect: '每日采集',
   debt: '债务管理',
   history: '操作记录',
   monthly: '月度报表',

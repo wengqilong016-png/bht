@@ -235,7 +235,7 @@ export const zh: Record<string, string> = {
   mapRoutes: '地图与轨迹',
   sitesNav: '网点管理',
   fleetPayroll: '车队与薪资',
-  collectEntry: '采集录入',
+  collectEntry: '每日采集',
   financeManagement: '债务管理',
   historyLog: '操作记录',
   actionCenter: '行动中心',
