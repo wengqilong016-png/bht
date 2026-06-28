@@ -16,6 +16,7 @@ CREATE OR REPLACE FUNCTION public.submit_collection_v2(
     p_expenses            INTEGER DEFAULT 0,
     p_tip                 INTEGER DEFAULT 0,
     p_startup_debt_deduction INTEGER DEFAULT 0,
+    p_timestamp            TIMESTAMPTZ DEFAULT NULL,
     p_is_owner_retaining  BOOLEAN DEFAULT TRUE,
     p_owner_retention     NUMERIC DEFAULT NULL,
     p_coin_exchange       INTEGER DEFAULT 0,
@@ -44,7 +45,7 @@ DECLARE
     v_available_after_core_deductions NUMERIC;
     v_startup_debt_deduction NUMERIC;
     v_net_payable     NUMERIC;
-    v_now             TIMESTAMPTZ := NOW();
+    v_now             TIMESTAMPTZ := COALESCE(p_timestamp, NOW());
     v_rows_inserted   INTEGER;
     v_existing_tx     RECORD;
     v_caller_uid      UUID;
@@ -274,12 +275,12 @@ $$;
 -- Revoke + regrant
 REVOKE EXECUTE ON FUNCTION public.submit_collection_v2(
     TEXT, UUID, TEXT, INTEGER, INTEGER, INTEGER, INTEGER,
-    BOOLEAN, NUMERIC, INTEGER, JSONB, TEXT, INTEGER, BOOLEAN,
+    TIMESTAMPTZ, BOOLEAN, NUMERIC, INTEGER, JSONB, TEXT, INTEGER, BOOLEAN,
     TEXT, TEXT, TEXT, TEXT, TEXT, BOOLEAN
 ) FROM PUBLIC;
 
 GRANT EXECUTE ON FUNCTION public.submit_collection_v2(
     TEXT, UUID, TEXT, INTEGER, INTEGER, INTEGER, INTEGER,
-    BOOLEAN, NUMERIC, INTEGER, JSONB, TEXT, INTEGER, BOOLEAN,
+    TIMESTAMPTZ, BOOLEAN, NUMERIC, INTEGER, JSONB, TEXT, INTEGER, BOOLEAN,
     TEXT, TEXT, TEXT, TEXT, TEXT, BOOLEAN
 ) TO authenticated;
