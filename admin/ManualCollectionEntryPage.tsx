@@ -146,6 +146,7 @@ const ManualCollectionEntryPage: React.FC = () => {
       expenseCategory: (parseInt(draftExpenses) || 0) > 0 ? draftExpenseCategory : null,
       expenseDescription: undefined,
       reportedStatus: 'active',
+      adminOverride: adminOverride,
     };
 
     try {

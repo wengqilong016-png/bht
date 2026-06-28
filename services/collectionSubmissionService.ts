@@ -81,6 +81,8 @@ export interface CollectionSubmissionInput {
   reportedStatus: 'active' | 'maintenance' | 'broken';
   /** Optional ISO timestamp for admin back-dating. When set, the server uses this instead of now(). */
   timestamp?: string;
+  /** Admin override — allows negative score diff (rollover/correction). Only honored for admin callers. */
+  adminOverride?: boolean;
 }
 
 /** Discriminated result so callers can branch on success / source. */
@@ -193,6 +195,7 @@ export async function submitCollectionV2(
       p_reported_status:   input.reportedStatus,
       p_expense_description: input.expenseDescription ?? null,
       p_timestamp:          input.timestamp ?? null,
+      p_admin_override:     input.adminOverride ?? false,
     }).abortSignal(options.signal ?? AbortSignal.timeout(30_000));
     data = result.data;
     error = result.error as { message?: string } | null;
