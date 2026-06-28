@@ -73,7 +73,17 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({
   const showNativeApkUpdate = Capacitor.isNativePlatform();
   const handleMutationError = useCallback(
     (error: unknown) => {
-      const msg = error instanceof Error ? error.message : String(error);
+      const e = error as Record<string, unknown> | null;
+      const msg =
+        error instanceof Error
+          ? error.message
+          : typeof e?.message === 'string'
+          ? e.message
+          : typeof e?.error === 'string'
+          ? e.error
+          : typeof e?.code === 'string' && typeof e?.details === 'string'
+          ? `${e.code}: ${e.details}`
+          : String(error);
       showToast(
         lang === 'zh' ? `操作失败：${msg}` : `Operation failed: ${msg}`,
         'error',
