@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BHT 每日采集录入 - 方案对比</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, sans-serif; background: #f5f2eb; color: #2a2420; padding: 20px; }
+  h1 { font-size: 20px; margin-bottom: 6px; }
+  .subtitle { font-size: 12px; color: #8c7e6d; margin-bottom: 24px; }
+
+  .schemes { display: flex; gap: 16px; flex-wrap: wrap; }
+  .scheme { flex: 1; min-width: 380px; background: #fff; border: 1px solid #e0d8cc; border-radius: 16px; overflow: hidden; }
+  .scheme-header { padding: 14px 16px; border-bottom: 1px solid #e0d8cc; display: flex; align-items: center; gap: 8px; }
+  .scheme-badge { font-size: 10px; font-weight: 800; padding: 2px 10px; border-radius: 20px; }
+  .scheme-badge.a { background: #ecfdf5; color: #065f46; }
+  .scheme-badge.b { background: #eff6ff; color: #1e40af; }
+  .scheme-badge.c { background: #fef3c7; color: #92400e; }
+  .scheme-title { font-size: 14px; font-weight: 800; }
+  .scheme-body { padding: 14px 16px; }
+
+  /* Date picker row */
+  .date-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding: 10px 14px; background: #fbf9f5; border: 1px solid #e0d8cc; border-radius: 12px; }
+  .date-label { font-size: 12px; font-weight: 800; color: #8c7e6d; white-space: nowrap; }
+  .date-picker { padding: 6px 12px; border: 1px solid #e0d8cc; border-radius: 8px; font-size: 13px; font-weight: bold; background: #fff; }
+  .btn { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 800; border: none; cursor: pointer; }
+  .btn-primary { background: #059669; color: #fff; }
+  .btn-outline { background: #fff; border: 1px solid #e0d8cc; color: #2a2420; }
+  .btn-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .btn-sm { padding: 4px 10px; font-size: 11px; }
+
+  /* Summary cards */
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .summary-card { padding: 12px; border-radius: 10px; border: 1px solid #e8e0d4; background: #fbf9f5; }
+  .summary-card .label { font-size: 10px; font-weight: 800; color: #a09080; text-transform: uppercase; letter-spacing: 0.1em; }
+  .summary-card .value { font-size: 18px; font-weight: 900; margin-top: 2px; }
+  .summary-card .value.green { color: #059669; }
+  .summary-card .value.red { color: #dc2626; }
+  .summary-card.highlight { background: #ecfdf5; border-color: #a7f3d0; }
+
+  /* Entry list */
+  .entry-list { max-height: 300px; overflow-y: auto; }
+  .entry-item { padding: 10px 12px; border: 1px solid #e0d8cc; border-radius: 10px; margin-bottom: 6px; background: #fff; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+  .entry-item .machine { font-weight: 800; }
+  .entry-item .meta { color: #8c7e6d; font-size: 10px; }
+  .entry-item .amount { font-weight: 900; font-size: 13px; }
+
+  /* Inline add form */
+  .add-form { border: 2px dashed #d1d5db; border-radius: 10px; padding: 12px; margin-bottom: 10px; background: #fafafa; }
+  .add-form .row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 8px; }
+  .add-form select, .add-form input { padding: 5px 10px; border: 1px solid #e0d8cc; border-radius: 6px; font-size: 12px; font-weight: bold; }
+  .add-form select { min-width: 100px; }
+  .add-form input { width: 90px; }
+
+  .section-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #a09080; margin-bottom: 8px; margin-top: 14px; }
+
+  .comparison { margin-top: 32px; padding: 20px; background: #fff; border: 1px solid #e0d8cc; border-radius: 16px; }
+  .comparison h2 { font-size: 16px; margin-bottom: 12px; }
+  .comparison table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .comparison th, .comparison td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #f3efe8; }
+  .comparison th { font-weight: 800; color: #8c7e6d; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .comparison .check { color: #059669; }
+  .comparison .cross { color: #dc2626; }
+</style>
+</head>
+<body>
+
+<h1>🧾 BHT 每日采集录入设计方案</h1>
+<p class="subtitle">三种布局方案对比 — 以日期为单位，批量写入 + 自动计算当日流水</p>
+
+<div class="schemes">
+
+  <!-- ── 方案 A: 日期锁定 + 行内添加 ── -->
+  <div class="scheme">
+    <div class="scheme-header">
+      <span class="scheme-badge a">方案 A</span>
+      <span class="scheme-title">日期锁定 · 行内添加</span>
+    </div>
+    <div class="scheme-body">
+      <div class="date-row">
+        <span class="date-label">📅 结算日期</span>
+        <input class="date-picker" type="date" value="2026-06-27">
+        <button class="btn btn-outline btn-sm">切换</button>
+        <span style="margin-left:auto;font-size:10px;color:#8c7e6d">已录入 3 笔</span>
+      </div>
+
+      <!-- Add form always visible at top -->
+      <div class="add-form">
+        <div class="row">
+          <select><option>选择机器</option><option>📍 888 · Kariakoo Shop</option></select>
+          <select><option>选择司机</option><option>👤 Juma</option></select>
+        </div>
+        <div class="row">
+          <input type="text" placeholder="上次: 12,800" readonly style="background:#f3efe8;width:80px;">
+          <input type="text" placeholder="当前读数" style="width:80px;">
+          <input type="text" placeholder="支出 TZS" style="width:80px;">
+          <input type="text" placeholder="零钱" style="width:70px;">
+          <button class="btn btn-primary btn-sm">+ 添加</button>
+        </div>
+      </div>
+
+      <div class="section-title">📋 当日记录 (2026-06-27)</div>
+      <div class="entry-list">
+        <div class="entry-item">
+          <div>
+            <span class="machine">📍 888 · Kariakoo</span>
+            <div class="meta">12,800 → 18,500 · Juma · 支出 TZS 5,000</div>
+          </div>
+          <div class="amount">TZS 57,000</div>
+          <button class="btn btn-danger btn-sm">✕</button>
+        </div>
+        <div class="entry-item">
+          <div>
+            <span class="machine">📍 999 · Mbagala</span>
+            <div class="meta">45,200 → 52,100 · Salim</div>
+          </div>
+          <div class="amount">TZS 69,000</div>
+          <button class="btn btn-danger btn-sm">✕</button>
+        </div>
+        <div class="entry-item">
+          <div>
+            <span class="machine">📍 777 · Temeke</span>
+            <div class="meta">8,900 → 12,300 · Juma · 支出 TZS 2,000</div>
+          </div>
+          <div class="amount">TZS 34,000</div>
+          <button class="btn btn-danger btn-sm">✕</button>
+        </div>
+        <div style="text-align:center;padding:20px;color:#d1d5db;font-size:11px;border:1px dashed #e5e7eb;border-radius:10px;">
+          + 点击上方表单添加新的采集记录
+        </div>
+      </div>
+
+      <!-- Daily totals -->
+      <div class="section-title">💰 当日流水汇总</div>
+      <div class="summary-grid">
+        <div class="summary-card"><div class="label">营业额</div><div class="value">TZS 160,000</div></div>
+        <div class="summary-card"><div class="label">总支出</div><div class="value red">TZS 7,000</div></div>
+        <div class="summary-card"><div class="label">店主留存</div><div class="value">TZS 48,000</div></div>
+        <div class="summary-card highlight"><div class="label">应交现金</div><div class="value green">TZS 105,000</div></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:10px;">📝 生成本日日结单</button>
+    </div>
+  </div>
+
+  <!-- ── 方案 B: 分步向导 ── -->
+  <div class="scheme">
+    <div class="scheme-header">
+      <span class="scheme-badge b">方案 B</span>
+      <span class="scheme-title">分步向导 · Step 1/3</span>
+    </div>
+    <div class="scheme-body" style="font-size:11px;color:#8c7e6d;">
+      <div style="display:flex;gap:4px;margin-bottom:16px;">
+        <div style="flex:1;height:4px;background:#059669;border-radius:2px;"></div>
+        <div style="flex:1;height:4px;background:#e0d8cc;border-radius:2px;"></div>
+        <div style="flex:1;height:4px;background:#e0d8cc;border-radius:2px;"></div>
+      </div>
+      <div style="text-align:center;padding:10px;font-weight:800;font-size:13px;color:#2a2420;">Step 1: 选择日期 & 分配机器</div>
+
+      <div class="date-row">
+        <span class="date-label">📅 日期</span>
+        <input class="date-picker" type="date" value="2026-06-27">
+      </div>
+
+      <div style="border:1px solid #e0d8cc;border-radius:10px;padding:10px;margin-bottom:12px;">
+        <div style="font-weight:800;font-size:12px;margin-bottom:8px;">选择本日运营的机器</div>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px;cursor:pointer;">
+          <input type="checkbox" checked> 📍 888 · Kariakoo Shop (Juma)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px;cursor:pointer;">
+          <input type="checkbox" checked> 📍 999 · Mbagala Center (Salim)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px;cursor:pointer;">
+          <input type="checkbox"> 📍 777 · Temeke Market (Juma)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px;cursor:pointer;">
+          <input type="checkbox"> 📍 666 · Ubungo (Amina)
+        </label>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%">下一步 → 录入读数</button>
+    </div>
+    <div style="padding:14px 16px;background:#f9fafb;border-top:1px solid #e0d8cc;font-size:11px;color:#6b7280;">
+      <strong>Step 2:</strong> 逐台录入当前读数和支出<br>
+      <strong>Step 3:</strong> 确认流水汇总 → 一键生成日结
+    </div>
+  </div>
+
+  <!-- ── 方案 C: 表格批量 ── -->
+  <div class="scheme">
+    <div class="scheme-header">
+      <span class="scheme-badge c">方案 C</span>
+      <span class="scheme-title">表格批量编辑</span>
+    </div>
+    <div class="scheme-body">
+      <div class="date-row">
+        <span class="date-label">📅 日期</span>
+        <input class="date-picker" type="date" value="2026-06-27">
+        <button class="btn btn-outline btn-sm" style="margin-left:auto;">加载当日数据</button>
+      </div>
+
+      <div class="section-title">📊 批量录入表</div>
+      <table style="width:100%;font-size:11px;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f3efe8;font-weight:800;font-size:10px;color:#8c7e6d;text-align:left;">
+            <th style="padding:8px;">机器</th><th style="padding:8px;">上次</th><th style="padding:8px;">当前</th><th style="padding:8px;">支出</th><th style="padding:8px;">营业额</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #f3efe8;">
+            <td style="padding:8px;font-weight:800;">📍 888 Kariakoo</td>
+            <td style="padding:8px;">12,800</td>
+            <td style="padding:8px;"><input type="text" value="18,500" style="width:60px;padding:4px;border:1px solid #e0d8cc;border-radius:4px;font-size:11px;font-weight:bold;"></td>
+            <td style="padding:8px;"><input type="text" value="5000" style="width:55px;padding:4px;border:1px solid #e0d8cc;border-radius:4px;font-size:11px;"></td>
+            <td style="padding:8px;font-weight:900;color:#059669;">57,000</td>
+            <td style="padding:8px;"><button class="btn btn-danger btn-sm">✕</button></td>
+          </tr>
+          <tr style="border-bottom:1px solid #f3efe8;">
+            <td style="padding:8px;font-weight:800;">📍 999 Mbagala</td>
+            <td style="padding:8px;">45,200</td>
+            <td style="padding:8px;"><input type="text" value="52,100" style="width:60px;padding:4px;border:1px solid #e0d8cc;border-radius:4px;font-size:11px;font-weight:bold;"></td>
+            <td style="padding:8px;"><input type="text" value="0" style="width:55px;padding:4px;border:1px solid #e0d8cc;border-radius:4px;font-size:11px;"></td>
+            <td style="padding:8px;font-weight:900;color:#059669;">69,000</td>
+            <td style="padding:8px;"><button class="btn btn-danger btn-sm">✕</button></td>
+          </tr>
+          <tr style="border-bottom:1px solid #f3efe8;">
+            <td style="padding:8px;font-weight:800;">📍 777 Temeke</td>
+            <td style="padding:8px;">8,900</td>
+            <td style="padding:8px;"><input type="text" placeholder="读数" style="width:60px;padding:4px;border:1px solid #e0d8cc;border-radius:4px;font-size:11px;"></td>
+            <td style="padding:8px;"><input type="text" placeholder="0" style="width:55px;padding:4px;border:1px solid #e0d8cc;border-radius:4px;font-size:11px;"></td>
+            <td style="padding:8px;color:#d1d5db;">—</td>
+            <td style="padding:8px;"></td>
+          </tr>
+        </tbody>
+      </table>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px;">+ 添加机器行</button>
+
+      <div class="section-title">💰 流水汇总</div>
+      <div class="summary-grid">
+        <div class="summary-card"><div class="label">总营收</div><div class="value">TZS 126,000</div></div>
+        <div class="summary-card"><div class="label">总支出</div><div class="value red">TZS 5,000</div></div>
+        <div class="summary-card"><div class="label">机器数</div><div class="value">2</div></div>
+        <div class="summary-card highlight"><div class="label">应交</div><div class="value green">TZS 121,000</div></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:10px;">💾 保存全部 &amp; 生成日结</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Comparison table -->
+<div class="comparison">
+  <h2>📊 三方案对比</h2>
+  <table>
+    <thead>
+      <tr><th>维度</th><th>方案 A · 行内添加</th><th>方案 B · 分步向导</th><th>方案 C · 表格批量</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>适合场景</td><td>边收边录、少量机器</td><td>先选机器再逐台录入</td><td>一次性补录多台、数据核对</td></tr>
+      <tr><td>学习成本</td><td><span class="check">低</span></td><td><span class="check">低</span>（引导式）</td><td>中（表格操作）</td></tr>
+      <tr><td>录入效率</td><td>中</td><td>中</td><td><span class="check">高</span>（批量改）</td></tr>
+      <tr><td>防错能力</td><td>中（实时预览）</td><td><span class="check">高</span>（逐步确认）</td><td>低（需人工核对）</td></tr>
+      <tr><td>复用现有代码</td><td><span class="check">高</span>（扩展原页面）</td><td>中（需新建向导组件）</td><td>中（全新表格组件）</td></tr>
+      <tr><td>开发量</td><td><span class="check">低</span></td><td>中</td><td>中-高</td></tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>
