@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import DailyCollectionEntryPage from '../admin/DailyCollectionEntryPage';
 import ManualCollectionEntryPage from '../admin/ManualCollectionEntryPage';
 
 jest.mock('../contexts/AuthContext', () => ({
@@ -20,14 +21,33 @@ jest.mock('../contexts/DataContext', () => ({
     isOnline: true,
   }),
 }));
-jest.mock('../contexts/MutationContext', () => ({
-  useMutations: () => ({ submitManualCollection: { mutateAsync: jest.fn().mockResolvedValue({ id: 'new-tx' }), isPending: false } }),
-}));
+jest.mock('../contexts/MutationContext', () => {
+  const mutateAsync = jest.fn().mockResolvedValue({ id: 'new-tx' });
+  return {
+    useMutations: () => ({
+      submitManualCollection: { mutateAsync, isPending: false },
+      createSettlement: { mutateAsync: jest.fn(), isPending: false },
+    }),
+    __getSubmitManualCollectionMock: () => mutateAsync,
+  };
+});
 jest.mock('../contexts/ToastContext', () => ({
   useToast: () => ({ showToast: jest.fn() }),
 }));
+jest.mock('../services/financeAuditService', () => ({
+  logFinanceAudit: jest.fn(),
+}));
+
+const getSubmitMock = () =>
+  (jest.requireMock('../contexts/MutationContext') as {
+    __getSubmitManualCollectionMock: () => jest.Mock;
+  }).__getSubmitManualCollectionMock();
 
 describe('ManualCollectionWalkthrough', () => {
+  beforeEach(() => {
+    getSubmitMock().mockClear();
+  });
+
   it('renders driver select and date picker on load', () => {
     render(<ManualCollectionEntryPage />);
     expect(screen.getByText(/逐项收款核查/i)).toBeInTheDocument();
@@ -47,6 +67,29 @@ describe('ManualCollectionWalkthrough', () => {
     fireEvent.click(screen.getByText(/Spot 12/i));
     expect(screen.getByText(/今日分数/i)).toBeInTheDocument();
     expect(screen.getByText(/83,900/)).toBeInTheDocument();
+  });
+
+  it('passes the selected historical date and admin override when submitting', async () => {
+    render(<ManualCollectionEntryPage />);
+    fireEvent.change(screen.getByLabelText(/日期/), { target: { value: '2026-05-31' } });
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'd1' } });
+    fireEvent.click(screen.getByText(/Spot 12/i));
+    fireEvent.change(screen.getByPlaceholderText(/输入读数/), { target: { value: '84250' } });
+
+    for (let step = 1; step < 7; step += 1) {
+      const buttons = screen.getAllByRole('button');
+      fireEvent.click(buttons[buttons.length - 1]);
+    }
+    const buttons = screen.getAllByRole('button');
+    fireEvent.click(buttons[buttons.length - 1]);
+
+    await waitFor(() => expect(getSubmitMock()).toHaveBeenCalledTimes(1));
+    expect(getSubmitMock()).toHaveBeenCalledWith(
+      expect.objectContaining({
+        timestamp: '2026-05-31T12:00:00+03:00',
+        adminOverride: true,
+      }),
+    );
   });
 
   it('advances through all 7 steps', () => {
@@ -87,5 +130,27 @@ describe('ManualCollectionWalkthrough', () => {
 
     // Step 7: coin exchange + submit
     expect(screen.getAllByText(/换币/).length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('DailyCollectionEntryPage', () => {
+  beforeEach(() => {
+    getSubmitMock().mockClear();
+  });
+
+  it('passes admin override when the toggle is enabled', async () => {
+    render(<DailyCollectionEntryPage />);
+    fireEvent.click(screen.getByRole('button', { name: /添加一台机器的采集记录/ }));
+
+    const selects = screen.getAllByRole('combobox');
+    fireEvent.change(selects[0], { target: { value: 'loc-1' } });
+    fireEvent.change(screen.getByPlaceholderText(/例如 12800/), { target: { value: '83000' } });
+    fireEvent.click(screen.getByRole('button', { pressed: false }));
+    fireEvent.click(screen.getByRole('button', { name: /提交此笔/ }));
+
+    await waitFor(() => expect(getSubmitMock()).toHaveBeenCalledTimes(1));
+    expect(getSubmitMock()).toHaveBeenCalledWith(
+      expect.objectContaining({ adminOverride: true }),
+    );
   });
 });
