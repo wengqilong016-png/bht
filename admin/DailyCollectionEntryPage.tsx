@@ -256,6 +256,7 @@ const DailyCollectionEntryPage: React.FC = () => {
       expenseDescription: preview.expenseAmount > 0 ? draft.expenseDescription.trim() || undefined : undefined,
       reportedStatus: draft.reportedStatus,
       timestamp: isBackdate ? `${selectedDate}T12:00:00+03:00` : undefined,
+      adminOverride: draft.adminOverride,
     };
 
     try {

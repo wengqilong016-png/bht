@@ -7,6 +7,7 @@ import { useMutations } from '../contexts/MutationContext';
 import { useToast } from '../contexts/ToastContext';
 import type { CollectionSubmissionInput } from '../services/collectionSubmissionService';
 import { CONSTANTS, safeRandomUUID, TRANSLATIONS, type Location, type Transaction } from '../types';
+import { getTodayLocalDate } from '../utils/dateUtils';
 
 type SubStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -33,7 +34,7 @@ const ManualCollectionEntryPage: React.FC = () => {
   const t = TRANSLATIONS[lang];
 
   const [driverId, setDriverId] = useState('');
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [selectedDate, setSelectedDate] = useState(getTodayLocalDate);
   const [adminOverride, setAdminOverride] = useState(true);
   const [currentMachineIdx, setCurrentMachineIdx] = useState<number | null>(null);
   const [subStep, setSubStep] = useState<SubStep>(1);
@@ -146,7 +147,8 @@ const ManualCollectionEntryPage: React.FC = () => {
       expenseCategory: (parseInt(draftExpenses) || 0) > 0 ? draftExpenseCategory : null,
       expenseDescription: undefined,
       reportedStatus: 'active',
-      adminOverride: adminOverride,
+      timestamp: selectedDate === getTodayLocalDate() ? undefined : `${selectedDate}T12:00:00+03:00`,
+      adminOverride,
     };
 
     try {
